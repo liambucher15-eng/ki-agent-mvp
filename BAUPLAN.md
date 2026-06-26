@@ -437,4 +437,97 @@ zur spaeteren SaaS-Phase. Nicht jetzt ueber-absichern.
 Dann werden relevant: #2 (Auth, z.B. Supabase), #3 (DB absichern, "Row Level
 Security"), #6 (SQL Injection: nur parametrisierte Abfragen), #7 (IDOR: pruefen,
 dass ein Nutzer nur SEINE Daten sieht), #8 (Admin-Routen hinter Login). Das gehen
-wir an, sobald diese Teile dazukommen — nicht vorher.
+wir an, sobald diese Teile dazukommen — nicht vorher. Der genaue Plan dafuer steht
+in Abschnitt 14.
+
+---
+
+## 14. Der Login-/SaaS-Umbau — genauer Plan (Phase 4)
+
+Das ist der Schritt von "ich pflege die Firmen-Infos selbst" zu "Firmen melden sich
+an und geben ihre Infos selbst ein". Wichtigste Beruhigung vorweg:
+
+**Der Agent-Kern bleibt unveraendert. Du baust DRUMHERUM, nicht NEU.**
+
+| Bleibt gleich (schon gebaut) | Kommt neu dazu |
+|---|---|
+| `chat.js` (ruft die KI) | Datenbank (statt `data/*.json`) |
+| `baueSystemPrompt.js` (baut den Prompt) | Login (Firmen-Konten) |
+| das Chatfenster (`index.html`) | Dashboard (Formular zum Infos-Eingeben) |
+| die Daten-Struktur (Name, Fakten, FAQ) | Einbett-Code fuer Kunden-Webseiten |
+
+Einzige Datei aus dem Bestand, die sich aendert: `firmen.js` — statt "lies die
+Datei" steht dort dann "frag die Datenbank".
+
+### Das grosse Bild: die App hat dann zwei Seiten
+
+1. **Dashboard (NEU):** Hier loggt sich die *Firma* ein und tippt ihre Infos in ein
+   Formular. Das ist der Teil, den du dir vorstellst.
+2. **Widget (haben wir):** Der Chat, der auf der *Webseite der Firma* sitzt und mit
+   den *Besuchern* redet.
+
+**Ablauf mit Login:**
+```
+Firma registriert sich  →  fuellt im Dashboard ihr Formular aus
+        ↓
+Infos landen in der Datenbank (unter dem Konto dieser Firma)
+        ↓
+Firma kriegt einen Einbett-Code <script ...firma=123> und klebt ihn auf ihre Seite
+        ↓
+Besucher chattet  →  Server liest NUR die Zeile dieser Firma aus der DB  →  Claude
+```
+(Die KI sieht weiterhin immer nur EINE Firma — wie heute.)
+
+### Werkzeug-Empfehlung: Supabase
+
+Fuer einen Einsteiger ist **Supabase** (supabase.com) der beste Weg, weil es drei
+schwierige Dinge in EINEM fertigen Dienst loest — mit grosszuegiger Gratis-Stufe:
+- **Datenbank** (Postgres) — wo die Firmen-Infos liegen.
+- **Login** (Auth) — Registrierung/Anmeldung. *Du speicherst NIE selbst Passwoerter*
+  — das macht Supabase sicher fuer dich. (loest Sicherheitspunkt #2)
+- **Zugriffsregeln** ("Row Level Security") — die DB-Regel "jede Firma sieht/aendert
+  nur ihre eigene Zeile". (loest die Sicherheitspunkte #3 und #7 weitgehend)
+
+### Die Bau-Reihenfolge (4 Stufen)
+
+**Stufe A — Datenbank statt Datei (das Fundament, kleiner Schritt):**
+1. Supabase-Projekt anlegen (gratis).
+2. Tabelle `firmen` erstellen: Spalten id, name, ton, fakten, faq, besitzer.
+3. Die jetzigen 2 Beispiel-Firmen einmal in die DB eintragen.
+4. `firmen.js` umbauen: statt JSON-Datei → Supabase abfragen. *(nur diese eine Datei!)*
+   → Ergebnis: gleiche App, Daten jetzt in der DB. Noch kein Login — du fuellst die
+   DB selbst. Guter erster, ueberschaubarer Schritt Richtung SaaS.
+
+**Stufe B — Login + Dashboard (Firmen geben selbst ein):**
+5. Registrierung/Anmeldung mit Supabase Auth einbauen.
+6. Dashboard-Seite bauen: eingeloggte Firma sieht ein Formular (Name, Oeffnungs-
+   zeiten, FAQ ...) und speichert es in ihre DB-Zeile.
+7. Row Level Security einschalten: Firma A kann Firma B niemals sehen/aendern.
+
+**Stufe C — Einbetten beim Kunden (das eigentliche Verkaufs-Feature):**
+8. Einbett-Code bauen: ein kleines `<script>`, das den Chat als Bubble unten rechts
+   auf eine fremde Webseite laedt — mit der `firmaId` dieser Firma.
+9. Domain-Absicherung: nur die freigegebene Webseite der Firma darf das Widget laden.
+
+**Stufe D — Betrieb & Verkauf (wenn echte Kunden kommen):**
+10. Echtes Rate Limiting pro Firma (jetzt mit DB moeglich → Sicherheitspunkt #1 "echt").
+11. Abrechnung (z.B. Stripe) + Nutzungslimits je Tarif.
+12. Datenschutz/DSGVO: AGB, Auftragsverarbeitung, ggf. EU-Hosting.
+
+### Sicherheit in dieser Phase
+Genau jetzt werden die "spaeteren" Punkte aus Abschnitt 13 aktiv — aber das meiste
+nimmt dir Supabase ab: #2 (Auth) und #3/#7 (Zugriffsregeln) sind eingebaut. #6 (SQL
+Injection) entfaellt, wenn du die Supabase-Funktionen statt selbstgebauter SQL-Strings
+nutzt. #8 (Admin/Dashboard hinter Login) ergibt sich aus dem Login selbst.
+
+### Ehrliche Aufwandseinschaetzung (fuer dich als Einsteiger)
+- Stufe A: ein bis zwei Abende. Klein und motivierend.
+- Stufe B: das groesste Stueck — gut eine Woche, weil Login + Formular + Regeln neu sind.
+- Stufe C: ein paar Abende.
+- Stufe D: laufend, erst bei echten Kunden noetig.
+
+### Empfehlung
+Erst den Kern mit API-Schluessel zum Laufen bringen (1 Schritt entfernt). Dann
+**Stufe A** als erster SaaS-Schritt — klein, und danach steht die Datenbank, auf der
+Login und Dashboard sauber aufbauen. So baust du Richtung verkaufbares Produkt,
+ohne dich am Anfang in Login-Technik zu verlieren, bevor der Agent ueberhaupt lebt.
