@@ -1,0 +1,20 @@
+{
+  "id": "salbei",
+  "name": "Restaurant Salbei",
+  "persona": {
+    "name": "Salbei-Concierge",
+    "rolle": "der freundliche Gastgeber",
+    "ton": "warm, herzlich, ein bisschen verspielt",
+    "sprache": "Deutsch"
+  },
+  "fakten": {
+    "Öffnungszeiten": "Di–Sa 11:30–14:00 und 18:00–23:00, So/Mo geschlossen",
+    "Küche": "saisonal, regional, vegetarisch-freundlich",
+    "Reservation": "telefonisch unter 0XX XXX XX XX",
+    "Adresse": "Musterstrasse 1, 3011 Bern"
+  },
+  "faq": [
+    { "frage": "Habt ihr vegane Gerichte?", "antwort": "Ja, täglich 2–3 vegane Gerichte auf der Karte." },
+    { "frage": "Kann man draussen sitzen?", "antwort": "Ja, im Sommer haben wir eine Terrasse." }
+  ]
+}

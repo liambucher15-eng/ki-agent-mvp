@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KI-Agent MVP</title>
+  <style>
+    /* Bewusst schlicht — Funktion zuerst, Design kommt später (T7). */
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    #chat { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; height: 400px; overflow-y: auto; }
+    .msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 80%; white-space: pre-wrap; }
+    .user { background: #2D5694; color: #fff; margin-left: auto; }
+    .bot  { background: #f0f0f0; }
+    .meta { color: #999; font-style: italic; }
+    form { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+    input { flex: 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 0.6rem 1rem; border: 0; border-radius: 8px; background: #2D5694; color: #fff; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: default; }
+  </style>
+</head>
+<body>
+  <h1>KI-Agent (MVP)</h1>
+  <div id="chat"></div>
+  <form id="form">
+    <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
+    <button id="send" type="submit">Senden</button>
+  </form>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+
+    // Welche Firma dieser Agent vertritt.
+    // Standard: salbei. Zum Testen einer anderen Firma "?firma=nordlicht" an die URL hängen.
+    // Später (eingebettet auf einer Kunden-Webseite) kommt die ID aus dem Einbett-Code.
+    const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
+
+    // T5 — Gesprächsverlauf: wird bei jeder Anfrage mitgeschickt,
+    // damit der Agent dem Gespräch folgen kann.
+    const messages = [];
+
+    function addBubble(text, who) {
+      const div = document.createElement("div");
+      div.className = "msg " + who;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      addBubble(text, "user");
+      messages.push({ role: "user", content: text });
+      input.value = "";
+      send.disabled = true;
+
+      // T6 — "tippt…"-Anzeige
+      const typing = addBubble("tippt…", "bot meta");
+
+      try {
+        const res = await fetch("/.netlify/functions/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages, firmaId: FIRMA_ID }),
+        });
+        const data = await res.json();
+        typing.remove();
+
+        if (!res.ok) {
+          addBubble("Fehler: " + (data.error || res.status), "bot meta");
+        } else {
+          addBubble(data.reply, "bot");
+          messages.push({ role: "assistant", content: data.reply });
+        }
+      } catch (err) {
+        typing.remove();
+        addBubble("Verbindungsfehler: " + err.message, "bot meta");
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+  </script>
+</body>
+</html>

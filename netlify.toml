@@ -1,0 +1,7 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Sorgt dafür, dass die Firmen-Daten beim Deploy mit der Funktion hochgeladen werden.
+[functions]
+  included_files = ["data/**"]
