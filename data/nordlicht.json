@@ -7,6 +7,10 @@
     "ton": "klar, kompetent, freundlich-sachlich",
     "sprache": "Deutsch"
   },
+  "charakter": {
+    "farbe": "#2D5694",
+    "akzent": "#9db8dd"
+  },
   "fakten": {
     "Angebot": "individuelle Web- und App-Entwicklung für KMU",
     "Standort": "Zürich, remote-first",

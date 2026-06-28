@@ -5,21 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KI-Agent MVP</title>
   <style>
-    /* Bewusst schlicht — Funktion zuerst, Design kommt später (T7). */
+    /* Standard-Farben — werden pro Firma aus den Daten überschrieben. */
+    :root { --farbe: #2D5694; --akzent: #9db8dd; }
+
     body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-    #chat { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; height: 400px; overflow-y: auto; }
+    h1 { font-size: 1.2rem; color: #444; text-align: center; }
+
+    /* --- Charakter --- */
+    #avatar-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 0.5rem; }
+    #avatar { width: 120px; height: 120px; }
+    #avatar svg { width: 100%; height: 100%; display: block; transform-origin: center bottom;
+                  animation: atmen 3.5s ease-in-out infinite; }
+    /* Generiertes Charakter-Bild (Phase 1): wird angezeigt, sobald die Firma
+       eigene Ausdruck-Bilder hat. Solange nicht -> Platzhalter-SVG oben. */
+    #avatar-img { width: 120px; height: 120px; object-fit: contain; display: none; }
+    #avatar-name { font-size: 0.85rem; color: #777; margin-top: 0.25rem; }
+
+    /* ruhiges Atmen (Grundzustand "idle") */
+    @keyframes atmen { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+    /* Augen blinzeln gelegentlich */
+    .augen { transform-box: fill-box; transform-origin: center; animation: blinzeln 4s infinite; }
+    @keyframes blinzeln { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+    /* Wangen (Erröten) — normal unsichtbar */
+    .wange { opacity: 0; transition: opacity 0.3s; }
+    /* Mund — Drehpunkt in der Mitte für die Sprech-Animation */
+    .mund { transform-box: fill-box; transform-origin: center; }
+
+    /* Zustand DENKEN: leicht wackeln, Augen wandern hoch */
+    #avatar.denken svg { animation: wackeln 1.2s ease-in-out infinite; }
+    @keyframes wackeln { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+    #avatar.denken .augen { animation: none; transform: translateY(-4px); }
+
+    /* Zustand SPRECHEN: Mund bewegt sich */
+    #avatar.sprechen .mund { animation: reden 0.28s ease-in-out infinite; }
+    @keyframes reden { 0%,100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.3); } }
+
+    /* Zustand VERLEGEN: Wangen rot, Augen schauen weg, kurz schrumpfen */
+    #avatar.verlegen .wange { opacity: 0.75; }
+    #avatar.verlegen .augen { animation: none; transform: translateX(4px); }
+    #avatar.verlegen svg { animation: schrumpf 2s ease-in-out; }
+    @keyframes schrumpf { 0% { transform: scale(1); } 30% { transform: scale(0.93); } 100% { transform: scale(1); } }
+
+    /* Zustand FREUEN (Begrüssung): kleiner Hüpfer */
+    #avatar.freuen svg { animation: huepf 0.6s ease; }
+    @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-12px); } }
+
+    /* --- Chat --- */
+    #chat { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; height: 340px; overflow-y: auto; }
     .msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 80%; white-space: pre-wrap; }
-    .user { background: #2D5694; color: #fff; margin-left: auto; }
+    .user { background: var(--farbe); color: #fff; margin-left: auto; }
     .bot  { background: #f0f0f0; }
     .meta { color: #999; font-style: italic; }
     form { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
     input { flex: 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px; }
-    button { padding: 0.6rem 1rem; border: 0; border-radius: 8px; background: #2D5694; color: #fff; cursor: pointer; }
+    button { padding: 0.6rem 1rem; border: 0; border-radius: 8px; background: var(--farbe); color: #fff; cursor: pointer; }
     button:disabled { opacity: 0.5; cursor: default; }
   </style>
 </head>
 <body>
   <h1>KI-Agent (MVP)</h1>
+
+  <!-- Charakter. Zwei Darstellungen:
+       1) #avatar  = Platzhalter-SVG (reagiert per CSS-Zuständen). Fallback.
+       2) #avatar-img = generiertes Bild pro Zustand (sobald die Firma welche hat).
+       setCharakter() wählt automatisch: Bild wenn vorhanden, sonst SVG. -->
+  <div id="avatar-wrap">
+    <div id="avatar">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse class="koerper" cx="60" cy="62" rx="44" ry="42" fill="var(--farbe)" />
+        <ellipse cx="60" cy="74" rx="26" ry="22" fill="var(--akzent)" opacity="0.5" />
+        <circle class="wange" cx="38" cy="66" r="7" fill="#ff8a8a" />
+        <circle class="wange" cx="82" cy="66" r="7" fill="#ff8a8a" />
+        <g class="augen" fill="#1b2a22">
+          <circle cx="47" cy="55" r="6" />
+          <circle cx="73" cy="55" r="6" />
+          <circle cx="49" cy="53" r="2" fill="#fff" />
+          <circle cx="75" cy="53" r="2" fill="#fff" />
+        </g>
+        <ellipse class="mund" cx="60" cy="73" rx="9" ry="5" fill="#1b2a22" />
+      </svg>
+    </div>
+    <img id="avatar-img" alt="Charakter" />
+    <div id="avatar-name"></div>
+  </div>
+
   <div id="chat"></div>
   <form id="form">
     <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
@@ -31,15 +102,43 @@
     const form = document.getElementById("form");
     const input = document.getElementById("input");
     const send = document.getElementById("send");
+    const avatar = document.getElementById("avatar");
+    const avatarImg = document.getElementById("avatar-img");
+    const avatarName = document.getElementById("avatar-name");
 
     // Welche Firma dieser Agent vertritt.
-    // Standard: salbei. Zum Testen einer anderen Firma "?firma=nordlicht" an die URL hängen.
-    // Später (eingebettet auf einer Kunden-Webseite) kommt die ID aus dem Einbett-Code.
+    // Standard: salbei. Andere Firma testen: "?firma=nordlicht" an die URL hängen.
     const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
 
-    // T5 — Gesprächsverlauf: wird bei jeder Anfrage mitgeschickt,
-    // damit der Agent dem Gespräch folgen kann.
     const messages = [];
+
+    // Generierte Charakter-Bilder pro Zustand (Phase 1). null = noch keine -> SVG-Fallback.
+    // Erwartet später z.B. { idle: "<url>", denken: "<url>", sprechen: "<url>", verlegen: "<url>" }
+    let bilder = null;
+
+    // --- Charakter-Steuerung ---
+    // Setzt den Zustand der Figur. Nutzt das generierte Bild, wenn vorhanden,
+    // sonst die Platzhalter-SVG. Mit dauer kehrt sie danach zu "idle" zurück.
+    let revertTimer;
+    function setCharakter(zustand, dauer) {
+      clearTimeout(revertTimer);
+      const svgKlasse = zustand === "idle" ? "" : zustand;
+      const bildKey = zustand === "idle" ? "idle" : zustand;
+
+      if (bilder && (bilder[bildKey] || bilder.idle)) {
+        // generiertes Bild zeigen, SVG ausblenden
+        avatarImg.src = bilder[bildKey] || bilder.idle;
+        avatarImg.style.display = "block";
+        avatar.style.display = "none";
+      } else {
+        // Platzhalter-SVG zeigen
+        avatar.className = svgKlasse;
+        avatar.style.display = "block";
+        avatarImg.style.display = "none";
+      }
+
+      if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
+    }
 
     function addBubble(text, who) {
       const div = document.createElement("div");
@@ -48,6 +147,24 @@
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
       return div;
+    }
+
+    // Beim Laden: Charakter-Aussehen der Firma holen + proaktiv begrüssen.
+    async function start() {
+      try {
+        const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
+        if (res.ok) {
+          const f = await res.json();
+          const c = f.charakter || {};
+          if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
+          if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
+          if (c.bilder) bilder = c.bilder;       // Phase 1: generierte Bilder übernehmen, falls vorhanden
+          if (f.persona) avatarName.textContent = f.persona;
+        }
+      } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
+
+      setCharakter("freuen", 700);
+      addBubble("Hallo! 👋 Schön, dass du da bist. Wie kann ich dir helfen?", "bot");
     }
 
     form.addEventListener("submit", async (e) => {
@@ -60,7 +177,7 @@
       input.value = "";
       send.disabled = true;
 
-      // T6 — "tippt…"-Anzeige
+      setCharakter("denken");           // Figur denkt nach
       const typing = addBubble("tippt…", "bot meta");
 
       try {
@@ -74,18 +191,24 @@
 
         if (!res.ok) {
           addBubble("Fehler: " + (data.error || res.status), "bot meta");
+          setCharakter("verlegen", 2500);
         } else {
           addBubble(data.reply, "bot");
           messages.push({ role: "assistant", content: data.reply });
+          const weissNicht = /wei(ss|ß).{0,6}nicht|leider|nicht sicher|kann ich (dir )?nicht/i.test(data.reply);
+          setCharakter(weissNicht ? "verlegen" : "sprechen", 3000);
         }
       } catch (err) {
         typing.remove();
         addBubble("Verbindungsfehler: " + err.message, "bot meta");
+        setCharakter("verlegen", 2500);
       } finally {
         send.disabled = false;
         input.focus();
       }
     });
+
+    start();
   </script>
 </body>
 </html>

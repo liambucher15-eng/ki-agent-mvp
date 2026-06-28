@@ -7,6 +7,10 @@
     "ton": "warm, herzlich, ein bisschen verspielt",
     "sprache": "Deutsch"
   },
+  "charakter": {
+    "farbe": "#3f7d5a",
+    "akzent": "#a8d5b9"
+  },
   "fakten": {
     "Öffnungszeiten": "Di–Sa 11:30–14:00 und 18:00–23:00, So/Mo geschlossen",
     "Küche": "saisonal, regional, vegetarisch-freundlich",
