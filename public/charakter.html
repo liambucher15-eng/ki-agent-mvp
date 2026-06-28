@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Charakter erstellen</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.3rem; }
+    .karte { border: 1px solid #ddd; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    label { display: block; font-weight: 600; margin: 0.5rem 0 0.25rem; }
+    textarea, input[type=text] { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px; font: inherit; box-sizing: border-box; }
+    .modus { display: flex; gap: 1.5rem; margin: 0.25rem 0; }
+    .modus label { font-weight: normal; }
+    button { padding: 0.6rem 1.1rem; border: 0; border-radius: 8px; background: #2D5694; color: #fff; cursor: pointer; font: inherit; }
+    button.sek { background: #eee; color: #222; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    #vorschau { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
+    #vorschau figure { margin: 0; text-align: center; }
+    #vorschau img { width: 100%; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+    #vorschau figcaption { font-size: 0.75rem; color: #777; }
+    .hinweis { background: #fff7e6; border: 1px solid #ffe0a3; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.85rem; }
+    .erfolg { background: #e9f7ef; border: 1px solid #aee0c0; border-radius: 8px; padding: 0.6rem 0.8rem; }
+    .versteckt { display: none; }
+    a { color: #2D5694; }
+  </style>
+</head>
+<body>
+  <h1>Charakter erstellen <span id="firma-label" style="color:#777; font-weight:normal;"></span></h1>
+
+  <p class="hinweis">Hinweis: Die Bilder sind aktuell <strong>Platzhalter</strong>. Die echte KI-Generierung
+  (Higgsfield) wird zuletzt angeschlossen — die Bedienung bleibt dann gleich.</p>
+
+  <div class="karte">
+    <div class="modus">
+      <label><input type="radio" name="modus" value="text" checked /> Text-Beschreibung</label>
+      <label><input type="radio" name="modus" value="upload" /> Bild hochladen</label>
+    </div>
+
+    <div id="feld-text">
+      <label for="beschreibung">Beschreibe deinen Charakter</label>
+      <textarea id="beschreibung" rows="3" placeholder="z.B. ein freundlicher grüner Fuchs, verspielt, runde Formen"></textarea>
+    </div>
+
+    <div id="feld-upload" class="versteckt">
+      <label for="datei">Logo oder Bild hochladen</label>
+      <input type="file" id="datei" accept="image/*" />
+    </div>
+
+    <p style="margin-top:0.8rem;">
+      <button id="gen">Charakter generieren</button>
+      <span id="status" style="margin-left:0.5rem; color:#777;"></span>
+    </p>
+  </div>
+
+  <div id="ergebnis" class="karte versteckt">
+    <strong>Vorschau (4 Zustände)</strong>
+    <div id="vorschau"></div>
+    <p style="margin-top:0.8rem;">
+      <button id="uebernehmen">Für den Chat übernehmen</button>
+      <button id="nochmal" class="sek">Nochmal generieren</button>
+    </p>
+    <div id="gespeichert" class="erfolg versteckt"></div>
+  </div>
+
+  <p><a id="zum-chat" href="index.html">← zum Chat</a></p>
+
+  <script>
+    const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
+    document.getElementById("zum-chat").href = "index.html?firma=" + encodeURIComponent(FIRMA_ID);
+
+    const ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
+    let letzteBilder = null;
+    let uploadDataUrl = null;
+
+    // Firmenname anzeigen (Kontext)
+    fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((f) => { if (f) document.getElementById("firma-label").textContent = "– für " + f.name; })
+      .catch(() => {});
+
+    // Modus umschalten (Text vs. Upload)
+    document.querySelectorAll('input[name=modus]').forEach((r) =>
+      r.addEventListener("change", () => {
+        const modus = document.querySelector('input[name=modus]:checked').value;
+        document.getElementById("feld-text").classList.toggle("versteckt", modus !== "text");
+        document.getElementById("feld-upload").classList.toggle("versteckt", modus !== "upload");
+      })
+    );
+
+    // Hochgeladene Datei in eine Data-URL umwandeln (geht so an das Backend)
+    document.getElementById("datei").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) { uploadDataUrl = null; return; }
+      const reader = new FileReader();
+      reader.onload = () => { uploadDataUrl = reader.result; };
+      reader.readAsDataURL(file);
+    });
+
+    async function generieren() {
+      const modus = document.querySelector('input[name=modus]:checked').value;
+      const beschreibung = document.getElementById("beschreibung").value.trim();
+      if (modus === "text" && !beschreibung) { alert("Bitte eine Beschreibung eingeben."); return; }
+      if (modus === "upload" && !uploadDataUrl) { alert("Bitte ein Bild hochladen."); return; }
+
+      const gen = document.getElementById("gen");
+      const status = document.getElementById("status");
+      gen.disabled = true; status.textContent = "generiert…";
+
+      try {
+        const res = await fetch("/.netlify/functions/charakter-generieren", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ firmaId: FIRMA_ID, modus, beschreibung, bild: uploadDataUrl }),
+        });
+        const data = await res.json();
+        if (!res.ok) { status.textContent = "Fehler: " + (data.error || res.status); return; }
+
+        letzteBilder = data.bilder;
+        const vorschau = document.getElementById("vorschau");
+        vorschau.innerHTML = "";
+        for (const z of ZUSTAENDE) {
+          const fig = document.createElement("figure");
+          const img = document.createElement("img");
+          img.src = data.bilder[z];
+          img.alt = z;
+          const cap = document.createElement("figcaption");
+          cap.textContent = z;
+          fig.appendChild(img); fig.appendChild(cap);
+          vorschau.appendChild(fig);
+        }
+        document.getElementById("ergebnis").classList.remove("versteckt");
+        document.getElementById("gespeichert").classList.add("versteckt");
+        status.textContent = data.stub ? "(Platzhalter)" : "";
+      } catch (err) {
+        status.textContent = "Verbindungsfehler: " + err.message;
+      } finally {
+        gen.disabled = false;
+      }
+    }
+
+    document.getElementById("gen").addEventListener("click", generieren);
+    document.getElementById("nochmal").addEventListener("click", generieren);
+
+    document.getElementById("uebernehmen").addEventListener("click", () => {
+      if (!letzteBilder) return;
+      // Gespeichert wird (vorerst) im Browser. Dauerhaft/serverseitig = später per Datenbank.
+      localStorage.setItem("charakter:" + FIRMA_ID, JSON.stringify(letzteBilder));
+      const box = document.getElementById("gespeichert");
+      box.innerHTML = "Gespeichert! Der Charakter erscheint jetzt im Chat. " +
+        '<a href="index.html?firma=' + encodeURIComponent(FIRMA_ID) + '">→ zum Chat</a>';
+      box.classList.remove("versteckt");
+    });
+  </script>
+</body>
+</html>

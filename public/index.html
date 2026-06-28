@@ -96,6 +96,7 @@
     <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
     <button id="send" type="submit">Senden</button>
   </form>
+  <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="charakter.html">Eigenen Charakter erstellen →</a></p>
 
   <script>
     const chat = document.getElementById("chat");
@@ -162,6 +163,15 @@
           if (f.persona) avatarName.textContent = f.persona;
         }
       } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
+
+      // Vom Charakter-Ersteller gespeicherte Bilder (localStorage) haben Vorrang.
+      try {
+        const gespeichert = localStorage.getItem("charakter:" + FIRMA_ID);
+        if (gespeichert) bilder = JSON.parse(gespeichert);
+      } catch (e) {}
+
+      const link = document.getElementById("erstellen-link");
+      if (link) link.href = "charakter.html?firma=" + encodeURIComponent(FIRMA_ID);
 
       setCharakter("freuen", 700);
       addBubble("Hallo! 👋 Schön, dass du da bist. Wie kann ich dir helfen?", "bot");

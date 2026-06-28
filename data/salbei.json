@@ -9,7 +9,13 @@
   },
   "charakter": {
     "farbe": "#3f7d5a",
-    "akzent": "#a8d5b9"
+    "akzent": "#a8d5b9",
+    "bilder": {
+      "idle": "https://d8j0ntlcm91z4.cloudfront.net/user_37cURK0F97F4X7y7ES33GHVbvUd/hf_20260628_231811_4fe41004-a60b-4f09-9965-bdda13648949.png",
+      "denken": "https://d8j0ntlcm91z4.cloudfront.net/user_37cURK0F97F4X7y7ES33GHVbvUd/hf_20260628_231854_72c555da-1e18-4a1e-a021-2ce6d7d9bf65.png",
+      "sprechen": "https://d8j0ntlcm91z4.cloudfront.net/user_37cURK0F97F4X7y7ES33GHVbvUd/hf_20260628_231857_1e3cd545-0d4e-469c-b5f3-fbeefe78673f.png",
+      "verlegen": "https://d8j0ntlcm91z4.cloudfront.net/user_37cURK0F97F4X7y7ES33GHVbvUd/hf_20260628_231901_c84c9a1e-f547-47a7-8365-e78d67587e1f.png"
+    }
   },
   "fakten": {
     "Öffnungszeiten": "Di–Sa 11:30–14:00 und 18:00–23:00, So/Mo geschlossen",
