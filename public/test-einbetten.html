@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test-Seite (simuliert eine fremde Webseite)</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem;
+           color: #222; line-height: 1.7; }
+    header { border-bottom: 2px solid #222; padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { margin: 0; }
+    .klein { color: #888; font-size: 0.9rem; }
+    section { margin: 2rem 0; }
+  </style>
+</head>
+<body>
+  <!-- Diese Seite tut so, als wäre sie irgendeine fremde Webseite (z.B. deine
+       Bewerbungswebseite). Sie weiss nichts vom Agenten — ausser der EINEN Zeile
+       ganz unten. Genau so läuft es später auf der echten Seite. -->
+  <header>
+    <h1>Max Muster</h1>
+    <p class="klein">Bewerbung · Beispiel-Seite zum Testen des Agenten</p>
+  </header>
+
+  <section>
+    <h2>Über mich</h2>
+    <p>Das hier ist nur Beispielinhalt, damit man sieht, wie der Chat-Agent über
+    einer echten Seite schwebt. Schau unten rechts — dort erscheint das Icon.</p>
+  </section>
+
+  <section>
+    <h2>Erfahrung</h2>
+    <p>Klick auf das Icon unten rechts. Es öffnet sich der fertige Agent. Auf dieser
+    Seite gibt es bewusst KEIN Onboarding — das macht nur die Firma einmalig vorher.</p>
+  </section>
+
+  <!-- ▼▼▼ DAS ist die eine Zeile, die die Firma einbaut ▼▼▼ -->
+  <script src="/widget.js" data-firma="salbei"></script>
+  <!-- ▲▲▲ mehr braucht es nicht ▲▲▲ -->
+</body>
+</html>

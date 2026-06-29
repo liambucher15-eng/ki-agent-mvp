@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>
+  <style>
+    /* Standard-Farben — werden pro Firma aus den Daten überschrieben. */
+    :root { --farbe: #3f7d5a; --akzent: #a8d5b9; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column;
+           background: #fafaf9; color: #111827; }
+
+    /* --- Kopfzeile --- */
+    #kopf { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem;
+            background: var(--farbe); color: #fff; flex-shrink: 0; }
+    #kopf-avatar { width: 40px; height: 40px; flex-shrink: 0; }
+    #kopf-avatar svg, #kopf-avatar img { width: 100%; height: 100%; display: block; }
+    #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
+    #kopf-img { object-fit: contain; display: none; }
+    #kopf-text { flex: 1; min-width: 0; }
+    #kopf-name { font-weight: 600; font-size: 0.95rem; line-height: 1.2; }
+    #kopf-status { font-size: 0.72rem; opacity: 0.85; }
+    #schliessen { background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 1.4rem;
+                  line-height: 1; padding: 0.2rem 0.4rem; opacity: 0.85; }
+    #schliessen:hover { opacity: 1; }
+
+    /* Avatar-Zustände (vom Hauptchat übernommen) */
+    @keyframes atmen { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    .augen { transform-box: fill-box; transform-origin: center; animation: blinzeln 4s infinite; }
+    @keyframes blinzeln { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+    .wange { opacity: 0; transition: opacity 0.3s; }
+    .mund { transform-box: fill-box; transform-origin: center; }
+    #kopf-avatar.denken svg { animation: wackeln 1.2s ease-in-out infinite; }
+    @keyframes wackeln { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+    #kopf-avatar.denken .augen { animation: none; transform: translateY(-3px); }
+    #kopf-avatar.sprechen .mund { animation: reden 0.28s ease-in-out infinite; }
+    @keyframes reden { 0%,100% { transform: scaleY(0.5); } 50% { transform: scaleY(1.3); } }
+    #kopf-avatar.verlegen .wange { opacity: 0.75; }
+    #kopf-avatar.verlegen .augen { animation: none; transform: translateX(3px); }
+    #kopf-avatar.freuen svg { animation: huepf 0.6s ease; }
+    @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
+
+    /* --- Chatverlauf --- */
+    #chat { flex: 1; overflow-y: auto; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .msg { padding: 0.55rem 0.75rem; border-radius: 14px; max-width: 82%; white-space: pre-wrap;
+           font-size: 0.9rem; line-height: 1.4; }
+    .user { background: var(--farbe); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bot  { background: #fff; border: 1px solid #e5e7eb; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .meta { color: #9ca3af; font-style: italic; background: transparent; border: 0; }
+
+    /* "tippt…" Punkte */
+    .tippt { display: inline-flex; gap: 3px; align-items: center; }
+    .tippt span { width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; animation: tip 1.2s infinite; }
+    .tippt span:nth-child(2) { animation-delay: 0.2s; }
+    .tippt span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes tip { 0%,60%,100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+    /* --- Eingabe --- */
+    #form { display: flex; gap: 0.5rem; padding: 0.7rem; background: #fff; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
+    #input { flex: 1; padding: 0.6rem 0.7rem; border: 1px solid #d1d5db; border-radius: 10px; font: inherit; }
+    #input:focus { outline: none; border-color: var(--farbe); }
+    #send { padding: 0 0.9rem; border: 0; border-radius: 10px; background: var(--farbe); color: #fff; cursor: pointer; }
+    #send:disabled { opacity: 0.5; cursor: default; }
+    .fuss { text-align: center; font-size: 0.65rem; color: #b0b0b0; padding: 0 0 0.5rem; background: #fff; }
+    .fuss a { color: inherit; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div id="kopf">
+    <div id="kopf-avatar">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse class="koerper" cx="60" cy="62" rx="44" ry="42" fill="var(--akzent)" />
+        <ellipse cx="60" cy="74" rx="26" ry="22" fill="#ffffff" opacity="0.35" />
+        <circle class="wange" cx="38" cy="66" r="7" fill="#ff8a8a" />
+        <circle class="wange" cx="82" cy="66" r="7" fill="#ff8a8a" />
+        <g class="augen" fill="#1b2a22">
+          <circle cx="47" cy="55" r="6" /><circle cx="73" cy="55" r="6" />
+          <circle cx="49" cy="53" r="2" fill="#fff" /><circle cx="75" cy="53" r="2" fill="#fff" />
+        </g>
+        <ellipse class="mund" cx="60" cy="73" rx="9" ry="5" fill="#1b2a22" />
+      </svg>
+      <img id="kopf-img" alt="Charakter" />
+    </div>
+    <div id="kopf-text">
+      <div id="kopf-name">Assistent</div>
+      <div id="kopf-status">online</div>
+    </div>
+    <button id="schliessen" aria-label="Schliessen" title="Schliessen">×</button>
+  </div>
+
+  <div id="chat"></div>
+
+  <form id="form">
+    <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
+    <button id="send" type="submit" aria-label="Senden">→</button>
+  </form>
+  <div class="fuss">mit KI-Agent</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="lib/supabase-config.js"></script>
+  <script src="lib/auth.js"></script>
+  <script src="lib/store.js"></script>
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const avatar = document.getElementById("kopf-avatar");
+    const avatarImg = document.getElementById("kopf-img");
+    const kopfName = document.getElementById("kopf-name");
+
+    const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
+    const messages = [];
+    let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
+    let firmaConfig = null;  // Firmen-Daten aus der DB -> an den Chat mitsenden
+
+    // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---
+    document.getElementById("schliessen").addEventListener("click", () => {
+      parent.postMessage({ type: "ki-agent-schliessen" }, "*");
+    });
+
+    // --- Charakter-Steuerung (Bild wenn vorhanden, sonst Platzhalter-SVG) ---
+    let revertTimer;
+    function setCharakter(zustand, dauer) {
+      clearTimeout(revertTimer);
+      const svgKlasse = zustand === "idle" ? "" : zustand;
+      const bildKey = zustand === "idle" ? "idle" : zustand;
+      if (bilder && (bilder[bildKey] || bilder.idle)) {
+        avatarImg.src = bilder[bildKey] || bilder.idle;
+        avatarImg.style.display = "block";
+        avatar.querySelector("svg").style.display = "none";
+      } else {
+        avatar.className = svgKlasse;
+      }
+      if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
+    }
+
+    function addBubble(text, who) {
+      const div = document.createElement("div");
+      div.className = "msg " + who;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+    function addTipptAnzeige() {
+      const div = document.createElement("div");
+      div.className = "msg bot meta";
+      div.innerHTML = '<span class="tippt"><span></span><span></span><span></span></span>';
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
+    }
+
+    function setFarben(c) {
+      if (c.farbe) document.documentElement.style.setProperty("--farbe", c.farbe);
+      if (c.akzent) document.documentElement.style.setProperty("--akzent", c.akzent);
+      if (c.bilder) bilder = c.bilder;
+    }
+
+    // Firma laden: erst aus der DB (öffentlich lesbar -> funktioniert für alle Besucher),
+    // sonst Seed-Firma vom Backend (salbei/nordlicht).
+    async function start() {
+      const eintrag = window.Store ? await Store.ladeFirma(FIRMA_ID) : null;
+      if (eintrag) {
+        firmaConfig = eintrag;
+        setFarben(eintrag.charakter || {});
+        kopfName.textContent = (eintrag.persona && eintrag.persona.name) || eintrag.name || "Assistent";
+      } else {
+        try {
+          const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
+          if (res.ok) {
+            const f = await res.json();
+            setFarben(f.charakter || {});
+            if (f.persona) kopfName.textContent = f.persona;
+            else if (f.name) kopfName.textContent = f.name;
+          }
+        } catch (e) { /* Aussehen ist nicht kritisch */ }
+      }
+      setCharakter("freuen", 700);
+      addBubble("Hallo! 👋 Wie kann ich dir helfen?", "bot");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      addBubble(text, "user");
+      messages.push({ role: "user", content: text });
+      input.value = "";
+      send.disabled = true;
+      setCharakter("denken");
+      const typing = addTipptAnzeige();
+      try {
+        const res = await fetch("/.netlify/functions/chat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages, firmaId: FIRMA_ID, firmaConfig }),
+        });
+        const data = await res.json();
+        typing.remove();
+        if (!res.ok) {
+          addBubble("Entschuldige, da ging etwas schief. Versuch es bitte nochmal.", "bot meta");
+          setCharakter("verlegen", 2500);
+        } else {
+          addBubble(data.reply, "bot");
+          messages.push({ role: "assistant", content: data.reply });
+          const weissNicht = /wei(ss|ß).{0,6}nicht|leider|nicht sicher|kann ich (dir )?nicht/i.test(data.reply);
+          setCharakter(weissNicht ? "verlegen" : "sprechen", 3000);
+        }
+      } catch (err) {
+        typing.remove();
+        addBubble("Verbindungsfehler. Bist du online?", "bot meta");
+        setCharakter("verlegen", 2500);
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+
+    start();
+  </script>
+</body>
+</html>

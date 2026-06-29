@@ -134,8 +134,9 @@
     <p class="klein">Diese eine Zeile kommt in die Webseite deiner Firma:</p>
     <pre id="embed-code"></pre>
     <button id="copy" class="sek">Code kopieren</button>
-    <p class="hinweis">Das funktioniert, sobald der Agent online gestellt ist (Deploy) und das
-    Einbett-Script <code>widget.js</code> gebaut ist — beides ein separater Schritt.</p>
+    <p class="hinweis">Diese Zeile vor dem schliessenden <code>&lt;/body&gt;</code> der eigenen Webseite
+    einfügen — fertig. Unten rechts erscheint dann ein Icon; ein Klick öffnet den Agenten.
+    Live geht es, sobald der Agent online gestellt ist (Deploy).</p>
     <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b4">Weiter</button></div>
   </section>
 
@@ -335,7 +336,10 @@
 
     // --- Schritt 3 -> 4: Einbett-Code ---
     document.getElementById("b3").addEventListener("click", () => {
-      const code = '<script src="https://DEINE-DOMAIN/widget.js" data-firma="' + entwurf.id + '"><\/script>';
+      // location.origin = die Domain, auf der dieser Agent läuft. Lokal zeigt das
+      // http://localhost:8888, nach dem Deploy die echte Netlify-Domain.
+      const farbe = (entwurf.charakter && entwurf.charakter.farbe) || "#3f7d5a";
+      const code = '<script src="' + location.origin + '/widget.js" data-firma="' + entwurf.id + '" data-farbe="' + farbe + '"><\/script>';
       document.getElementById("embed-code").textContent = code;
       gehe(4);
     });
