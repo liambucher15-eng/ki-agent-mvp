@@ -98,6 +98,7 @@
   </form>
   <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="charakter.html">Eigenen Charakter erstellen →</a></p>
 
+  <script src="lib/store.js"></script>
   <script>
     const chat = document.getElementById("chat");
     const form = document.getElementById("form");
@@ -116,6 +117,9 @@
     // Generierte Charakter-Bilder pro Zustand (Phase 1). null = noch keine -> SVG-Fallback.
     // Erwartet später z.B. { idle: "<url>", denken: "<url>", sprechen: "<url>", verlegen: "<url>" }
     let bilder = null;
+
+    // Gesetzt, wenn diese Firma ein Onboarding-Entwurf ist -> wird an den Chat mitgesendet.
+    let firmaConfig = null;
 
     // --- Charakter-Steuerung ---
     // Setzt den Zustand der Figur. Nutzt das generierte Bild, wenn vorhanden,
@@ -150,25 +154,37 @@
       return div;
     }
 
-    // Beim Laden: Charakter-Aussehen der Firma holen + proaktiv begrüssen.
+    // Beim Laden: Firma bestimmen (Onboarding-Entwurf hat Vorrang), Aussehen setzen, begrüssen.
     async function start() {
-      try {
-        const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
-        if (res.ok) {
-          const f = await res.json();
-          const c = f.charakter || {};
-          if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
-          if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
-          if (c.bilder) bilder = c.bilder;       // Phase 1: generierte Bilder übernehmen, falls vorhanden
-          if (f.persona) avatarName.textContent = f.persona;
-        }
-      } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
+      const entwurf = window.Store ? Store.ladeFirma(FIRMA_ID) : null;
 
-      // Vom Charakter-Ersteller gespeicherte Bilder (localStorage) haben Vorrang.
-      try {
-        const gespeichert = localStorage.getItem("charakter:" + FIRMA_ID);
-        if (gespeichert) bilder = JSON.parse(gespeichert);
-      } catch (e) {}
+      if (entwurf) {
+        // Onboarding-Entwurf (im Browser gespeichert): komplette Config an den Chat mitsenden.
+        firmaConfig = entwurf;
+        const c = entwurf.charakter || {};
+        if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
+        if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
+        if (c.bilder) bilder = c.bilder;
+        avatarName.textContent = (entwurf.persona && entwurf.persona.name) || entwurf.name || "";
+      } else {
+        // Seed-Firma vom Backend (salbei/nordlicht).
+        try {
+          const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
+          if (res.ok) {
+            const f = await res.json();
+            const c = f.charakter || {};
+            if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
+            if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
+            if (c.bilder) bilder = c.bilder;
+            if (f.persona) avatarName.textContent = f.persona;
+          }
+        } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
+        // Override durch den eigenständigen Charakter-Ersteller (nur Seed-Firmen).
+        try {
+          const gespeichert = localStorage.getItem("charakter:" + FIRMA_ID);
+          if (gespeichert) bilder = JSON.parse(gespeichert);
+        } catch (e) {}
+      }
 
       const link = document.getElementById("erstellen-link");
       if (link) link.href = "charakter.html?firma=" + encodeURIComponent(FIRMA_ID);
@@ -194,7 +210,7 @@
         const res = await fetch("/.netlify/functions/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages, firmaId: FIRMA_ID }),
+          body: JSON.stringify({ messages, firmaId: FIRMA_ID, firmaConfig }),
         });
         const data = await res.json();
         typing.remove();

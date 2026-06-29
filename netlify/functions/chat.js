@@ -22,20 +22,27 @@ exports.handler = async (event) => {
     return json(500, { error: "ANTHROPIC_API_KEY fehlt — Umgebungsvariable setzen (.env)" });
   }
 
-  let messages, firmaId;
+  let messages, firmaId, firmaConfig;
   try {
-    ({ messages, firmaId } = JSON.parse(event.body || "{}"));
+    ({ messages, firmaId, firmaConfig } = JSON.parse(event.body || "{}"));
   } catch {
     return json(400, { error: "Ungültiges JSON" });
   }
 
-  // Welche Firma? -> passende Daten laden (data/<firmaId>.json über die Registry).
-  if (!firmaId) {
-    return json(400, { error: "firmaId fehlt" });
-  }
-  const firma = ladeFirma(firmaId);
+  // Welche Firma?
+  // a) firmaConfig = ein Entwurf direkt vom Browser (Onboarding/Vorschau).
+  //    HINWEIS: nur Prototyp — in Produktion baut der Server den Prompt aus der
+  //    Datenbank der angemeldeten Firma, nicht aus Client-Daten.
+  // b) sonst firmaId -> data/<firmaId>.json über die Registry (Seed-Firmen).
+  let firma = firmaConfig || null;
   if (!firma) {
-    return json(404, { error: `Unbekannte Firma: ${firmaId}` });
+    if (!firmaId) {
+      return json(400, { error: "firmaId oder firmaConfig fehlt" });
+    }
+    firma = ladeFirma(firmaId);
+    if (!firma) {
+      return json(404, { error: `Unbekannte Firma: ${firmaId}` });
+    }
   }
 
   if (!Array.isArray(messages) || messages.length === 0) {

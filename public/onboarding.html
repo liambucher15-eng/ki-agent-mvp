@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent einrichten</title>
+  <style>
+    :root { --farbe: #2D5694; }
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.1rem; margin-top: 0; }
+    .schritte { display: flex; gap: 0.4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .schritte span { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: #eee; color: #888; }
+    .schritte span.aktiv { background: var(--farbe); color: #fff; }
+    .karte { border: 1px solid #ddd; border-radius: 10px; padding: 1.25rem; }
+    label { display: block; font-weight: 600; margin: 0.7rem 0 0.25rem; }
+    input[type=text], input[type=email], textarea, select {
+      width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px; font: inherit; box-sizing: border-box;
+    }
+    .reihe { display: flex; gap: 0.5rem; }
+    .reihe input { flex: 1; }
+    .modus { display: flex; gap: 1.5rem; margin: 0.25rem 0; }
+    .modus label { font-weight: normal; display: inline; }
+    button { padding: 0.6rem 1.1rem; border: 0; border-radius: 8px; background: var(--farbe); color: #fff; cursor: pointer; font: inherit; }
+    button.sek { background: #eee; color: #222; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .navi { margin-top: 1.25rem; display: flex; justify-content: space-between; }
+    .versteckt { display: none; }
+    #vorschau-bilder { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
+    #vorschau-bilder figure { margin: 0; text-align: center; }
+    #vorschau-bilder img { width: 100%; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+    #vorschau-bilder figcaption { font-size: 0.72rem; color: #777; }
+    .faq-zeile { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .faq-zeile input { flex: 1; }
+    .hinweis { background: #fff7e6; border: 1px solid #ffe0a3; border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.85rem; }
+    code, pre { background: #f4f4f4; border-radius: 6px; }
+    pre { padding: 0.8rem; overflow-x: auto; }
+    iframe { width: 100%; height: 520px; border: 1px solid #ddd; border-radius: 10px; }
+    a { color: var(--farbe); }
+    .klein { color: #777; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1>Agent einrichten</h1>
+  <div class="schritte">
+    <span data-dot="0">1 Anmelden</span>
+    <span data-dot="1">2 Infos</span>
+    <span data-dot="2">3 Charakter</span>
+    <span data-dot="3">4 Vorschau</span>
+    <span data-dot="4">5 Einbetten</span>
+    <span data-dot="5">6 Fertig</span>
+  </div>
+
+  <!-- Schritt 0: Anmelden -->
+  <section class="karte step" data-step="0">
+    <h2>Willkommen 👋</h2>
+    <p class="klein">Melde dich an, um den Agenten für deine Firma einzurichten.</p>
+    <label for="email">Deine E-Mail</label>
+    <input type="email" id="email" placeholder="name@firma.ch" />
+    <p class="hinweis">Du bekommst einen Login-Link per E-Mail (Magic-Link). Solange Supabase
+    noch nicht eingerichtet ist, geht es ohne E-Mail direkt weiter (Simulation).</p>
+    <p id="mail-info" class="hinweis versteckt"></p>
+    <div class="navi"><span></span><button id="b0">Weiter</button></div>
+  </section>
+
+  <!-- Schritt 1: Firmen-Infos -->
+  <section class="karte step versteckt" data-step="1">
+    <h2>Infos über deine Firma</h2>
+    <p class="klein">Daraus lernt der Agent, was er beantworten darf. Er erfindet nichts dazu.</p>
+    <label for="name">Firmenname *</label>
+    <input type="text" id="name" placeholder="z.B. Restaurant Salbei" />
+    <label for="branche">Was bietet ihr an? (kurz)</label>
+    <input type="text" id="branche" placeholder="z.B. saisonales Bistro, regionale Küche" />
+    <label for="ton">Ton des Agenten</label>
+    <select id="ton">
+      <option value="warm, herzlich, freundlich">warm & herzlich</option>
+      <option value="klar, kompetent, sachlich">professionell & sachlich</option>
+      <option value="locker, verspielt, jugendlich">locker & verspielt</option>
+    </select>
+    <label for="agentname">Name des Agenten (optional)</label>
+    <input type="text" id="agentname" placeholder="z.B. Salbei-Concierge" />
+    <label for="oeffnung">Öffnungszeiten</label>
+    <input type="text" id="oeffnung" placeholder="z.B. Di–Sa 11:30–14:00 und 18:00–23:00" />
+    <label for="adresse">Adresse</label>
+    <input type="text" id="adresse" placeholder="z.B. Musterstrasse 1, 3011 Bern" />
+    <label for="kontakt">Kontakt (Telefon / E-Mail)</label>
+    <input type="text" id="kontakt" placeholder="z.B. 031 123 45 67" />
+
+    <label>Häufige Fragen (FAQ)</label>
+    <div id="faq-liste"></div>
+    <button type="button" class="sek" id="faq-add">+ Frage hinzufügen</button>
+
+    <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b1">Weiter</button></div>
+  </section>
+
+  <!-- Schritt 2: Charakter -->
+  <section class="karte step versteckt" data-step="2">
+    <h2>Charakter erstellen</h2>
+    <p class="hinweis">Die Bilder sind aktuell <strong>Platzhalter</strong>. Die echte KI-Generierung
+    wird später angeschlossen — die Bedienung bleibt gleich.</p>
+    <label for="farbe">Markenfarbe</label>
+    <input type="color" id="farbe" value="#3f7d5a" style="width:60px; height:38px; padding:2px;" />
+    <div class="modus">
+      <label><input type="radio" name="cmodus" value="text" checked /> Text-Beschreibung</label>
+      <label><input type="radio" name="cmodus" value="upload" /> Bild hochladen</label>
+    </div>
+    <div id="cfeld-text">
+      <textarea id="cbeschreibung" rows="2" placeholder="z.B. ein freundliches Salbei-Blatt mit Kochmütze, rund, verspielt"></textarea>
+    </div>
+    <div id="cfeld-upload" class="versteckt">
+      <input type="file" id="cdatei" accept="image/*" />
+    </div>
+    <p style="margin-top:0.6rem;">
+      <button id="cgen">Charakter generieren</button>
+      <span id="cstatus" class="klein" style="margin-left:0.5rem;"></span>
+    </p>
+    <div id="vorschau-bilder"></div>
+    <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b2">Weiter</button></div>
+  </section>
+
+  <!-- Schritt 3: Vorschau -->
+  <section class="karte step versteckt" data-step="3">
+    <h2>Vorschau — sprich mit deinem Agenten</h2>
+    <p class="klein">Stell ihm eine Frage zu deiner Firma. Er antwortet nur aus deinen Infos.</p>
+    <iframe id="vorschau-frame" title="Vorschau"></iframe>
+    <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b3">Weiter</button></div>
+  </section>
+
+  <!-- Schritt 4: Einbetten -->
+  <section class="karte step versteckt" data-step="4">
+    <h2>Auf deine Webseite einbetten</h2>
+    <p class="klein">Diese eine Zeile kommt in die Webseite deiner Firma:</p>
+    <pre id="embed-code"></pre>
+    <button id="copy" class="sek">Code kopieren</button>
+    <p class="hinweis">Das funktioniert, sobald der Agent online gestellt ist (Deploy) und das
+    Einbett-Script <code>widget.js</code> gebaut ist — beides ein separater Schritt.</p>
+    <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b4">Weiter</button></div>
+  </section>
+
+  <!-- Schritt 5: Fertig -->
+  <section class="karte step versteckt" data-step="5">
+    <h2>Fertig! 🎉</h2>
+    <p>Dein Agent <strong id="fertig-name"></strong> ist eingerichtet.</p>
+    <p>
+      <a id="fertig-chat" href="#">→ Agent im Chat öffnen</a><br />
+      <a href="onboarding.html">+ Weiteren Agenten einrichten</a>
+    </p>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="lib/supabase-config.js"></script>
+  <script src="lib/auth.js"></script>
+  <script src="lib/store.js"></script>
+  <script>
+    // Der Entwurf, der über die Schritte hinweg gefüllt wird.
+    const entwurf = { id: null, email: null, name: "", branche: "", persona: {}, fakten: {}, faq: [], charakter: { farbe: "#3f7d5a", akzent: "#a8d5b9", bilder: null } };
+
+    const stepsEls = document.querySelectorAll(".step");
+    const dots = document.querySelectorAll(".schritte span");
+    function zeigeSchritt(n) {
+      stepsEls.forEach((s) => s.classList.toggle("versteckt", Number(s.dataset.step) !== n));
+      dots.forEach((d) => d.classList.toggle("aktiv", Number(d.dataset.dot) === n));
+      window.scrollTo(0, 0);
+    }
+    document.querySelectorAll("[data-zurueck]").forEach((b) =>
+      b.addEventListener("click", () => zeigeSchritt(aktuell - 1))
+    );
+    let aktuell = 0;
+    function gehe(n) { aktuell = n; zeigeSchritt(n); }
+
+    // Vorhandene E-Mail vorbefüllen
+    if (Store.aktuellerNutzer()) document.getElementById("email").value = Store.aktuellerNutzer();
+
+    // --- Schritt 0: Anmelden (echtes Magic-Link, sonst Simulation) ---
+    const mailInfo = document.getElementById("mail-info");
+    document.getElementById("b0").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email || !email.includes("@")) { alert("Bitte eine gültige E-Mail eingeben."); return; }
+
+      if (Auth.konfiguriert) {
+        const btn = document.getElementById("b0");
+        btn.disabled = true;
+        try {
+          // Link führt genau auf diese Seite zurück (ohne Hash/Query).
+          const redirectTo = location.href.split("#")[0].split("?")[0];
+          const { error } = await Auth.sendMagicLink(email, redirectTo);
+          if (error) { alert("Fehler: " + error.message); btn.disabled = false; return; }
+          mailInfo.textContent = "✓ Login-Link an " + email + " geschickt. Öffne die E-Mail und klick den Link — du landest dann hier zurück.";
+          mailInfo.classList.remove("versteckt");
+        } catch (e) {
+          alert("Fehler: " + e.message); btn.disabled = false;
+        }
+      } else {
+        // Supabase noch nicht konfiguriert -> Simulation wie bisher.
+        Store.setNutzer(email);
+        entwurf.email = email;
+        gehe(1);
+      }
+    });
+
+    // Beim Laden: über den Magic-Link zurückgekommen oder schon eingeloggt? -> weiter zu Schritt 1.
+    (async () => {
+      if (Auth.konfiguriert) {
+        const u = await Auth.nutzer();
+        if (u && u.email) {
+          entwurf.email = u.email;
+          Store.setNutzer(u.email);
+          const feld = document.getElementById("email");
+          if (feld) feld.value = u.email;
+          gehe(1);
+        }
+      }
+    })();
+
+    // --- Schritt 1: FAQ-Zeilen ---
+    const faqListe = document.getElementById("faq-liste");
+    function faqZeile(frage = "", antwort = "") {
+      const div = document.createElement("div");
+      div.className = "faq-zeile";
+      div.innerHTML =
+        '<input type="text" class="faq-frage" placeholder="Frage">' +
+        '<input type="text" class="faq-antwort" placeholder="Antwort">' +
+        '<button type="button" class="sek faq-weg">×</button>';
+      div.querySelector(".faq-frage").value = frage;
+      div.querySelector(".faq-antwort").value = antwort;
+      div.querySelector(".faq-weg").addEventListener("click", () => div.remove());
+      faqListe.appendChild(div);
+    }
+    faqZeile(); // eine leere Zeile zum Start
+    document.getElementById("faq-add").addEventListener("click", () => faqZeile());
+
+    // --- Schritt 1: Weiter (Infos sammeln) ---
+    document.getElementById("b1").addEventListener("click", () => {
+      const name = document.getElementById("name").value.trim();
+      if (!name) { alert("Bitte einen Firmennamen eingeben."); return; }
+      entwurf.name = name;
+      entwurf.branche = document.getElementById("branche").value.trim();
+      const ton = document.getElementById("ton").value;
+      const agentname = document.getElementById("agentname").value.trim();
+
+      entwurf.persona = {
+        name: agentname || (name + "-Assistent"),
+        rolle: "der Assistent von " + name,
+        ton: ton,
+        sprache: "Deutsch",
+      };
+
+      const fakten = {};
+      if (entwurf.branche) fakten["Angebot"] = entwurf.branche;
+      const oeffnung = document.getElementById("oeffnung").value.trim();
+      const adresse = document.getElementById("adresse").value.trim();
+      const kontakt = document.getElementById("kontakt").value.trim();
+      if (oeffnung) fakten["Öffnungszeiten"] = oeffnung;
+      if (adresse) fakten["Adresse"] = adresse;
+      if (kontakt) fakten["Kontakt"] = kontakt;
+      entwurf.fakten = fakten;
+
+      const faq = [];
+      faqListe.querySelectorAll(".faq-zeile").forEach((z) => {
+        const f = z.querySelector(".faq-frage").value.trim();
+        const a = z.querySelector(".faq-antwort").value.trim();
+        if (f && a) faq.push({ frage: f, antwort: a });
+      });
+      entwurf.faq = faq;
+
+      if (!entwurf.id) entwurf.id = Store.macheId(name);
+      gehe(2);
+    });
+
+    // --- Schritt 2: Charakter ---
+    document.querySelectorAll('input[name=cmodus]').forEach((r) =>
+      r.addEventListener("change", () => {
+        const m = document.querySelector('input[name=cmodus]:checked').value;
+        document.getElementById("cfeld-text").classList.toggle("versteckt", m !== "text");
+        document.getElementById("cfeld-upload").classList.toggle("versteckt", m !== "upload");
+      })
+    );
+    let cUpload = null;
+    document.getElementById("cdatei").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) { cUpload = null; return; }
+      const reader = new FileReader();
+      reader.onload = () => { cUpload = reader.result; };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("cgen").addEventListener("click", async () => {
+      const modus = document.querySelector('input[name=cmodus]:checked').value;
+      const beschreibung = document.getElementById("cbeschreibung").value.trim();
+      const farbe = document.getElementById("farbe").value;
+      if (modus === "text" && !beschreibung) { alert("Bitte eine Beschreibung eingeben."); return; }
+      if (modus === "upload" && !cUpload) { alert("Bitte ein Bild hochladen."); return; }
+
+      const status = document.getElementById("cstatus");
+      const btn = document.getElementById("cgen");
+      btn.disabled = true; status.textContent = "generiert…";
+      try {
+        const res = await fetch("/.netlify/functions/charakter-generieren", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ modus, beschreibung, bild: cUpload, farbe }),
+        });
+        const data = await res.json();
+        if (!res.ok) { status.textContent = "Fehler: " + (data.error || res.status); return; }
+
+        entwurf.charakter.farbe = farbe;
+        entwurf.charakter.bilder = data.bilder;
+        const box = document.getElementById("vorschau-bilder");
+        box.innerHTML = "";
+        ["idle", "denken", "sprechen", "verlegen"].forEach((z) => {
+          const fig = document.createElement("figure");
+          const img = document.createElement("img"); img.src = data.bilder[z]; img.alt = z;
+          const cap = document.createElement("figcaption"); cap.textContent = z;
+          fig.appendChild(img); fig.appendChild(cap); box.appendChild(fig);
+        });
+        status.textContent = data.stub ? "(Platzhalter)" : "";
+      } catch (err) {
+        status.textContent = "Verbindungsfehler: " + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("b2").addEventListener("click", () => {
+      // Charakter ist optional — ohne Bilder zeigt der Chat die Platzhalter-Figur.
+      gehe(3);
+      // Entwurf speichern, DANN Vorschau laden (das iframe liest ihn aus dem Speicher).
+      Store.saveFirma(entwurf);
+      document.getElementById("vorschau-frame").src = "index.html?firma=" + encodeURIComponent(entwurf.id);
+    });
+
+    // --- Schritt 3 -> 4: Einbett-Code ---
+    document.getElementById("b3").addEventListener("click", () => {
+      const code = '<script src="https://DEINE-DOMAIN/widget.js" data-firma="' + entwurf.id + '"><\/script>';
+      document.getElementById("embed-code").textContent = code;
+      gehe(4);
+    });
+    document.getElementById("copy").addEventListener("click", () => {
+      navigator.clipboard.writeText(document.getElementById("embed-code").textContent);
+      document.getElementById("copy").textContent = "Kopiert ✓";
+    });
+
+    // --- Schritt 4 -> 5: Fertig ---
+    document.getElementById("b4").addEventListener("click", () => {
+      document.getElementById("fertig-name").textContent = entwurf.persona.name || entwurf.name;
+      document.getElementById("fertig-chat").href = "index.html?firma=" + encodeURIComponent(entwurf.id);
+      gehe(5);
+    });
+
+    zeigeSchritt(0);
+  </script>
+</body>
+</html>

@@ -62,13 +62,20 @@ exports.handler = async (event) => {
   } catch {
     return json(400, { error: "Ungültiges JSON" });
   }
-  const { firmaId, modus, beschreibung, bild } = body;
+  const { firmaId, modus, beschreibung, bild, farbe: farbeIn, akzent: akzentIn } = body;
 
-  const firma = ladeFirma(firmaId);
-  if (!firma) return json(404, { error: `Unbekannte Firma: ${firmaId}` });
-
-  const farbe = firma.charakter && firma.charakter.farbe;
-  const akzent = firma.charakter && firma.charakter.akzent;
+  // Farben direkt nehmen (Onboarding/Entwurf) ODER aus einer bekannten Firma holen (Seed).
+  let farbe = farbeIn;
+  let akzent = akzentIn;
+  if ((!farbe || !akzent) && firmaId) {
+    const firma = ladeFirma(firmaId);
+    if (firma && firma.charakter) {
+      farbe = farbe || firma.charakter.farbe;
+      akzent = akzent || firma.charakter.akzent;
+    }
+  }
+  farbe = farbe || "#3f7d5a";
+  akzent = akzent || "#a8d5b9";
 
   // Prompts schon jetzt bauen — die echte Bild-API nutzt sie später unverändert.
   const { stil, prompts } = baueCharakterPrompt({ beschreibung, farbe });
