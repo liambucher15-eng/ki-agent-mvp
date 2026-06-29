@@ -317,12 +317,20 @@
       }
     });
 
-    document.getElementById("b2").addEventListener("click", () => {
+    document.getElementById("b2").addEventListener("click", async () => {
       // Charakter ist optional — ohne Bilder zeigt der Chat die Platzhalter-Figur.
-      gehe(3);
-      // Entwurf speichern, DANN Vorschau laden (das iframe liest ihn aus dem Speicher).
-      Store.saveFirma(entwurf);
-      document.getElementById("vorschau-frame").src = "index.html?firma=" + encodeURIComponent(entwurf.id);
+      const btn = document.getElementById("b2");
+      btn.disabled = true;
+      try {
+        // Erst speichern (DB oder lokal), DANN Vorschau laden (das iframe liest die Firma).
+        await Store.saveFirma(entwurf);
+        gehe(3);
+        document.getElementById("vorschau-frame").src = "index.html?firma=" + encodeURIComponent(entwurf.id);
+      } catch (e) {
+        alert("Konnte nicht speichern: " + e.message);
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     // --- Schritt 3 -> 4: Einbett-Code ---
