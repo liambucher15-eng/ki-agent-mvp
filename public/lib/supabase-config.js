@@ -4,5 +4,5 @@
 //
 // Solange "DEIN-PROJEKT" drinsteht, läuft das Onboarding im Simulations-Modus
 // (kein echtes Login). Sobald du echte Werte einträgst, wird das Login echt.
-window.SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";
-window.SUPABASE_ANON_KEY = "DEIN-ANON-PUBLIC-KEY";
+window.SUPABASE_URL = "https://naxicmzlnkbikvitkxgj.supabase.co";
+window.SUPABASE_ANON_KEY = "sb_publishable_DtYkVNJPcvVizrL8aU7PWA_C9GoDB45";

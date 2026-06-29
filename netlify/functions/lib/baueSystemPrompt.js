@@ -21,13 +21,13 @@ Ton: ${p.ton}. Sprich ${p.sprache || "Deutsch"}, warm und knapp.
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den FAKTEN und FAQ unten.
+- ANTWORTE nur aus den Informationen unten.
 
-WICHTIG: Erfinde nichts. Wenn etwas nicht in den Fakten steht, sag ehrlich,
+WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
 dass du es nicht weisst, und biete an, das Team zu fragen.
 
-FAKTEN über ${firma.name}:
-${faktenListe}${faqListe ? `\n\nHÄUFIGE FRAGEN:\n${faqListe}` : ""}`;
+INFORMATIONEN über ${firma.name}:
+${faktenListe || "(keine Stichpunkte)"}${firma.wissen ? `\n\nWEITERE INFOS:\n${firma.wissen}` : ""}${faqListe ? `\n\nHÄUFIGE FRAGEN:\n${faqListe}` : ""}`;
 }
 
 module.exports = { baueSystemPrompt };

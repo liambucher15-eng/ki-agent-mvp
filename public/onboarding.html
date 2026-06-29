@@ -86,9 +86,11 @@
     <label for="kontakt">Kontakt (Telefon / E-Mail)</label>
     <input type="text" id="kontakt" placeholder="z.B. 031 123 45 67" />
 
-    <label>Häufige Fragen (FAQ)</label>
-    <div id="faq-liste"></div>
-    <button type="button" class="sek" id="faq-add">+ Frage hinzufügen</button>
+    <label for="wissen">Was soll der Agent über deine Firma wissen?</label>
+    <textarea id="wissen" rows="6" placeholder="Schreib frei, was wichtig ist: Angebot, Besonderheiten, häufige Kundenfragen samt Antworten, Abläufe ..."></textarea>
+    <label for="dateien">Oder Infos aus Dateien laden (.txt, .md)</label>
+    <input type="file" id="dateien" accept=".txt,.md,.markdown,text/plain,text/markdown" multiple />
+    <p id="datei-info" class="klein"></p>
 
     <div class="navi"><button class="sek" data-zurueck>Zurück</button><button id="b1">Weiter</button></div>
   </section>
@@ -153,7 +155,7 @@
   <script src="lib/store.js"></script>
   <script>
     // Der Entwurf, der über die Schritte hinweg gefüllt wird.
-    const entwurf = { id: null, email: null, name: "", branche: "", persona: {}, fakten: {}, faq: [], charakter: { farbe: "#3f7d5a", akzent: "#a8d5b9", bilder: null } };
+    const entwurf = { id: null, email: null, name: "", branche: "", persona: {}, fakten: {}, wissen: "", charakter: { farbe: "#3f7d5a", akzent: "#a8d5b9", bilder: null } };
 
     const stepsEls = document.querySelectorAll(".step");
     const dots = document.querySelectorAll(".schritte span");
@@ -212,22 +214,22 @@
       }
     })();
 
-    // --- Schritt 1: FAQ-Zeilen ---
-    const faqListe = document.getElementById("faq-liste");
-    function faqZeile(frage = "", antwort = "") {
-      const div = document.createElement("div");
-      div.className = "faq-zeile";
-      div.innerHTML =
-        '<input type="text" class="faq-frage" placeholder="Frage">' +
-        '<input type="text" class="faq-antwort" placeholder="Antwort">' +
-        '<button type="button" class="sek faq-weg">×</button>';
-      div.querySelector(".faq-frage").value = frage;
-      div.querySelector(".faq-antwort").value = antwort;
-      div.querySelector(".faq-weg").addEventListener("click", () => div.remove());
-      faqListe.appendChild(div);
-    }
-    faqZeile(); // eine leere Zeile zum Start
-    document.getElementById("faq-add").addEventListener("click", () => faqZeile());
+    // --- Schritt 1: Dateien (Text) einlesen und ans Wissen-Feld anhängen ---
+    document.getElementById("dateien").addEventListener("change", async (e) => {
+      const files = [...e.target.files];
+      const info = document.getElementById("datei-info");
+      const wissenFeld = document.getElementById("wissen");
+      for (const file of files) {
+        try {
+          const text = await file.text();
+          wissenFeld.value += (wissenFeld.value ? "\n\n" : "") + "--- aus " + file.name + " ---\n" + text.trim();
+          info.textContent = "✓ " + file.name + " hinzugefügt";
+        } catch (err) {
+          info.textContent = "Konnte " + file.name + " nicht lesen (nur Text/Markdown).";
+        }
+      }
+      e.target.value = "";
+    });
 
     // --- Schritt 1: Weiter (Infos sammeln) ---
     document.getElementById("b1").addEventListener("click", () => {
@@ -255,13 +257,7 @@
       if (kontakt) fakten["Kontakt"] = kontakt;
       entwurf.fakten = fakten;
 
-      const faq = [];
-      faqListe.querySelectorAll(".faq-zeile").forEach((z) => {
-        const f = z.querySelector(".faq-frage").value.trim();
-        const a = z.querySelector(".faq-antwort").value.trim();
-        if (f && a) faq.push({ frage: f, antwort: a });
-      });
-      entwurf.faq = faq;
+      entwurf.wissen = document.getElementById("wissen").value.trim();
 
       if (!entwurf.id) entwurf.id = Store.macheId(name);
       gehe(2);
