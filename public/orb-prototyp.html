@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orb-Prototyp · KI-Agent</title>
+  <style>
+    :root {
+      --indigo: #6366F1;
+      --indigo-tief: #4F46E5;
+      --violett: #8B5CF6;
+      --orange: #F97316;
+      --coral: #FB7185;
+      --bg: #FAFAF9;
+      --text: #111827;
+      --grau: #6B7280;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2rem; transition: background 0.5s ease; overflow: hidden;
+    }
+    body.dark { --bg: #07080f; --text: #f3f4f6; --grau: #9ca3af; }
+
+    h1 { font-size: 1rem; font-weight: 600; color: var(--grau); margin: 0; letter-spacing: 0.02em; }
+
+    .stage { position: relative; width: 340px; height: 340px;
+             display: flex; align-items: center; justify-content: center; }
+
+    /* leichter Feld-Blur (deutlich schwächer als vorher) lässt Basis + Blobs
+       sauber verschmelzen, ohne alles zu verwaschen. */
+    .orb-field { position: relative; width: 190px; height: 190px;
+                 filter: blur(3px); will-change: transform; }
+
+    /* DEFINIERTE Basis-Kugel — wie im Original: warmer heller Bereich oben,
+       nach außen orange -> coral -> Indigo, weicher Rand (läuft transparent aus). */
+    .orb-base {
+      position: absolute; top: 50%; left: 50%; width: 158px; height: 158px;
+      margin: -79px 0 0 -79px; border-radius: 50%;
+      background: radial-gradient(circle at 47% 36%,
+        #FFEFD6 0%, #FDBA74 20%, var(--orange) 40%, var(--coral) 60%,
+        rgba(139,92,246,0.85) 84%, rgba(99,102,241,0) 100%);
+      filter: blur(4px); will-change: transform;
+    }
+
+    /* Blobs nur noch als subtiles, lebendiges Schimmern ÜBER der Basis. */
+    .blob {
+      position: absolute; top: 50%; left: 50%; width: 120px; height: 120px;
+      margin: -60px 0 0 -60px; border-radius: 50%;
+      filter: blur(13px); will-change: transform; opacity: 0.5;
+      mix-blend-mode: soft-light;
+    }
+    body.dark .blob { mix-blend-mode: screen; opacity: 0.7; }
+    .b1 { background: radial-gradient(circle, var(--coral) 0%, rgba(251,113,133,0) 64%); }
+    .b2 { background: radial-gradient(circle, var(--orange) 0%, rgba(249,115,22,0) 64%); }
+    .b3 { background: radial-gradient(circle, var(--indigo) 0%, rgba(99,102,241,0) 64%); }
+    .b4 { background: radial-gradient(circle, var(--violett) 0%, rgba(139,92,246,0) 64%); }
+  </style>
+</head>
+<body>
+  <button class="dark-toggle" id="darkToggle"
+          style="position:fixed;top:1rem;right:1rem;font:inherit;font-size:0.8rem;padding:0.4rem 0.8rem;border-radius:999px;border:1px solid rgba(0,0,0,0.1);background:#fff;cursor:pointer;">🌙 Dunkel</button>
+  <h1>KI-Agent · Orb-Prototyp</h1>
+
+  <div class="stage">
+    <div class="orb-field" id="field">
+      <div class="orb-base" id="base"></div>
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="blob b4"></div>
+    </div>
+  </div>
+
+  <div class="zustand-label" id="label" style="font-size:0.8rem;color:var(--grau);min-height:1.2em;">Zustand: idle</div>
+  <div class="controls" style="display:flex;gap:0.6rem;flex-wrap:wrap;justify-content:center;">
+    <button data-zustand="idle" class="aktiv">Idle</button>
+    <button data-zustand="denken">Denken</button>
+    <button data-zustand="sprechen">Sprechen</button>
+  </div>
+
+  <style>
+    .controls button { font: inherit; font-size: 0.9rem; padding: 0.55rem 1.1rem; border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.1); background: #fff; color: var(--text); cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.2s ease; }
+    body.dark .controls button { background: #141a2e; border-color: rgba(255,255,255,0.12); color: #f3f4f6; }
+    .controls button:hover { transform: translateY(-1px); }
+    .controls button.aktiv { background: var(--indigo-tief); color: #fff; border-color: transparent;
+      box-shadow: 0 6px 18px rgba(79,70,229,0.4); }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script>
+    const rnd = gsap.utils.random;
+    const blobs = gsap.utils.toArray(".blob");
+    const field = "#field";
+    const base = "#base";
+
+    // organisches Driften der Schimmer-Blobs (kompakter Radius -> bleibt eine Kugel)
+    const driftTweens = [];
+    function macheDrift(el, radius, dur) {
+      const tl = gsap.timeline({ repeat: -1, yoyo: true });
+      for (let i = 0; i < 4; i++) {
+        tl.to(el, { x: rnd(-radius, radius), y: rnd(-radius, radius),
+          scale: rnd(0.85, 1.2), duration: rnd(dur * 0.7, dur * 1.3), ease: "sine.inOut" });
+      }
+      return tl;
+    }
+    blobs.forEach((el, i) => driftTweens.push(macheDrift(el, 18, 4 + i * 0.9)));
+
+    const rotation = gsap.to(field, { rotation: 360, duration: 30, ease: "none", repeat: -1 });
+    const breath = gsap.to(field, { scale: 1.06, duration: 3.4, ease: "sine.inOut", repeat: -1, yoyo: true });
+    let basePulse = gsap.to(base, { scale: 1.05, duration: 2.6, ease: "sine.inOut", repeat: -1, yoyo: true });
+
+    function setTempo(driftScale, rotScale) {
+      driftTweens.forEach((t) => gsap.to(t, { timeScale: driftScale, duration: 0.8, overwrite: true }));
+      gsap.to(rotation, { timeScale: rotScale, duration: 0.8, overwrite: true });
+    }
+
+    const zustaende = {
+      idle() {
+        setTempo(1, 1); breath.timeScale(1);
+        basePulse.kill();
+        basePulse = gsap.to(base, { scale: 1.05, duration: 2.6, ease: "sine.inOut", repeat: -1, yoyo: true });
+      },
+      denken() {
+        setTempo(3.2, 2.4); breath.timeScale(2.6);
+        basePulse.kill();
+        basePulse = gsap.to(base, { scale: 1.04, duration: 0.6, ease: "sine.inOut", repeat: -1, yoyo: true });
+      },
+      sprechen() {
+        setTempo(2.0, 1.4); breath.timeScale(1.4);
+        basePulse.kill();
+        const tl = gsap.timeline({ repeat: -1 });
+        [1.10, 0.97, 1.07, 1.0, 1.12, 0.96, 1.05].forEach((s) =>
+          tl.to(base, { scale: s, duration: 0.12, ease: "power1.inOut" }));
+        basePulse = tl;
+      },
+    };
+
+    let aktuell = "idle";
+    function setZustand(name) {
+      aktuell = name; zustaende[name]();
+      document.getElementById("label").textContent = "Zustand: " + name;
+      document.querySelectorAll(".controls button").forEach((b) =>
+        b.classList.toggle("aktiv", b.dataset.zustand === name));
+    }
+    document.querySelectorAll(".controls button").forEach((b) =>
+      b.addEventListener("click", () => setZustand(b.dataset.zustand)));
+
+    const mm = gsap.matchMedia();
+    mm.add({ reduziert: "(prefers-reduced-motion: reduce)" }, (ctx) => {
+      if (ctx.conditions.reduziert) {
+        driftTweens.forEach((t) => t.pause()); rotation.pause(); breath.pause(); basePulse.pause();
+        gsap.to(base, { scale: 1.04, duration: 3, ease: "sine.inOut", repeat: -1, yoyo: true });
+      }
+    });
+
+    setZustand("idle");
+
+    document.getElementById("darkToggle").addEventListener("click", (e) => {
+      document.body.classList.toggle("dark");
+      e.target.textContent = document.body.classList.contains("dark") ? "☀️ Hell" : "🌙 Dunkel";
+    });
+  </script>
+</body>
+</html>

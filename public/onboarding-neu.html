@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent einrichten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --indigo: #4F46E5; --indigo-tief: #3730A3; --orange: #F97316; --coral: #FB7185;
+      --bg: #FAFAF9; --karte: #FFFFFF; --text: #111827; --grau: #6B7280; --grau-hell: #9CA3AF;
+      --border: #E5E7EB; --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--sans); color: var(--text);
+      background:
+        radial-gradient(1200px 500px at 85% -10%, rgba(79,70,229,0.10), transparent 60%),
+        radial-gradient(900px 500px at 0% 110%, rgba(249,115,22,0.10), transparent 55%), var(--bg);
+      min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1.25rem;
+    }
+    .wizard {
+      width: 100%; max-width: 460px; background: var(--karte); border: 1px solid var(--border);
+      border-radius: 24px; box-shadow: 0 24px 60px -20px rgba(17,24,39,0.18);
+      padding: 1.6rem 1.6rem 1.4rem; display: flex; flex-direction: column;
+      height: min(640px, calc(100dvh - 2.5rem)); position: relative; overflow: hidden;
+    }
+    @media (max-width: 520px) {
+      body { padding: 0; }
+      .wizard { max-width: 100%; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; }
+    }
+
+    /* Fortschritt: kleine Punkte, aktueller = länglicher Balken (Pill) */
+    .progress { display: flex; gap: 7px; margin-bottom: 1.4rem; justify-content: center; align-items: center; }
+    .progress .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--border);
+                     transition: width 0.4s cubic-bezier(0.4,0,0.2,1), background 0.3s ease; }
+    .progress .dot.done { background: var(--indigo); }
+    .progress .dot.aktiv { width: 26px; background: var(--indigo); }
+
+    /* Verlaufs-Visual oben */
+    .visual-wrap { display: flex; justify-content: center; margin: 0.4rem 0 1.4rem; }
+    .visual { position: relative; width: 96px; height: 96px; }
+    .visual .blob { position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; margin: -40px 0 0 -40px;
+                    border-radius: 50%; filter: blur(10px); opacity: 0.85; mix-blend-mode: multiply; will-change: transform; }
+    .visual .v1 { background: radial-gradient(circle, var(--coral) 0%, rgba(251,113,133,0) 65%); }
+    .visual .v2 { background: radial-gradient(circle, var(--orange) 0%, rgba(249,115,22,0) 65%); }
+    .visual .v3 { background: radial-gradient(circle, var(--indigo) 0%, rgba(79,70,229,0) 65%); }
+
+    .steps { position: relative; flex: 1; min-height: 0; }
+    .step { position: absolute; inset: 0; display: flex; flex-direction: column;
+            overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .step::-webkit-scrollbar { width: 6px; }
+    .step::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    .step[hidden] { display: none; }
+
+    .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+               color: var(--indigo); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--display); font-size: 1.6rem; font-weight: 700; line-height: 1.15;
+         letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .sub { color: var(--grau); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.3rem; }
+
+    label.feld { display: block; font-size: 0.82rem; font-weight: 600; margin: 0.9rem 0 0.35rem; }
+    input[type=text], input[type=email], input[type=url], textarea {
+      width: 100%; font: inherit; font-size: 0.95rem; padding: 0.8rem 0.9rem; border: 1.5px solid var(--border);
+      border-radius: 12px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
+    textarea { resize: vertical; min-height: 130px; }
+    .hint { font-size: 0.78rem; color: var(--grau-hell); margin-top: 0.4rem; }
+    .scan-notiz { display: flex; gap: 0.5rem; align-items: flex-start; background: rgba(79,70,229,0.06);
+                  border: 1px solid rgba(79,70,229,0.15); border-radius: 12px; padding: 0.7rem 0.85rem;
+                  font-size: 0.82rem; color: var(--indigo-tief); margin-bottom: 0.4rem; }
+
+    .nav { display: flex; align-items: center; gap: 0.8rem; margin-top: 1.3rem; padding-top: 1rem; }
+    .btn { font: inherit; font-weight: 600; font-size: 0.95rem; padding: 0.85rem 1.4rem; border-radius: 12px;
+           border: 0; cursor: pointer; transition: transform 0.12s, box-shadow 0.2s, background 0.2s; }
+    .btn-primar { background: var(--orange); color: #fff; flex: 1; box-shadow: 0 8px 20px -6px rgba(249,115,22,0.5); }
+    .btn-primar:hover { transform: translateY(-1px); box-shadow: 0 12px 24px -6px rgba(249,115,22,0.6); }
+    .btn-zurueck { background: transparent; color: var(--grau); padding: 0.85rem 0.6rem; }
+    .btn-zurueck:hover { color: var(--text); }
+    .btn-text { background: transparent; color: var(--indigo); font-weight: 600; font-size: 0.85rem; padding: 0.5rem; cursor: pointer; border: 0; }
+
+    .code-box { background: #0f1424; color: #e5e7eb; border-radius: 12px; padding: 0.9rem; font-size: 0.8rem;
+                font-family: "Geist Mono", "SF Mono", monospace; overflow-x: auto; line-height: 1.5; word-break: break-all; }
+    .erfolg-emoji { font-size: 3rem; text-align: center; margin-bottom: 0.5rem; }
+    .center { text-align: center; }
+    .grow { flex: 1; }
+
+    /* Scan-Animation */
+    .scan-visual { position: relative; width: 150px; height: 150px; margin: 0 auto 1.4rem; }
+    .scan-visual .blob { position: absolute; top: 50%; left: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px;
+                         border-radius: 50%; filter: blur(16px); opacity: 0.7; mix-blend-mode: multiply; }
+    .scan-visual .s1 { background: radial-gradient(circle, var(--coral), rgba(251,113,133,0) 65%); }
+    .scan-visual .s2 { background: radial-gradient(circle, var(--orange), rgba(249,115,22,0) 65%); }
+    .scan-visual .s3 { background: radial-gradient(circle, var(--indigo), rgba(79,70,229,0) 65%); }
+  </style>
+</head>
+<body>
+  <div class="wizard">
+    <div class="progress" id="progress"></div>
+
+    <div class="visual-wrap" id="visualWrap">
+      <div class="visual" id="visual">
+        <div class="blob v1"></div><div class="blob v2"></div><div class="blob v3"></div>
+      </div>
+    </div>
+
+    <div class="steps" id="steps">
+
+      <!-- 1 Willkommen -->
+      <section class="step" data-step="0">
+        <div class="grow"></div>
+        <div class="center">
+          <h1>Lass uns deinen<br>KI-Agenten bauen</h1>
+          <p class="sub">Gib uns deine Webseite — der Rest passiert fast von allein.</p>
+        </div>
+        <div class="grow"></div>
+        <div class="nav"><button class="btn btn-primar" data-next>Los geht's →</button></div>
+      </section>
+
+      <!-- 2 Anmelden -->
+      <section class="step" data-step="1" hidden>
+        <div class="eyebrow">Anmelden</div>
+        <h1>Wie erreichen wir dich?</h1>
+        <p class="sub">Wir schicken dir einen Login-Link per E-Mail — kein Passwort nötig.</p>
+        <label class="feld" for="email">E-Mail</label>
+        <input type="email" id="email" placeholder="name@firma.ch" />
+        <div class="grow"></div>
+        <div class="nav">
+          <button class="btn btn-zurueck" data-prev>←</button>
+          <button class="btn btn-primar" data-next>Weiter →</button>
+        </div>
+      </section>
+
+      <!-- 3 Webseite eingeben + Scan -->
+      <section class="step" data-step="2" hidden>
+        <!-- 3a Eingabe -->
+        <div id="web-eingabe" style="display:flex; flex-direction:column; flex:1;">
+          <div class="eyebrow">Deine Webseite</div>
+          <h1>Wo finden wir deine Firma?</h1>
+          <p class="sub">Gib deine Webseite ein — die KI liest sie und richtet deinen Agenten automatisch ein.</p>
+          <label class="feld" for="webseite">Adresse deiner Webseite</label>
+          <input type="url" id="webseite" placeholder="https://deine-firma.ch" />
+          <p class="hint">Wir lesen die wichtigsten Seiten (Start, Über uns, Angebot, Kontakt).</p>
+          <div class="grow"></div>
+          <div class="nav">
+            <button class="btn btn-zurueck" data-prev>←</button>
+            <button class="btn btn-primar" id="scanBtn">Webseite scannen ✨</button>
+          </div>
+        </div>
+        <!-- 3b Scan läuft -->
+        <div id="web-scan" hidden style="display:none; flex-direction:column; flex:1; justify-content:center; text-align:center;">
+          <div class="scan-visual" id="scanVisual">
+            <div class="blob s1"></div><div class="blob s2"></div><div class="blob s3"></div>
+          </div>
+          <h1>Wir lesen deine Webseite…</h1>
+          <p class="sub" id="scanStatus">Seiten werden geladen…</p>
+        </div>
+      </section>
+
+      <!-- 4 Überprüfen & Ergänzen -->
+      <section class="step" data-step="3" hidden>
+        <div class="eyebrow">Überprüfen</div>
+        <h1>Stimmt das so?</h1>
+        <div class="scan-notiz">✨ <span>Das hat die KI aus deiner Webseite gelesen. Bitte überprüfen und ergänzen — du kannst alles ändern.</span></div>
+        <label class="feld" for="name">Firmenname</label>
+        <input type="text" id="name" placeholder="z.B. Restaurant Salbei" />
+        <label class="feld" for="angebot">Was bietet ihr an?</label>
+        <input type="text" id="angebot" placeholder="z.B. saisonales Bistro, regionale Küche" />
+        <label class="feld" for="wissen">Was dein Agent wissen soll</label>
+        <textarea id="wissen" placeholder="Infos, die der Agent kennen soll …"></textarea>
+        <p class="hint">Der Agent antwortet nur aus diesen Infos — er erfindet nichts dazu.</p>
+        <div class="nav">
+          <button class="btn btn-zurueck" data-prev>←</button>
+          <button class="btn btn-primar" data-next>Weiter →</button>
+        </div>
+      </section>
+
+      <!-- 5 Anpassen -->
+      <section class="step" data-step="4" hidden>
+        <div class="eyebrow">Aussehen</div>
+        <h1>Pass ihn an deine Seite an</h1>
+        <div class="scan-notiz">🎨 <span>Diese Farben hat die KI von deiner Webseite übernommen — jederzeit änderbar.</span></div>
+        <label class="feld">Farben</label>
+        <div style="display:flex; gap:0.8rem;">
+          <label style="flex:1; font-size:0.8rem; color:var(--grau);">Primär<br><input type="color" id="farbe1" value="#4F46E5" style="width:100%; height:40px; padding:2px; border-radius:8px; border:1.5px solid var(--border);"></label>
+          <label style="flex:1; font-size:0.8rem; color:var(--grau);">Akzent<br><input type="color" id="farbe2" value="#F97316" style="width:100%; height:40px; padding:2px; border-radius:8px; border:1.5px solid var(--border);"></label>
+        </div>
+        <div class="grow"></div>
+        <div class="nav">
+          <button class="btn btn-zurueck" data-prev>←</button>
+          <button class="btn btn-primar" data-next>Weiter →</button>
+        </div>
+      </section>
+
+      <!-- 6 Fertig -->
+      <section class="step" data-step="5" hidden>
+        <div class="grow"></div>
+        <div class="center">
+          <div class="erfolg-emoji">🎉</div>
+          <h1>Dein Agent ist bereit!</h1>
+          <p class="sub">Füge diese eine Zeile in deine Webseite ein — fertig.</p>
+        </div>
+        <div class="code-box" id="embed">&lt;script src="…/widget.js" data-firma="…"&gt;&lt;/script&gt;</div>
+        <button class="btn-text" id="copy" style="margin-top:0.6rem; align-self:center;">Code kopieren</button>
+        <div class="grow"></div>
+        <div class="nav"><button class="btn btn-primar" id="testen">Agent testen →</button></div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script>
+    const daten = { email:"", webseite:"", name:"", angebot:"", wissen:"", farbe1:"#4F46E5", farbe2:"#F97316" };
+    const STEPS = document.querySelectorAll(".step");
+    const ANZAHL = STEPS.length;
+    let aktuell = 0;
+
+    // Fortschritts-Dots
+    const progress = document.getElementById("progress");
+    for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
+    const dots = progress.querySelectorAll(".dot");
+    function updateProgress() {
+      dots.forEach((d, i) => { d.classList.toggle("done", i < aktuell); d.classList.toggle("aktiv", i === aktuell); });
+    }
+
+    // Verlaufs-Visual (oben) lebt
+    gsap.utils.toArray("#visual .blob").forEach((el, i) => {
+      gsap.to(el, { x: "random(-14,14)", y: "random(-14,14)", scale: "random(0.8,1.2)",
+        duration: 3 + i, ease: "sine.inOut", repeat: -1, yoyo: true, repeatRefresh: true });
+    });
+    gsap.to("#visual", { rotation: 360, duration: 40, ease: "none", repeat: -1 });
+
+    // Schritt-Wechsel (mit Lock)
+    let istUebergang = false;
+    function zeige(n, richtung = 1) {
+      if (n < 0 || n >= ANZAHL || n === aktuell || istUebergang) return;
+      istUebergang = true;
+      const alt = STEPS[aktuell], neu = STEPS[n];
+      gsap.to(alt, { autoAlpha: 0, x: -30 * richtung, duration: 0.25, ease: "power2.in",
+        onComplete: () => {
+          alt.hidden = true; gsap.set(alt, { x: 0 });
+          neu.hidden = false; neu.scrollTop = 0;
+          gsap.fromTo(neu, { autoAlpha: 0, x: 30 * richtung }, { autoAlpha: 1, x: 0, duration: 0.35, ease: "power2.out",
+            onComplete: () => { istUebergang = false; } });
+        }});
+      aktuell = n; updateProgress();
+    }
+
+    document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { sammle(); zeige(aktuell + 1, 1); }));
+    document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell - 1, -1)));
+
+    // === Webseite scannen (echter Aufruf der Backend-Funktion scan.js) ===
+    document.getElementById("scanBtn").addEventListener("click", async () => {
+      const url = document.getElementById("webseite").value.trim();
+      if (!url) { alert("Bitte gib deine Webseite ein."); return; }
+      daten.webseite = url;
+
+      // Eingabe ausblenden, Scan-Animation zeigen
+      const eingabe = document.getElementById("web-eingabe");
+      const scan = document.getElementById("web-scan");
+      eingabe.style.display = "none";
+      scan.hidden = false; scan.style.display = "flex";
+
+      gsap.utils.toArray("#scanVisual .blob").forEach((el, i) => {
+        gsap.to(el, { x: "random(-20,20)", y: "random(-20,20)", scale: "random(0.7,1.3)",
+          duration: 1.2 + i * 0.4, ease: "sine.inOut", repeat: -1, yoyo: true, repeatRefresh: true });
+      });
+
+      // Status-Texte laufen, während der echte Scan im Hintergrund arbeitet
+      const status = document.getElementById("scanStatus");
+      const schritte = ["Seiten werden geladen…", "Texte werden gelesen…", "Infos werden zusammengefasst…", "Farben werden erkannt…"];
+      let i = 0; status.textContent = schritte[0];
+      const iv = setInterval(() => { if (i < schritte.length - 1) status.textContent = schritte[++i]; }, 1400);
+
+      const zurueckZurEingabe = () => { eingabe.style.display = "flex"; scan.hidden = true; scan.style.display = "none"; };
+
+      try {
+        const res = await fetch("/.netlify/functions/scan", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        clearInterval(iv);
+        if (!res.ok) throw new Error(data.error || "Scan fehlgeschlagen");
+
+        // echte Ergebnisse in die Überprüfen-Felder
+        document.getElementById("name").value = data.name || "";
+        document.getElementById("angebot").value = data.angebot || "";
+        document.getElementById("wissen").value = data.wissen || "";
+        if (data.farbe1) document.getElementById("farbe1").value = data.farbe1;
+        if (data.farbe2) document.getElementById("farbe2").value = data.farbe2;
+
+        zurueckZurEingabe();
+        zeige(3, 1);
+      } catch (e) {
+        clearInterval(iv);
+        // Fehler: Felder leeren, Hinweis in Schritt 4 auf „manuell" umstellen, trotzdem weiter
+        const notiz = document.querySelector('.step[data-step="3"] .scan-notiz');
+        if (notiz) { notiz.innerHTML = '⚠️ <span>Wir konnten die Webseite nicht automatisch lesen (' + (e.message || "Fehler") + '). Bitte trag die Infos selbst ein.</span>';
+          notiz.style.background = "rgba(249,115,22,0.08)"; notiz.style.borderColor = "rgba(249,115,22,0.25)"; notiz.style.color = "#9a3412"; }
+        ["name","angebot","wissen"].forEach(id => document.getElementById(id).value = "");
+        zurueckZurEingabe();
+        zeige(3, 1);
+      }
+    });
+
+    function sammle() {
+      daten.email = (document.getElementById("email")||{}).value || daten.email;
+      daten.name = (document.getElementById("name")||{}).value || daten.name;
+      daten.angebot = (document.getElementById("angebot")||{}).value || daten.angebot;
+      daten.wissen = (document.getElementById("wissen")||{}).value || daten.wissen;
+      daten.farbe1 = (document.getElementById("farbe1")||{}).value || daten.farbe1;
+      daten.farbe2 = (document.getElementById("farbe2")||{}).value || daten.farbe2;
+      const id = (daten.name || "firma").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") || "firma";
+      document.getElementById("embed").textContent =
+        '<script src="' + location.origin + '/widget.js" data-firma="' + id + '" data-farbe="' + daten.farbe1 + '"><\/script>';
+    }
+
+    document.getElementById("copy").addEventListener("click", (e) => {
+      navigator.clipboard.writeText(document.getElementById("embed").textContent); e.target.textContent = "Kopiert ✓";
+    });
+    document.getElementById("testen").addEventListener("click", () => alert("Prototyp — hier würde der Test-Chat öffnen."));
+
+    gsap.set(STEPS[0], { autoAlpha: 1, x: 0 });
+    updateProgress();
+  </script>
+</body>
+</html>
