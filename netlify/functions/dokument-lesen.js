@@ -1,0 +1,65 @@
+// Liest ein hochgeladenes Dokument (Bild oder PDF) mit Claude aus.
+// Beispiel: ein Foto/PDF einer Menükarte -> strukturierter Text (Gerichte + Preise),
+// der ins Wissen des Agenten übernommen wird.
+// Text-Dateien (.txt/.md) werden NICHT hier verarbeitet — die liest das Frontend direkt.
+// Der API-Schlüssel bleibt hier auf dem Server.
+
+const json = (statusCode, obj) => ({
+  statusCode,
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify(obj),
+});
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
+  if (!process.env.ANTHROPIC_API_KEY) return json(500, { error: "ANTHROPIC_API_KEY fehlt (.env)" });
+
+  let dateiname, mediaType, daten;
+  try { ({ dateiname, mediaType, daten } = JSON.parse(event.body || "{}")); }
+  catch { return json(400, { error: "Ungültiges JSON" }); }
+  if (!mediaType || !daten) return json(400, { error: "mediaType oder daten fehlt" });
+
+  // Content-Block je nach Dateityp bauen
+  let block;
+  if (mediaType.startsWith("image/")) {
+    block = { type: "image", source: { type: "base64", media_type: mediaType, data: daten } };
+  } else if (mediaType === "application/pdf") {
+    block = { type: "document", source: { type: "base64", media_type: "application/pdf", data: daten } };
+  } else {
+    return json(415, { error: "Nur Bilder oder PDF werden hier verarbeitet." });
+  }
+
+  const anweisung =
+    `Das ist ein Dokument der Firma (z.B. Menükarte, Preisliste, Broschüre) — Dateiname: ${dateiname || "unbekannt"}. ` +
+    `Lies den GESAMTEN Inhalt vollständig aus und gib ihn als klar strukturierten, gut lesbaren Text zurück ` +
+    `(z.B. alle Gerichte/Produkte mit Preisen, nach Kategorien geordnet). ` +
+    `Gib NUR den Inhalt aus — keine Einleitung, kein Kommentar. Schreibe auf Deutsch.`;
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 22000);
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001", // kann Bilder UND PDF lesen
+        max_tokens: 2500,
+        temperature: 0.1,
+        messages: [{ role: "user", content: [block, { type: "text", text: anweisung }] }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) return json(502, { error: data.error?.message || "API-Fehler" });
+    const text = data.content?.[0]?.text?.trim() || "";
+    return json(200, { text });
+  } catch (e) {
+    return json(502, { error: e.name === "AbortError" ? "Zeitüberschreitung beim Lesen" : e.message });
+  } finally {
+    clearTimeout(t);
+  }
+};

@@ -129,6 +129,16 @@ als wäre er **ein nativer Teil genau dieser Webseite** — nicht „reingeklats
 - Technischer Bezug: speist die Style-Felder der Firma; heute gibt es nur einen einfachen
   Farb-Picker (onboarding.html Schritt 2) — das hier ist der **Ausbau** dazu.
 
+## O7 — Dokumente hochladen (Menükarte, Preisliste …)
+**Idee:** Zusätzlich zum Webseiten-Scan kann der Kunde **wichtige Dateien hochladen**
+(z.B. Menükarte, Preisliste, Broschüre) — gerade Infos, die nicht (gut) auf der Webseite stehen.
+
+- **Technik:** Claude liest **Bilder (Foto/PNG/JPG) und PDFs direkt** (Vision/Document) →
+  extrahiert den Inhalt (z.B. alle Gerichte mit Preisen) → kommt ins `wissen` des Agenten.
+- **Platzierung:** im „Überprüfen & Ergänzen"-Schritt (ergänzt die gescannten Infos).
+- **Formate:** .txt/.md (im Browser ausgelesen), PDF + Bilder (Backend `dokument-lesen.js` via Claude).
+- **Grenze:** Dateigröße ~4,5 MB (Function-Body-Limit); Bilder ggf. vorher verkleinern.
+
 ## O6 — „Scan-First"-Onboarding (Webseite lesen statt tippen) ⭐ KERN-FLOW
 **Idee:** Nach der E-Mail gibt der Kunde **nur seine Webseite-URL** ein. Die KI **scannt
 die Webseite**, extrahiert automatisch alle Infos (Firmenname, Angebot, wichtige Inhalte)
@@ -145,6 +155,25 @@ die Webseite**, extrahiert automatisch alle Infos (Firmenname, Angebot, wichtige
   holen, Text extrahieren, an Claude geben („extrahiere Name, Angebot, Infos, FAQ"),
   Farben aus dem HTML/CSS lesen → strukturiert in der Firma speichern.
   Realistisch: Startseite + wichtige Unterseiten (Über uns, Kontakt), nicht die ganze Seite komplett.
+
+---
+
+# ⚙️ AGENT-VERHALTEN / FUNKTIONEN
+
+## F1 — Live-Nachschlagen auf der eigenen Webseite (bei Wissenslücke)
+**Idee:** Wenn der Agent eine Frage NICHT aus den Onboarding-Infos beantworten kann,
+darf er **live auf die Firmen-Webseite zugreifen** und dort nachsehen — aber
+**AUSSCHLIESSLICH auf die eigene Webseite**, keine andere Quelle.
+
+- **Technik:** Claude **Tool-Use**. Werkzeug `webseite_nachschlagen(thema)` im `chat.js`.
+  System-Prompt: „Wenn du es nicht weisst, nutze das Werkzeug — nutze NUR diese Quelle."
+- **Sperre „nur eigene Webseite":** Domain-Whitelist — das Werkzeug darf nur die beim
+  Onboarding gespeicherte Firmen-Domain abrufen, jede andere URL wird hart abgelehnt.
+- **Verhältnis zum Onboarding-Scan ([O6](#o6--scan-first-onboarding-webseite-lesen-statt-tippen--kern-flow)):**
+  Scan = einmalige schnelle Basis; Live-Nachschlagen = Fallback für Lücken + hält den
+  Agenten aktuell (geänderte Preise/Angebote) ohne erneutes Onboarding.
+- **Trade-offs:** langsamer + teurer bei solchen Antworten (nur wenn nachgeschlagen wird);
+  mit Cache abmildern. Passt zur „erfinde nichts"-Regel: lieber kurz nachsehen als raten.
 
 ---
 

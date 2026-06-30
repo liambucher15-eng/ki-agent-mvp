@@ -74,6 +74,14 @@
                   border: 1px solid rgba(79,70,229,0.15); border-radius: 12px; padding: 0.7rem 0.85rem;
                   font-size: 0.82rem; color: var(--indigo-tief); margin-bottom: 0.4rem; }
 
+    /* Dokument-Upload */
+    .upload-zone { display: block; text-align: center; padding: 0.9rem; border: 1.5px dashed var(--border);
+                   border-radius: 12px; color: var(--indigo); font-weight: 600; font-size: 0.88rem; cursor: pointer;
+                   transition: border-color 0.15s, background 0.15s; }
+    .upload-zone:hover { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
+    .doc-eintrag { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; padding: 0.4rem 0.1rem; color: var(--grau); }
+    .doc-eintrag .stat { margin-left: auto; font-weight: 600; }
+
     .nav { display: flex; align-items: center; gap: 0.8rem; margin-top: 1.3rem; padding-top: 1rem; }
     .btn { font: inherit; font-weight: 600; font-size: 0.95rem; padding: 0.85rem 1.4rem; border-radius: 12px;
            border: 0; cursor: pointer; transition: transform 0.12s, box-shadow 0.2s, background 0.2s; }
@@ -179,8 +187,23 @@
         </div>
       </section>
 
-      <!-- 5 Anpassen -->
+      <!-- 5 Dokumente hochladen -->
       <section class="step" data-step="4" hidden>
+        <div class="eyebrow">Dokumente</div>
+        <h1>Hast du wichtige Dateien?</h1>
+        <p class="sub">Menükarte, Preisliste, Broschüre … Die KI liest sie aus, damit dein Agent den Inhalt kennt. <span style="color:var(--grau-hell);">(Optional)</span></p>
+        <label class="upload-zone" for="docs">📎 PDF, Bild oder Text hochladen</label>
+        <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
+        <div id="doc-liste"></div>
+        <div class="grow"></div>
+        <div class="nav">
+          <button class="btn btn-zurueck" data-prev>←</button>
+          <button class="btn btn-primar" data-next>Weiter →</button>
+        </div>
+      </section>
+
+      <!-- 6 Anpassen -->
+      <section class="step" data-step="5" hidden>
         <div class="eyebrow">Aussehen</div>
         <h1>Pass ihn an deine Seite an</h1>
         <div class="scan-notiz">🎨 <span>Diese Farben hat die KI von deiner Webseite übernommen — jederzeit änderbar.</span></div>
@@ -196,8 +219,8 @@
         </div>
       </section>
 
-      <!-- 6 Fertig -->
-      <section class="step" data-step="5" hidden>
+      <!-- 7 Fertig -->
+      <section class="step" data-step="6" hidden>
         <div class="grow"></div>
         <div class="center">
           <div class="erfolg-emoji">🎉</div>
@@ -307,6 +330,47 @@
         zurueckZurEingabe();
         zeige(3, 1);
       }
+    });
+
+    // === Dokumente hochladen (Menükarte, Preisliste …) ===
+    const MAX_DATEI = 4.5 * 1024 * 1024; // ~4,5 MB (Function-Body-Limit)
+    document.getElementById("docs").addEventListener("change", async (e) => {
+      const liste = document.getElementById("doc-liste");
+      const wissen = document.getElementById("wissen");
+      for (const f of e.target.files) {
+        const eintrag = document.createElement("div");
+        eintrag.className = "doc-eintrag";
+        eintrag.innerHTML = "📄 <span>" + f.name + "</span><span class='stat'>…</span>";
+        liste.appendChild(eintrag);
+        const stat = eintrag.querySelector(".stat");
+        try {
+          if (f.size > MAX_DATEI) throw new Error("zu gross (max 4,5 MB)");
+          const istText = /\.(txt|md|markdown)$/i.test(f.name) || (f.type || "").startsWith("text/");
+          if (istText) {
+            const t = await f.text();
+            wissen.value += (wissen.value ? "\n\n" : "") + "--- " + f.name + " ---\n" + t.trim();
+            stat.textContent = "✓";
+          } else {
+            // Bild/PDF -> Backend (Claude liest den Inhalt)
+            stat.textContent = "liest…";
+            const dataUrl = await new Promise((res, rej) => {
+              const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f);
+            });
+            const base64 = String(dataUrl).split(",")[1];
+            const resp = await fetch("/.netlify/functions/dokument-lesen", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ dateiname: f.name, mediaType: f.type, daten: base64 }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || "Fehler");
+            wissen.value += (wissen.value ? "\n\n" : "") + "--- " + f.name + " (gelesen) ---\n" + (data.text || "");
+            stat.textContent = "✓ gelesen";
+          }
+        } catch (err) {
+          stat.textContent = "✕ " + err.message; stat.style.color = "#dc2626";
+        }
+      }
+      e.target.value = "";
     });
 
     function sammle() {
