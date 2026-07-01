@@ -142,14 +142,16 @@ async function claudeExtrakt(url, text) {
     "Erfinde nichts — nutze nur Infos aus dem Text. Schreibe auf Deutsch.";
   const prompt =
     `Webseite: ${url}\n\n` +
-    `Lies den gesamten Text und extrahiere SO VIELE INFOS WIE MÖGLICH über die Firma. ` +
-    `Sei gründlich und vollständig — der Agent soll später fast jede Kundenfrage beantworten können.\n\n` +
+    `Lies den gesamten Text und extrahiere die Infos über die Firma, GEGLIEDERT nach Kategorien. ` +
+    `Sei gründlich. Wenn eine Kategorie nicht vorkommt, gib einen leeren String "" zurück.\n\n` +
     `Gib genau dieses JSON zurück:\n` +
-    `{"name":"Firmenname","angebot":"1-2 Sätze: was die Firma macht/anbietet",` +
-    `"wissen":"SEHR AUSFÜHRLICH und strukturiert (nutze Absätze/Aufzählungen): Angebot & Leistungen im Detail, ` +
-    `Produkte, Preise, Öffnungszeiten, Adresse(n), Kontakt (Telefon/E-Mail), Team, Geschichte/Über uns, ` +
-    `Besonderheiten/Stärken, Abläufe/Prozesse, häufige Fragen samt Antworten, und alles weitere Wissenswerte. ` +
-    `Lieber zu viel als zu wenig."}\n\n` +
+    `{"name":"Firmenname",` +
+    `"angebot":"1-2 Sätze, was die Firma anbietet",` +
+    `"oeffnungszeiten":"Öffnungszeiten, falls vorhanden",` +
+    `"adresse":"Adresse oder Standort, falls vorhanden",` +
+    `"kontakt":"Telefon und/oder E-Mail, falls vorhanden",` +
+    `"faq":"die wichtigsten Fragen und Antworten als lesbarer Text (Frage und Antwort je Zeile), falls erkennbar",` +
+    `"weiteres":"alle weiteren wichtigen Infos ausführlich: Angebote und Leistungen im Detail, Produkte, Preise, Team, Geschichte, Besonderheiten"}\n\n` +
     `WEBSEITEN-TEXT:\n${text}`;
 
   const ctrl = new AbortController();
@@ -219,10 +221,25 @@ exports.handler = async (event) => {
   try { extrakt = await claudeExtrakt(url, gesamtText); }
   catch (e) { return json(502, { error: "Konnte Infos nicht auswerten: " + e.message }); }
 
+  // Zusammengesetztes Wissen (für den Agenten / baueSystemPrompt) aus den Kategorien
+  const wissen = [
+    extrakt.angebot && ("Angebot: " + extrakt.angebot),
+    extrakt.oeffnungszeiten && ("Öffnungszeiten: " + extrakt.oeffnungszeiten),
+    extrakt.adresse && ("Adresse: " + extrakt.adresse),
+    extrakt.kontakt && ("Kontakt: " + extrakt.kontakt),
+    extrakt.faq && ("Häufige Fragen:\n" + extrakt.faq),
+    extrakt.weiteres && ("Weiteres:\n" + extrakt.weiteres),
+  ].filter(Boolean).join("\n\n");
+
   return json(200, {
     name: extrakt.name || "",
     angebot: extrakt.angebot || "",
-    wissen: extrakt.wissen || "",
+    oeffnungszeiten: extrakt.oeffnungszeiten || "",
+    adresse: extrakt.adresse || "",
+    kontakt: extrakt.kontakt || "",
+    faq: extrakt.faq || "",
+    weiteres: extrakt.weiteres || "",
+    wissen,
     farbe1: farben.farbe1,
     farbe2: farben.farbe2,
     gescannt: [url, ...unterseiten],
