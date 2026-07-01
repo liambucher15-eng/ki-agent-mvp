@@ -31,8 +31,11 @@ kein kaltes Tool). Die ganze Gestaltung löst genau diesen Spannungsbogen:
 ## 2. Die Farbe
 - **Indigo `#4F46E5`** (Vertrauen + KI) · **Orange `#F97316` / Coral `#FB923C`** (Wärme/Funke)
   · Neutral warm-weiss `#FAFAF9`, Text `#111827`.
-- **Der Indigo→Coral-Verlauf ist der rote Faden** — er taucht überall als dieselbe Geste auf:
-  als Hintergrund-Blob, als Onboarding-Seite, **als der Agent selbst (Orb)**.
+- **Der Verlauf (Indigo→Coral) ist der rote Faden** — als Hintergrund-Flächen, als
+  **Produkt-Highlight-Bilder** und als Akzente. Sparsam einsetzen, nicht jeder Screen braucht ihn.
+- ⚠️ **Die Orb ist NICHT die Onboarding-Deko.** Sie ist nur eine der zwei Agent-Darstellungen
+  (Modell B, §3). Im Onboarding arbeiten wir mit **Verlaufs-/Bildflächen + Produkt-Präsentation**,
+  nicht mit einer Kugel auf jedem Screen.
 
 ## 3. Der Agent: ZWEI Modelle zur Auswahl (Produkt-Feature)
 Die Firma wählt im Onboarding zwischen zwei Agent-Typen — **beide gleichwertig**:
@@ -50,8 +53,9 @@ Die Firma wählt im Onboarding zwischen zwei Agent-Typen — **beide gleichwerti
   Maskottchen erstellt.
 
 ## 4. Das Onboarding
-- **Split-Screen** (O1): links **Verlaufsfläche** mit Marke + Begrüssung (ggf. Text über
-  dem Verlauf, O3), rechts die **Fragen/Formular** auf hellem Grund.
+- **Split-Screen** (O1): eine Seite **Fragen/Formular**, die andere Seite eine grosse
+  **Verlaufs-/Bildfläche zur Produkt-Präsentation** — den freien Platz (v.a. Desktop) nutzen,
+  um das Produkt zu highlighten (Feature-Bild, Vorschau, kurze Vorteile), [O8](#o8--produkt-highlight-fläche-freien-platz-nutzen). **Keine Orb hier.**
 - Oben ein **Schritt-Pfad/Stepper** (O2) — fertig ✓ / aktiv / offen.
 - Light als Standard; **Dark-Variante** (O4, „Get Started"-Look) als Option im Hinterkopf.
 - **Eigener Schritt „Design-Anpassung"** ([O5](#o5--design-anpassung-an-die-kunden-webseite-kernzweck)): der Kunde stellt **die Farben + Schrift
@@ -68,9 +72,10 @@ Die Firma wählt im Onboarding zwischen zwei Agent-Typen — **beide gleichwerti
   oder eigenes Maskottchen wie Salbei via Higgsfield). Deine Marke bleibt dezent („mit KI-Agent").
 
 ## In einem Satz
-**Eine helle, ruhige, vertrauensvolle Oberfläche (Indigo + viel Weiss), in der ein warmer
-Indigo→Coral-Funke lebt — als Verlauf im Hintergrund und als leuchtende, reagierende
-Agent-Kugel — sparsam dosiert (60-30-10), damit der Funke immer etwas Besonderes bleibt.**
+**Eine helle, ruhige, vertrauensvolle Oberfläche (Indigo + viel Weiss), in der warme
+Indigo→Coral-Verläufe als wiederkehrende Geste leben — als Hintergrund-Flächen und als
+Produkt-Highlight-Bilder, sparsam dosiert (60-30-10). Die leuchtende Orb ist die Agent-Figur,
+nicht die Deko.**
 
 ---
 
@@ -155,6 +160,20 @@ die Webseite**, extrahiert automatisch alle Infos (Firmenname, Angebot, wichtige
   holen, Text extrahieren, an Claude geben („extrahiere Name, Angebot, Infos, FAQ"),
   Farben aus dem HTML/CSS lesen → strukturiert in der Firma speichern.
   Realistisch: Startseite + wichtige Unterseiten (Über uns, Kontakt), nicht die ganze Seite komplett.
+
+---
+
+## O8 — Produkt-Highlight-Fläche (freien Platz nutzen)
+**Referenz:** Revolut-artiges Sign-in (links Formular, rechts grosse Bild-/Verlaufsfläche)
++ „For desktop login forms you have ample space for product presentation."
+
+- **Statt überall eine Orb:** den freien Platz (besonders auf Desktop) nutzen, um **das Produkt
+  zu highlighten** — eine grosse **Verlaufs-/Bildfläche** neben dem Formular.
+- Inhalt dieser Fläche kann sein: ein schönes **abstraktes Verlaufsbild**, eine **Produkt-Vorschau**
+  (Mini-Chat/Agent in Aktion), **Feature-Stichpunkte**, ein **Testimonial** oder eine kurze Nutzen-Liste.
+- **Verläufe sind die Design-Sprache** hier (Indigo→Coral / Aurora), nicht die Kugel.
+- Mobile: Fläche schrumpft/entfällt, Formular zuerst. Desktop: Split ~ 50/50 oder 40/60.
+- Bezug: schärft [O1](#o1--split-screen-layout-basis-richtung)/[O3](#o3--verfeinerung-des-split-layouts-gefällt-sehr-gut) — die „andere Hälfte" ist **Produkt-Marketing**, kein Deko-Element.
 
 ---
 

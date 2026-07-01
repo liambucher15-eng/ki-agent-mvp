@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent einrichten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&family=DM+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Lora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --indigo: #4F46E5; --indigo-hell: #6366F1; --violett: #8B5CF6;
+      --coral: #FB7185; --orange: #F97316;
+      --text: #111827; --grau: #6B7280; --grau-hell: #9CA3AF; --border: #E5E7EB;
+      --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: var(--sans); color: var(--text); background: #fff;
+           display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 2rem; }
+
+    .stage { position: relative; width: 100%; max-width: 1060px; }
+
+    .glow { position: absolute; inset: -45px; border-radius: 48px; z-index: 0;
+      background: conic-gradient(from 120deg, var(--indigo-hell), var(--violett), var(--coral), var(--orange), var(--indigo-hell));
+      filter: blur(65px); opacity: 0.45; will-change: transform; }
+
+    .card { position: relative; z-index: 1; background: #fff; border-radius: 26px;
+      box-shadow: 0 30px 80px -30px rgba(17,24,39,0.25);
+      display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; height: min(580px, calc(100dvh - 4rem)); }
+
+    /* LINKE Spalte */
+    .card-links { display: flex; flex-direction: column; padding: 2rem 2.4rem 2.2rem; min-width: 0; }
+    .kopf { display: flex; align-items: center; margin-bottom: 1rem; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+    .logo .mark { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 0.85rem;
+      background: linear-gradient(135deg, var(--indigo), var(--coral) 60%, var(--orange)); }
+
+    /* Fortschritt: grösser, eigene zentrierte Zeile mit Luft */
+    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.2rem 0 1.7rem; }
+    .progress .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border);
+                     transition: width 0.45s cubic-bezier(0.4,0,0.2,1), background 0.35s; }
+    .progress .dot.done { background: var(--indigo); }
+    .progress .dot.aktiv { width: 38px; background: linear-gradient(90deg, var(--indigo), var(--indigo-hell)); }
+
+    .links-inhalt { position: relative; flex: 1; min-height: 0; }
+    .schritt-links { position: absolute; inset: 0; display: flex; flex-direction: column; overflow-y: auto;
+                     scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .schritt-links::-webkit-scrollbar { width: 5px; }
+    .schritt-links::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    .schritt-links[hidden] { display: none; }
+
+    h1 { font-family: var(--display); font-size: 2.1rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+    .sub { color: var(--grau); font-size: 0.96rem; line-height: 1.55; margin-top: 0.6rem; }
+    .grow { flex: 1; }
+
+    label.feld { display: block; font-size: 0.8rem; font-weight: 600; margin: 1rem 0 0.35rem; }
+    .input-wrap { position: relative; }
+    .input-wrap .icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); }
+    input[type=text], input[type=email], input[type=url], select.select {
+      width: 100%; font: inherit; font-size: 0.95rem; padding: 0.8rem 0.9rem 0.8rem 2.4rem; border: 1.5px solid var(--border);
+      border-radius: 12px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
+    select.select { padding-left: 0.9rem; cursor: pointer; }
+    input:focus, select:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
+
+    .btn { font: inherit; font-weight: 600; font-size: 0.96rem; border: 0; border-radius: 13px; cursor: pointer;
+           padding: 0.9rem 1.5rem; transition: transform 0.13s, box-shadow 0.2s, opacity 0.2s; }
+    .btn-primar { color: #fff; width: 100%; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
+                  box-shadow: 0 12px 24px -8px rgba(79,70,229,0.55); }
+    .btn-primar:hover { transform: translateY(-1px); box-shadow: 0 16px 30px -8px rgba(79,70,229,0.65); }
+    .nav { display: flex; align-items: center; gap: 0.7rem; margin-top: 1.2rem; }
+    .btn-zurueck { background: transparent; color: var(--grau); width: auto; padding: 0.9rem 0.5rem; box-shadow: none; flex-shrink: 0; }
+    .btn-zurueck:hover { color: var(--text); transform: none; }
+    .mini { font-size: 0.84rem; color: var(--grau); margin-top: 0.9rem; text-align: center; }
+    .mini a, .link { color: var(--indigo); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .hinweis-box { background: rgba(79,70,229,0.06); border: 1px solid rgba(79,70,229,0.15); border-radius: 12px;
+                   padding: 0.7rem 0.85rem; font-size: 0.85rem; color: var(--indigo); margin-top: 0.8rem; }
+
+    /* Scan-Loader */
+    .scan-loader { display: none; align-items: center; gap: 0.65rem; margin-top: 1rem; color: var(--grau); font-size: 0.9rem; }
+    .scan-loader.an { display: flex; }
+    .spinner { width: 20px; height: 20px; border: 2.5px solid rgba(79,70,229,0.2); border-top-color: var(--indigo);
+               border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .balken { height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 0.9rem; display: none; }
+    .balken.an { display: block; }
+    .balken span { display: block; height: 100%; width: 40%; border-radius: 999px;
+                   background: linear-gradient(90deg, var(--indigo), var(--coral)); animation: rutsch 1.1s ease-in-out infinite; }
+    @keyframes rutsch { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+
+    /* Drop-Zone */
+    .drop { display: block; text-align: center; padding: 1.6rem 1rem; border: 1.5px dashed var(--border); border-radius: 14px;
+            color: var(--grau); cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-top: 0.5rem; }
+    .drop:hover { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
+    .drop .gross { font-size: 1.5rem; }
+    #doc-liste { font-size: 0.8rem; color: var(--grau); margin-top: 0.5rem; }
+    .doc-eintrag { display: flex; gap: 0.4rem; padding: 0.2rem 0; }
+    .doc-eintrag .stat { margin-left: auto; font-weight: 600; }
+
+    /* Farben + Schrift */
+    .farben { display: flex; gap: 1.6rem; margin-top: 0.7rem; }
+    .farb-feld { text-align: center; font-size: 0.8rem; color: var(--grau); }
+    .farb-feld input { width: 60px; height: 60px; border: 3px solid #fff; border-radius: 50%; padding: 0; cursor: pointer;
+                       box-shadow: 0 0 0 1.5px var(--border); margin-bottom: 0.3rem; }
+    .font-vorschau { margin-top: 0.7rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 12px;
+                     font-size: 1.15rem; color: var(--text); }
+
+    /* Code-Box */
+    .code-box { background: #0f1424; color: #e5e7eb; border-radius: 12px; padding: 0.85rem 0.9rem; font-size: 0.78rem;
+                font-family: "Geist Mono","SF Mono",monospace; line-height: 1.5; word-break: break-all; position: relative; margin-top: 0.8rem; }
+    .code-box .copy { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.12); color: #fff;
+                      border: 0; border-radius: 7px; padding: 0.25rem 0.6rem; font-size: 0.72rem; cursor: pointer; }
+
+    /* RECHTE Spalte: Verlaufs-Panel + Bild-Platzhalter */
+    .card-rechts { position: relative; margin: 14px 14px 14px 0; border-radius: 18px; overflow: hidden; }
+    .schritt-rechts { position: absolute; inset: 0; }
+    .schritt-rechts[hidden] { display: none; }
+    .panel { position: absolute; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .panel .feld-bg { position: absolute; inset: 0;
+      background: linear-gradient(140deg, var(--indigo) 0%, var(--violett) 45%, var(--coral) 80%, var(--orange) 100%); }
+    .panel .welle { position: absolute; border-radius: 50%; filter: blur(38px); opacity: 0.55; will-change: transform; }
+    .panel .w1 { width: 300px; height: 300px; top: -50px; left: -40px; background: var(--indigo-hell); }
+    .panel .w2 { width: 280px; height: 280px; top: 35%; right: -50px; background: var(--coral); }
+    .panel .w3 { width: 260px; height: 260px; bottom: -50px; left: 30%; background: var(--orange); opacity: 0.5; }
+    .platzhalter { position: relative; z-index: 1; width: 78%; max-width: 320px; aspect-ratio: 4/3;
+      border: 2px dashed rgba(255,255,255,0.6); border-radius: 16px; background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; text-align: center; padding: 1rem; }
+    .platzhalter .ph-icon { font-size: 1.8rem; }
+    .platzhalter .ph-titel { color: #fff; font-weight: 700; font-size: 0.9rem; }
+    .platzhalter .ph-text { color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.35; }
+
+    @media (max-width: 860px) {
+      body { padding: 0; }
+      .stage { max-width: 100%; }
+      .glow { display: none; }
+      .card { grid-template-columns: 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
+      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 220px; max-height: 36vh; }
+      .card-links { padding: 1.6rem 1.4rem; }
+      h1 { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="glow" id="glow"></div>
+    <div class="card">
+
+      <!-- LINKS -->
+      <div class="card-links">
+        <div class="kopf"><div class="logo"><span class="mark">A</span><span>AuraChat</span></div></div>
+        <div class="progress" id="progress"></div>
+
+        <div class="links-inhalt" id="linksInhalt">
+
+          <!-- 1 Willkommen -->
+          <div class="schritt-links" data-step="0">
+            <div class="grow"></div>
+            <h1>Willkommen<br>bei AuraChat</h1>
+            <p class="sub">Erstelle in wenigen Minuten deinen eigenen KI-Agenten. Er lernt alles direkt von deiner Webseite.</p>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
+          </div>
+
+          <!-- 2 Anmelden -->
+          <div class="schritt-links" data-step="1" hidden>
+            <div class="grow"></div>
+            <h1>Melde dich an</h1>
+            <p class="sub">Mit deiner E-Mail kommst du jederzeit zurück und verwaltest deinen Agenten. Du bekommst einen sicheren Login-Link, ganz ohne Passwort.</p>
+            <label class="feld" for="email">E-Mail-Adresse</label>
+            <div class="input-wrap"><span class="icon">✉️</span><input type="email" id="email" placeholder="name@firma.ch" /></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Login-Link senden</button></div>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 3 Webseite scannen -->
+          <div class="schritt-links" data-step="2" hidden>
+            <div class="grow"></div>
+            <h1>Webseite scannen<br>und analysieren</h1>
+            <p class="sub">Gib deine Internetadresse ein. Die KI liest deine Inhalte und Farben und richtet den Agenten automatisch ein.</p>
+            <label class="feld" for="webseite">Deine Webseite</label>
+            <div class="input-wrap"><span class="icon">🌐</span><input type="url" id="webseite" placeholder="https://deine-firma.ch" /></div>
+            <div class="scan-loader" id="scanLoader"><span class="spinner"></span><span id="scanStatus">Wird gelesen</span></div>
+            <div class="balken" id="scanBalken"><span></span></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 4 Dokumente -->
+          <div class="schritt-links" data-step="3" hidden>
+            <div class="grow"></div>
+            <h1>Dokumente<br>hochladen</h1>
+            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus. Das ist optional.</p>
+            <label class="drop" for="docs"><div class="gross">📎</div>Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
+            <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
+            <div id="doc-liste"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <p class="mini"><a class="link" data-next>Diesen Schritt überspringen</a></p>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 5 Anpassen -->
+          <div class="schritt-links" data-step="4" hidden>
+            <div class="grow"></div>
+            <h1>Gestalte<br>deine Marke</h1>
+            <div class="hinweis-box">Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</div>
+            <label class="feld">Farben</label>
+            <div class="farben">
+              <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
+              <div class="farb-feld"><input type="color" id="farbe2" value="#FB7185" /><br>Akzent</div>
+            </div>
+            <label class="feld" for="schrift">Schriftart</label>
+            <select class="select" id="schrift">
+              <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+              <option value="Inter">Inter</option>
+              <option value="Poppins">Poppins</option>
+              <option value="DM Sans">DM Sans</option>
+              <option value="Space Grotesk">Space Grotesk</option>
+              <option value="Lora">Lora (Serif)</option>
+            </select>
+            <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 6 Fertig -->
+          <div class="schritt-links" data-step="5" hidden>
+            <div class="grow"></div>
+            <h1>Dein Agent<br>ist bereit 🎉</h1>
+            <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
+            <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
+            <div class="grow"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RECHTS: Verlaufs-Panel + Bild-Platzhalter -->
+      <div class="card-rechts" id="cardRechts">
+        <div class="panel" style="z-index:0;">
+          <div class="feld-bg"></div>
+          <div class="welle w1"></div><div class="welle w2"></div><div class="welle w3"></div>
+        </div>
+        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="platzhalter"><div class="ph-icon">💬</div><div class="ph-titel">Bild: Chat-Vorschau</div><div class="ph-text">Agent in Aktion mit Tagline</div></div></div></div>
+        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">✉️</div><div class="ph-titel">Bild: Glas-Umschlag</div><div class="ph-text">Sicher und passwortlos in Sekunden</div></div></div></div>
+        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🖥️</div><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
+        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">📄</div><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
+        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🎨</div><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
+        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🚀</div><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script>
+    const daten = { email:"", webseite:"", name:"", angebot:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans" };
+    const linksSchritte = document.querySelectorAll(".schritt-links");
+    const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
+    const ANZAHL = linksSchritte.length;
+    let aktuell = 0;
+
+    const progress = document.getElementById("progress");
+    for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
+    const dots = progress.querySelectorAll(".dot");
+    function updateProgress() { dots.forEach((d,i)=>{ d.classList.toggle("done", i<aktuell); d.classList.toggle("aktiv", i===aktuell); }); }
+
+    gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
+    gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
+    gsap.to(".w2", { x: -34, y: 26, scale: 1.2, duration: 11, ease: "sine.inOut", repeat: -1, yoyo: true });
+    gsap.to(".w3", { x: 18, y: -26, scale: 1.1, duration: 8, ease: "sine.inOut", repeat: -1, yoyo: true });
+
+    let istUebergang = false;
+    function zeige(n, richtung = 1) {
+      if (n < 0 || n >= ANZAHL || n === aktuell || istUebergang) return;
+      istUebergang = true;
+      const lAlt = linksSchritte[aktuell], lNeu = linksSchritte[n];
+      const rAlt = rechtsSchritte[aktuell], rNeu = rechtsSchritte[n];
+      gsap.to([lAlt, rAlt], { autoAlpha: 0, x: -24 * richtung, duration: 0.22, ease: "power2.in",
+        onComplete: () => {
+          lAlt.hidden = true; rAlt.hidden = true; gsap.set([lAlt, rAlt], { x: 0 });
+          lNeu.hidden = false; rNeu.hidden = false; lNeu.scrollTop = 0;
+          gsap.fromTo([lNeu, rNeu], { autoAlpha: 0, x: 24 * richtung }, { autoAlpha: 1, x: 0, duration: 0.32, ease: "power2.out",
+            onComplete: () => { istUebergang = false; } });
+        }});
+      aktuell = n; updateProgress();
+    }
+    document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { sammle(); zeige(aktuell+1, 1); }));
+    document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
+
+    // --- Webseite scannen (mit sichtbarem Loader) ---
+    document.getElementById("scanBtn").addEventListener("click", async () => {
+      const url = document.getElementById("webseite").value.trim();
+      if (!url) { alert("Bitte gib deine Webseite ein."); return; }
+      daten.webseite = url;
+      const status = document.getElementById("scanStatus");
+      const loader = document.getElementById("scanLoader");
+      const balken = document.getElementById("scanBalken");
+      const btn = document.getElementById("scanBtn");
+      btn.disabled = true; btn.style.opacity = 0.5;
+      loader.classList.add("an"); balken.classList.add("an");
+      const schritte = ["Seiten werden geladen", "Texte werden gelesen", "Infos werden zusammengefasst", "Farben werden erkannt"];
+      let i = 0; status.textContent = schritte[0];
+      const iv = setInterval(() => { if (i < schritte.length-1) status.textContent = schritte[++i]; }, 1400);
+      const aufraeumen = () => { clearInterval(iv); loader.classList.remove("an"); balken.classList.remove("an"); btn.disabled = false; btn.style.opacity = 1; };
+      try {
+        const res = await fetch("/.netlify/functions/scan", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ url }) });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || "Scan fehlgeschlagen");
+        daten.name = d.name || ""; daten.angebot = d.angebot || ""; daten.wissen = d.wissen || "";
+        if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
+        if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
+        status.textContent = "Fertig gelesen";
+        setTimeout(() => { aufraeumen(); zeige(3, 1); }, 600);
+      } catch (e) {
+        aufraeumen();
+        status.textContent = "Konnte die Seite nicht lesen. Du kannst trotzdem weiter.";
+        loader.classList.add("an"); loader.querySelector(".spinner").style.display = "none";
+        btn.textContent = "Weiter ohne Scan"; btn.onclick = () => zeige(3, 1);
+      }
+    });
+
+    // --- Dokumente hochladen ---
+    const MAX_DATEI = 4.5 * 1024 * 1024;
+    document.getElementById("docs").addEventListener("change", async (e) => {
+      const liste = document.getElementById("doc-liste");
+      for (const f of e.target.files) {
+        const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
+        eintrag.innerHTML = "📄 <span>"+f.name+"</span><span class='stat'>…</span>"; liste.appendChild(eintrag);
+        const stat = eintrag.querySelector(".stat");
+        try {
+          if (f.size > MAX_DATEI) throw new Error("zu gross");
+          const istText = /\.(txt|md|markdown)$/i.test(f.name) || (f.type||"").startsWith("text/");
+          if (istText) { const t = await f.text(); daten.wissen += "\n\n--- "+f.name+" ---\n"+t.trim(); stat.textContent = "✓"; }
+          else {
+            stat.textContent = "liest";
+            const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+            const resp = await fetch("/.netlify/functions/dokument-lesen", { method:"POST", headers:{"content-type":"application/json"},
+              body: JSON.stringify({ dateiname:f.name, mediaType:f.type, daten:String(dataUrl).split(",")[1] }) });
+            const d = await resp.json(); if (!resp.ok) throw new Error(d.error||"Fehler");
+            daten.wissen += "\n\n--- "+f.name+" (gelesen) ---\n"+(d.text||""); stat.textContent = "✓ gelesen";
+          }
+        } catch (err) { stat.textContent = "✕"; stat.style.color = "#dc2626"; }
+      }
+      e.target.value = "";
+    });
+
+    // --- Schrift wählen (Live-Vorschau) ---
+    document.getElementById("schrift").addEventListener("change", (e) => {
+      daten.schrift = e.target.value;
+      document.getElementById("fontVorschau").style.fontFamily = '"' + e.target.value + '", sans-serif';
+    });
+
+    function sammle() {
+      daten.email = (document.getElementById("email")||{}).value || daten.email;
+      daten.webseite = (document.getElementById("webseite")||{}).value || daten.webseite;
+      daten.farbe1 = (document.getElementById("farbe1")||{}).value || daten.farbe1;
+      daten.farbe2 = (document.getElementById("farbe2")||{}).value || daten.farbe2;
+      const id = (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
+      document.getElementById("embed-text").textContent =
+        '<script src="' + location.origin + '/widget.js" data-firma="' + id + '" data-farbe="' + daten.farbe1 + '"><\/script>';
+    }
+    document.getElementById("copy").addEventListener("click", (e) => {
+      navigator.clipboard.writeText(document.getElementById("embed-text").textContent); e.target.textContent = "Kopiert ✓";
+    });
+    document.getElementById("fertig").addEventListener("click", () => alert("Prototyp. Hier öffnet später der Test-Chat oder das Dashboard."));
+
+    gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
+    updateProgress();
+  </script>
+</body>
+</html>
