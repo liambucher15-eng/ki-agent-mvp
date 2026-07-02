@@ -1,0 +1,13 @@
+{
+  "name": "ki-agent-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KI-Website-Agent: Chat-Widget + Scan-First-Onboarding (Netlify Functions + Claude).",
+  "scripts": {
+    "dev": "netlify dev",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
