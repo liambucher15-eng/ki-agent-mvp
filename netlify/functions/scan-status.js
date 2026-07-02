@@ -2,14 +2,11 @@
 // Status "done" (mit Ergebnis) oder "error" (mit Fehlertext) ist.
 
 const { leseJob } = require("./lib/jobSpeicher");
+const { json, originErlaubt } = require("./lib/schutz");
 
-const json = (statusCode, obj) => ({
-  statusCode,
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify(obj),
-});
-
+// Kein Rate-Limit hier: das Frontend pollt diesen Endpunkt bewusst häufig.
 exports.handler = async (event) => {
+  if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
   const jobId = event.queryStringParameters && event.queryStringParameters.jobId;
   if (!jobId) return json(400, { error: "jobId fehlt" });
 

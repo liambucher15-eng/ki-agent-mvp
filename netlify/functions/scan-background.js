@@ -8,11 +8,19 @@
 
 const { scanneWebseite } = require("./lib/webseiteScannen");
 const { setzeJob } = require("./lib/jobSpeicher");
+const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
 exports.handler = async (event) => {
+  if (!originErlaubt(event)) return { statusCode: 403 };
+
+  // Rate-Limit: 5 Scans pro Minute und IP (ein Scan ist teuer)
+  if (!(await rateOk("scan:" + holeIp(event), 5, 60))) return { statusCode: 429 };
+
   let url, jobId;
   try { ({ url, jobId } = JSON.parse(event.body || "{}")); } catch {}
   if (!url || !jobId) return { statusCode: 400 };
+  if (typeof url !== "string" || url.length > 2000 ||
+      typeof jobId !== "string" || jobId.length > 100) return { statusCode: 400 };
 
   // Sofort einen "läuft"-Eintrag anlegen, damit die Status-Abfrage etwas findet.
   try {

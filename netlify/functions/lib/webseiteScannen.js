@@ -11,18 +11,13 @@ function normalisiere(url) {
   return url;
 }
 
-// Eine Ressource holen (Timeout + Browser-User-Agent)
+// Eine Ressource holen — SSRF-geschützt (siehe sichererFetch: nur http/https,
+// keine privaten/internen IPs, Redirects werden einzeln geprüft).
+const { sichererFetch } = require("./sichererFetch");
 async function hole(url, timeout = 8000) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeout);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal, redirect: "follow",
-      headers: { "user-agent": "Mozilla/5.0 (compatible; KI-Agent-Scanner/1.0)" },
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.text();
-  } finally { clearTimeout(t); }
+  const res = await sichererFetch(url, { timeout });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return await res.text();
 }
 
 function htmlZuText(html) {

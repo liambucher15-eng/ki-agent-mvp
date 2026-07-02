@@ -4,20 +4,28 @@
 // Text-Dateien (.txt/.md) werden NICHT hier verarbeitet — die liest das Frontend direkt.
 // Der API-Schlüssel bleibt hier auf dem Server.
 
-const json = (statusCode, obj) => ({
-  statusCode,
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify(obj),
-});
+const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+
+// ~6,7 Mio. Base64-Zeichen ≈ 5 MB Rohdaten -> Obergrenze fürs Hochladen.
+const MAX_BASE64 = 6_700_000;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
+  if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
   if (!process.env.ANTHROPIC_API_KEY) return json(500, { error: "ANTHROPIC_API_KEY fehlt (.env)" });
+
+  // Rate-Limit: 10 Dokumente pro Minute und IP
+  if (!(await rateOk("dok:" + holeIp(event), 10, 60))) {
+    return json(429, { error: "Zu viele Uploads. Bitte einen Moment warten." });
+  }
 
   let dateiname, mediaType, daten;
   try { ({ dateiname, mediaType, daten } = JSON.parse(event.body || "{}")); }
   catch { return json(400, { error: "Ungültiges JSON" }); }
   if (!mediaType || !daten) return json(400, { error: "mediaType oder daten fehlt" });
+  if (typeof daten !== "string" || daten.length > MAX_BASE64) {
+    return json(413, { error: "Datei zu groß (max. ca. 5 MB)." });
+  }
 
   // Content-Block je nach Dateityp bauen
   let block;

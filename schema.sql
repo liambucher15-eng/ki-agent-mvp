@@ -51,3 +51,41 @@ drop policy if exists "firmen anlegen" on firmen;
 drop policy if exists "firmen aendern" on firmen;
 create policy "firmen anlegen" on firmen for insert with check (true);
 create policy "firmen aendern" on firmen for update using (true);
+
+-- ────────────────────────────────────────────────────────────────
+-- 3) rate_limits — Rate-Limiting für die öffentlichen Functions (Milestone 1)
+-- ────────────────────────────────────────────────────────────────
+create table if not exists rate_limits (
+  schluessel    text primary key,        -- z.B. "chat:<ip>"
+  anzahl        int not null default 0,
+  fenster_ende  timestamptz not null
+);
+
+-- Tabelle bleibt komplett gesperrt (RLS an, keine Policies). Nur die Funktion
+-- unten (SECURITY DEFINER) darf schreiben -> niemand kann die Zähler manipulieren.
+alter table rate_limits enable row level security;
+
+-- Atomar: zählt einen Treffer und sagt, ob er noch im Limit liegt.
+-- Gibt true zurück, wenn erlaubt; false, wenn das Limit im Zeitfenster erreicht ist.
+create or replace function rate_hit(p_key text, p_limit int, p_fenster int)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_now    timestamptz := now();
+  v_anzahl int;
+begin
+  insert into rate_limits (schluessel, anzahl, fenster_ende)
+    values (p_key, 1, v_now + make_interval(secs => p_fenster))
+  on conflict (schluessel) do update set
+    anzahl = case when rate_limits.fenster_ende < v_now then 1 else rate_limits.anzahl + 1 end,
+    fenster_ende = case when rate_limits.fenster_ende < v_now then v_now + make_interval(secs => p_fenster) else rate_limits.fenster_ende end
+  returning anzahl into v_anzahl;
+  return v_anzahl <= p_limit;
+end;
+$$;
+
+-- Der öffentliche anon-Key darf die Funktion aufrufen (aber nicht die Tabelle).
+grant execute on function rate_hit(text, int, int) to anon;
