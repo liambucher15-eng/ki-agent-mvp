@@ -1,14 +1,9 @@
-// Webseiten-Scan für das Onboarding.
-// Liest die Startseite + mehrere wichtige Unterseiten, holt zusätzlich die
-// verlinkten CSS-Dateien (für zuverlässige Farb-Erkennung), extrahiert den Text
-// und lässt Claude daraus möglichst VOLLSTÄNDIGE Firmen-Infos strukturieren.
-// Der API-Schlüssel bleibt hier auf dem Server — er kommt NIE in den Browser.
-
-const json = (statusCode, obj) => ({
-  statusCode,
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify(obj),
-});
+// Kern-Logik des Webseiten-Scans (ohne HTTP-Rahmen), damit sie sowohl von der
+// Background-Function als auch von Tests genutzt werden kann.
+//
+// WICHTIG: Läuft in der Background-Function -> KEIN 10-Sekunden-Limit. Deshalb
+// hier GROSSZÜGIGE Budgets (viele Unterseiten, viel Text, langer Claude-Timeout),
+// damit der Scan wirklich vollständig ist. Der API-Schlüssel bleibt auf dem Server.
 
 function normalisiere(url) {
   url = String(url).trim();
@@ -17,7 +12,7 @@ function normalisiere(url) {
 }
 
 // Eine Ressource holen (Timeout + Browser-User-Agent)
-async function hole(url, timeout = 7000) {
+async function hole(url, timeout = 8000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);
   try {
@@ -43,7 +38,7 @@ function htmlZuText(html) {
 }
 
 // Interne Unterseiten finden — wichtige zuerst, dann auffüllen
-function findeUnterseiten(html, basisUrl, max = 4) {
+function findeUnterseiten(html, basisUrl, max = 5) {
   const host = new URL(basisUrl).hostname;
   const wichtig = /(ueber|über|about|kontakt|contact|leistung|angebot|service|produkt|menu|speisekarte|preise|pricing|team|faq|standort|geschichte|story|werte|shop)/i;
   const alle = new Set();
@@ -51,7 +46,7 @@ function findeUnterseiten(html, basisUrl, max = 4) {
     try {
       const u = new URL(m[1], basisUrl);
       if (u.hostname !== host) continue;
-      if (/\.(jpg|jpeg|png|gif|svg|webp|pdf|zip|mp4|css|js|ico)$/i.test(u.pathname)) continue;
+      if (/\.(jpg|jpeg|png|gif|svg|webp|avif|pdf|zip|mp4|css|js|mjs|json|xml|rss|atom|txt|ico|woff2?|ttf|otf|eot)$/i.test(u.pathname)) continue;
       const sauber = (u.origin + u.pathname).replace(/\/$/, "");
       if (sauber !== basisUrl.replace(/\/$/, "")) alle.add(sauber);
     } catch {}
@@ -119,7 +114,7 @@ function ermittleFarben(html, css) {
   return { farbe1, farbe2 };
 }
 
-// CSS-Quellen sammeln: inline <style> + verlinkte Stylesheets (max 4)
+// CSS-Quellen sammeln: inline <style> + verlinkte Stylesheets (bis 3)
 async function sammleCss(html, basisUrl) {
   let css = "";
   for (const m of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) css += m[1] + "\n";
@@ -143,19 +138,23 @@ async function claudeExtrakt(url, text) {
   const prompt =
     `Webseite: ${url}\n\n` +
     `Lies den gesamten Text und extrahiere die Infos über die Firma, GEGLIEDERT nach Kategorien. ` +
-    `Sei gründlich. Wenn eine Kategorie nicht vorkommt, gib einen leeren String "" zurück.\n\n` +
+    `Sei gründlich. Wenn eine Kategorie nicht vorkommt ODER der Text keine verwertbaren Firmen-Infos ` +
+    `enthält (z.B. nur technische Metadaten, Manifest-/Konfigurationsdaten oder unlesbare Zeichen), ` +
+    `gib für diese Kategorie einen leeren String "" zurück. Schreib NIEMALS über den Text selbst oder ` +
+    `darüber, dass/warum keine Infos extrahierbar sind — im Zweifel einfach "".\n\n` +
     `Gib genau dieses JSON zurück:\n` +
     `{"name":"Firmenname",` +
     `"angebot":"1-2 Sätze, was die Firma anbietet",` +
     `"oeffnungszeiten":"Öffnungszeiten, falls vorhanden",` +
     `"adresse":"Adresse oder Standort, falls vorhanden",` +
     `"kontakt":"Telefon und/oder E-Mail, falls vorhanden",` +
-    `"faq":"die wichtigsten Fragen und Antworten als lesbarer Text (Frage und Antwort je Zeile), falls erkennbar",` +
+    `"faq":[{"frage":"...","antwort":"..."}] — die wichtigsten Fragen samt Antworten, die auf der Seite ` +
+    `erkennbar sind (z.B. aus einem FAQ-Bereich), maximal 6 Paare. Leeres Array [], wenn keine erkennbar.,` +
     `"weiteres":"alle weiteren wichtigen Infos ausführlich: Angebote und Leistungen im Detail, Produkte, Preise, Team, Geschichte, Besonderheiten"}\n\n` +
     `WEBSEITEN-TEXT:\n${text}`;
 
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 22000); // sauberer Abbruch vor dem Function-Timeout
+  const t = setTimeout(() => ctrl.abort(), 60000); // Background-Function: viel Luft, aber nicht endlos
   let res;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -167,7 +166,7 @@ async function claudeExtrakt(url, text) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001", // schnellstes Modell — wichtig fürs Function-Timeout
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2800,
         temperature: 0.2,
         system,
@@ -181,67 +180,63 @@ async function claudeExtrakt(url, text) {
   let txt = (data.content?.[0]?.text || "{}").replace(/```json/gi, "").replace(/```/g, "").trim();
   const a = txt.indexOf("{"), b = txt.lastIndexOf("}");
   if (a >= 0 && b > a) txt = txt.slice(a, b + 1);
-  try { return JSON.parse(txt); } catch { return { name: "", angebot: "", wissen: txt }; }
+  try { return JSON.parse(txt); } catch { return { name: "", angebot: "", weiteres: "" }; }
 }
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
-  if (!process.env.ANTHROPIC_API_KEY) return json(500, { error: "ANTHROPIC_API_KEY fehlt (.env)" });
+// Führt den gesamten Scan aus und gibt das fertige Ergebnis-Objekt zurück.
+// Wirft bei harten Fehlern (Seite nicht erreichbar, kein Text, Claude-Fehler).
+async function scanneWebseite(rohUrl) {
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt (.env)");
+  const url = normalisiere(rohUrl);
 
-  let url;
-  try { ({ url } = JSON.parse(event.body || "{}")); } catch { return json(400, { error: "Ungültiges JSON" }); }
-  if (!url) return json(400, { error: "url fehlt" });
-  url = normalisiere(url);
-
-  // Startseite
   let hauptHtml;
   try { hauptHtml = await hole(url); }
-  catch (e) { return json(502, { error: "Webseite nicht erreichbar: " + e.message }); }
+  catch (e) { throw new Error("Webseite nicht erreichbar: " + e.message); }
 
-  // CSS + Unterseiten parallel ermitteln
   const unterseiten = findeUnterseiten(hauptHtml, url);
   const [css, ...unterResultate] = await Promise.all([
     sammleCss(hauptHtml, url),
     ...unterseiten.map((u) => hole(u).catch(() => null)),
   ]);
 
-  // Farben aus HTML + gesammeltem CSS
   const farben = ermittleFarben(hauptHtml, css);
 
-  // Text aller Seiten zusammen (großzügiges Limit)
   const texte = [htmlZuText(hauptHtml)];
   for (const html of unterResultate) if (html) texte.push(htmlZuText(html));
   const gesamtText = texte.join("\n\n").slice(0, 16000);
 
   if (gesamtText.length < 40) {
-    return json(422, { error: "Auf der Webseite war kaum lesbarer Text (evtl. reine Bild-/JS-Seite)." });
+    throw new Error("Auf der Webseite war kaum lesbarer Text (evtl. reine Bild-/JS-Seite).");
   }
 
-  let extrakt;
-  try { extrakt = await claudeExtrakt(url, gesamtText); }
-  catch (e) { return json(502, { error: "Konnte Infos nicht auswerten: " + e.message }); }
+  const extrakt = await claudeExtrakt(url, gesamtText);
 
-  // Zusammengesetztes Wissen (für den Agenten / baueSystemPrompt) aus den Kategorien
+  const faq = Array.isArray(extrakt.faq)
+    ? extrakt.faq.filter((f) => f && (f.frage || f.antwort)).slice(0, 6)
+    : [];
+
   const wissen = [
     extrakt.angebot && ("Angebot: " + extrakt.angebot),
-    extrakt.oeffnungszeiten && ("Öffnungszeiten: " + extrakt.oeffnungszeiten),
-    extrakt.adresse && ("Adresse: " + extrakt.adresse),
-    extrakt.kontakt && ("Kontakt: " + extrakt.kontakt),
-    extrakt.faq && ("Häufige Fragen:\n" + extrakt.faq),
     extrakt.weiteres && ("Weiteres:\n" + extrakt.weiteres),
   ].filter(Boolean).join("\n\n");
 
-  return json(200, {
+  return {
     name: extrakt.name || "",
     angebot: extrakt.angebot || "",
     oeffnungszeiten: extrakt.oeffnungszeiten || "",
     adresse: extrakt.adresse || "",
     kontakt: extrakt.kontakt || "",
-    faq: extrakt.faq || "",
+    faq,
     weiteres: extrakt.weiteres || "",
     wissen,
     farbe1: farben.farbe1,
     farbe2: farben.farbe2,
     gescannt: [url, ...unterseiten],
-  });
+  };
+}
+
+module.exports = {
+  scanneWebseite,
+  // einzelne Helfer exportiert für Unit-Tests
+  normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
 };

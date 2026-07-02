@@ -15,7 +15,7 @@
       --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    html, body { height: 100%; overflow: hidden; }
     body { font-family: var(--sans); color: var(--text); background: #fff;
            display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 2rem; }
 
@@ -60,6 +60,7 @@
       border-radius: 10px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
     select.select { cursor: pointer; }
     textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
+    textarea.klein { min-height: 52px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
 
     .btn { font: inherit; font-weight: 600; font-size: 0.96rem; border: 0; border-radius: 13px; cursor: pointer;
@@ -103,6 +104,15 @@
     .pk.auf .pk-body { display: block; }
     .pk-passt { font-size: 0.8rem; color: var(--gruen); font-weight: 600; cursor: pointer; background: none; border: 0; margin-top: 0.5rem; padding: 0; }
 
+    .faq-liste { display: flex; flex-direction: column; gap: 0.55rem; }
+    .faq-eintrag { position: relative; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.6rem 1.9rem 0.6rem 0.6rem; }
+    .faq-eintrag input { font-size: 0.87rem; font-weight: 600; padding: 0.5rem 0.6rem; margin-bottom: 0.4rem; }
+    .faq-eintrag textarea { font-size: 0.85rem; min-height: 44px; padding: 0.5rem 0.6rem; }
+    .faq-entfernen { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: 0; color: var(--grau-hell);
+                     cursor: pointer; font-size: 1rem; line-height: 1; padding: 0.1rem 0.3rem; }
+    .faq-entfernen:hover { color: #e11d48; }
+    .faq-hinzufuegen { font-size: 0.82rem; font-weight: 600; color: var(--indigo); background: none; border: 0; cursor: pointer; padding: 0.3rem 0; }
+
     .drop { display: block; text-align: center; padding: 1.6rem 1rem; border: 1.5px dashed var(--border); border-radius: 14px;
             color: var(--grau); cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-top: 0.5rem; }
     .drop:hover { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
@@ -137,7 +147,6 @@
       border: 2px dashed rgba(255,255,255,0.6); border-radius: 16px; background: rgba(255,255,255,0.12);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; text-align: center; padding: 1rem; }
-    .platzhalter .ph-icon { font-size: 1.8rem; }
     .platzhalter .ph-titel { color: #fff; font-weight: 700; font-size: 0.9rem; }
     .platzhalter .ph-text { color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.35; }
 
@@ -179,7 +188,7 @@
             <h1>Melde dich an</h1>
             <p class="sub">Mit deiner E-Mail kommst du jederzeit zurück und verwaltest deinen Agenten. Du bekommst einen sicheren Login-Link, ganz ohne Passwort.</p>
             <label class="feld" for="email">E-Mail-Adresse</label>
-            <div class="input-wrap"><span class="icon">✉️</span><input type="email" id="email" placeholder="name@firma.ch" /></div>
+            <input type="email" id="email" placeholder="name@firma.ch" />
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Login-Link senden</button></div>
             <div class="grow"></div>
           </div>
@@ -190,7 +199,7 @@
             <h1>Webseite scannen<br>und analysieren</h1>
             <p class="sub">Gib deine Internetadresse ein. Die KI liest deine Inhalte und Farben und richtet den Agenten automatisch ein.</p>
             <label class="feld" for="webseite">Deine Webseite</label>
-            <div class="input-wrap"><span class="icon">🌐</span><input type="url" id="webseite" placeholder="https://deine-firma.ch" /></div>
+            <input type="url" id="webseite" placeholder="https://deine-firma.ch" />
             <div class="scan-loader" id="scanLoader"><span class="spinner"></span><span id="scanStatus">Wird gelesen</span></div>
             <div class="balken" id="scanBalken"><span></span></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
@@ -200,34 +209,39 @@
           <!-- 4 Überprüfen -->
           <div class="schritt-links" data-step="3" hidden>
             <h1 class="klein">Stimmt das so?</h1>
-            <div class="hinweis-box">✨ <span>Das haben wir von deiner Webseite gelesen. Prüf kurz und ergänze, was fehlt.</span></div>
+            <div class="hinweis-box"><span>Das haben wir von deiner Webseite gelesen. Prüf kurz und ergänze, was fehlt.</span></div>
             <label class="feld" for="p-name">Firmenname</label>
             <input type="text" id="p-name" placeholder="Name deiner Firma" />
             <label class="feld" for="p-angebot">Was ihr anbietet</label>
-            <input type="text" id="p-angebot" placeholder="In einem Satz" />
+            <textarea class="klein" id="p-angebot" placeholder="In einem Satz"></textarea>
 
             <label class="feld">Details (aufklappen zum Prüfen)</label>
             <div class="pruef">
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">🕐 Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea id="p-oeffnung" placeholder="z.B. Di bis Sa, 11:30 bis 14:00"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body"><textarea class="klein" id="p-oeffnung" placeholder="z.B. Di bis Sa, 11:30 bis 14:00"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">📍 Standort & Kontakt</span><span class="pk-vorschau" id="v-kontakt">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Standort &amp; Kontakt</span><span class="pk-vorschau" id="v-kontakt">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
                 <div class="pk-body">
                   <label class="feld" for="p-adresse" style="margin-top:0.2rem;">Adresse</label>
-                  <input type="text" id="p-adresse" placeholder="Strasse, Ort" />
+                  <textarea class="klein" id="p-adresse" placeholder="Strasse, Ort"></textarea>
                   <label class="feld" for="p-kontakt">Telefon / E-Mail</label>
-                  <input type="text" id="p-kontakt" placeholder="Kontaktdaten" />
+                  <textarea class="klein" id="p-kontakt" placeholder="Kontaktdaten"></textarea>
                   <button type="button" class="pk-passt">✓ Passt</button>
                 </div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">❓ Häufige Fragen</span><span class="pk-vorschau" id="v-faq">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea id="p-faq" placeholder="Frage und Antwort, je Zeile"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Häufige Fragen</span><span class="pk-vorschau" id="v-faq">noch keine Frage</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body">
+                  <p class="sub" style="margin:0 0 0.5rem;font-size:0.83rem;">Definiere Fragen, die dein Agent sicher beantworten soll.</p>
+                  <div class="faq-liste" id="faqListe"></div>
+                  <button type="button" class="faq-hinzufuegen" id="faqHinzufuegen">+ Frage hinzufügen</button>
+                  <button type="button" class="pk-passt">✓ Passt</button>
+                </div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">📝 Weitere Infos</span><span class="pk-vorschau" id="v-weiteres">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Weitere Infos</span><span class="pk-vorschau" id="v-weiteres">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
                 <div class="pk-body"><textarea id="p-weiteres" placeholder="Angebote, Preise, Team, Besonderheiten" style="min-height:120px;"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
               </div>
             </div>
@@ -239,7 +253,7 @@
             <div class="grow"></div>
             <h1>Dokumente<br>hochladen</h1>
             <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus. Das ist optional.</p>
-            <label class="drop" for="docs"><div class="gross">📎</div>Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
+            <label class="drop" for="docs">Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
             <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
             <div id="doc-liste"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
@@ -251,7 +265,7 @@
           <div class="schritt-links" data-step="5" hidden>
             <div class="grow"></div>
             <h1>Gestalte<br>deine Marke</h1>
-            <div class="hinweis-box">🎨 <span>Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</span></div>
+            <div class="hinweis-box"><span>Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</span></div>
             <label class="feld">Farben</label>
             <div class="farben">
               <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
@@ -274,10 +288,11 @@
           <!-- 7 Fertig -->
           <div class="schritt-links" data-step="6" hidden>
             <div class="grow"></div>
-            <h1>Dein Agent<br>ist bereit 🎉</h1>
+            <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
             <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
+            <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
             <div class="grow"></div>
           </div>
 
@@ -290,21 +305,25 @@
           <div class="feld-bg"></div>
           <div class="welle w1"></div><div class="welle w2"></div><div class="welle w3"></div>
         </div>
-        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="platzhalter"><div class="ph-icon">💬</div><div class="ph-titel">Bild: Chat-Vorschau</div><div class="ph-text">Agent in Aktion mit Tagline</div></div></div></div>
-        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">✉️</div><div class="ph-titel">Bild: Glas-Umschlag</div><div class="ph-text">Sicher und passwortlos in Sekunden</div></div></div></div>
-        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🖥️</div><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
-        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">📋</div><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
-        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">📄</div><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
-        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🎨</div><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-icon">🚀</div><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Vorschau</div><div class="ph-text">Agent in Aktion mit Tagline</div></div></div></div>
+        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Glas-Umschlag</div><div class="ph-text">Sicher und passwortlos in Sekunden</div></div></div></div>
+        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
+        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
+        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
+        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
       </div>
 
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="lib/supabase-config.js"></script>
+  <script src="lib/auth.js"></script>
+  <script src="lib/store.js"></script>
   <script>
-    const daten = { email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:"", weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans" };
     const linksSchritte = document.querySelectorAll(".schritt-links");
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
@@ -348,13 +367,63 @@
       document.getElementById("v-oeffnung").textContent = kurz(document.getElementById("p-oeffnung").value);
       const k = [document.getElementById("p-adresse").value, document.getElementById("p-kontakt").value].filter(Boolean).join(" · ");
       document.getElementById("v-kontakt").textContent = kurz(k);
-      document.getElementById("v-faq").textContent = kurz(document.getElementById("p-faq").value);
+      const faqAnzahl = faqListe.value().length;
+      document.getElementById("v-faq").textContent = faqAnzahl ? faqAnzahl + (faqAnzahl === 1 ? " Frage definiert" : " Fragen definiert") : "noch keine Frage";
       document.getElementById("v-weiteres").textContent = kurz(document.getElementById("p-weiteres").value);
     }
-    ["p-oeffnung","p-adresse","p-kontakt","p-faq","p-weiteres"].forEach(id =>
+    ["p-oeffnung","p-adresse","p-kontakt","p-weiteres"].forEach(id =>
       document.getElementById(id).addEventListener("input", updatePruefVorschau));
 
-    // --- Webseite scannen ---
+    // Überprüfen: Häufige Fragen als Liste von Frage/Antwort-Paaren
+    const faqListe = (function () {
+      const el = document.getElementById("faqListe");
+      function zeileHinzufuegen(frage = "", antwort = "") {
+        const zeile = document.createElement("div"); zeile.className = "faq-eintrag";
+        zeile.innerHTML =
+          '<button type="button" class="faq-entfernen" title="Entfernen">×</button>' +
+          '<input type="text" class="faq-frage" placeholder="Frage, die Kunden oft stellen" />' +
+          '<textarea class="faq-antwort" placeholder="Antwort, die der Agent geben soll"></textarea>';
+        zeile.querySelector(".faq-frage").value = frage;
+        zeile.querySelector(".faq-antwort").value = antwort;
+        zeile.querySelector(".faq-entfernen").addEventListener("click", () => { zeile.remove(); updatePruefVorschau(); });
+        zeile.querySelectorAll("input,textarea").forEach(f => f.addEventListener("input", updatePruefVorschau));
+        el.appendChild(zeile);
+      }
+      return {
+        hinzufuegen: zeileHinzufuegen,
+        rendern(liste) {
+          el.innerHTML = "";
+          (liste && liste.length ? liste : [{ frage: "", antwort: "" }]).forEach(f => zeileHinzufuegen(f.frage, f.antwort));
+        },
+        value() {
+          return [...el.querySelectorAll(".faq-eintrag")]
+            .map(z => ({ frage: z.querySelector(".faq-frage").value.trim(), antwort: z.querySelector(".faq-antwort").value.trim() }))
+            .filter(f => f.frage || f.antwort);
+        },
+      };
+    })();
+    document.getElementById("faqHinzufuegen").addEventListener("click", () => { faqListe.hinzufuegen(); updatePruefVorschau(); });
+    faqListe.rendern([]);
+
+    // --- Webseite scannen (Background-Function + Status-Polling) ---
+    // Der Scan läuft serverseitig als Background-Function (kein 10s-Limit). Das
+    // Frontend stößt ihn an und fragt danach den Status ab, bis "done"/"error".
+    const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
+    function uebernehmeScan(d) {
+      daten.name = d.name||""; daten.angebot = d.angebot||"";
+      daten.oeffnungszeiten = d.oeffnungszeiten||""; daten.adresse = d.adresse||"";
+      daten.kontakt = d.kontakt||""; daten.faq = d.faq||[]; daten.weiteres = d.weiteres||""; daten.wissen = d.wissen||"";
+      document.getElementById("p-name").value = daten.name;
+      document.getElementById("p-angebot").value = daten.angebot;
+      document.getElementById("p-oeffnung").value = daten.oeffnungszeiten;
+      document.getElementById("p-adresse").value = daten.adresse;
+      document.getElementById("p-kontakt").value = daten.kontakt;
+      faqListe.rendern(daten.faq);
+      document.getElementById("p-weiteres").value = daten.weiteres;
+      updatePruefVorschau();
+      if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
+      if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
+    }
     document.getElementById("scanBtn").addEventListener("click", async () => {
       const url = document.getElementById("webseite").value.trim();
       if (!url) { alert("Bitte gib deine Webseite ein."); return; }
@@ -367,25 +436,31 @@
       loader.classList.add("an"); balken.classList.add("an");
       const schritte = ["Seiten werden geladen", "Texte werden gelesen", "Infos werden gegliedert", "Farben werden erkannt"];
       let i = 0; status.textContent = schritte[0];
-      const iv = setInterval(() => { if (i < schritte.length-1) status.textContent = schritte[++i]; }, 1400);
+      const iv = setInterval(() => { i = (i + 1) % schritte.length; status.textContent = schritte[i]; }, 1800);
       const aufraeumen = () => { clearInterval(iv); loader.classList.remove("an"); balken.classList.remove("an"); btn.disabled = false; btn.style.opacity = 1; };
       try {
-        const res = await fetch("/.netlify/functions/scan", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ url }) });
-        const d = await res.json();
-        if (!res.ok) throw new Error(d.error || "Scan fehlgeschlagen");
-        daten.name = d.name||""; daten.angebot = d.angebot||"";
-        daten.oeffnungszeiten = d.oeffnungszeiten||""; daten.adresse = d.adresse||"";
-        daten.kontakt = d.kontakt||""; daten.faq = d.faq||""; daten.weiteres = d.weiteres||""; daten.wissen = d.wissen||"";
-        document.getElementById("p-name").value = daten.name;
-        document.getElementById("p-angebot").value = daten.angebot;
-        document.getElementById("p-oeffnung").value = daten.oeffnungszeiten;
-        document.getElementById("p-adresse").value = daten.adresse;
-        document.getElementById("p-kontakt").value = daten.kontakt;
-        document.getElementById("p-faq").value = daten.faq;
-        document.getElementById("p-weiteres").value = daten.weiteres;
-        updatePruefVorschau();
-        if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
-        if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
+        const jobId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                       : Date.now() + "-" + Math.random().toString(36).slice(2);
+        // 1) Background-Scan anstoßen (antwortet sofort mit 202)
+        const start = await fetch("/.netlify/functions/scan-background", {
+          method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ url, jobId }),
+        });
+        if (start.status !== 202 && !start.ok) throw new Error("Scan konnte nicht gestartet werden");
+        // 2) Status pollen, bis fertig oder Fehler (max ~90s)
+        let d = null;
+        for (let versuch = 0; versuch < 60; versuch++) {
+          await schlaf(1500);
+          let s;
+          try {
+            const r = await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId));
+            s = await r.json();
+          } catch { continue; } // kurzer Netz-Hänger -> einfach weiter pollen
+          if (s.status === "done") { d = s.ergebnis; break; }
+          if (s.status === "error") throw new Error(s.fehler || "Scan fehlgeschlagen");
+          // "pending"/"running" -> weiter warten
+        }
+        if (!d) throw new Error("Zeitüberschreitung beim Scan");
+        uebernehmeScan(d);
         status.textContent = "Fertig gelesen";
         setTimeout(() => { aufraeumen(); zeige(3, 1); }, 600);
       } catch (e) {
@@ -402,7 +477,7 @@
       const liste = document.getElementById("doc-liste");
       for (const f of e.target.files) {
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
-        eintrag.innerHTML = "📄 <span>"+f.name+"</span><span class='stat'>…</span>"; liste.appendChild(eintrag);
+        eintrag.innerHTML = "<span>"+f.name+"</span><span class='stat'>…</span>"; liste.appendChild(eintrag);
         const stat = eintrag.querySelector(".stat");
         try {
           if (f.size > MAX_DATEI) throw new Error("zu gross");
@@ -435,27 +510,45 @@
       daten.oeffnungszeiten = (document.getElementById("p-oeffnung")||{}).value || daten.oeffnungszeiten;
       daten.adresse = (document.getElementById("p-adresse")||{}).value || daten.adresse;
       daten.kontakt = (document.getElementById("p-kontakt")||{}).value || daten.kontakt;
-      daten.faq = (document.getElementById("p-faq")||{}).value || daten.faq;
+      daten.faq = faqListe.value();
       daten.weiteres = (document.getElementById("p-weiteres")||{}).value || daten.weiteres;
       daten.farbe1 = (document.getElementById("farbe1")||{}).value || daten.farbe1;
       daten.farbe2 = (document.getElementById("farbe2")||{}).value || daten.farbe2;
-      // Wissen fürs Agenten-Backend aus den (evtl. bearbeiteten) Feldern zusammenbauen
-      daten.wissen = [
-        daten.angebot && ("Angebot: " + daten.angebot),
-        daten.oeffnungszeiten && ("Öffnungszeiten: " + daten.oeffnungszeiten),
-        daten.adresse && ("Adresse: " + daten.adresse),
-        daten.kontakt && ("Kontakt: " + daten.kontakt),
-        daten.faq && ("Häufige Fragen:\n" + daten.faq),
-        daten.weiteres && ("Weiteres:\n" + daten.weiteres),
-      ].filter(Boolean).join("\n\n");
-      const id = (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
+      // Freitext-Wissen fürs Agenten-Backend; Öffnungszeiten/Adresse/Kontakt/FAQ gehen strukturiert in fakten/faq (siehe "fertig")
+      daten.wissen = [daten.angebot, daten.weiteres].filter(Boolean).join("\n\n");
+      daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
       document.getElementById("embed-text").textContent =
-        '<script src="' + location.origin + '/widget.js" data-firma="' + id + '" data-farbe="' + daten.farbe1 + '"><\/script>';
+        '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '"><\/script>';
     }
     document.getElementById("copy").addEventListener("click", (e) => {
       navigator.clipboard.writeText(document.getElementById("embed-text").textContent); e.target.textContent = "Kopiert ✓";
     });
-    document.getElementById("fertig").addEventListener("click", () => alert("Prototyp. Hier öffnet später der Test-Chat oder das Dashboard."));
+    document.getElementById("fertig").addEventListener("click", async () => {
+      sammle();
+      const status = document.getElementById("speicherStatus");
+      const btn = document.getElementById("fertig");
+      btn.disabled = true; status.textContent = "Speichern…"; status.style.color = "";
+      const fakten = {};
+      if (daten.oeffnungszeiten) fakten["Öffnungszeiten"] = daten.oeffnungszeiten;
+      if (daten.adresse) fakten["Adresse"] = daten.adresse;
+      if (daten.kontakt) fakten["Kontakt"] = daten.kontakt;
+      const firma = {
+        id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
+        persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: "freundlich, hilfsbereit, klar", sprache: "Deutsch" },
+        fakten, faq: daten.faq, wissen: daten.wissen,
+        charakter: { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift },
+      };
+      try {
+        await Store.saveFirma(firma);
+        Store.setNutzer(daten.email);
+        status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
+        window.open("index.html?firma=" + encodeURIComponent(daten.id), "_blank");
+      } catch (e) {
+        status.style.color = "#e11d48"; status.textContent = "Konnte nicht gespeichert werden: " + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();
