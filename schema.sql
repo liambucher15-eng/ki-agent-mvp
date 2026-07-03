@@ -44,13 +44,16 @@ alter table firmen enable row level security;
 drop policy if exists "firmen lesen" on firmen;
 create policy "firmen lesen" on firmen for select using (true);
 
--- ACHTUNG (nur zum Testen offen!): aktuell darf jeder schreiben.
--- VOR echten Kunden ersetzen durch: with check (auth.uid() = besitzer)
--- und beim Speichern besitzer = auth.uid() setzen (siehe Audit-Punkt F4).
+-- Schreiben nur als Besitzer: besitzer muss der eingeloggten (auch anonymen)
+-- Nutzer-ID entsprechen. So kann niemand den Agenten einer fremden Firma
+-- überschreiben. Beim Speichern setzt store.js besitzer = auth.uid().
+-- VORAUSSETZUNG: In Supabase "Anonymous sign-ins" aktivieren
+-- (Authentication -> Sign In / Providers -> Anonymous).
 drop policy if exists "firmen anlegen" on firmen;
 drop policy if exists "firmen aendern" on firmen;
-create policy "firmen anlegen" on firmen for insert with check (true);
-create policy "firmen aendern" on firmen for update using (true);
+create policy "firmen anlegen" on firmen for insert with check (auth.uid() = besitzer);
+create policy "firmen aendern" on firmen for update
+  using (auth.uid() = besitzer) with check (auth.uid() = besitzer);
 
 -- ────────────────────────────────────────────────────────────────
 -- 3) rate_limits — Rate-Limiting für die öffentlichen Functions (Milestone 1)

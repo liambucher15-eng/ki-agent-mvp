@@ -40,11 +40,14 @@ const Store = (function () {
       return _alleLokal()[id] || null;
     },
 
-    // Eine Firma speichern/aktualisieren (nur Besitzer darf das, erzwingt RLS).
+    // Eine Firma speichern/aktualisieren. Der Besitzer wird über die anonyme
+    // Sitzung gesetzt (auth.uid()); die RLS-Regel lässt nur den Besitzer schreiben.
     async saveFirma(firma) {
       if (sb) {
-        const { error } = await sb.from("firmen")
-          .upsert({ id: firma.id, name: firma.name, daten: firma }, { onConflict: "id" });
+        const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
+        const eintrag = { id: firma.id, name: firma.name, daten: firma };
+        if (nutzer) eintrag.besitzer = nutzer.id;
+        const { error } = await sb.from("firmen").upsert(eintrag, { onConflict: "id" });
         if (error) throw new Error(error.message);
         return firma;
       }

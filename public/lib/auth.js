@@ -31,6 +31,19 @@ const Auth = (function () {
       return data.user || null;
     },
 
+    // Stellt sicher, dass eine Sitzung existiert. Gibt es noch keine, wird der
+    // Nutzer ANONYM angemeldet (echte Nutzer-ID ohne E-Mail). Damit gehört ein
+    // erstellter Agent diesem Browser — Fremde können ihn nicht überschreiben
+    // (siehe RLS besitzer = auth.uid()). Später auf Magic-Link aufrüstbar.
+    async sitzungSichern() {
+      if (!client) return null;
+      const { data } = await client.auth.getUser();
+      if (data.user) return data.user;
+      const { data: neu, error } = await client.auth.signInAnonymously();
+      if (error) throw new Error("Anmeldung fehlgeschlagen: " + error.message);
+      return neu.user;
+    },
+
     async abmelden() {
       if (client) await client.auth.signOut();
     },
