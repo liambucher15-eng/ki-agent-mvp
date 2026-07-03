@@ -1,7 +1,7 @@
 // Gemeinsame Chat-Logik für die volle Seite (index.html) UND das Einbett-Widget
 // (widget-frame.html). Kapselt den Sende-Ablauf, das Deuten der Antwort (verlegen
-// bei "weiss nicht", sonst sprechen) und die Nachrichten-Bubbles — damit sich diese
-// Logik nicht mehr an zwei Stellen auseinanderentwickeln kann.
+// bei "weiss nicht", sonst sprechen), die Nachrichten-Bubbles und die
+// Vorschlags-Chips — damit sich diese Logik nicht an zwei Stellen auseinanderentwickelt.
 //
 // Was PRO SEITE unterschiedlich ist (Avatar-DOM, Tipp-Anzeige), wird als Callback
 // übergeben. So bleibt das Modul frei von seitenspezifischem HTML.
@@ -12,6 +12,33 @@ window.ChatUI = (function () {
     return /wei(ss|ß).{0,6}nicht|leider|nicht sicher|kann ich (dir )?nicht/i.test(text);
   }
 
+  // Vorschlags-Chips: aus den Firmen-Daten sinnvolle Einstiegsfragen ableiten.
+  function vorschlaegeAus(firma) {
+    const v = [];
+    const faq = firma && firma.faq;
+    if (Array.isArray(faq)) faq.slice(0, 2).forEach((x) => { if (x && x.frage) v.push(x.frage); });
+    const fakten = (firma && firma.fakten) || {};
+    if (fakten["Öffnungszeiten"]) v.push("Wann habt ihr offen?");
+    if (fakten["Adresse"] || fakten["Standort"] || fakten["Kontakt"]) v.push("Wie erreiche ich euch?");
+    if (!v.length) { v.push("Was bietet ihr an?"); v.push("Wie erreiche ich euch?"); }
+    return v.slice(0, 4);
+  }
+
+  // Chip-Styles einmal pro Seite injizieren (nutzt die Marken-Farbe --farbe).
+  let stilDa = false;
+  function sorgeFuerStil() {
+    if (stilDa) return;
+    stilDa = true;
+    const s = document.createElement("style");
+    s.textContent =
+      ".ki-vorschlaege{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}" +
+      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:6px 11px;border-radius:999px;" +
+      "border:1px solid var(--farbe,#4F46E5);background:#fff;color:var(--farbe,#4F46E5);" +
+      "transition:background .15s,color .15s}" +
+      ".ki-vorschlag:hover{background:var(--farbe,#4F46E5);color:#fff}";
+    document.head.appendChild(s);
+  }
+
   // Startet die Chat-Steuerung und hängt den Absende-Handler ans Formular.
   // cfg:
   //   chat, form, input, send   – DOM-Elemente
@@ -19,9 +46,11 @@ window.ChatUI = (function () {
   //   avatar(zustand, dauer)     – Avatar-Reaktion (seitenspezifisch)
   //   tipptAn?()  -> Element     – Tipp-Anzeige einfügen (Standard: Text-Bubble)
   //   holeFirmaConfig?() -> obj  – optionaler Entwurf/Vorschau-Config fürs Backend
-  // Rückgabe: { addBubble, messages }
+  //   seiteInfo?  { pfad, titel } – auf welcher Unterseite ist der Besucher
+  // Rückgabe: { addBubble, messages, zeigeVorschlaege }
   function starten(cfg) {
     const messages = [];
+    let vorschlaegeEl = null;
 
     function addBubble(text, who) {
       const div = document.createElement("div");
@@ -34,12 +63,37 @@ window.ChatUI = (function () {
     function tipptAnzeigen() {
       return cfg.tipptAn ? cfg.tipptAn() : addBubble("tippt…", "bot meta");
     }
+    function entferneVorschlaege() {
+      if (vorschlaegeEl) { vorschlaegeEl.remove(); vorschlaegeEl = null; }
+    }
+    function zeigeVorschlaege(liste) {
+      if (!liste || !liste.length) return;
+      sorgeFuerStil();
+      entferneVorschlaege();
+      const box = document.createElement("div");
+      box.className = "ki-vorschlaege";
+      liste.slice(0, 4).forEach((t) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ki-vorschlag";
+        b.textContent = t;
+        b.addEventListener("click", () => {
+          cfg.input.value = t;
+          cfg.form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        });
+        box.appendChild(b);
+      });
+      cfg.chat.appendChild(box);
+      cfg.chat.scrollTop = cfg.chat.scrollHeight;
+      vorschlaegeEl = box;
+    }
 
     cfg.form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = cfg.input.value.trim();
       if (!text) return;
 
+      entferneVorschlaege(); // Chips verschwinden, sobald das Gespräch beginnt
       addBubble(text, "user");
       messages.push({ role: "user", content: text });
       cfg.input.value = "";
@@ -56,6 +110,7 @@ window.ChatUI = (function () {
             messages,
             firmaId: cfg.firmaId,
             firmaConfig: cfg.holeFirmaConfig ? cfg.holeFirmaConfig() : null,
+            seiteInfo: cfg.seiteInfo || null,
           }),
         });
         const data = await res.json();
@@ -79,8 +134,8 @@ window.ChatUI = (function () {
       }
     });
 
-    return { addBubble, messages };
+    return { addBubble, messages, zeigeVorschlaege };
   }
 
-  return { istUnsicher, starten };
+  return { istUnsicher, starten, vorschlaegeAus };
 })();

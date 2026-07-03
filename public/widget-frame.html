@@ -112,7 +112,10 @@
     const avatarImg = document.getElementById("kopf-img");
     const kopfName = document.getElementById("kopf-name");
 
-    const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
+    const _p = new URLSearchParams(location.search);
+    const FIRMA_ID = _p.get("firma") || "salbei";
+    // Seiten-Kontext vom Widget (welche Unterseite schaut der Besucher an?)
+    const seiteInfo = { pfad: _p.get("pfad") || "", titel: _p.get("titel") || "" };
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
     let firmaConfig = null;  // Firmen-Daten aus der DB -> an den Chat mitsenden
 
@@ -155,9 +158,11 @@
     // Firma laden: erst aus der DB (öffentlich lesbar -> funktioniert für alle Besucher),
     // sonst Seed-Firma vom Backend (salbei/nordlicht).
     async function start() {
+      let quelle = null;
       const eintrag = window.Store ? await Store.ladeFirma(FIRMA_ID) : null;
       if (eintrag) {
         firmaConfig = eintrag;
+        quelle = eintrag;
         setFarben(eintrag.charakter || {});
         kopfName.textContent = (eintrag.persona && eintrag.persona.name) || eintrag.name || "Assistent";
       } else {
@@ -165,6 +170,7 @@
           const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
           if (res.ok) {
             const f = await res.json();
+            quelle = f;
             setFarben(f.charakter || {});
             if (f.persona) kopfName.textContent = f.persona;
             else if (f.name) kopfName.textContent = f.name;
@@ -173,6 +179,7 @@
       }
       setCharakter("freuen", 700);
       ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
+      ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
     }
 
     // Gemeinsame Chat-Logik aus lib/chat-ui.js. Avatar + Tipp-Anzeige (Punkte)
@@ -183,6 +190,7 @@
       avatar: setCharakter,
       tipptAn: addTipptAnzeige,
       holeFirmaConfig: () => firmaConfig,
+      seiteInfo: seiteInfo,
     });
 
     start();

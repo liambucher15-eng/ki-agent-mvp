@@ -158,11 +158,13 @@
 
     // Beim Laden: Firma bestimmen (Onboarding-Entwurf hat Vorrang), Aussehen setzen, begrüssen.
     async function start() {
+      let quelle = null;
       const entwurf = window.Store ? await Store.ladeFirma(FIRMA_ID) : null;
 
       if (entwurf) {
         // Onboarding-Entwurf (im Browser gespeichert): komplette Config an den Chat mitsenden.
         firmaConfig = entwurf;
+        quelle = entwurf;
         const c = entwurf.charakter || {};
         if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
         if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
@@ -174,6 +176,7 @@
           const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
           if (res.ok) {
             const f = await res.json();
+            quelle = f;
             const c = f.charakter || {};
             if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
             if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
@@ -193,6 +196,7 @@
 
       setCharakter("freuen", 700);
       ui.addBubble("Hallo! Schön, dass du da bist. Wie kann ich dir helfen?", "bot");
+      ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
     }
 
     start();

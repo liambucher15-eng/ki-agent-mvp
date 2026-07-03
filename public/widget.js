@@ -27,7 +27,22 @@
   var farbe2 = istHex(script.getAttribute("data-farbe2")) ? script.getAttribute("data-farbe2") : farbe;
 
   var basis = new URL(script.src, location.href).origin;
-  var frameUrl = basis + "/widget-frame.html?firma=" + encodeURIComponent(firma);
+
+  // Seiten-Kontext: welche Unterseite schaut der Besucher gerade an? Nur Pfad +
+  // Titel (keine Seiteninhalte) — das reicht dem Agenten als Hinweis und bleibt
+  // datensparsam. Wird an das Chat-iframe weitergegeben.
+  function seitenKontext() {
+    var h1 = document.querySelector("h1");
+    return {
+      pfad: String(location.pathname || "").slice(0, 200),
+      titel: String(document.title || (h1 && h1.textContent) || "").slice(0, 200),
+    };
+  }
+  function baueFrameUrl() {
+    var k = seitenKontext();
+    return basis + "/widget-frame.html?firma=" + encodeURIComponent(firma) +
+      "&pfad=" + encodeURIComponent(k.pfad) + "&titel=" + encodeURIComponent(k.titel);
+  }
 
   // Host-Element mit Shadow-DOM: kapselt unser CSS komplett von der fremden Seite ab.
   var host = document.createElement("div");
@@ -86,17 +101,36 @@
     ".panel.auf { display: block; opacity: 1; transform: translateY(0) scale(1); }",
     ".panel iframe { width: 100%; height: 100%; border: 0; display: block; }",
 
+    // Proaktive Sprechblase (selten, wegklickbar) — links neben dem Orb.
+    ".hinweis {",
+    "  position: fixed; bottom: 40px; right: 98px; max-width: 220px; z-index: 2147483000;",
+    "  background: #fff; color: #111827; border-radius: 14px; padding: 0.6rem 1.4rem 0.6rem 0.85rem;",
+    "  box-shadow: 0 8px 24px rgba(0,0,0,0.18); font-size: 0.9rem; line-height: 1.35;",
+    "  font-family: system-ui, -apple-system, sans-serif;",
+    "  opacity: 0; transform: translateY(6px) scale(0.96); pointer-events: none;",
+    "  transition: opacity 0.3s ease, transform 0.3s ease;",
+    "}",
+    ".hinweis.sichtbar { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }",
+    ".hinweis .text { cursor: pointer; }",
+    ".hinweis .zu { position: absolute; top: 3px; right: 7px; cursor: pointer; color: #9ca3af; font-size: 0.95rem; line-height: 1; }",
+    ".hinweis .zu:hover { color: #6b7280; }",
+
     "@media (max-width: 480px) {",
+    "  .hinweis { display: none; }",
     "  .panel { right: 0; bottom: 0; width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }",
     "  .bubble { bottom: 18px; right: 18px; }",
     "}",
     "</style>",
     '<div class="panel" id="panel"></div>',
+    '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span></div>',
     '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="orb"></span></button>',
   ].join("");
 
   var bubble = root.getElementById("bubble");
   var panel = root.getElementById("panel");
+  var hinweis = root.getElementById("hinweis");
+  var hinweisTextEl = root.getElementById("hinweisText");
+  var hinweisZu = root.getElementById("hinweisZu");
   var offen = false;
   var geladen = false;
 
@@ -104,9 +138,10 @@
   setTimeout(function () { bubble.classList.add("sichtbar"); }, 2500);
 
   function oeffne() {
+    versteckeHinweis();
     if (!geladen) {
       var f = document.createElement("iframe");
-      f.src = frameUrl;
+      f.src = baueFrameUrl(); // Seiten-Kontext beim Öffnen mitgeben
       f.title = "Chat";
       f.setAttribute("allow", "clipboard-write");
       panel.appendChild(f);
@@ -123,6 +158,32 @@
     offen = false;
   }
   bubble.addEventListener("click", function () { offen ? schliesse() : oeffne(); });
+
+  // --- Proaktive Sprechblase: selten, wegklickbar, einmal pro Besucher/Firma ---
+  var HINWEIS_KEY = "kiagent-hinweis-" + firma;
+  var hinweisTimer;
+  function hinweisSatz() {
+    var p = String(location.pathname || "").toLowerCase();
+    if (/preis|pricing|tarif|abo|plan/.test(p)) return "Soll ich dir die Preise erklären?";
+    if (/produkt|product|leistung|service|angebot/.test(p)) return "Fragen zum Angebot? Ich helfe gern.";
+    if (/kontakt|contact|support|hilfe/.test(p)) return "Kann ich dir weiterhelfen?";
+    return "Kann ich dir helfen?";
+  }
+  function versteckeHinweis() {
+    clearTimeout(hinweisTimer);
+    hinweis.classList.remove("sichtbar");
+  }
+  function zeigeHinweis() {
+    if (offen) return; // Chat schon offen -> nicht nötig
+    try { if (localStorage.getItem(HINWEIS_KEY)) return; } catch (e) {} // nie zweimal nerven
+    hinweisTextEl.textContent = hinweisSatz();
+    hinweis.classList.add("sichtbar");
+    try { localStorage.setItem(HINWEIS_KEY, "1"); } catch (e) {}
+    hinweisTimer = setTimeout(versteckeHinweis, 6500); // verschwindet von selbst
+  }
+  hinweisTextEl.addEventListener("click", function () { versteckeHinweis(); oeffne(); });
+  hinweisZu.addEventListener("click", function (e) { e.stopPropagation(); versteckeHinweis(); });
+  setTimeout(zeigeHinweis, 9000); // ruhig ein paar Sekunden nach dem Orb
 
   // Der Chat im iframe kann das Schliessen anfordern (×-Button im Chat-Header).
   window.addEventListener("message", function (e) {
