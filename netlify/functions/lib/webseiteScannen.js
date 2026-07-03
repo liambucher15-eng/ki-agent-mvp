@@ -206,24 +206,29 @@ async function scanneWebseite(rohUrl) {
 
   const extrakt = await claudeExtrakt(url, gesamtText);
 
-  const faq = Array.isArray(extrakt.faq)
-    ? extrakt.faq.filter((f) => f && (f.frage || f.antwort)).slice(0, 6)
-    : [];
+  // Claudes JSON typsicher machen: nur erwartete Felder, jeweils als String/Array.
+  // Schützt davor, dass unerwartete Strukturen (z.B. ein Objekt statt Text) in die
+  // Firmen-Daten und damit in den System-Prompt gelangen.
+  const str = (v) => (typeof v === "string" ? v.trim() : "");
+  const faq = (Array.isArray(extrakt.faq) ? extrakt.faq : [])
+    .map((f) => ({ frage: str(f && f.frage), antwort: str(f && f.antwort) }))
+    .filter((f) => f.frage || f.antwort)
+    .slice(0, 6);
+
+  const name = str(extrakt.name);
+  const angebot = str(extrakt.angebot);
+  const oeffnungszeiten = str(extrakt.oeffnungszeiten);
+  const adresse = str(extrakt.adresse);
+  const kontakt = str(extrakt.kontakt);
+  const weiteres = str(extrakt.weiteres);
 
   const wissen = [
-    extrakt.angebot && ("Angebot: " + extrakt.angebot),
-    extrakt.weiteres && ("Weiteres:\n" + extrakt.weiteres),
+    angebot && ("Angebot: " + angebot),
+    weiteres && ("Weiteres:\n" + weiteres),
   ].filter(Boolean).join("\n\n");
 
   return {
-    name: extrakt.name || "",
-    angebot: extrakt.angebot || "",
-    oeffnungszeiten: extrakt.oeffnungszeiten || "",
-    adresse: extrakt.adresse || "",
-    kontakt: extrakt.kontakt || "",
-    faq,
-    weiteres: extrakt.weiteres || "",
-    wissen,
+    name, angebot, oeffnungszeiten, adresse, kontakt, faq, weiteres, wissen,
     farbe1: farben.farbe1,
     farbe2: farben.farbe2,
     gescannt: [url, ...unterseiten],
