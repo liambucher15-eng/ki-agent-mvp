@@ -113,6 +113,15 @@
     .faq-entfernen:hover { color: #e11d48; }
     .faq-hinzufuegen { font-size: 0.82rem; font-weight: 600; color: var(--indigo); background: none; border: 0; cursor: pointer; padding: 0.3rem 0; }
 
+    /* Persönlichkeits-Auswahl */
+    .pers { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
+    .pers-chip { font: inherit; font-size: 0.87rem; font-weight: 600; cursor: pointer;
+                 padding: 0.5rem 0.9rem; border-radius: 999px; border: 1.5px solid var(--border);
+                 background: #fff; color: var(--text); transition: border-color 0.15s, background 0.15s, color 0.15s; }
+    .pers-chip:hover { border-color: var(--indigo); }
+    .pers-chip.aktiv { border-color: var(--indigo); background: rgba(79,70,229,0.08); color: var(--indigo); }
+    .pers-hinweis { font-size: 0.83rem; color: var(--grau); margin-top: 0.5rem; min-height: 1.1em; }
+
     .drop { display: block; text-align: center; padding: 1.6rem 1rem; border: 1.5px dashed var(--border); border-radius: 14px;
             color: var(--grau); cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-top: 0.5rem; }
     .drop:hover { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
@@ -266,6 +275,16 @@
             <div class="grow"></div>
             <h1>Gestalte<br>deine Marke</h1>
             <div class="hinweis-box"><span>Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</span></div>
+            <label class="feld">Persönlichkeit — wie soll dein Agent klingen?</label>
+            <div class="pers" id="persListe">
+              <button type="button" class="pers-chip" data-ton="professionell">Professionell</button>
+              <button type="button" class="pers-chip" data-ton="freundlich">Freundlich</button>
+              <button type="button" class="pers-chip" data-ton="humorvoll">Humorvoll</button>
+              <button type="button" class="pers-chip" data-ton="sachlich">Sachlich</button>
+              <button type="button" class="pers-chip" data-ton="motivierend">Motivierend</button>
+              <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
+            </div>
+            <p class="pers-hinweis" id="persHinweis"></p>
             <label class="feld">Farben</label>
             <div class="farben">
               <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
@@ -323,7 +342,25 @@
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
   <script>
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich" };
+
+    // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
+    const TON_TEXTE = {
+      professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
+      freundlich:    "warm, freundlich und hilfsbereit; geduldig und zugänglich",
+      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern — aber immer hilfreich",
+      sachlich:      "sachlich, knapp und faktenorientiert, ohne Ausschmückungen",
+      motivierend:   "motivierend und begeisternd; ermutigt die Besucher",
+      luxurioes:     "gehoben, elegant und exklusiv; gewählte, diskrete Sprache",
+    };
+    const TON_HINWEIS = {
+      professionell: "Kompetent und verbindlich — für seriöse Marken.",
+      freundlich:    "Warm und nahbar — der Allrounder.",
+      humorvoll:     "Locker mit Augenzwinkern — für nahbare Marken.",
+      sachlich:      "Knapp und faktenorientiert — für technische Angebote.",
+      motivierend:   "Energiegeladen — für Coaching, Fitness, Bildung.",
+      luxurioes:     "Gehoben und exklusiv — für Premium-Marken.",
+    };
     const linksSchritte = document.querySelectorAll(".schritt-links");
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
@@ -502,6 +539,16 @@
       document.getElementById("fontVorschau").style.fontFamily = '"' + e.target.value + '", sans-serif';
     });
 
+    // --- Persönlichkeit wählen ---
+    const persChips = document.querySelectorAll(".pers-chip");
+    function waehlePers(ton) {
+      daten.persoenlichkeit = ton;
+      persChips.forEach((c) => c.classList.toggle("aktiv", c.dataset.ton === ton));
+      document.getElementById("persHinweis").textContent = TON_HINWEIS[ton] || "";
+    }
+    persChips.forEach((c) => c.addEventListener("click", () => waehlePers(c.dataset.ton)));
+    waehlePers(daten.persoenlichkeit); // Standard vorwählen
+
     function sammle() {
       daten.email = (document.getElementById("email")||{}).value || daten.email;
       daten.webseite = (document.getElementById("webseite")||{}).value || daten.webseite;
@@ -518,7 +565,7 @@
       daten.wissen = [daten.angebot, daten.weiteres].filter(Boolean).join("\n\n");
       daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
       document.getElementById("embed-text").textContent =
-        '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '"><\/script>';
+        '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
     }
     document.getElementById("copy").addEventListener("click", (e) => {
       navigator.clipboard.writeText(document.getElementById("embed-text").textContent); e.target.textContent = "Kopiert ✓";
@@ -534,7 +581,7 @@
       if (daten.kontakt) fakten["Kontakt"] = daten.kontakt;
       const firma = {
         id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
-        persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: "freundlich, hilfsbereit, klar", sprache: "Deutsch" },
+        persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
         fakten, faq: daten.faq, wissen: daten.wissen,
         charakter: { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift },
       };
