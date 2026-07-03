@@ -102,6 +102,7 @@
   <script src="lib/supabase-config.js"></script>
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
+  <script src="lib/chat-ui.js"></script>
   <script>
     const chat = document.getElementById("chat");
     const form = document.getElementById("form");
@@ -114,8 +115,6 @@
     // Welche Firma dieser Agent vertritt.
     // Standard: salbei. Andere Firma testen: "?firma=nordlicht" an die URL hängen.
     const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
-
-    const messages = [];
 
     // Generierte Charakter-Bilder pro Zustand (Phase 1). null = noch keine -> SVG-Fallback.
     // Erwartet später z.B. { idle: "<url>", denken: "<url>", sprechen: "<url>", verlegen: "<url>" }
@@ -148,14 +147,14 @@
       if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
     }
 
-    function addBubble(text, who) {
-      const div = document.createElement("div");
-      div.className = "msg " + who;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
-    }
+    // Gemeinsame Chat-Logik (Sende-Ablauf, Antwort-Deutung, Bubbles) aus lib/chat-ui.js.
+    // Der Avatar bleibt hier lokal, weil index.html eine eigene DOM-Struktur hat.
+    const ui = ChatUI.starten({
+      chat, form, input, send,
+      firmaId: FIRMA_ID,
+      avatar: setCharakter,
+      holeFirmaConfig: () => firmaConfig,
+    });
 
     // Beim Laden: Firma bestimmen (Onboarding-Entwurf hat Vorrang), Aussehen setzen, begrüssen.
     async function start() {
@@ -193,49 +192,8 @@
       if (link) link.href = "charakter.html?firma=" + encodeURIComponent(FIRMA_ID);
 
       setCharakter("freuen", 700);
-      addBubble("Hallo! Schön, dass du da bist. Wie kann ich dir helfen?", "bot");
+      ui.addBubble("Hallo! Schön, dass du da bist. Wie kann ich dir helfen?", "bot");
     }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-
-      addBubble(text, "user");
-      messages.push({ role: "user", content: text });
-      input.value = "";
-      send.disabled = true;
-
-      setCharakter("denken");           // Figur denkt nach
-      const typing = addBubble("tippt…", "bot meta");
-
-      try {
-        const res = await fetch("/.netlify/functions/chat", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages, firmaId: FIRMA_ID, firmaConfig }),
-        });
-        const data = await res.json();
-        typing.remove();
-
-        if (!res.ok) {
-          addBubble("Fehler: " + (data.error || res.status), "bot meta");
-          setCharakter("verlegen", 2500);
-        } else {
-          addBubble(data.reply, "bot");
-          messages.push({ role: "assistant", content: data.reply });
-          const weissNicht = /wei(ss|ß).{0,6}nicht|leider|nicht sicher|kann ich (dir )?nicht/i.test(data.reply);
-          setCharakter(weissNicht ? "verlegen" : "sprechen", 3000);
-        }
-      } catch (err) {
-        typing.remove();
-        addBubble("Verbindungsfehler: " + err.message, "bot meta");
-        setCharakter("verlegen", 2500);
-      } finally {
-        send.disabled = false;
-        input.focus();
-      }
-    });
 
     start();
   </script>

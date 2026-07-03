@@ -102,6 +102,7 @@
   <script src="lib/supabase-config.js"></script>
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
+  <script src="lib/chat-ui.js"></script>
   <script>
     const chat = document.getElementById("chat");
     const form = document.getElementById("form");
@@ -112,7 +113,6 @@
     const kopfName = document.getElementById("kopf-name");
 
     const FIRMA_ID = new URLSearchParams(location.search).get("firma") || "salbei";
-    const messages = [];
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
     let firmaConfig = null;  // Firmen-Daten aus der DB -> an den Chat mitsenden
 
@@ -137,14 +137,6 @@
       if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
     }
 
-    function addBubble(text, who) {
-      const div = document.createElement("div");
-      div.className = "msg " + who;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-      return div;
-    }
     function addTipptAnzeige() {
       const div = document.createElement("div");
       div.className = "msg bot meta";
@@ -180,44 +172,17 @@
         } catch (e) { /* Aussehen ist nicht kritisch */ }
       }
       setCharakter("freuen", 700);
-      addBubble("Hallo! Wie kann ich dir helfen?", "bot");
+      ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-      addBubble(text, "user");
-      messages.push({ role: "user", content: text });
-      input.value = "";
-      send.disabled = true;
-      setCharakter("denken");
-      const typing = addTipptAnzeige();
-      try {
-        const res = await fetch("/.netlify/functions/chat", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ messages, firmaId: FIRMA_ID, firmaConfig }),
-        });
-        const data = await res.json();
-        typing.remove();
-        if (!res.ok) {
-          addBubble("Entschuldige, da ging etwas schief. Versuch es bitte nochmal.", "bot meta");
-          setCharakter("verlegen", 2500);
-        } else {
-          addBubble(data.reply, "bot");
-          messages.push({ role: "assistant", content: data.reply });
-          const weissNicht = /wei(ss|ß).{0,6}nicht|leider|nicht sicher|kann ich (dir )?nicht/i.test(data.reply);
-          setCharakter(weissNicht ? "verlegen" : "sprechen", 3000);
-        }
-      } catch (err) {
-        typing.remove();
-        addBubble("Verbindungsfehler. Bist du online?", "bot meta");
-        setCharakter("verlegen", 2500);
-      } finally {
-        send.disabled = false;
-        input.focus();
-      }
+    // Gemeinsame Chat-Logik aus lib/chat-ui.js. Avatar + Tipp-Anzeige (Punkte)
+    // bleiben lokal, weil das Widget eine eigene DOM-Struktur hat.
+    const ui = ChatUI.starten({
+      chat, form, input, send,
+      firmaId: FIRMA_ID,
+      avatar: setCharakter,
+      tipptAn: addTipptAnzeige,
+      holeFirmaConfig: () => firmaConfig,
     });
 
     start();
