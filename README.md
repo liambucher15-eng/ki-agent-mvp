@@ -16,26 +16,33 @@ Supabase-Tabelle `firmen`). Der gleiche Code baut daraus den System-Prompt
    speichert. Ergebnis: ein Eintrag in der `firmen`-Tabelle.
 2. **Widget** (`public/widget.js` + `widget-frame.html`) — das Einbett-Script für
    fremde Seiten: `<script src=".../widget.js" data-firma="<id>"></script>`.
+   **Update-Vertrag:** Kunden betten die Datei einmal ein — `widget.js` bleibt für
+   immer rückwärtskompatibel (Details im Datei-Kopf); Breaking Changes bekämen
+   eine neue Datei. Plus-Firmen zeigen statt des Orbs eine eigene Figur, die beim
+   Chatten die Zustände (denken/sprechen/verlegen) mitmacht.
 3. **Chat** (`public/index.html`, geteilte Logik in `public/lib/chat-ui.js`) — die
    Chat-Oberfläche; der Agent reagiert als Charakter (idle/denken/sprechen/verlegen).
 
 ## Lokal starten
 1. **Voraussetzungen:** Node.js + Netlify CLI (`npm install -g netlify-cli`)
-2. `npm install` (Abhängigkeiten fürs Backend, z.B. `@netlify/blobs`)
+2. `npm install`
 3. `.env.example` → `.env` kopieren und ausfüllen:
    - `ANTHROPIC_API_KEY` (console.anthropic.com)
    - `SUPABASE_URL` + `SUPABASE_ANON_KEY` (Supabase → Project Settings → API)
+   - `SUPABASE_SERVICE_KEY` (service_role — GEHEIM, nur serverseitig!)
 4. **Supabase einrichten:** `schema.sql` einmal im Supabase-SQL-Editor ausführen
-   (legt `firmen`, `scan_jobs`, `rate_limits` an) und **Anonymous sign-ins**
-   aktivieren (Authentication → Providers).
+   (legt `firmen`, `scan_jobs`, `rate_limits` + Storage-Bucket `charaktere` an)
+   und **Anonymous sign-ins** aktivieren (Authentication → Providers).
+   Bestehende Projekte: stattdessen `migration-m0.sql` + `migration-m1.sql`.
 5. `netlify dev` starten (Frontend + Functions zusammen, meist http://localhost:8888).
 6. Onboarding testen: `/onboarding-aura.html`. Chat einer Seed-Firma:
-   `/?firma=salbei` (oder `?firma=nordlicht`).
+   `/?firma=salbei` (oder `?firma=nordlicht`). Widget-Demo: `/test-einbetten.html`.
+7. Tests: `npm test` (Node-Testrunner, `test/*.test.js`).
 
 ## Deploy (Netlify)
 - Netlify-Konto erstellen, Repo verbinden.
-- `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` im Netlify-Dashboard als
-  Umgebungsvariablen setzen (NICHT die `.env` hochladen).
+- `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`
+  im Netlify-Dashboard als Umgebungsvariablen setzen (NICHT die `.env` hochladen).
 - Der Scan läuft als **Background-Function** (`scan-background.js`) — prüfen, dass
   der Netlify-Plan Background-Functions unterstützt.
 
@@ -57,13 +64,18 @@ Supabase-Tabelle `firmen`). Der gleiche Code baut daraus den System-Prompt
 **Daten:** `data/<firma>.json` (Seed-Firmen), `schema.sql` (DB-Schema).
 
 ## Sicherheit (Stand)
-- **Missbrauchsschutz:** Rate-Limit pro IP (Supabase-RPC `rate_hit`), Input-Limits,
-  Origin-Prüfung, SSRF-Filter im Scan.
+- **Missbrauchsschutz:** Rate-Limit pro IP (Supabase-RPC `rate_hit`) auf ALLEN
+  öffentlichen Functions, Input-Limits, Origin-Prüfung, SSRF-Filter im Scan.
 - **Besitzer-Schutz:** Ein Agent gehört seinem Ersteller (anonyme Auth →
-  `besitzer = auth.uid()`); nur der Besitzer darf ihn überschreiben (RLS). Lesen
-  ist öffentlich, damit das Widget für alle funktioniert.
+  `besitzer = auth.uid()`); nur der Besitzer darf ihn lesen/überschreiben (RLS).
+- **Lese-Isolation (Milestone 0):** Besucher/Widget sehen Firmendaten NUR über
+  die gefilterte `/firma`-Function (keine E-Mail, kein internes Wissen); der
+  Server liest mit dem Service-Key. `scan_jobs` ist komplett Server-exklusiv.
+- **Kleine Daten (Milestone 1):** Charakterbilder liegen im Storage-Bucket
+  `charaktere` (URLs), die `firmen.daten`-Zeile ist auf 200 KB begrenzt;
+  `plan` ist eine eigene Spalte (Stripe-vorbereitet).
 
 ## Anpassen
 - **Fakten/Charakter einer Seed-Firma:** `data/<firma>.json`
 - **Ton/Verhalten für ALLE Firmen:** `lib/baueSystemPrompt.js`
-- **Modell:** `claude-haiku-4-5-20251001` (günstig/schnell)
+- **Modell (eine Stelle für alle Functions):** `lib/claude.js`

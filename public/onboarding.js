@@ -173,21 +173,31 @@
     const MAX_DATEI = 4.5 * 1024 * 1024;
     document.getElementById("docs").addEventListener("change", async (e) => {
       const liste = document.getElementById("doc-liste");
+      // Gelesenes landet in daten.weiteres UND im Textfeld "Weitere Infos" —
+      // sonst überschreibt der nächste sammle()-Lauf (liest das Textfeld) den
+      // Dokument-Text und er ginge stillschweigend verloren.
+      const uebernimm = (zusatz) => {
+        daten.weiteres = (daten.weiteres || "") + zusatz;
+        document.getElementById("p-weiteres").value = daten.weiteres;
+        updatePruefVorschau();
+      };
       for (const f of e.target.files) {
+        // Dateiname per textContent (nie innerHTML mit Nutzer-Daten — XSS-Hygiene)
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
-        eintrag.innerHTML = "<span>"+f.name+"</span><span class='stat'>…</span>"; liste.appendChild(eintrag);
-        const stat = eintrag.querySelector(".stat");
+        const nameEl = document.createElement("span"); nameEl.textContent = f.name;
+        const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "…";
+        eintrag.appendChild(nameEl); eintrag.appendChild(stat); liste.appendChild(eintrag);
         try {
           if (f.size > MAX_DATEI) throw new Error("zu gross");
           const istText = /\.(txt|md|markdown)$/i.test(f.name) || (f.type||"").startsWith("text/");
-          if (istText) { const t = await f.text(); daten.weiteres += "\n\n--- "+f.name+" ---\n"+t.trim(); stat.textContent = "✓"; }
+          if (istText) { const t = await f.text(); uebernimm("\n\n--- "+f.name+" ---\n"+t.trim()); stat.textContent = "✓"; }
           else {
             stat.textContent = "liest";
             const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
             const resp = await fetch("/.netlify/functions/dokument-lesen", { method:"POST", headers:{"content-type":"application/json"},
               body: JSON.stringify({ dateiname:f.name, mediaType:f.type, daten:String(dataUrl).split(",")[1] }) });
             const d = await resp.json(); if (!resp.ok) throw new Error(d.error||"Fehler");
-            daten.weiteres += "\n\n--- "+f.name+" (gelesen) ---\n"+(d.text||""); stat.textContent = "✓ gelesen";
+            uebernimm("\n\n--- "+f.name+" (gelesen) ---\n"+(d.text||"")); stat.textContent = "✓ gelesen";
           }
         } catch (err) { stat.textContent = "✕"; stat.style.color = "#dc2626"; }
       }
@@ -321,17 +331,20 @@
     aktualisiereAgentVorschau(); // Anfangszustand (Orb)
 
     function sammle() {
-      daten.email = (document.getElementById("email")||{}).value || daten.email;
-      daten.webseite = (document.getElementById("webseite")||{}).value || daten.webseite;
-      daten.name = (document.getElementById("p-name")||{}).value || daten.name;
-      daten.angebot = (document.getElementById("p-angebot")||{}).value || daten.angebot;
-      daten.oeffnungszeiten = (document.getElementById("p-oeffnung")||{}).value || daten.oeffnungszeiten;
-      daten.adresse = (document.getElementById("p-adresse")||{}).value || daten.adresse;
-      daten.kontakt = (document.getElementById("p-kontakt")||{}).value || daten.kontakt;
+      // Die Felder sind die WAHRHEIT: direkte Übernahme (kein "||"-Fallback,
+      // sonst liesse sich ein falsch erkannter Wert nie durch Leeren löschen).
+      const wert = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+      daten.email = wert("email");
+      daten.webseite = wert("webseite") || daten.webseite;
+      daten.name = wert("p-name");
+      daten.angebot = wert("p-angebot");
+      daten.oeffnungszeiten = wert("p-oeffnung");
+      daten.adresse = wert("p-adresse");
+      daten.kontakt = wert("p-kontakt");
       daten.faq = faqListe.value();
-      daten.weiteres = (document.getElementById("p-weiteres")||{}).value || daten.weiteres;
-      daten.farbe1 = (document.getElementById("farbe1")||{}).value || daten.farbe1;
-      daten.farbe2 = (document.getElementById("farbe2")||{}).value || daten.farbe2;
+      daten.weiteres = wert("p-weiteres");
+      daten.farbe1 = wert("farbe1") || daten.farbe1;
+      daten.farbe2 = wert("farbe2") || daten.farbe2;
       // Freitext-Wissen fürs Agenten-Backend; Öffnungszeiten/Adresse/Kontakt/FAQ gehen strukturiert in fakten/faq (siehe "fertig")
       daten.wissen = [daten.angebot, daten.weiteres].filter(Boolean).join("\n\n");
       daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";

@@ -10,6 +10,18 @@
 //
 // Bewusst CSS-only (keine externe Animations-Lib auf der fremden Seite laden)
 // und in einem Shadow-DOM gekapselt, damit fremdes CSS nichts stört.
+//
+// ══ UPDATE-VERTRAG ══════════════════════════════════════════════════════════
+// Kunden betten diese Datei EINMAL ein und fassen sie nie wieder an. Darum gilt:
+//   1. /widget.js bleibt für immer rückwärtskompatibel — die data-Attribute
+//      (data-firma, data-farbe, data-farbe2) dürfen nie ihre Bedeutung ändern,
+//      neue Attribute sind immer optional mit sinnvollem Standard.
+//   2. Breaking Changes gibt es nicht in dieser Datei; wäre je einer nötig,
+//      bekäme er eine NEUE Datei (widget2.js) — Bestandskunden bleiben stabil.
+//   3. Fehler dürfen die Kundenseite NIE beeinträchtigen (alles gekapselt,
+//      jeder fetch mit catch, kein globaler Zustand ausser __kiAgentWidget).
+// Version: 2 (Milestone 2 — Figur-Zustände, Kontext-Hinweis, Sprechblase)
+// ════════════════════════════════════════════════════════════════════════════
 
 (function () {
   if (window.__kiAgentWidget) return;
@@ -146,12 +158,21 @@
 
   // Launcher-Darstellung: Plus-Firmen mit eigenem Bild zeigen eine Figur statt
   // des Orbs. Dafür einmal die öffentliche Firmen-Info holen (Name/Charakter/Plan).
+  var figurBilder = null; // Zustands-Bilder (idle/denken/sprechen/verlegen), wenn Plus
+  function setFigurBild(zustand) {
+    if (!figurBilder) return;
+    var bild = figurBilder[zustand] || figurBilder.idle;
+    if (bild) figurEl.style.backgroundImage = 'url("' + bild + '")';
+  }
   fetch(basis + "/.netlify/functions/firma?id=" + encodeURIComponent(firma))
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (f) {
-      var bild = f && f.plan === "plus" && f.charakter && f.charakter.bilder && f.charakter.bilder.idle;
-      if (bild) {
-        figurEl.style.backgroundImage = 'url("' + bild + '")';
+      var bilder = f && f.plan === "plus" && f.charakter && f.charakter.bilder;
+      if (bilder && bilder.idle) {
+        figurBilder = bilder;
+        // Alle Zustands-Bilder vorladen -> Zustandswechsel später ohne Flackern.
+        for (var z in bilder) { if (bilder[z]) { var im = new Image(); im.src = bilder[z]; } }
+        setFigurBild("idle");
         figurEl.hidden = false;
         orbEl.hidden = true;
       }
@@ -209,8 +230,15 @@
   hinweisZu.addEventListener("click", function (e) { e.stopPropagation(); versteckeHinweis(); });
   setTimeout(zeigeHinweis, 9000); // ruhig ein paar Sekunden nach dem Orb
 
-  // Der Chat im iframe kann das Schliessen anfordern (×-Button im Chat-Header).
+  // Nachrichten aus dem Chat-iframe:
+  //  - "ki-agent-schliessen": ×-Button im Chat-Header
+  //  - "ki-agent-zustand": Avatar-Zustand (denken/sprechen/…) -> die Launcher-
+  //    Figur macht mit (nur Plus-Firmen mit eigenen Zustands-Bildern).
   window.addEventListener("message", function (e) {
-    if (e.data && e.data.type === "ki-agent-schliessen") schliesse();
+    if (!e.data) return;
+    if (e.data.type === "ki-agent-schliessen") schliesse();
+    if (e.data.type === "ki-agent-zustand" && typeof e.data.zustand === "string") {
+      setFigurBild(e.data.zustand);
+    }
   });
 })();

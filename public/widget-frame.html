@@ -136,6 +136,10 @@
       } else {
         avatar.className = svgKlasse;
       }
+      // Auch dem Eltern-Fenster (widget.js) melden: Die Launcher-FIGUR auf der
+      // Kundenseite spiegelt den Zustand (denkt/spricht mit), wenn die Firma
+      // eigene Zustands-Bilder hat.
+      try { parent.postMessage({ type: "ki-agent-zustand", zustand: zustand }, "*"); } catch (e) {}
       if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
     }
 
