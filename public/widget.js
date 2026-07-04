@@ -143,7 +143,7 @@
       var f = document.createElement("iframe");
       f.src = baueFrameUrl(); // Seiten-Kontext beim Öffnen mitgeben
       f.title = "Chat";
-      f.setAttribute("allow", "clipboard-write");
+      f.setAttribute("allow", "clipboard-write; microphone");
       panel.appendChild(f);
       geladen = true;
     }

@@ -94,6 +94,7 @@
   <div id="chat"></div>
   <form id="form">
     <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
+    <button id="mic" type="button" class="ki-mic" aria-label="Spracheingabe" title="Sprechen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>
     <button id="send" type="submit">Senden</button>
   </form>
   <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="charakter.html">Eigenen Charakter erstellen →</a></p>
@@ -155,6 +156,7 @@
       avatar: setCharakter,
       holeFirmaConfig: () => firmaConfig,
     });
+    ChatUI.spracheAn(document.getElementById("mic"), input);
 
     // Beim Laden: Firma bestimmen (Onboarding-Entwurf hat Vorrang), Aussehen setzen, begrüssen.
     async function start() {

@@ -39,6 +39,47 @@ window.ChatUI = (function () {
     document.head.appendChild(s);
   }
 
+  // Spracheingabe (Web Speech API). Aktiviert den Mikrofon-Knopf, wenn der Browser
+  // es kann; sonst wird der Knopf ausgeblendet. Gesprochenes landet live im
+  // Eingabefeld — abgeschickt wird bewusst NICHT automatisch (Nutzer prüft/ergänzt).
+  let micStilDa = false;
+  function sorgeFuerMicStil() {
+    if (micStilDa) return;
+    micStilDa = true;
+    const s = document.createElement("style");
+    s.textContent =
+      ".ki-mic{flex-shrink:0;width:40px;height:40px;border-radius:10px;border:1px solid #d1d5db;" +
+      "background:#fff;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;" +
+      "transition:color .15s,border-color .15s,background .15s}" +
+      ".ki-mic:hover{color:var(--farbe,#4F46E5);border-color:var(--farbe,#4F46E5)}" +
+      ".ki-mic.hoert{color:#fff;background:#ef4444;border-color:#ef4444;animation:ki-mic-puls 1.2s ease-in-out infinite}" +
+      "@keyframes ki-mic-puls{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}";
+    document.head.appendChild(s);
+  }
+  function spracheAn(mic, input) {
+    if (!mic) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { mic.style.display = "none"; return; } // Browser kann's nicht
+    sorgeFuerMicStil();
+    let rec = null, laeuft = false;
+    mic.addEventListener("click", () => {
+      if (laeuft && rec) { rec.stop(); return; }
+      rec = new SR();
+      rec.lang = "de-DE";
+      rec.interimResults = true;
+      rec.continuous = false;
+      rec.onstart = () => { laeuft = true; mic.classList.add("hoert"); };
+      rec.onresult = (e) => {
+        let t = "";
+        for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+        input.value = t;
+      };
+      rec.onerror = () => { laeuft = false; mic.classList.remove("hoert"); };
+      rec.onend = () => { laeuft = false; mic.classList.remove("hoert"); input.focus(); };
+      try { rec.start(); } catch (e) {}
+    });
+  }
+
   // Startet die Chat-Steuerung und hängt den Absende-Handler ans Formular.
   // cfg:
   //   chat, form, input, send   – DOM-Elemente
@@ -137,5 +178,5 @@ window.ChatUI = (function () {
     return { addBubble, messages, zeigeVorschlaege };
   }
 
-  return { istUnsicher, starten, vorschlaegeAus };
+  return { istUnsicher, starten, vorschlaegeAus, spracheAn };
 })();
