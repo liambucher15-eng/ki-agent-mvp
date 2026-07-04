@@ -18,14 +18,13 @@ create table if not exists scan_jobs (
 
 alter table scan_jobs enable row level security;
 
--- Jobs sind kurzlebig und nicht sensibel (nur Scans öffentlicher Webseiten),
--- die id ist eine nicht erratbare UUID -> offene Policies sind hier vertretbar.
+-- KEINE Policies (Milestone 0): Nur der Server schreibt/liest — die Functions
+-- nutzen den Service-Key (SUPABASE_SERVICE_KEY), der RLS umgeht. Der öffentliche
+-- anon-Key kommt an diese Tabelle nicht mehr heran (kein Job-Spam, kein
+-- Überschreiben fremder Jobs). Alte Jobs räumt scan-background nebenbei weg.
 drop policy if exists "scan_jobs lesen"   on scan_jobs;
 drop policy if exists "scan_jobs anlegen" on scan_jobs;
 drop policy if exists "scan_jobs aendern" on scan_jobs;
-create policy "scan_jobs lesen"   on scan_jobs for select using (true);
-create policy "scan_jobs anlegen" on scan_jobs for insert with check (true);
-create policy "scan_jobs aendern" on scan_jobs for update using (true);
 
 -- ────────────────────────────────────────────────────────────────
 -- 2) firmen — gespeicherte Agenten (Onboarding-Abschluss + Widget lesen)
@@ -40,9 +39,14 @@ create table if not exists firmen (
 
 alter table firmen enable row level security;
 
--- Öffentlich lesbar, damit das Chat-Widget für alle Besucher funktioniert.
+-- Lesen NUR als Besitzer (Milestone 0): daten enthält private Felder (E-Mail,
+-- internes Wissen). Besucher/Widget bekommen Firmendaten ausschliesslich über
+-- die gefilterte /firma-Function (Server, Service-Key). Der Test-Chat des
+-- Erstellers (index.html) liest weiterhin direkt — als Besitzer erlaubt.
 drop policy if exists "firmen lesen" on firmen;
-create policy "firmen lesen" on firmen for select using (true);
+drop policy if exists "firmen lesen (nur Besitzer)" on firmen;
+create policy "firmen lesen (nur Besitzer)" on firmen
+  for select using (auth.uid() = besitzer);
 
 -- Schreiben nur als Besitzer: besitzer muss der eingeloggten (auch anonymen)
 -- Nutzer-ID entsprechen. So kann niemand den Agenten einer fremden Firma

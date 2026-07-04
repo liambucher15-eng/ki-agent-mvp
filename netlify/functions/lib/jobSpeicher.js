@@ -3,21 +3,23 @@
 // liest es. So teilen sich zwei getrennte Function-Aufrufe denselben Zustand —
 // lokal (netlify dev) wie live identisch.
 //
-// Nutzt den öffentlichen anon-Key (kein Geheimnis). Zugriff regelt die RLS-Policy
-// in schema.sql. Kein zusätzliches npm-Paket nötig — reines fetch gegen PostgREST.
+// Nutzt bevorzugt den SERVICE-Key (nur serverseitig, umgeht RLS) — seit der
+// Milestone-0-Migration hat scan_jobs KEINE offenen Policies mehr, d.h. nur noch
+// der Server darf schreiben/lesen. Fallback anon-Key nur für alte Setups.
+// Kein zusätzliches npm-Paket nötig — reines fetch gegen PostgREST.
 
 const URL_BASIS = process.env.SUPABASE_URL || "";
-const ANON = process.env.SUPABASE_ANON_KEY || "";
+const KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 function konfiguriert() {
-  return !!URL_BASIS && !!ANON;
+  return !!URL_BASIS && !!KEY;
 }
 
 function kopf() {
   return {
     "content-type": "application/json",
-    apikey: ANON,
-    authorization: "Bearer " + ANON,
+    apikey: KEY,
+    authorization: "Bearer " + KEY,
   };
 }
 
@@ -48,4 +50,18 @@ async function leseJob(id) {
   return Array.isArray(zeilen) && zeilen.length ? zeilen[0] : null;
 }
 
-module.exports = { setzeJob, leseJob, konfiguriert };
+// Alte Jobs löschen (älter als 1 Tag). Wird von der Background-Function bei jedem
+// Scan nebenbei aufgerufen — so wächst die Tabelle nicht unbegrenzt, ganz ohne Cron.
+// Fehler sind unkritisch (nächster Scan räumt wieder auf).
+async function raeumeAlteJobs() {
+  if (!konfiguriert()) return;
+  const grenze = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  try {
+    await fetch(URL_BASIS + "/rest/v1/scan_jobs?erstellt=lt." + encodeURIComponent(grenze), {
+      method: "DELETE",
+      headers: kopf(),
+    });
+  } catch { /* beim nächsten Mal */ }
+}
+
+module.exports = { setzeJob, leseJob, konfiguriert, raeumeAlteJobs };

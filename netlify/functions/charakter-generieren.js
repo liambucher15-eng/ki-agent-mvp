@@ -8,8 +8,14 @@
 
 const { ladeFirma } = require("./lib/firmen");
 const { baueCharakterPrompt } = require("./lib/baueCharakterPrompt");
+const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
 const ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
+
+// Input-Limits. WICHTIG: Sobald hier die echte Bild-API (Higgsfield) angeschlossen
+// wird, ist das ein KOSTEN-Endpunkt — die Schutzschicht muss vorher schon stehen.
+const MAX_BESCHREIBUNG = 500;
+const MAX_BASE64 = 6_700_000; // ~5 MB Rohdaten (wie dokument-lesen.js)
 
 function escapeXml(s) {
   return String(s).replace(/[&<>"]/g, (c) =>
@@ -55,6 +61,12 @@ exports.handler = async (event) => {
   });
 
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
+  if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
+
+  // Rate-Limit: 10 Generierungen pro Minute und IP
+  if (!(await rateOk("char:" + holeIp(event), 10, 60))) {
+    return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
+  }
 
   let body;
   try {
@@ -63,6 +75,14 @@ exports.handler = async (event) => {
     return json(400, { error: "Ungültiges JSON" });
   }
   const { firmaId, modus, beschreibung, bild, farbe: farbeIn, akzent: akzentIn } = body;
+
+  // Input-Limits prüfen (Beschreibung + Bild-Größe)
+  if (beschreibung != null && (typeof beschreibung !== "string" || beschreibung.length > MAX_BESCHREIBUNG)) {
+    return json(413, { error: "Beschreibung zu lang (max. " + MAX_BESCHREIBUNG + " Zeichen)." });
+  }
+  if (bild != null && (typeof bild !== "string" || bild.length > MAX_BASE64)) {
+    return json(413, { error: "Bild zu groß (max. ca. 5 MB)." });
+  }
 
   // Farben direkt nehmen (Onboarding/Entwurf) ODER aus einer bekannten Firma holen (Seed).
   let farbe = farbeIn;

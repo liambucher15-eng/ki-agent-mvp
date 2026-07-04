@@ -99,10 +99,9 @@
   </form>
   <div class="fuss">mit KI-Agent</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
-  <script src="lib/supabase-config.js"></script>
-  <script src="lib/auth.js"></script>
-  <script src="lib/store.js"></script>
+  <!-- Bewusst OHNE Supabase-Skripte (Milestone 0): Das Widget läuft im BESUCHER-
+       Kontext und liest Firmendaten ausschliesslich über die gefilterte
+       /firma-Function — keine privaten Felder, kein Direktzugriff auf die DB. -->
   <script src="lib/chat-ui.js"></script>
   <script>
     const chat = document.getElementById("chat");
@@ -118,7 +117,6 @@
     // Seiten-Kontext vom Widget (welche Unterseite schaut der Besucher an?)
     const seiteInfo = { pfad: _p.get("pfad") || "", titel: _p.get("titel") || "" };
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
-    let firmaConfig = null;  // Firmen-Daten aus der DB -> an den Chat mitsenden
 
     // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---
     document.getElementById("schliessen").addEventListener("click", () => {
@@ -156,28 +154,21 @@
       if (c.bilder) bilder = c.bilder;
     }
 
-    // Firma laden: erst aus der DB (öffentlich lesbar -> funktioniert für alle Besucher),
-    // sonst Seed-Firma vom Backend (salbei/nordlicht).
+    // Firma laden — NUR über die gefilterte /firma-Function (Seed + Onboarding-
+    // Firmen). Liefert auch faq/fakten für die Vorschlags-Chips, aber keine
+    // privaten Felder. Der Prompt wird sowieso serverseitig gebaut (chat.js).
     async function start() {
       let quelle = null;
-      const eintrag = window.Store ? await Store.ladeFirma(FIRMA_ID) : null;
-      if (eintrag) {
-        firmaConfig = eintrag;
-        quelle = eintrag;
-        setFarben(eintrag.charakter || {});
-        kopfName.textContent = (eintrag.persona && eintrag.persona.name) || eintrag.name || "Assistent";
-      } else {
-        try {
-          const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
-          if (res.ok) {
-            const f = await res.json();
-            quelle = f;
-            setFarben(f.charakter || {});
-            if (f.persona) kopfName.textContent = f.persona;
-            else if (f.name) kopfName.textContent = f.name;
-          }
-        } catch (e) { /* Aussehen ist nicht kritisch */ }
-      }
+      try {
+        const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
+        if (res.ok) {
+          const f = await res.json();
+          quelle = f;
+          setFarben(f.charakter || {});
+          if (f.persona) kopfName.textContent = f.persona;
+          else if (f.name) kopfName.textContent = f.name;
+        }
+      } catch (e) { /* Aussehen ist nicht kritisch */ }
       setCharakter("freuen", 700);
       ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
       ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
@@ -190,7 +181,6 @@
       firmaId: FIRMA_ID,
       avatar: setCharakter,
       tipptAn: addTipptAnzeige,
-      holeFirmaConfig: () => firmaConfig,
       seiteInfo: seiteInfo,
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);

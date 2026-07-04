@@ -7,7 +7,7 @@
 // asynchron (Netlify-Konvention).
 
 const { scanneWebseite } = require("./lib/webseiteScannen");
-const { setzeJob } = require("./lib/jobSpeicher");
+const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
 const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
 exports.handler = async (event) => {
@@ -30,6 +30,9 @@ exports.handler = async (event) => {
     console.error("scan-background: Job konnte nicht angelegt werden:", e.message);
     return { statusCode: 202 };
   }
+
+  // Nebenbei alte Jobs (> 1 Tag) wegräumen — hält die Tabelle klein, ohne Cron.
+  await raeumeAlteJobs();
 
   try {
     const ergebnis = await scanneWebseite(url);

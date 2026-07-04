@@ -9,18 +9,22 @@
 const { ladeFirma: ladeSeed } = require("./firmen");
 
 const URL_BASIS = process.env.SUPABASE_URL || "";
-const ANON = process.env.SUPABASE_ANON_KEY || "";
+// Bevorzugt der SERVICE-Key (nur serverseitig, umgeht RLS): Seit der Milestone-0-
+// Migration dürfen Anonyme die firmen-Tabelle nicht mehr lesen — der Browser sieht
+// Firmendaten nur noch über die gefilterte /firma-Function. Fallback anon-Key,
+// damit alte Setups (ohne Migration) weiterlaufen.
+const KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 async function ladeFirmaServer(id) {
   if (!id) return null;
   const seed = ladeSeed(id);
   if (seed) return seed;
 
-  if (!URL_BASIS || !ANON) return null;
+  if (!URL_BASIS || !KEY) return null;
   try {
     const res = await fetch(
       URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(id) + "&select=daten",
-      { headers: { apikey: ANON, authorization: "Bearer " + ANON } }
+      { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
     );
     if (!res.ok) return null;
     const zeilen = await res.json();

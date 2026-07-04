@@ -30,7 +30,11 @@ const Store = (function () {
     abmelden() { localStorage.removeItem(NUTZER_KEY); },
     macheId,
 
-    // Eine Firma laden (öffentlich lesbar -> Chat funktioniert für alle Besucher).
+    // Eine Firma laden. Seit Milestone 0 lässt die RLS-Policy nur noch den
+    // BESITZER lesen (Datenschutz: daten enthält E-Mail + internes Wissen).
+    // Für Besucher/Widget gibt es die gefilterte /firma-Function. Diese Funktion
+    // hier ist also für Onboarding/Test-Chat im Browser des Erstellers gedacht;
+    // für Fremde liefert sie null.
     async ladeFirma(id) {
       if (sb) {
         const { data, error } = await sb.from("firmen").select("daten").eq("id", id).maybeSingle();
