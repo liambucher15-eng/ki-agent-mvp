@@ -411,6 +411,8 @@
         plan: daten.plan,
         persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
         fakten, faq: daten.faq, wissensquellen,
+        // Jeder Agent kann von Anfang an Kontaktanfragen aufnehmen (Lead-Capture).
+        faehigkeiten: ["kontakt"],
         charakter,
       };
       try {

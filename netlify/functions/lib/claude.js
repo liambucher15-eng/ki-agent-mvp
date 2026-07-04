@@ -9,9 +9,10 @@ const MODELL = "claude-haiku-4-5-20251001"; // günstig + schnell; mehr Qualitä
 // Behandlung (HTTP-Antwort bauen vs. werfen) bleibt bewusst beim Aufrufer,
 // weil sie sich je Function unterscheidet.
 // Bei Zeitüberschreitung wirft fetch einen AbortError (wie bisher).
-async function rufeClaude({ system, messages, maxTokens = 600, temperature = 0.5, timeout = 25000 }) {
+async function rufeClaude({ system, messages, maxTokens = 600, temperature = 0.5, timeout = 25000, tools }) {
   const body = { model: MODELL, max_tokens: maxTokens, temperature, messages };
   if (system) body.system = system;
+  if (tools && tools.length) body.tools = tools;
 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeout);

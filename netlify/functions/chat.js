@@ -11,6 +11,8 @@ const { baueSystemPrompt } = require("./lib/baueSystemPrompt");
 const { ladeFirmaServer } = require("./lib/firmaLaden");
 const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz");
 const { rufeClaude } = require("./lib/claude");
+const { baueTools } = require("./lib/faehigkeiten");
+const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 
 // Input-Limits (bremsen Kostenmissbrauch)
 const MAX_NACHRICHTEN = 40;
@@ -73,17 +75,67 @@ exports.handler = async (event) => {
     }
   }
 
-  try {
-    const { ok, data } = await rufeClaude({
-      system: SYSTEM_PROMPT,
-      messages,
-      maxTokens: 600,
-      temperature: 0.5,
-    });
-    if (!ok) return json(502, { error: data.error?.message || "API-Fehler" });
+  // Fähigkeiten (Tools) dieser Firma — z.B. "kontakt_hinterlassen". Ohne
+  // Fähigkeiten bleibt der Agent ein reiner Antwort-Bot (kein Tool-Loop).
+  const tools = baueTools(firma);
+  // Bei Fähigkeiten mehr Ausgabe-Budget: Tool-Aufruf + finale Antwort in einem Turn.
+  const maxTokens = tools.length ? 900 : 600;
 
-    const reply = data.content?.[0]?.text ?? "(keine Antwort)";
-    return json(200, { reply });
+  // Verlauf, den wir während des Tool-Loops erweitern (Kopie — Original bleibt).
+  const verlauf = messages.slice();
+  const letzteFrage = [...messages].reverse().find((m) => m && m.role === "user");
+
+  try {
+    let reply = "(keine Antwort)";
+    let toolErgebnis = null; // was das Tool bewirkt hat (für die Antwort an den Nutzer)
+
+    // Tool-Loop: max. 3 Runden (Nachfragen -> Tool -> finale Antwort). Ein hartes
+    // Limit verhindert Endlosschleifen und Kostenausreißer.
+    for (let runde = 0; runde < 3; runde++) {
+      const { ok, data } = await rufeClaude({
+        system: SYSTEM_PROMPT,
+        messages: verlauf,
+        maxTokens,
+        temperature: 0.5,
+        tools: tools.length ? tools : undefined,
+      });
+      if (!ok) return json(502, { error: data.error?.message || "API-Fehler" });
+
+      const bloecke = Array.isArray(data.content) ? data.content : [];
+      // Text der Runde (falls vorhanden) als Antwort merken.
+      const text = bloecke.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+      if (text) reply = text;
+
+      // Kein Tool angefragt -> fertig.
+      if (data.stop_reason !== "tool_use") break;
+
+      // Tool(s) ausführen und die Ergebnisse zurückgeben, damit Claude die finale
+      // Antwort formulieren kann.
+      verlauf.push({ role: "assistant", content: bloecke });
+      const toolResults = [];
+      for (const b of bloecke) {
+        if (b.type !== "tool_use") continue;
+        let ergebnis = "OK";
+        if (b.name === "kontakt_hinterlassen") {
+          const eingabe = b.input || {};
+          await speichereKontakt(firma.id || firmaId, eingabe);
+          toolErgebnis = "kontakt";
+          ergebnis = "Kontaktanfrage gespeichert. Das Team meldet sich.";
+        }
+        toolResults.push({ type: "tool_result", tool_use_id: b.id, content: ergebnis });
+      }
+      verlauf.push({ role: "user", content: toolResults });
+    }
+
+    // Gespräch mitschreiben (datensparsam, fire-and-forget — blockt die Antwort nicht).
+    speichereGespraech(
+      firma.id || firmaId,
+      typeof letzteFrage?.content === "string" ? letzteFrage.content : "",
+      reply,
+      seiteInfo && seiteInfo.pfad
+    ).catch(() => {});
+
+    return json(200, { reply, aktion: toolErgebnis || undefined });
   } catch (err) {
     return json(500, { error: err.message });
   }

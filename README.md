@@ -25,7 +25,17 @@ Supabase-Tabelle `firmen`). Der gleiche Code baut daraus den System-Prompt
 4. **Dashboard** (`public/dashboard.html`) — Wissen pflegen: Quellen (Scan/Dokument/
    Notiz, je mit Stand) bearbeiten, löschen, ergänzen; Webseite **neu scannen** mit
    Alt/Neu-Vergleich vor der Übernahme. Wissen liegt als `wissensquellen[]` in den
-   Firmen-Daten (`lib/baueSystemPrompt.js` baut daraus den Prompt-Block).
+   Firmen-Daten (`lib/baueSystemPrompt.js` baut daraus den Prompt-Block). Dazu:
+   **Posteingang** (vom Agenten aufgenommene Kontaktanfragen) und **Gespräche**
+   (was Besucher gefragt haben) — beides nur für den Besitzer sichtbar (RLS).
+
+## Vom Chatbot zum Agenten (Fähigkeiten)
+Ein Agent kann nicht nur antworten, sondern **handeln**. Fähigkeiten stehen
+datengetrieben in `daten.faehigkeiten` (z.B. `["kontakt"]`); `lib/faehigkeiten.js`
+macht daraus Claude-Tools, und `chat.js` führt sie in einem Tool-Loop aus.
+Erste Fähigkeit: **`kontakt_hinterlassen`** — der Agent nimmt Kontaktdaten auf
+(Lead-Capture) und legt sie in `kontaktanfragen` ab. Neue Fähigkeit = ein Eintrag
+im Katalog + ein Handler, kein firmenspezifischer Code.
 
 ## Lokal starten
 1. **Voraussetzungen:** Node.js + Netlify CLI (`npm install -g netlify-cli`)

@@ -51,6 +51,20 @@
                      max-height: 220px; overflow-y: auto; margin: 0.3rem 0 0.7rem; }
     a { color: var(--indigo); }
     [hidden] { display: none !important; }
+    .lead { border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 0.9rem; margin: 0.5rem 0; }
+    .lead.erledigt { opacity: 0.55; }
+    .lead-kopf { display: flex; align-items: baseline; gap: 0.5rem; }
+    .lead-name { font-weight: 600; }
+    .lead-kontakt { color: var(--indigo); font-size: 0.88rem; }
+    .lead-zeit { color: var(--grau-hell); font-size: 0.78rem; margin-left: auto; }
+    .lead-nachricht { font-size: 0.9rem; margin-top: 0.35rem; line-height: 1.45; }
+    .lead-erledigen { margin-top: 0.5rem; font-size: 0.82rem; font-weight: 600; color: var(--gruen);
+                      background: none; border: 0; cursor: pointer; padding: 0; }
+    .gespraech { border-left: 2px solid var(--border); padding: 0.3rem 0 0.3rem 0.75rem; margin: 0.6rem 0; }
+    .gespraech-f { font-weight: 600; font-size: 0.9rem; }
+    .gespraech-a { color: var(--grau); font-size: 0.86rem; margin-top: 0.2rem; line-height: 1.45; }
+    .gespraech-zeit { color: var(--grau-hell); font-size: 0.75rem; margin-top: 0.15rem; }
+    .leer { color: var(--grau-hell); font-size: 0.88rem; }
     .kopfzeile { display: flex; align-items: center; gap: 0.8rem; }
     .kopfzeile .zurueck { background: none; border: 0; color: var(--grau); cursor: pointer; font: inherit; padding: 0.2rem 0.4rem; }
   </style>
@@ -71,6 +85,14 @@
       <h1 id="ed-name" style="margin:0;"></h1>
     </div>
     <p class="sub"><a id="ed-chatlink" target="_blank">Test-Chat öffnen →</a></p>
+
+    <h2>Posteingang <span id="lead-zahl" class="sub" style="font-weight:400;"></span></h2>
+    <p class="sub">Kontaktanfragen, die dein Agent für dich aufgenommen hat.</p>
+    <div id="leads-liste"></div>
+
+    <h2>Letzte Gespräche</h2>
+    <p class="sub">Was Besucher deinen Agenten gefragt haben.</p>
+    <div id="gespraeche-liste"></div>
 
     <h2>Wissen (Quellen)</h2>
     <p class="sub">Jede Quelle kennt ihre Herkunft und ihren Stand. Was du hier löschst, weiss der Agent ab sofort nicht mehr.</p>
@@ -158,8 +180,70 @@
       $("rescan-status").textContent = "";
       $("speicher-status").textContent = "";
       zeigeQuellen();
+      ladeLeads();
+      ladeGespraeche();
     }
     $("zurueck").addEventListener("click", zeigeListe);
+
+    // ---------- Posteingang (Leads) + Gespräche ----------
+    // Beides ist NUR für den Firmen-Besitzer lesbar (RLS über die anonyme
+    // Sitzung). Ohne Supabase (Simulation) bleiben die Listen leer.
+    const sb = (window.Auth && window.Auth.konfiguriert) ? window.Auth.client : null;
+    function zeit(iso) {
+      try { return new Date(iso).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" }); }
+      catch { return ""; }
+    }
+    async function ladeLeads() {
+      const el = $("leads-liste"), zahl = $("lead-zahl");
+      el.textContent = ""; zahl.textContent = "";
+      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; return; }
+      const { data, error } = await sb.from("kontaktanfragen").select("*")
+        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
+      if (error || !data || !data.length) {
+        el.innerHTML = '<p class="leer">Noch keine Kontaktanfragen.</p>'; return;
+      }
+      const offen = data.filter((l) => !l.erledigt).length;
+      zahl.textContent = offen ? "· " + offen + " offen" : "";
+      data.forEach((lead) => {
+        const box = document.createElement("div");
+        box.className = "lead" + (lead.erledigt ? " erledigt" : "");
+        const kopf = document.createElement("div"); kopf.className = "lead-kopf";
+        const name = document.createElement("span"); name.className = "lead-name"; name.textContent = lead.name || "Ohne Namen";
+        const kontakt = document.createElement("span"); kontakt.className = "lead-kontakt"; kontakt.textContent = lead.kontakt || "";
+        const t = document.createElement("span"); t.className = "lead-zeit"; t.textContent = zeit(lead.erstellt);
+        kopf.appendChild(name); kopf.appendChild(kontakt); kopf.appendChild(t);
+        const nachricht = document.createElement("div"); nachricht.className = "lead-nachricht"; nachricht.textContent = lead.nachricht;
+        box.appendChild(kopf); box.appendChild(nachricht);
+        if (!lead.erledigt) {
+          const btn = document.createElement("button"); btn.className = "lead-erledigen"; btn.textContent = "✓ Als erledigt markieren";
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            const { error: e2 } = await sb.from("kontaktanfragen").update({ erledigt: true }).eq("id", lead.id);
+            if (!e2) ladeLeads();
+          });
+          box.appendChild(btn);
+        }
+        el.appendChild(box);
+      });
+    }
+    async function ladeGespraeche() {
+      const el = $("gespraeche-liste");
+      el.textContent = "";
+      if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; return; }
+      const { data, error } = await sb.from("gespraeche").select("frage,antwort,erstellt")
+        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(30);
+      if (error || !data || !data.length) {
+        el.innerHTML = '<p class="leer">Noch keine Gespräche.</p>'; return;
+      }
+      data.forEach((g) => {
+        const box = document.createElement("div"); box.className = "gespraech";
+        const f = document.createElement("div"); f.className = "gespraech-f"; f.textContent = g.frage;
+        const a = document.createElement("div"); a.className = "gespraech-a"; a.textContent = g.antwort || "";
+        const t = document.createElement("div"); t.className = "gespraech-zeit"; t.textContent = zeit(g.erstellt);
+        box.appendChild(f); box.appendChild(a); box.appendChild(t);
+        el.appendChild(box);
+      });
+    }
 
     function zeigeQuellen() {
       const liste = $("quellen-liste");

@@ -34,13 +34,20 @@ function baueSystemPrompt(firma) {
   const p = firma.persona || {};
   const wissen = baueWissensText(firma);
 
+  const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
+  const kontaktRegel = kannKontakt
+    ? `\n- Wenn du eine Frage NICHT beantworten kannst oder der Besucher kontaktiert werden ` +
+      `möchte (Rückruf, Reservierung, Anfrage), nimm seine Kontaktdaten mit dem Werkzeug ` +
+      `„kontakt_hinterlassen" auf, statt ihn wegzuschicken.`
+    : "";
+
   return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
 Ton: ${p.ton}. Sprich ${p.sprache || "Deutsch"}, warm und knapp.
 
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den Informationen unten.
+- ANTWORTE nur aus den Informationen unten.${kontaktRegel}
 
 WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
 dass du es nicht weisst, und biete an, das Team zu fragen.
