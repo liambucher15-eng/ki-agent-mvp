@@ -136,6 +136,49 @@
                        box-shadow: 0 0 0 1.5px var(--border); margin-bottom: 0.3rem; }
     .font-vorschau { margin-top: 0.6rem; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 12px; font-size: 1.1rem; }
 
+    /* Schritt "Dein Agent" */
+    .agent-wahl { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.3rem; }
+    .agent-opt { position: relative; text-align: left; background: #fff; border: 1.5px solid var(--border);
+                 border-radius: 14px; padding: 0.9rem 0.85rem; cursor: pointer; font: inherit;
+                 display: flex; flex-direction: column; gap: 0.15rem; transition: border-color 0.15s, box-shadow 0.15s; }
+    .agent-opt:hover { border-color: var(--indigo); }
+    .agent-opt.aktiv { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+    .agent-opt.gesperrt { opacity: 0.7; }
+    .agent-opt-titel { font-weight: 700; font-size: 0.92rem; }
+    .agent-opt-sub { font-size: 0.76rem; color: var(--grau); line-height: 1.3; }
+    .agent-badge { position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.66rem; font-weight: 700;
+                   color: #fff; background: linear-gradient(135deg, var(--indigo), var(--coral)); border-radius: 999px; padding: 0.1rem 0.5rem; }
+    .agent-orb-mini { width: 46px; height: 46px; border-radius: 50%; margin-bottom: 0.35rem;
+                      background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0) 46%),
+                                  radial-gradient(circle at 70% 76%, var(--vor-f2, #FB7185), var(--vor-f1, #4F46E5) 72%);
+                      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.2), inset 0 4px 8px rgba(255,255,255,0.25); }
+    .agent-figur-mini { width: 46px; height: 46px; border-radius: 50%; margin-bottom: 0.35rem; background: var(--border);
+                        display: flex; align-items: center; justify-content: center; color: var(--grau-hell); font-size: 1.4rem; overflow: hidden; }
+    .agent-figur-mini img { width: 100%; height: 100%; object-fit: cover; }
+
+    .tabs { display: flex; gap: 0.3rem; margin: 0.9rem 0 0.6rem; border-bottom: 1.5px solid var(--border); }
+    .tab { font: inherit; font-size: 0.85rem; font-weight: 600; background: none; border: 0; cursor: pointer;
+           padding: 0.4rem 0.6rem; color: var(--grau); border-bottom: 2px solid transparent; margin-bottom: -1.5px; }
+    .tab.aktiv { color: var(--indigo); border-bottom-color: var(--indigo); }
+    .prompts { margin-top: 0.6rem; }
+    .prompt-box { background: #0f1424; color: #e5e7eb; border-radius: 10px; padding: 0.6rem 0.7rem; font-size: 0.72rem;
+                  line-height: 1.45; white-space: pre-wrap; position: relative; margin-bottom: 0.4rem; }
+    .prompt-box .copy { position: absolute; top: 0.35rem; right: 0.35rem; background: rgba(255,255,255,0.14); color: #fff;
+                        border: 0; border-radius: 6px; padding: 0.15rem 0.45rem; font-size: 0.68rem; cursor: pointer; }
+
+    /* Live-Vorschau im rechten Panel (Orb bzw. Figur) */
+    .vorschau { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.7rem; }
+    .vorschau-orb { width: 130px; height: 130px; border-radius: 50%;
+                    background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0) 46%),
+                                radial-gradient(circle at 70% 76%, var(--vor-f2, #FB7185), var(--vor-f1, #4F46E5) 72%);
+                    box-shadow: 0 14px 34px rgba(0,0,0,0.28), inset 0 -8px 16px rgba(0,0,0,0.2), inset 0 8px 14px rgba(255,255,255,0.28);
+                    animation: vor-schweben 5s ease-in-out infinite; }
+    .vorschau-figur { width: 150px; height: 150px; border-radius: 20px; overflow: hidden; background: rgba(255,255,255,0.25);
+                      box-shadow: 0 14px 34px rgba(0,0,0,0.28); animation: vor-schweben 5s ease-in-out infinite; }
+    .vorschau-figur img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vorschau-label { color: #fff; font-weight: 600; font-size: 0.85rem; text-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+    @keyframes vor-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
     .code-box { background: #0f1424; color: #e5e7eb; border-radius: 12px; padding: 0.85rem 0.9rem; font-size: 0.78rem;
                 font-family: "Geist Mono","SF Mono",monospace; line-height: 1.5; word-break: break-all; position: relative; margin-top: 0.8rem; }
     .code-box .copy { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.12); color: #fff;
@@ -304,8 +347,47 @@
             <div class="grow"></div>
           </div>
 
-          <!-- 7 Fertig -->
-          <div class="schritt-links" data-step="6" hidden>
+          <!-- 7 Dein Agent -->
+          <div class="schritt-links" data-step="6" id="schrittAgent" hidden>
+            <h1 class="klein">Wie sieht dein<br>Agent aus?</h1>
+            <div class="agent-wahl">
+              <button type="button" class="agent-opt aktiv" data-typ="orb" id="optOrb">
+                <span class="agent-orb-mini"></span>
+                <span class="agent-opt-titel">Leucht-Orb</span>
+                <span class="agent-opt-sub">In deinen Farben. Im Basis-Plan enthalten.</span>
+              </button>
+              <button type="button" class="agent-opt gesperrt" data-typ="figur" id="optFigur">
+                <span class="agent-badge">Plus</span>
+                <span class="agent-figur-mini" id="figurMini">★</span>
+                <span class="agent-opt-titel">Eigene Figur</span>
+                <span class="agent-opt-sub">Bild hochladen oder erstellen.</span>
+              </button>
+            </div>
+            <p class="mini" id="plusHinweis" style="text-align:left;"><a class="link" id="plusTesten">Plus testen (Simulation) →</a></p>
+
+            <div id="figurEditor" hidden>
+              <div class="tabs">
+                <button type="button" class="tab aktiv" data-tab="upload">Bild hochladen</button>
+                <button type="button" class="tab" data-tab="erstellen">Charakter erstellen</button>
+              </div>
+              <div class="tab-inhalt" data-tab="upload">
+                <label class="drop" for="charBild">Bild hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">Ein Bild reicht — gilt für alle Ausdrücke</div></label>
+                <input type="file" id="charBild" accept="image/*" style="display:none" />
+                <p class="mini" id="charBildStatus" style="text-align:left;"></p>
+              </div>
+              <div class="tab-inhalt" data-tab="erstellen" hidden>
+                <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
+                <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
+                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">Vorschau erstellen</button>
+                <p class="mini" id="charErstellenStatus" style="text-align:left;"></p>
+                <div class="prompts" id="charPrompts" hidden></div>
+              </div>
+            </div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 8 Fertig -->
+          <div class="schritt-links" data-step="7" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
@@ -330,7 +412,12 @@
         <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
         <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
         <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="vorschau">
+          <div class="vorschau-orb" id="vorOrb"></div>
+          <div class="vorschau-figur" id="vorFigur" hidden><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
+          <div class="vorschau-label" id="vorLabel">Dein Leucht-Orb</div>
+        </div></div></div>
+        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
       </div>
 
     </div>
@@ -342,7 +429,7 @@
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
   <script>
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", plan:"basis", charakterBilder:null };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -364,6 +451,7 @@
     const linksSchritte = document.querySelectorAll(".schritt-links");
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
+    const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
     let aktuell = 0;
 
     const progress = document.getElementById("progress");
@@ -390,6 +478,7 @@
             onComplete: () => { istUebergang = false; } });
         }});
       aktuell = n; updateProgress();
+      if (n === AGENT_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { sammle(); zeige(aktuell+1, 1); }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
@@ -549,6 +638,116 @@
     persChips.forEach((c) => c.addEventListener("click", () => waehlePers(c.dataset.ton)));
     waehlePers(daten.persoenlichkeit); // Standard vorwählen
 
+    // --- Schritt "Dein Agent": Orb (Basis) vs. eigene Figur (Plus) ---
+    const optOrb = document.getElementById("optOrb");
+    const optFigur = document.getElementById("optFigur");
+    const figurEditor = document.getElementById("figurEditor");
+    const vorOrb = document.getElementById("vorOrb");
+    const vorFigur = document.getElementById("vorFigur");
+    const vorFigurImg = document.getElementById("vorFigurImg");
+    const vorLabel = document.getElementById("vorLabel");
+    const figurMini = document.getElementById("figurMini");
+    let plusFrei = false;
+
+    function setVorschauFarben() {
+      [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='6']")].forEach((el) => {
+        if (!el) return;
+        el.style.setProperty("--vor-f1", daten.farbe1);
+        el.style.setProperty("--vor-f2", daten.farbe2);
+      });
+    }
+    function aktualisiereAgentVorschau() {
+      setVorschauFarben();
+      const bild = daten.charakterBilder && daten.charakterBilder.idle;
+      if (daten.plan === "plus" && bild) {
+        vorFigurImg.src = bild; vorFigur.hidden = false; vorOrb.hidden = true;
+        vorLabel.textContent = "Deine Figur";
+        figurMini.textContent = "";
+        const im = document.createElement("img"); im.src = bild; im.alt = ""; figurMini.appendChild(im);
+      } else {
+        vorFigur.hidden = true; vorOrb.hidden = false;
+        vorLabel.textContent = daten.plan === "plus" ? "Lade ein Bild hoch oder erstelle einen Charakter" : "Dein Leucht-Orb";
+      }
+    }
+    function waehleTyp(typ) {
+      if (typ === "figur" && !plusFrei) { document.getElementById("plusTesten").focus(); return; }
+      daten.plan = (typ === "figur") ? "plus" : "basis";
+      optOrb.classList.toggle("aktiv", typ === "orb");
+      optFigur.classList.toggle("aktiv", typ === "figur");
+      figurEditor.hidden = (typ !== "figur");
+      aktualisiereAgentVorschau();
+    }
+    optOrb.addEventListener("click", () => waehleTyp("orb"));
+    optFigur.addEventListener("click", () => waehleTyp("figur"));
+    document.getElementById("plusTesten").addEventListener("click", () => {
+      plusFrei = true;
+      optFigur.classList.remove("gesperrt");
+      const h = document.getElementById("plusHinweis");
+      h.textContent = ""; const ok = document.createElement("span");
+      ok.style.color = "var(--gruen)"; ok.style.fontWeight = "600"; ok.textContent = "✓ Plus (Simulation) aktiv";
+      h.appendChild(ok);
+      waehleTyp("figur");
+    });
+
+    // Tabs im Figur-Editor
+    document.querySelectorAll("#figurEditor .tab").forEach((t) => t.addEventListener("click", () => {
+      document.querySelectorAll("#figurEditor .tab").forEach((x) => x.classList.toggle("aktiv", x === t));
+      document.querySelectorAll("#figurEditor .tab-inhalt").forEach((x) => { x.hidden = (x.dataset.tab !== t.dataset.tab); });
+    }));
+
+    // Weg 1: Bild hochladen -> ein Bild gilt für alle 4 Ausdrücke (wie der Stub)
+    document.getElementById("charBild").addEventListener("change", (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const status = document.getElementById("charBildStatus");
+      if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; e.target.value = ""; return; }
+      const r = new FileReader();
+      r.onload = () => {
+        const url = r.result;
+        daten.charakterBilder = { idle: url, denken: url, sprechen: url, verlegen: url };
+        status.style.color = "var(--gruen)"; status.textContent = "✓ Bild übernommen.";
+        aktualisiereAgentVorschau();
+      };
+      r.readAsDataURL(f);
+      e.target.value = "";
+    });
+
+    // Weg 2: Charakter erstellen -> Stub liefert 4 SVG-Vorschauen + fertige Bild-Prompts
+    document.getElementById("charErstellen").addEventListener("click", async () => {
+      const beschr = document.getElementById("charBeschr").value.trim();
+      const status = document.getElementById("charErstellenStatus");
+      if (!beschr) { status.style.color = "#e11d48"; status.textContent = "Bitte kurz beschreiben."; return; }
+      const btn = document.getElementById("charErstellen");
+      btn.disabled = true; status.style.color = ""; status.textContent = "Erstelle Vorschau…";
+      try {
+        const res = await fetch("/.netlify/functions/charakter-generieren", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ modus: "text", beschreibung: beschr, farbe: daten.farbe1, akzent: daten.farbe2 }),
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || "Fehler");
+        daten.charakterBilder = d.bilder;
+        aktualisiereAgentVorschau();
+        status.style.color = "var(--gruen)";
+        status.textContent = d.stub ? "Vorschau erstellt — finale Bilder folgen." : "Erstellt.";
+        const box = document.getElementById("charPrompts");
+        box.hidden = false; box.textContent = "";
+        const lbl = document.createElement("label"); lbl.className = "feld"; lbl.textContent = "Bild-Prompts (z.B. für Higgsfield):";
+        box.appendChild(lbl);
+        Object.entries(d.prompts || {}).forEach(([z, p]) => {
+          const el = document.createElement("div"); el.className = "prompt-box";
+          const copy = document.createElement("button"); copy.type = "button"; copy.className = "copy"; copy.textContent = "Kopieren";
+          copy.addEventListener("click", () => { navigator.clipboard.writeText(p); copy.textContent = "Kopiert ✓"; });
+          const strong = document.createElement("strong"); strong.textContent = z + ": ";
+          el.appendChild(copy); el.appendChild(strong); el.appendChild(document.createTextNode(p));
+          box.appendChild(el);
+        });
+      } catch (e) {
+        status.style.color = "#e11d48"; status.textContent = "Konnte keine Vorschau erstellen: " + e.message;
+      } finally { btn.disabled = false; }
+    });
+
+    aktualisiereAgentVorschau(); // Anfangszustand (Orb)
+
     function sammle() {
       daten.email = (document.getElementById("email")||{}).value || daten.email;
       daten.webseite = (document.getElementById("webseite")||{}).value || daten.webseite;
@@ -579,11 +778,16 @@
       if (daten.oeffnungszeiten) fakten["Öffnungszeiten"] = daten.oeffnungszeiten;
       if (daten.adresse) fakten["Adresse"] = daten.adresse;
       if (daten.kontakt) fakten["Kontakt"] = daten.kontakt;
+      const charakter = { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift };
+      if (daten.plan === "plus" && daten.charakterBilder && daten.charakterBilder.idle) {
+        charakter.bilder = daten.charakterBilder;
+      }
       const firma = {
         id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
+        plan: daten.plan,
         persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
         fakten, faq: daten.faq, wissen: daten.wissen,
-        charakter: { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift },
+        charakter,
       };
       try {
         await Store.saveFirma(firma);

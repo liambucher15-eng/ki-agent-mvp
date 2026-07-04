@@ -1,6 +1,7 @@
 {
   "id": "salbei",
   "name": "Restaurant Salbei",
+  "plan": "plus",
   "persona": {
     "name": "Salbei-Concierge",
     "rolle": "der freundliche Gastgeber",

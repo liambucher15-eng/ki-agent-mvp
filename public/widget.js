@@ -86,8 +86,16 @@
     "@keyframes kiorb-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }",
     "@keyframes kiorb-dreh { to { transform: rotate(360deg); } }",
     "@media (prefers-reduced-motion: reduce) {",
-    "  .orb, .orb::before { animation: none; }",
+    "  .orb, .orb::before, .figur { animation: none; }",
     "}",
+
+    // Figur-Launcher (Plus-Plan): eigenes Bild statt Orb.
+    ".figur {",
+    "  width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center;",
+    "  box-shadow: 0 8px 22px rgba(0,0,0,0.28), 0 0 0 3px #fff, 0 0 0 5px " + farbe + "40;",
+    "  animation: kiorb-schweben 5s ease-in-out infinite; transition: box-shadow 0.3s ease;",
+    "}",
+    ".bubble.sichtbar:hover .figur { box-shadow: 0 10px 26px rgba(0,0,0,0.30), 0 0 0 3px #fff, 0 0 18px 4px " + farbe + "80; }",
 
     // Chat-Fenster (fährt aus der Orb-Ecke auf)
     ".panel {",
@@ -123,16 +131,32 @@
     "</style>",
     '<div class="panel" id="panel"></div>',
     '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span></div>',
-    '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="orb"></span></button>',
+    '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="orb" id="orb"></span><span class="figur" id="figur" hidden></span></button>',
   ].join("");
 
   var bubble = root.getElementById("bubble");
   var panel = root.getElementById("panel");
+  var orbEl = root.getElementById("orb");
+  var figurEl = root.getElementById("figur");
   var hinweis = root.getElementById("hinweis");
   var hinweisTextEl = root.getElementById("hinweisText");
   var hinweisZu = root.getElementById("hinweisZu");
   var offen = false;
   var geladen = false;
+
+  // Launcher-Darstellung: Plus-Firmen mit eigenem Bild zeigen eine Figur statt
+  // des Orbs. Dafür einmal die öffentliche Firmen-Info holen (Name/Charakter/Plan).
+  fetch(basis + "/.netlify/functions/firma?id=" + encodeURIComponent(firma))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (f) {
+      var bild = f && f.plan === "plus" && f.charakter && f.charakter.bilder && f.charakter.bilder.idle;
+      if (bild) {
+        figurEl.style.backgroundImage = 'url("' + bild + '")';
+        figurEl.hidden = false;
+        orbEl.hidden = true;
+      }
+    })
+    .catch(function () { /* Orb bleibt — kein Problem */ });
 
   // Verzögertes, ruhiges Erscheinen (kein aufdringliches Sofort-Pop-up).
   setTimeout(function () { bubble.classList.add("sichtbar"); }, 2500);
