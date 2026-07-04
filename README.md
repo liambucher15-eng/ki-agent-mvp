@@ -22,6 +22,10 @@ Supabase-Tabelle `firmen`). Der gleiche Code baut daraus den System-Prompt
    Chatten die Zustände (denken/sprechen/verlegen) mitmacht.
 3. **Chat** (`public/index.html`, geteilte Logik in `public/lib/chat-ui.js`) — die
    Chat-Oberfläche; der Agent reagiert als Charakter (idle/denken/sprechen/verlegen).
+4. **Dashboard** (`public/dashboard.html`) — Wissen pflegen: Quellen (Scan/Dokument/
+   Notiz, je mit Stand) bearbeiten, löschen, ergänzen; Webseite **neu scannen** mit
+   Alt/Neu-Vergleich vor der Übernahme. Wissen liegt als `wissensquellen[]` in den
+   Firmen-Daten (`lib/baueSystemPrompt.js` baut daraus den Prompt-Block).
 
 ## Lokal starten
 1. **Voraussetzungen:** Node.js + Netlify CLI (`npm install -g netlify-cli`)

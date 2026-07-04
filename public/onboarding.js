@@ -1,7 +1,7 @@
 // Onboarding-Wizard — Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", wissen:"", farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", plan:"basis", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", plan:"basis", charakterBilder:null };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -170,19 +170,32 @@
     });
 
     // --- Dokumente hochladen ---
+    // Jedes Dokument wird eine EIGENE Wissensquelle (daten.dokumente) — mit
+    // Herkunft und Stand, einzeln entfernbar. Nichts wird mehr in das Textfeld
+    // "Weitere Infos" gemischt (Milestone 3: Jede Info kennt ihre Herkunft).
     const MAX_DATEI = 4.5 * 1024 * 1024;
+    function zeigeDokumente() {
+      const liste = document.getElementById("doc-liste");
+      liste.textContent = "";
+      daten.dokumente.forEach((doc) => {
+        const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
+        const nameEl = document.createElement("span"); nameEl.textContent = doc.titel;
+        const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "✓ gelesen";
+        stat.style.color = "var(--gruen)";
+        const weg = document.createElement("button"); weg.type = "button"; weg.className = "faq-entfernen";
+        weg.style.position = "static"; weg.title = "Entfernen"; weg.textContent = "×";
+        weg.addEventListener("click", () => {
+          daten.dokumente = daten.dokumente.filter((d) => d.id !== doc.id);
+          zeigeDokumente();
+        });
+        eintrag.appendChild(nameEl); eintrag.appendChild(stat); eintrag.appendChild(weg);
+        liste.appendChild(eintrag);
+      });
+    }
     document.getElementById("docs").addEventListener("change", async (e) => {
       const liste = document.getElementById("doc-liste");
-      // Gelesenes landet in daten.weiteres UND im Textfeld "Weitere Infos" —
-      // sonst überschreibt der nächste sammle()-Lauf (liest das Textfeld) den
-      // Dokument-Text und er ginge stillschweigend verloren.
-      const uebernimm = (zusatz) => {
-        daten.weiteres = (daten.weiteres || "") + zusatz;
-        document.getElementById("p-weiteres").value = daten.weiteres;
-        updatePruefVorschau();
-      };
       for (const f of e.target.files) {
-        // Dateiname per textContent (nie innerHTML mit Nutzer-Daten — XSS-Hygiene)
+        // Fortschritts-Zeile (Dateiname per textContent — nie innerHTML mit Nutzer-Daten)
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
         const nameEl = document.createElement("span"); nameEl.textContent = f.name;
         const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "…";
@@ -190,16 +203,23 @@
         try {
           if (f.size > MAX_DATEI) throw new Error("zu gross");
           const istText = /\.(txt|md|markdown)$/i.test(f.name) || (f.type||"").startsWith("text/");
-          if (istText) { const t = await f.text(); uebernimm("\n\n--- "+f.name+" ---\n"+t.trim()); stat.textContent = "✓"; }
-          else {
+          let text;
+          if (istText) {
+            text = (await f.text()).trim();
+          } else {
             stat.textContent = "liest";
             const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
             const resp = await fetch("/.netlify/functions/dokument-lesen", { method:"POST", headers:{"content-type":"application/json"},
               body: JSON.stringify({ dateiname:f.name, mediaType:f.type, daten:String(dataUrl).split(",")[1] }) });
             const d = await resp.json(); if (!resp.ok) throw new Error(d.error||"Fehler");
-            uebernimm("\n\n--- "+f.name+" (gelesen) ---\n"+(d.text||"")); stat.textContent = "✓ gelesen";
+            text = d.text || "";
           }
-        } catch (err) { stat.textContent = "✕"; stat.style.color = "#dc2626"; }
+          daten.dokumente.push({ id: "doc-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+            typ: "dokument", titel: f.name, text, stand: new Date().toISOString().slice(0, 10) });
+          zeigeDokumente(); // ersetzt auch die Fortschritts-Zeile
+        } catch (err) {
+          stat.textContent = "✕ " + (err.message || "Fehler"); stat.style.color = "#dc2626";
+        }
       }
       e.target.value = "";
     });
@@ -345,8 +365,6 @@
       daten.weiteres = wert("p-weiteres");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
-      // Freitext-Wissen fürs Agenten-Backend; Öffnungszeiten/Adresse/Kontakt/FAQ gehen strukturiert in fakten/faq (siehe "fertig")
-      daten.wissen = [daten.angebot, daten.weiteres].filter(Boolean).join("\n\n");
       daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
       document.getElementById("embed-text").textContent =
         '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
@@ -377,11 +395,22 @@
           return;
         }
       }
+      // Wissen als QUELLEN-Liste: Scan/eigene Angaben + jedes Dokument einzeln.
+      // So kann das Dashboard später einzelne Quellen aktualisieren oder löschen.
+      const heute = new Date().toISOString().slice(0, 10);
+      const wissensquellen = [];
+      const scanText = [daten.angebot && ("Angebot: " + daten.angebot), daten.weiteres].filter(Boolean).join("\n\n");
+      if (scanText) {
+        wissensquellen.push({ id: "scan", typ: daten.webseite ? "scan" : "manuell",
+          titel: "Webseite & eigene Angaben", quelle: daten.webseite || "", stand: heute, text: scanText });
+      }
+      for (const doc of daten.dokumente) wissensquellen.push(doc);
+
       const firma = {
         id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
         plan: daten.plan,
         persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
-        fakten, faq: daten.faq, wissen: daten.wissen,
+        fakten, faq: daten.faq, wissensquellen,
         charakter,
       };
       try {

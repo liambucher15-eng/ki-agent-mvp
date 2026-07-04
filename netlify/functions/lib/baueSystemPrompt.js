@@ -4,6 +4,24 @@
 // verkaufbar: egal ob die Daten aus einer Datei oder aus einer Datenbank kommen,
 // hier ändert sich nichts.
 
+// Wissen einer Firma als Text für den Prompt.
+// NEU (Milestone 3): wissensquellen[] — jede Quelle kennt Herkunft und Stand
+//   { id, typ: "scan"|"dokument"|"manuell", titel, text, stand, quelle? }
+// Damit lässt sich Wissen einzeln aktualisieren/löschen (Dashboard, Re-Scan).
+// ALT (Fallback): ein einzelner wissen-String (Seed-Firmen, alte Zeilen).
+function baueWissensText(firma) {
+  if (Array.isArray(firma.wissensquellen) && firma.wissensquellen.length) {
+    return firma.wissensquellen
+      .filter((q) => q && typeof q.text === "string" && q.text.trim())
+      .map((q) => {
+        const kopf = `── ${q.titel || "Quelle"}${q.stand ? ` (Stand: ${q.stand})` : ""} ──`;
+        return `${kopf}\n${q.text.trim()}`;
+      })
+      .join("\n\n");
+  }
+  return firma.wissen || "";
+}
+
 function baueSystemPrompt(firma) {
   const faktenListe = Object.entries(firma.fakten || {})
     .map(([schluessel, wert]) => `- ${schluessel}: ${wert}`)
@@ -14,6 +32,7 @@ function baueSystemPrompt(firma) {
     .join("\n\n");
 
   const p = firma.persona || {};
+  const wissen = baueWissensText(firma);
 
   return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
 Ton: ${p.ton}. Sprich ${p.sprache || "Deutsch"}, warm und knapp.
@@ -27,7 +46,7 @@ WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlic
 dass du es nicht weisst, und biete an, das Team zu fragen.
 
 INFORMATIONEN über ${firma.name}:
-${faktenListe || "(keine Stichpunkte)"}${firma.wissen ? `\n\nWEITERE INFOS:\n${firma.wissen}` : ""}${faqListe ? `\n\nHÄUFIGE FRAGEN:\n${faqListe}` : ""}`;
+${faktenListe || "(keine Stichpunkte)"}${wissen ? `\n\nWEITERE INFOS:\n${wissen}` : ""}${faqListe ? `\n\nHÄUFIGE FRAGEN:\n${faqListe}` : ""}`;
 }
 
-module.exports = { baueSystemPrompt };
+module.exports = { baueSystemPrompt, baueWissensText };

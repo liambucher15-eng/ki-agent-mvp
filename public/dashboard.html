@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meine Agenten — Dashboard</title>
+  <style>
+    :root {
+      --indigo: #4F46E5; --gruen: #22C55E; --rot: #e11d48;
+      --text: #111827; --grau: #6B7280; --grau-hell: #9CA3AF; --border: #E5E7EB;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: "Inter", system-ui, sans-serif; color: var(--text); background: #fafaf9;
+           max-width: 760px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+    h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
+    h2 { font-size: 1.15rem; margin: 1.6rem 0 0.6rem; }
+    .sub { color: var(--grau); font-size: 0.92rem; line-height: 1.5; }
+    .karte { background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 1rem 1.1rem; margin: 0.6rem 0; }
+    .firma-knopf { display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
+                   background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 0.9rem 1.1rem;
+                   margin: 0.5rem 0; cursor: pointer; font: inherit; transition: border-color 0.15s; }
+    .firma-knopf:hover { border-color: var(--indigo); }
+    .firma-knopf .punkt { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .firma-knopf .name { font-weight: 600; }
+    .firma-knopf .id { color: var(--grau-hell); font-size: 0.82rem; margin-left: auto; }
+    .badge { font-size: 0.7rem; font-weight: 700; border-radius: 999px; padding: 0.12rem 0.55rem; }
+    .badge.scan { background: rgba(79,70,229,0.1); color: var(--indigo); }
+    .badge.dokument { background: rgba(34,197,94,0.12); color: #15803d; }
+    .badge.manuell { background: rgba(107,114,128,0.12); color: var(--grau); }
+    .quelle-kopf { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem; }
+    .quelle-kopf .titel { font-weight: 600; font-size: 0.92rem; }
+    .quelle-kopf .stand { color: var(--grau-hell); font-size: 0.78rem; }
+    .quelle-kopf .weg { margin-left: auto; background: none; border: 0; color: var(--grau-hell);
+                        cursor: pointer; font-size: 1.05rem; line-height: 1; padding: 0.1rem 0.3rem; }
+    .quelle-kopf .weg:hover { color: var(--rot); }
+    textarea, input[type=text], input[type=url] { width: 100%; font: inherit; font-size: 0.9rem; padding: 0.6rem 0.7rem;
+      border: 1.5px solid var(--border); border-radius: 10px; background: #fff; }
+    textarea { resize: vertical; min-height: 90px; line-height: 1.45; }
+    textarea:focus, input:focus { outline: none; border-color: var(--indigo); }
+    .btn { font: inherit; font-weight: 600; font-size: 0.92rem; border: 0; border-radius: 11px; cursor: pointer;
+           padding: 0.7rem 1.2rem; background: var(--indigo); color: #fff; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn.sek { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
+    .btn.klein { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
+    .zeile { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .status { font-size: 0.86rem; min-height: 1.2em; margin-top: 0.5rem; }
+    .vergleich { border: 1.5px dashed var(--indigo); border-radius: 14px; padding: 1rem 1.1rem; margin-top: 0.7rem; background: rgba(79,70,229,0.03); }
+    .vergleich h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+    .vergleich pre { white-space: pre-wrap; font: inherit; font-size: 0.85rem; background: #fff;
+                     border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 0.7rem;
+                     max-height: 220px; overflow-y: auto; margin: 0.3rem 0 0.7rem; }
+    a { color: var(--indigo); }
+    [hidden] { display: none !important; }
+    .kopfzeile { display: flex; align-items: center; gap: 0.8rem; }
+    .kopfzeile .zurueck { background: none; border: 0; color: var(--grau); cursor: pointer; font: inherit; padding: 0.2rem 0.4rem; }
+  </style>
+</head>
+<body>
+  <!-- ANSICHT 1: Liste meiner Agenten -->
+  <div id="liste-ansicht">
+    <h1>Meine Agenten</h1>
+    <p class="sub">Alle Agenten, die du in diesem Browser erstellt hast. Klick einen an, um sein Wissen zu pflegen.</p>
+    <div id="firmen-liste"></div>
+    <p class="sub" id="leer-hinweis" hidden>Noch kein Agent. <a href="onboarding-aura.html">Jetzt einen erstellen →</a></p>
+  </div>
+
+  <!-- ANSICHT 2: Wissen einer Firma pflegen -->
+  <div id="editor-ansicht" hidden>
+    <div class="kopfzeile">
+      <button class="zurueck" id="zurueck">← Übersicht</button>
+      <h1 id="ed-name" style="margin:0;"></h1>
+    </div>
+    <p class="sub"><a id="ed-chatlink" target="_blank">Test-Chat öffnen →</a></p>
+
+    <h2>Wissen (Quellen)</h2>
+    <p class="sub">Jede Quelle kennt ihre Herkunft und ihren Stand. Was du hier löschst, weiss der Agent ab sofort nicht mehr.</p>
+    <div id="quellen-liste"></div>
+    <div class="zeile" style="margin-top:0.6rem;">
+      <button class="btn sek klein" id="quelle-neu">+ Eigene Notiz hinzufügen</button>
+    </div>
+
+    <h2>Webseite neu scannen</h2>
+    <p class="sub">Liest deine Webseite erneut und schlägt einen aktualisierten Wissens-Text vor — du entscheidest, ob er übernommen wird.</p>
+    <div class="zeile">
+      <input type="url" id="rescan-url" placeholder="https://deine-firma.ch" style="flex:1; min-width: 220px;" />
+      <button class="btn sek" id="rescan-btn">Neu scannen</button>
+    </div>
+    <div class="status" id="rescan-status"></div>
+    <div class="vergleich" id="vergleich" hidden>
+      <h3>Vorschlag aus dem neuen Scan</h3>
+      <div class="sub">Bisheriger Scan-Text:</div>
+      <pre id="vergleich-alt"></pre>
+      <div class="sub">Neuer Scan-Text:</div>
+      <pre id="vergleich-neu"></pre>
+      <div class="zeile">
+        <button class="btn klein" id="uebernehmen">Übernehmen</button>
+        <button class="btn sek klein" id="verwerfen">Verwerfen</button>
+      </div>
+    </div>
+
+    <div style="margin-top:1.6rem;" class="zeile">
+      <button class="btn" id="speichern">Speichern</button>
+      <span class="status" id="speicher-status" style="margin-top:0;"></span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
+  <script src="lib/supabase-config.js"></script>
+  <script src="lib/auth.js"></script>
+  <script src="lib/store.js"></script>
+  <script>
+    // Dashboard (Milestone 3): Wissensquellen einer Firma pflegen + Re-Scan.
+    // Bewusst schlank — bearbeitet NUR das Wissen. Persona/Farben/Charakter
+    // bleiben (noch) Sache des Onboardings.
+    let firma = null; // die gerade geöffnete Firma (komplettes daten-Objekt)
+
+    const $ = (id) => document.getElementById(id);
+    const heute = () => new Date().toISOString().slice(0, 10);
+    const neueId = (p) => p + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+
+    // ---------- Ansicht 1: Liste ----------
+    async function zeigeListe() {
+      $("editor-ansicht").hidden = true;
+      $("liste-ansicht").hidden = false;
+      const firmen = await Store.meineFirmen();
+      const liste = $("firmen-liste");
+      liste.textContent = "";
+      $("leer-hinweis").hidden = firmen.length > 0;
+      firmen.forEach((f) => {
+        const b = document.createElement("button");
+        b.className = "firma-knopf";
+        const punkt = document.createElement("span"); punkt.className = "punkt";
+        punkt.style.background = (f.charakter && f.charakter.farbe) || "#4F46E5";
+        const name = document.createElement("span"); name.className = "name"; name.textContent = f.name || f.id;
+        const id = document.createElement("span"); id.className = "id"; id.textContent = f.id;
+        b.appendChild(punkt); b.appendChild(name); b.appendChild(id);
+        b.addEventListener("click", () => oeffneFirma(f));
+        liste.appendChild(b);
+      });
+    }
+
+    // ---------- Ansicht 2: Editor ----------
+    function oeffneFirma(f) {
+      firma = f;
+      // Alt-Format (ein wissen-String) einmalig in eine Quelle umwandeln.
+      if (!Array.isArray(firma.wissensquellen)) {
+        firma.wissensquellen = firma.wissen
+          ? [{ id: "legacy", typ: "manuell", titel: "Bisheriges Wissen", stand: "", text: firma.wissen }]
+          : [];
+        delete firma.wissen;
+      }
+      $("liste-ansicht").hidden = true;
+      $("editor-ansicht").hidden = false;
+      $("ed-name").textContent = firma.name || firma.id;
+      $("ed-chatlink").href = "index.html?firma=" + encodeURIComponent(firma.id);
+      $("rescan-url").value = firma.webseite || "";
+      $("vergleich").hidden = true;
+      $("rescan-status").textContent = "";
+      $("speicher-status").textContent = "";
+      zeigeQuellen();
+    }
+    $("zurueck").addEventListener("click", zeigeListe);
+
+    function zeigeQuellen() {
+      const liste = $("quellen-liste");
+      liste.textContent = "";
+      if (!firma.wissensquellen.length) {
+        const p = document.createElement("p"); p.className = "sub";
+        p.textContent = "Noch keine Quellen — füge eine Notiz hinzu oder scanne die Webseite.";
+        liste.appendChild(p);
+        return;
+      }
+      firma.wissensquellen.forEach((q) => {
+        const karte = document.createElement("div"); karte.className = "karte";
+        const kopf = document.createElement("div"); kopf.className = "quelle-kopf";
+        const badge = document.createElement("span"); badge.className = "badge " + (q.typ || "manuell");
+        badge.textContent = q.typ === "scan" ? "Scan" : q.typ === "dokument" ? "Dokument" : "Notiz";
+        const titel = document.createElement("span"); titel.className = "titel"; titel.textContent = q.titel || "Quelle";
+        const stand = document.createElement("span"); stand.className = "stand";
+        stand.textContent = q.stand ? "Stand: " + q.stand : "";
+        const weg = document.createElement("button"); weg.className = "weg"; weg.title = "Quelle löschen"; weg.textContent = "×";
+        weg.addEventListener("click", () => {
+          if (!confirm('Quelle "' + (q.titel || "Quelle") + '" löschen? Der Agent kennt diese Infos dann nicht mehr.')) return;
+          firma.wissensquellen = firma.wissensquellen.filter((x) => x.id !== q.id);
+          zeigeQuellen();
+        });
+        kopf.appendChild(badge); kopf.appendChild(titel); kopf.appendChild(stand); kopf.appendChild(weg);
+        const feld = document.createElement("textarea");
+        feld.value = q.text || "";
+        feld.addEventListener("input", () => { q.text = feld.value; });
+        karte.appendChild(kopf); karte.appendChild(feld);
+        liste.appendChild(karte);
+      });
+    }
+
+    $("quelle-neu").addEventListener("click", () => {
+      firma.wissensquellen.push({ id: neueId("notiz"), typ: "manuell", titel: "Eigene Notiz", stand: heute(), text: "" });
+      zeigeQuellen();
+    });
+
+    // ---------- Re-Scan (nutzt den bestehenden Background-Job) ----------
+    const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
+    $("rescan-btn").addEventListener("click", async () => {
+      const url = $("rescan-url").value.trim();
+      const status = $("rescan-status");
+      if (!url) { status.textContent = "Bitte Webseiten-Adresse eingeben."; return; }
+      const btn = $("rescan-btn");
+      btn.disabled = true; status.style.color = ""; status.textContent = "Scan läuft (bis ~1 Minute)…";
+      $("vergleich").hidden = true;
+      try {
+        const jobId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                       : Date.now() + "-" + Math.random().toString(36).slice(2);
+        const start = await fetch("/.netlify/functions/scan-background", {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, jobId }),
+        });
+        if (start.status !== 202 && !start.ok) throw new Error("Scan konnte nicht gestartet werden");
+        let d = null;
+        for (let i = 0; i < 60; i++) {
+          await schlaf(1500);
+          let s;
+          try { s = await (await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId))).json(); }
+          catch { continue; }
+          if (s.status === "done") { d = s.ergebnis; break; }
+          if (s.status === "error") throw new Error(s.fehler || "Scan fehlgeschlagen");
+        }
+        if (!d) throw new Error("Zeitüberschreitung beim Scan");
+
+        const neuText = [d.angebot && ("Angebot: " + d.angebot), d.weiteres].filter(Boolean).join("\n\n");
+        if (!neuText) throw new Error("Der Scan hat keinen verwertbaren Text geliefert.");
+        const scanQuelle = firma.wissensquellen.find((q) => q.typ === "scan");
+        $("vergleich-alt").textContent = scanQuelle ? scanQuelle.text : "(noch kein Scan-Text vorhanden)";
+        $("vergleich-neu").textContent = neuText;
+        $("vergleich").hidden = false;
+        status.textContent = "";
+        $("uebernehmen").onclick = () => {
+          if (scanQuelle) {
+            scanQuelle.text = neuText; scanQuelle.stand = heute(); scanQuelle.quelle = url;
+          } else {
+            firma.wissensquellen.unshift({ id: "scan", typ: "scan", titel: "Webseiten-Scan",
+              quelle: url, stand: heute(), text: neuText });
+          }
+          firma.webseite = url;
+          $("vergleich").hidden = true;
+          status.style.color = "var(--gruen)";
+          status.textContent = "Übernommen — denk ans Speichern.";
+          zeigeQuellen();
+        };
+        $("verwerfen").onclick = () => { $("vergleich").hidden = true; };
+      } catch (e) {
+        status.style.color = "var(--rot)";
+        status.textContent = "Scan fehlgeschlagen: " + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ---------- Speichern ----------
+    $("speichern").addEventListener("click", async () => {
+      const status = $("speicher-status");
+      const btn = $("speichern");
+      btn.disabled = true; status.style.color = ""; status.textContent = "Speichern…";
+      try {
+        // Leere Quellen nicht mitspeichern
+        firma.wissensquellen = firma.wissensquellen.filter((q) => (q.text || "").trim() || q.typ !== "manuell");
+        await Store.saveFirma(firma);
+        status.style.color = "var(--gruen)"; status.textContent = "Gespeichert.";
+      } catch (e) {
+        status.style.color = "var(--rot)"; status.textContent = "Fehler: " + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    zeigeListe();
+  </script>
+</body>
+</html>
