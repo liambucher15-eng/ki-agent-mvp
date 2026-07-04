@@ -84,7 +84,10 @@
       <button class="zurueck" id="zurueck">← Übersicht</button>
       <h1 id="ed-name" style="margin:0;"></h1>
     </div>
-    <p class="sub"><a id="ed-chatlink" target="_blank">Test-Chat öffnen →</a></p>
+    <p class="sub">
+      <a id="ed-chatlink" target="_blank">Test-Chat öffnen →</a>
+      <span id="plan-bereich" style="margin-left:0.8rem;"></span>
+    </p>
 
     <h2>Posteingang <span id="lead-zahl" class="sub" style="font-weight:400;"></span></h2>
     <p class="sub">Kontaktanfragen, die dein Agent für dich aufgenommen hat.</p>
@@ -180,10 +183,53 @@
       $("rescan-status").textContent = "";
       $("speicher-status").textContent = "";
       zeigeQuellen();
+      zeigePlan();
       ladeLeads();
       ladeGespraeche();
     }
     $("zurueck").addEventListener("click", zeigeListe);
+
+    // ---------- Plan-Badge + Upgrade auf Plus ----------
+    // Der Plan ist Server-Wahrheit (Stripe). Nach dem Kauf setzt der Webhook
+    // firmen.plan="plus" — hier wird er über /firma frisch geladen (nicht aus
+    // dem evtl. veralteten daten-Objekt).
+    async function aktuellerPlan() {
+      try {
+        const f = await (await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(firma.id) + "&t=" + Date.now())).json();
+        return f.plan || "basis";
+      } catch { return firma.plan || "basis"; }
+    }
+    async function zeigePlan() {
+      const el = $("plan-bereich");
+      el.textContent = "";
+      const plan = await aktuellerPlan();
+      const badge = document.createElement("span");
+      badge.className = "badge " + (plan === "plus" ? "scan" : "manuell");
+      badge.textContent = "Plan: " + (plan === "plus" ? "Plus" : "Basis");
+      el.appendChild(badge);
+      if (plan !== "plus") {
+        const btn = document.createElement("button");
+        btn.className = "btn klein"; btn.style.marginLeft = "0.6rem"; btn.textContent = "Auf Plus upgraden";
+        btn.addEventListener("click", () => starteCheckout(btn));
+        el.appendChild(btn);
+      }
+    }
+    async function starteCheckout(btn) {
+      btn.disabled = true; btn.textContent = "Weiterleiten…";
+      try {
+        const res = await fetch("/.netlify/functions/abo-checkout", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ firmaId: firma.id, basis: location.origin }),
+        });
+        const d = await res.json();
+        if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); btn.disabled = false; btn.textContent = "Auf Plus upgraden"; return; }
+        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
+        location.href = d.url; // ab zu Stripe
+      } catch (e) {
+        alert("Upgrade fehlgeschlagen: " + e.message);
+        btn.disabled = false; btn.textContent = "Auf Plus upgraden";
+      }
+    }
 
     // ---------- Posteingang (Leads) + Gespräche ----------
     // Beides ist NUR für den Firmen-Besitzer lesbar (RLS über die anonyme

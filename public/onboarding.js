@@ -55,6 +55,21 @@
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { sammle(); zeige(aktuell+1, 1); }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
+    // Anmelden: echten Bestätigungs-Link schicken, wenn Supabase konfiguriert ist
+    // (sonst Simulation — es geht einfach weiter). Verknüpft die anonyme Sitzung
+    // mit der E-Mail, ohne die Nutzer-ID zu wechseln -> Besitz der Firma bleibt.
+    // Fire-and-forget: der Ablauf wartet nicht auf die Mail.
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const email = (document.getElementById("email").value || "").trim();
+      const status = document.getElementById("loginStatus");
+      if (!email || !(window.Auth && window.Auth.konfiguriert)) return; // Simulation
+      status.style.color = ""; status.textContent = "Bestätigungs-Link wird gesendet…";
+      window.Auth.verknuepfeEmail(email, location.origin + "/dashboard.html").then((r) => {
+        if (r.ok) { status.style.color = "var(--gruen)"; status.textContent = "✓ Link an " + email + " gesendet — du kannst hier weitermachen."; }
+        else { status.style.color = "var(--grau)"; status.textContent = "Konnte den Link nicht senden (" + (r.error || "unbekannt") + ") — Onboarding läuft trotzdem weiter."; }
+      });
+    });
+
     // Überprüfen: Karten auf/zu + "Passt"-Haken
     document.querySelectorAll(".pk-kopf").forEach(k => k.addEventListener("click", () => k.parentElement.classList.toggle("auf")));
     document.querySelectorAll(".pk-passt").forEach(b => b.addEventListener("click", () => {

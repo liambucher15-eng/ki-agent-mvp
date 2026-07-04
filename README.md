@@ -53,12 +53,34 @@ im Katalog + ein Handler, kein firmenspezifischer Code.
    `/?firma=salbei` (oder `?firma=nordlicht`). Widget-Demo: `/test-einbetten.html`.
 7. Tests: `npm test` (Node-Testrunner, `test/*.test.js`).
 
+## Abo / Bezahlung (Stripe, Milestone 5)
+Der Plus-Plan (eigene Figur) wird über Stripe verkauft. Der **Plan ist Server-
+Wahrheit**: nur der Stripe-Webhook setzt `firmen.plan` (Column-REVOKE in
+`migration-m5.sql`), und `firma.js` liefert die Figur-Bilder nur bei `plan=plus`.
+Einrichtung:
+1. Stripe-Konto → ein wiederkehrendes Produkt/Preis anlegen (`price_...`).
+2. `STRIPE_SECRET_KEY` + `STRIPE_PREIS_ID` als Netlify-Env setzen.
+3. Webhook-Endpoint auf `https://DEINE-DOMAIN/.netlify/functions/stripe-webhook`
+   zeigen lassen; Events `checkout.session.completed`,
+   `customer.subscription.deleted`, `customer.subscription.updated` abonnieren;
+   den Signing-Secret als `STRIPE_WEBHOOK_SECRET` setzen.
+4. `migration-m5.sql` ausführen (sperrt `plan` für Kunden, legt `stripe_kunde` an).
+
+Ohne diese Werte bleibt alles nutzbar — der Upgrade-Button meldet nur, dass die
+Bezahlung noch nicht eingerichtet ist (Checkout gibt `501`).
+
 ## Deploy (Netlify)
 - Netlify-Konto erstellen, Repo verbinden.
-- `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`
-  im Netlify-Dashboard als Umgebungsvariablen setzen (NICHT die `.env` hochladen).
+- Umgebungsvariablen im Netlify-Dashboard setzen (NICHT die `.env` hochladen):
+  `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`
+  und (für Bezahlung) `STRIPE_SECRET_KEY`, `STRIPE_PREIS_ID`, `STRIPE_WEBHOOK_SECRET`.
+- **Migrationen** in Reihenfolge im Supabase-SQL-Editor ausführen: `schema.sql`
+  (oder `migration-m0` → `m1` → `m4` → `m5` bei bestehendem Projekt).
+- `SUPABASE_URL`/`SUPABASE_ANON_KEY` zusätzlich in `public/lib/supabase-config.js`
+  eintragen (die liest das Frontend).
 - Der Scan läuft als **Background-Function** (`scan-background.js`) — prüfen, dass
   der Netlify-Plan Background-Functions unterstützt.
+- Nach dem Deploy: Widget-Demo unter `https://DEINE-DOMAIN/test-einbetten.html`.
 
 ## Wichtige Dateien
 **Backend (`netlify/functions/`)**

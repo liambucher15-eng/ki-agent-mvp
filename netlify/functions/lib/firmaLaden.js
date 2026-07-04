@@ -38,4 +38,48 @@ async function ladeFirmaServer(id) {
   }
 }
 
-module.exports = { ladeFirmaServer };
+// Setzt den Plan einer Firma (nur Server, via Service-Key -> umgeht RLS).
+// Wird vom Stripe-Webhook gerufen: bezahlt -> "plus", gekündigt -> "basis".
+// Optional wird die Stripe-Kunden-ID mitgespeichert (für Kündigungs-Webhooks).
+async function setzePlanServer(firmaId, plan, stripeKunde) {
+  if (!firmaId || !URL_BASIS || !KEY) return false;
+  const felder = { plan };
+  if (stripeKunde) felder.stripe_kunde = stripeKunde;
+  try {
+    const res = await fetch(
+      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(firmaId),
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          apikey: KEY,
+          authorization: "Bearer " + KEY,
+          prefer: "return=minimal",
+        },
+        body: JSON.stringify(felder),
+      }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Findet eine Firma über die gespeicherte Stripe-Kunden-ID (Kündigungs-Webhook
+// liefert nur die customer-ID, nicht die firma_id).
+async function firmaZuStripeKunde(stripeKunde) {
+  if (!stripeKunde || !URL_BASIS || !KEY) return null;
+  try {
+    const res = await fetch(
+      URL_BASIS + "/rest/v1/firmen?stripe_kunde=eq." + encodeURIComponent(stripeKunde) + "&select=id",
+      { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
+    );
+    if (!res.ok) return null;
+    const zeilen = await res.json();
+    return Array.isArray(zeilen) && zeilen.length ? zeilen[0].id : null;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { ladeFirmaServer, setzePlanServer, firmaZuStripeKunde };

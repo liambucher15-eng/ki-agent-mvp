@@ -72,11 +72,15 @@ const Store = (function () {
 
     // Eine Firma speichern/aktualisieren. Der Besitzer wird über die anonyme
     // Sitzung gesetzt (auth.uid()); die RLS-Regel lässt nur den Besitzer schreiben.
-    // plan geht in die EIGENE Spalte (Server-Wahrheit, später Stripe-exklusiv).
+    //
+    // WICHTIG (Milestone 5): Die plan-Spalte wird hier NICHT geschrieben — der Plan
+    // ist Server-Wahrheit und wird ausschliesslich vom Stripe-Webhook gesetzt
+    // (Column-Level-REVOKE in migration-m5.sql). Neue Firmen bekommen per DB-Default
+    // "basis"; ein Re-Save lässt einen bezahlten Plan unangetastet.
     async saveFirma(firma) {
       if (sb) {
         const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
-        const eintrag = { id: firma.id, name: firma.name, daten: firma, plan: firma.plan || "basis" };
+        const eintrag = { id: firma.id, name: firma.name, daten: firma };
         if (nutzer) eintrag.besitzer = nutzer.id;
         const { error } = await sb.from("firmen").upsert(eintrag, { onConflict: "id" });
         if (error) throw new Error(error.message);

@@ -44,6 +44,21 @@ const Auth = (function () {
       return neu.user;
     },
 
+    // Verknüpft die (anonyme) Sitzung mit einer E-Mail — der Nutzer wird so vom
+    // anonymen zu einem dauerhaften Konto, OHNE die Nutzer-ID zu wechseln. Damit
+    // bleibt die Firma in seinem Besitz (besitzer = auth.uid()), und er kann per
+    // Bestätigungs-Link auf jedem Gerät zurückkommen. Supabase schickt die Mail.
+    async verknuepfeEmail(email, redirectTo) {
+      if (!client || !email) return { ok: false };
+      await this.sitzungSichern(); // sicherstellen, dass eine (anonyme) Sitzung existiert
+      const { error } = await client.auth.updateUser(
+        { email },
+        redirectTo ? { emailRedirectTo: redirectTo } : undefined
+      );
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
     async abmelden() {
       if (client) await client.auth.signOut();
     },
