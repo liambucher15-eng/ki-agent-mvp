@@ -44,12 +44,39 @@ const Store = (function () {
       return _alleLokal()[id] || null;
     },
 
+    // Charakterbilder (Data-URLs aus Upload/Stub) in den Storage-Bucket
+    // "charaktere" hochladen und durch öffentliche URLs ersetzen. So bleibt die
+    // firmen-Zeile klein (Größenlimit!) und das Widget lädt Bilder als Dateien.
+    // Bilder, die schon URLs sind (http…), werden unverändert übernommen.
+    // Ohne Supabase (Simulation): Data-URLs bleiben, wie sie sind.
+    async ladeBilderHoch(firmaId, bilder) {
+      if (!bilder) return bilder;
+      if (!sb) return bilder;
+      const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
+      if (!nutzer) return bilder;
+
+      const ergebnis = {};
+      for (const [zustand, wert] of Object.entries(bilder)) {
+        if (!wert || !String(wert).startsWith("data:")) { ergebnis[zustand] = wert; continue; }
+        const blob = await (await fetch(wert)).blob();
+        const endung = (blob.type.split("/")[1] || "png").replace("+xml", "");
+        // Pfad MUSS mit der eigenen Nutzer-ID beginnen (Storage-Policy).
+        const pfad = nutzer.id + "/" + firmaId + "-" + zustand + "." + endung;
+        const { error } = await sb.storage.from("charaktere")
+          .upload(pfad, blob, { upsert: true, contentType: blob.type });
+        if (error) throw new Error("Bild-Upload (" + zustand + "): " + error.message);
+        ergebnis[zustand] = sb.storage.from("charaktere").getPublicUrl(pfad).data.publicUrl;
+      }
+      return ergebnis;
+    },
+
     // Eine Firma speichern/aktualisieren. Der Besitzer wird über die anonyme
     // Sitzung gesetzt (auth.uid()); die RLS-Regel lässt nur den Besitzer schreiben.
+    // plan geht in die EIGENE Spalte (Server-Wahrheit, später Stripe-exklusiv).
     async saveFirma(firma) {
       if (sb) {
         const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
-        const eintrag = { id: firma.id, name: firma.name, daten: firma };
+        const eintrag = { id: firma.id, name: firma.name, daten: firma, plan: firma.plan || "basis" };
         if (nutzer) eintrag.besitzer = nutzer.id;
         const { error } = await sb.from("firmen").upsert(eintrag, { onConflict: "id" });
         if (error) throw new Error(error.message);

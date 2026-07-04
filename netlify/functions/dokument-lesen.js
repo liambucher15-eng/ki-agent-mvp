@@ -5,6 +5,7 @@
 // Der API-Schlüssel bleibt hier auf dem Server.
 
 const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { rufeClaude } = require("./lib/claude");
 
 // ~6,7 Mio. Base64-Zeichen ≈ 5 MB Rohdaten -> Obergrenze fürs Hochladen.
 const MAX_BASE64 = 6_700_000;
@@ -43,31 +44,18 @@ exports.handler = async (event) => {
     `(z.B. alle Gerichte/Produkte mit Preisen, nach Kategorien geordnet). ` +
     `Gib NUR den Inhalt aus — keine Einleitung, kein Kommentar. Schreibe auf Deutsch.`;
 
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 22000);
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001", // kann Bilder UND PDF lesen
-        max_tokens: 2500,
-        temperature: 0.1,
-        messages: [{ role: "user", content: [block, { type: "text", text: anweisung }] }],
-      }),
+    // Haiku kann Bilder UND PDF lesen
+    const { ok, data } = await rufeClaude({
+      messages: [{ role: "user", content: [block, { type: "text", text: anweisung }] }],
+      maxTokens: 2500,
+      temperature: 0.1,
+      timeout: 22000,
     });
-    const data = await res.json();
-    if (!res.ok) return json(502, { error: data.error?.message || "API-Fehler" });
+    if (!ok) return json(502, { error: data.error?.message || "API-Fehler" });
     const text = data.content?.[0]?.text?.trim() || "";
     return json(200, { text });
   } catch (e) {
     return json(502, { error: e.name === "AbortError" ? "Zeitüberschreitung beim Lesen" : e.message });
-  } finally {
-    clearTimeout(t);
   }
 };

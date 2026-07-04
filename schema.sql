@@ -32,9 +32,12 @@ drop policy if exists "scan_jobs aendern" on scan_jobs;
 create table if not exists firmen (
   id        text primary key,           -- Firmen-/Agenten-Kennung (Slug)
   name      text,
-  besitzer  uuid,                        -- später: auth.uid() des Erstellers
-  daten     jsonb not null,              -- komplettes Firmen-Objekt (persona, fakten, faq, wissen, charakter)
-  erstellt  timestamptz not null default now()
+  besitzer  uuid,                        -- auth.uid() des Erstellers
+  daten     jsonb not null,              -- Firmen-Objekt (persona, fakten, faq, wissen, charakter)
+  plan      text not null default 'basis' check (plan in ('basis','plus','enterprise')),
+  erstellt  timestamptz not null default now(),
+  -- daten muss klein bleiben (Bilder liegen im Storage, nicht im JSONB)
+  constraint firmen_daten_klein check (pg_column_size(daten) < 200000)
 );
 
 alter table firmen enable row level security;
@@ -96,3 +99,24 @@ $$;
 
 -- Der öffentliche anon-Key darf die Funktion aufrufen (aber nicht die Tabelle).
 grant execute on function rate_hit(text, int, int) to anon;
+
+-- ────────────────────────────────────────────────────────────────
+-- 4) Storage: Bucket "charaktere" für Charakterbilder (Milestone 1)
+--    Öffentlich lesbar (Widget zeigt die Bilder), Upload nur in den
+--    eigenen Ordner (Pfad = eigene Nutzer-ID).
+-- ────────────────────────────────────────────────────────────────
+insert into storage.buckets (id, name, public, file_size_limit)
+  values ('charaktere', 'charaktere', true, 5242880)
+  on conflict (id) do update set public = true, file_size_limit = 5242880;
+
+drop policy if exists "charaktere lesen"     on storage.objects;
+drop policy if exists "charaktere hochladen" on storage.objects;
+drop policy if exists "charaktere ersetzen"  on storage.objects;
+-- SELECT braucht es auch für upsert-Uploads (intern insert-or-update).
+create policy "charaktere lesen" on storage.objects for select to authenticated
+  using (bucket_id = 'charaktere');
+create policy "charaktere hochladen" on storage.objects for insert to authenticated
+  with check (bucket_id = 'charaktere' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "charaktere ersetzen" on storage.objects for update to authenticated
+  using (bucket_id = 'charaktere' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'charaktere' and (storage.foldername(name))[1] = auth.uid()::text);

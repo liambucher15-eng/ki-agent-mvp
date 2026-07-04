@@ -14,6 +14,7 @@ function normalisiere(url) {
 // Eine Ressource holen — SSRF-geschützt (siehe sichererFetch: nur http/https,
 // keine privaten/internen IPs, Redirects werden einzeln geprüft).
 const { sichererFetch } = require("./sichererFetch");
+const { rufeClaude } = require("./claude");
 async function hole(url, timeout = 8000) {
   const res = await sichererFetch(url, { timeout });
   if (!res.ok) throw new Error("HTTP " + res.status);
@@ -148,29 +149,14 @@ async function claudeExtrakt(url, text) {
     `"weiteres":"alle weiteren wichtigen Infos ausführlich: Angebote und Leistungen im Detail, Produkte, Preise, Team, Geschichte, Besonderheiten"}\n\n` +
     `WEBSEITEN-TEXT:\n${text}`;
 
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 60000); // Background-Function: viel Luft, aber nicht endlos
-  let res;
-  try {
-    res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: ctrl.signal,
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2800,
-        temperature: 0.2,
-        system,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-  } finally { clearTimeout(t); }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || "API-Fehler");
+  const { ok, data } = await rufeClaude({
+    system,
+    messages: [{ role: "user", content: prompt }],
+    maxTokens: 2800,
+    temperature: 0.2,
+    timeout: 60000, // Background-Function: viel Luft, aber nicht endlos
+  });
+  if (!ok) throw new Error(data.error?.message || "API-Fehler");
 
   let txt = (data.content?.[0]?.text || "{}").replace(/```json/gi, "").replace(/```/g, "").trim();
   const a = txt.indexOf("{"), b = txt.lastIndexOf("}");

@@ -23,12 +23,16 @@ async function ladeFirmaServer(id) {
   if (!URL_BASIS || !KEY) return null;
   try {
     const res = await fetch(
-      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(id) + "&select=daten",
+      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(id) + "&select=daten,plan",
       { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
     );
     if (!res.ok) return null;
     const zeilen = await res.json();
-    return Array.isArray(zeilen) && zeilen.length ? zeilen[0].daten : null;
+    if (!Array.isArray(zeilen) || !zeilen.length) return null;
+    // plan kommt aus der EIGENEN Spalte (Server-Wahrheit, künftig Stripe) und
+    // überschreibt einen evtl. noch im JSONB liegenden Wert.
+    const { daten, plan } = zeilen[0];
+    return { ...daten, plan: plan || daten.plan || "basis" };
   } catch {
     return null;
   }

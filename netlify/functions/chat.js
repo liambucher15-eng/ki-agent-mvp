@@ -10,6 +10,7 @@
 const { baueSystemPrompt } = require("./lib/baueSystemPrompt");
 const { ladeFirmaServer } = require("./lib/firmaLaden");
 const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz");
+const { rufeClaude } = require("./lib/claude");
 
 // Input-Limits (bremsen Kostenmissbrauch)
 const MAX_NACHRICHTEN = 40;
@@ -73,24 +74,13 @@ exports.handler = async (event) => {
   }
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001", // günstig + schnell; für mehr Qualität: claude-sonnet-4-6
-        max_tokens: 600,
-        temperature: 0.5,
-        system: SYSTEM_PROMPT,
-        messages,
-      }),
+    const { ok, data } = await rufeClaude({
+      system: SYSTEM_PROMPT,
+      messages,
+      maxTokens: 600,
+      temperature: 0.5,
     });
-
-    const data = await res.json();
-    if (!res.ok) return json(502, { error: data.error?.message || "API-Fehler" });
+    if (!ok) return json(502, { error: data.error?.message || "API-Fehler" });
 
     const reply = data.content?.[0]?.text ?? "(keine Antwort)";
     return json(200, { reply });
