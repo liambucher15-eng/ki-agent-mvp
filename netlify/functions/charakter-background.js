@@ -32,6 +32,18 @@ const MAX_ANWEISUNG = 300;
 const MAX_BASE64 = 6_700_000; // ~5 MB Rohdaten
 const MONAT_SEK = 30 * 24 * 60 * 60;
 
+// Gemini liefert bei Bild-Edits SPORADISCH nur Text statt Bild (Status 502 bei
+// uns) oder läuft in einen 5xx/Timeout. Ein bis zwei Wiederholungen beheben das
+// fast immer. NICHT wiederholt wird bei 4xx (Key/Quota/Eingabe — das bleibt so).
+async function mitWiederholung(aufruf, versuche) {
+  let r;
+  for (let i = 0; i < (versuche || 3); i++) {
+    r = await aufruf();
+    if (r.ok || (r.status >= 400 && r.status < 500)) return r;
+  }
+  return r;
+}
+
 // Bild für einen Edit besorgen: entweder Data-URL (noch nicht gespeicherter
 // Entwurf) oder eine URL aus UNSEREM Bucket (SSRF-Schutz: nichts Fremdes laden).
 async function holeBildFuerEdit(bild) {
@@ -59,7 +71,7 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
   const idlePrompt = referenzBild
     ? prompts.idle + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
     : prompts.idle;
-  const basis = await generiereBild({ prompt: idlePrompt, referenzBild });
+  const basis = await mitWiederholung(() => generiereBild({ prompt: idlePrompt, referenzBild }));
   if (!basis.ok) throw new Error("Basisbild: " + basis.fehler);
 
   const roh = { idle: { base64: basis.bildBase64, mimeType: basis.mimeType } };
@@ -67,11 +79,11 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
   // 2) Die drei anderen Ausdrücke als Edits des Basisbilds — nacheinander,
   //    damit wir bei einem Fehler sauber abbrechen (kein halbes Geld verbrennen).
   for (const zustand of ZUSTAENDE.slice(1)) {
-    const r = await bearbeiteBild({
+    const r = await mitWiederholung(() => bearbeiteBild({
       bild: basis.bildBase64,
       mimeType: basis.mimeType,
       anweisung: edits[zustand],
-    });
+    }));
     if (!r.ok) throw new Error("Ausdruck '" + zustand + "': " + r.fehler);
     roh[zustand] = { base64: r.bildBase64, mimeType: r.mimeType };
   }
@@ -91,13 +103,13 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
 
 async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
   const quelle = await holeBildFuerEdit(bild);
-  const r = await bearbeiteBild({
+  const r = await mitWiederholung(() => bearbeiteBild({
     bild: quelle.base64,
     mimeType: quelle.mimeType,
     anweisung:
       anweisung +
       " Behalte Stil, Farben und Proportionen der Figur bei; einfarbiger heller Hintergrund.",
-  });
+  }));
   if (!r.ok) throw new Error(r.fehler);
   const endung = (r.mimeType.split("/")[1] || "png").split(";")[0];
   // Zeitstempel im Pfad: alte URL bleibt gültig (Verlauf/Zurück), kein Cache-Problem.
