@@ -33,22 +33,158 @@ function htmlZuText(html) {
     .replace(/\s+/g, " ").trim();
 }
 
-// Interne Unterseiten finden — wichtige zuerst, dann auffüllen
-function findeUnterseiten(html, basisUrl, max = 5) {
+// Seiten-Budgets (Milestone 7): mehr Seiten, mehr Text — aber pro Seite
+// gedeckelt, damit EINE Riesenseite nicht das ganze Budget frisst.
+const MAX_UNTERSEITEN = 11; // + Hauptseite = 12 Seiten
+const MAX_TEXT_PRO_SEITE = 6000;
+const MAX_TEXT_GESAMT = 48000;
+
+const ASSET_ENDUNG = /\.(jpg|jpeg|png|gif|svg|webp|avif|pdf|zip|mp4|css|js|mjs|json|rss|atom|ico|woff2?|ttf|otf|eot)$/i;
+const WICHTIG = /(ueber|über|about|kontakt|contact|leistung|angebot|service|produkt|menu|speisekarte|preise|pricing|team|faq|standort|geschichte|story|werte|shop)/i;
+
+function sortiereWichtige(liste) {
+  return [...liste.filter((l) => WICHTIG.test(l)), ...liste.filter((l) => !WICHTIG.test(l))];
+}
+
+// Interne Unterseiten aus den Links der Hauptseite — wichtige zuerst.
+function findeUnterseiten(html, basisUrl, max = MAX_UNTERSEITEN) {
   const host = new URL(basisUrl).hostname;
-  const wichtig = /(ueber|über|about|kontakt|contact|leistung|angebot|service|produkt|menu|speisekarte|preise|pricing|team|faq|standort|geschichte|story|werte|shop)/i;
   const alle = new Set();
   for (const m of html.matchAll(/href=["']([^"']+)["']/gi)) {
     try {
       const u = new URL(m[1], basisUrl);
       if (u.hostname !== host) continue;
-      if (/\.(jpg|jpeg|png|gif|svg|webp|avif|pdf|zip|mp4|css|js|mjs|json|xml|rss|atom|txt|ico|woff2?|ttf|otf|eot)$/i.test(u.pathname)) continue;
+      if (ASSET_ENDUNG.test(u.pathname) || /\.xml$/i.test(u.pathname) || /\.txt$/i.test(u.pathname)) continue;
       const sauber = (u.origin + u.pathname).replace(/\/$/, "");
       if (sauber !== basisUrl.replace(/\/$/, "")) alle.add(sauber);
     } catch {}
   }
-  const liste = [...alle];
-  return [...liste.filter((l) => wichtig.test(l)), ...liste.filter((l) => !wichtig.test(l))].slice(0, max);
+  return sortiereWichtige([...alle]).slice(0, max);
+}
+
+// <loc>-Einträge aus einem Sitemap-XML ziehen (funktioniert für urlset UND sitemapindex).
+function parseSitemapLocs(xml) {
+  const locs = [];
+  for (const m of String(xml).matchAll(/<loc>\s*([^<\s][^<]*?)\s*<\/loc>/gi)) locs.push(m[1]);
+  return locs;
+}
+
+// Sitemap-Seiten finden: robots.txt ("Sitemap:"-Zeilen) -> sonst /sitemap.xml.
+// Sitemap-INDEXE (Sitemaps, die auf weitere Sitemaps zeigen) werden eine Ebene
+// tief verfolgt. Fehler sind unkritisch — dann zählen nur die Link-Funde.
+async function findeSitemapSeiten(basisUrl, holeFn) {
+  const holen = holeFn || ((u) => hole(u, 6000));
+  const basis = new URL(basisUrl);
+  let sitemapUrls = [];
+  try {
+    const robots = await holen(basis.origin + "/robots.txt");
+    for (const m of String(robots).matchAll(/^\s*sitemap:\s*(\S+)/gim)) sitemapUrls.push(m[1]);
+  } catch {}
+  if (!sitemapUrls.length) sitemapUrls = [basis.origin + "/sitemap.xml"];
+
+  const seiten = new Set();
+  for (const smUrl of sitemapUrls.slice(0, 2)) {
+    let xml;
+    try { xml = await holen(smUrl); } catch { continue; }
+    let locs = parseSitemapLocs(xml);
+    // Sitemap-Index? Dann die ersten Kind-Sitemaps nachladen.
+    if (/<sitemapindex/i.test(xml)) {
+      const kinder = locs.slice(0, 3);
+      locs = [];
+      for (const kind of kinder) {
+        try { locs.push(...parseSitemapLocs(await holen(kind))); } catch {}
+      }
+    }
+    for (const loc of locs) {
+      try {
+        const u = new URL(loc);
+        if (u.hostname !== basis.hostname) continue;
+        if (ASSET_ENDUNG.test(u.pathname) || /\.xml$/i.test(u.pathname)) continue;
+        seiten.add((u.origin + u.pathname).replace(/\/$/, ""));
+      } catch {}
+    }
+    if (seiten.size) break; // erste brauchbare Sitemap reicht
+  }
+  seiten.delete(basisUrl.replace(/\/$/, ""));
+  return sortiereWichtige([...seiten]);
+}
+
+// --- Strukturierte Daten (JSON-LD + og-Meta) ---
+// Viele Firmenseiten tragen Adresse/Öffnungszeiten/Telefon maschinenlesbar in
+// <script type="application/ld+json"> — präziser als jede Text-Extraktion.
+function extrahiereJsonLd(html) {
+  const objekte = [];
+  for (const m of String(html).matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const geparst = JSON.parse(m[1].trim());
+      const liste = Array.isArray(geparst) ? geparst : [geparst];
+      for (const o of liste) {
+        if (o && typeof o === "object") {
+          objekte.push(o);
+          if (Array.isArray(o["@graph"])) objekte.push(...o["@graph"].filter((g) => g && typeof g === "object"));
+        }
+      }
+    } catch {}
+  }
+  return objekte;
+}
+
+function formatiereAdresse(a) {
+  if (!a) return "";
+  if (typeof a === "string") return a.trim();
+  return [a.streetAddress, [a.postalCode, a.addressLocality].filter(Boolean).join(" "), a.addressCountry]
+    .filter(Boolean).map(String).map((s) => s.trim()).filter(Boolean).join(", ");
+}
+
+function formatiereOeffnung(o) {
+  if (!o) return "";
+  const liste = Array.isArray(o) ? o : [o];
+  const teile = [];
+  for (const e of liste) {
+    if (typeof e === "string") { teile.push(e); continue; }
+    if (e && typeof e === "object" && e.opens && e.closes) {
+      const tage = (Array.isArray(e.dayOfWeek) ? e.dayOfWeek : [e.dayOfWeek])
+        .filter(Boolean)
+        .map((t) => String(t).replace(/.*\//, "")) // "https://schema.org/Monday" -> "Monday"
+        .join(", ");
+      teile.push((tage ? tage + " " : "") + e.opens + "–" + e.closes);
+    }
+  }
+  return teile.join("; ");
+}
+
+// Sucht in allen JSON-LD-Objekten aller Seiten nach Firma/Geschäft und sammelt
+// die verlässlichen Kontakt-Fakten ein (erstes brauchbares Vorkommen gewinnt).
+function strukturierteDaten(htmls) {
+  const erg = { name: "", adresse: "", kontakt: "", oeffnungszeiten: "" };
+  const istFirma = (t) => {
+    const typen = (Array.isArray(t) ? t : [t]).filter(Boolean).map(String);
+    return typen.some((x) => /Organization|Business|Store|Restaurant|Cafe|Hotel|Dentist|Physician|Attorney|Shop/i.test(x));
+  };
+  for (const html of htmls) {
+    if (!html) continue;
+    for (const o of extrahiereJsonLd(html)) {
+      if (!istFirma(o["@type"])) continue;
+      if (!erg.name && typeof o.name === "string") erg.name = o.name.trim();
+      if (!erg.adresse) erg.adresse = formatiereAdresse(o.address);
+      if (!erg.kontakt) {
+        const k = [o.telephone, o.email].filter((v) => typeof v === "string" && v.trim()).join(" · ");
+        if (k) erg.kontakt = k;
+      }
+      if (!erg.oeffnungszeiten)
+        erg.oeffnungszeiten = formatiereOeffnung(o.openingHours || o.openingHoursSpecification);
+    }
+  }
+  return erg;
+}
+
+// og:-Meta der Hauptseite (Beschreibung ist oft eine gute Angebots-Zusammenfassung).
+function ogMeta(html) {
+  const lies = (prop) => {
+    const m = String(html).match(new RegExp('<meta[^>]*property=["\']og:' + prop + '["\'][^>]*>', "i"));
+    return m ? ((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
+  };
+  return { titel: lies("title"), beschreibung: lies("description"), name: lies("site_name") };
 }
 
 // --- Farben ---
@@ -146,13 +282,18 @@ async function claudeExtrakt(url, text) {
     `"kontakt":"Telefon und/oder E-Mail, falls vorhanden",` +
     `"faq":[{"frage":"...","antwort":"..."}] — die wichtigsten Fragen samt Antworten, die auf der Seite ` +
     `erkennbar sind (z.B. aus einem FAQ-Bereich), maximal 6 Paare. Leeres Array [], wenn keine erkennbar.,` +
-    `"weiteres":"alle weiteren wichtigen Infos ausführlich: Angebote und Leistungen im Detail, Produkte, Preise, Team, Geschichte, Besonderheiten"}\n\n` +
+    `"leistungen":["Leistung/Produkt: kurze Beschreibung", ...] — ALLE erkennbaren Leistungen/Produkte ` +
+    `einzeln, je ein Eintrag mit 1 Satz Beschreibung, maximal 15. Leeres Array [], wenn keine erkennbar.,` +
+    `"preise":"konkrete Preise, Preisspannen oder Tarife, falls genannt",` +
+    `"team":"Personen/Team mit Rollen, falls genannt",` +
+    `"besonderheiten":"was die Firma besonders macht: USPs, Auszeichnungen, Werte, Geschichte",` +
+    `"weiteres":"alle weiteren wichtigen Infos ausführlich, die oben nicht abgedeckt sind"}\n\n` +
     `WEBSEITEN-TEXT:\n${text}`;
 
   const { ok, data } = await rufeClaude({
     system,
     messages: [{ role: "user", content: prompt }],
-    maxTokens: 2800,
+    maxTokens: 4000,
     temperature: 0.2,
     timeout: 60000, // Background-Function: viel Luft, aber nicht endlos
   });
@@ -174,7 +315,12 @@ async function scanneWebseite(rohUrl) {
   try { hauptHtml = await hole(url); }
   catch (e) { throw new Error("Webseite nicht erreichbar: " + e.message); }
 
-  const unterseiten = findeUnterseiten(hauptHtml, url);
+  // Unterseiten aus ZWEI Quellen: Links der Hauptseite + Sitemap (findet auch
+  // Seiten, die nicht im Menü verlinkt sind). Wichtige zuerst, dann auffüllen.
+  const ausLinks = findeUnterseiten(hauptHtml, url, MAX_UNTERSEITEN);
+  const ausSitemap = await findeSitemapSeiten(url).catch(() => []);
+  const unterseiten = sortiereWichtige([...new Set([...ausLinks, ...ausSitemap])]).slice(0, MAX_UNTERSEITEN);
+
   const [css, ...unterResultate] = await Promise.all([
     sammleCss(hauptHtml, url),
     ...unterseiten.map((u) => hole(u).catch(() => null)),
@@ -182,13 +328,23 @@ async function scanneWebseite(rohUrl) {
 
   const farben = ermittleFarben(hauptHtml, css);
 
-  const texte = [htmlZuText(hauptHtml)];
-  for (const html of unterResultate) if (html) texte.push(htmlZuText(html));
-  const gesamtText = texte.join("\n\n").slice(0, 16000);
+  // Strukturierte Daten (JSON-LD) aus allen Seiten — präziser als Text-Extraktion.
+  const strukturiert = strukturierteDaten([hauptHtml, ...unterResultate]);
+  const og = ogMeta(hauptHtml);
+
+  const texte = [htmlZuText(hauptHtml).slice(0, MAX_TEXT_PRO_SEITE)];
+  if (og.beschreibung) texte[0] = "Seitenbeschreibung: " + og.beschreibung + "\n" + texte[0];
+  for (const html of unterResultate) if (html) texte.push(htmlZuText(html).slice(0, MAX_TEXT_PRO_SEITE));
+  const gesamtText = texte.join("\n\n").slice(0, MAX_TEXT_GESAMT);
 
   if (gesamtText.length < 40) {
     throw new Error("Auf der Webseite war kaum lesbarer Text (evtl. reine Bild-/JS-Seite).");
   }
+  // Wenig Text trotz erreichbarer Seite = vermutlich JS-gerenderte Inhalte.
+  // Kein Abbruch, aber eine ehrliche Diagnose für den Qualitätsbericht.
+  const hinweis = gesamtText.length < 600
+    ? "Die Seite liefert nur wenig lesbaren Text (vermutlich per JavaScript aufgebaut). Bitte ergänze die Infos unten von Hand oder lade ein Dokument hoch."
+    : "";
 
   const extrakt = await claudeExtrakt(url, gesamtText);
 
@@ -200,21 +356,36 @@ async function scanneWebseite(rohUrl) {
     .map((f) => ({ frage: str(f && f.frage), antwort: str(f && f.antwort) }))
     .filter((f) => f.frage || f.antwort)
     .slice(0, 6);
+  const leistungen = (Array.isArray(extrakt.leistungen) ? extrakt.leistungen : [])
+    .map((l) => (typeof l === "string" ? l.trim()
+      : l && typeof l === "object" ? [l.titel, l.beschreibung].filter(Boolean).map(String).join(": ") : ""))
+    .filter(Boolean)
+    .slice(0, 15);
 
-  const name = str(extrakt.name);
-  const angebot = str(extrakt.angebot);
-  const oeffnungszeiten = str(extrakt.oeffnungszeiten);
-  const adresse = str(extrakt.adresse);
-  const kontakt = str(extrakt.kontakt);
+  // Strukturierte Daten (JSON-LD) gewinnen gegen die LLM-Extraktion — sie sind
+  // von der Firma selbst maschinenlesbar hinterlegt.
+  const name = strukturiert.name || str(extrakt.name) || og.name;
+  const angebot = str(extrakt.angebot) || og.beschreibung;
+  const oeffnungszeiten = strukturiert.oeffnungszeiten || str(extrakt.oeffnungszeiten);
+  const adresse = strukturiert.adresse || str(extrakt.adresse);
+  const kontakt = strukturiert.kontakt || str(extrakt.kontakt);
+  const preise = str(extrakt.preise);
+  const team = str(extrakt.team);
+  const besonderheiten = str(extrakt.besonderheiten);
   const weiteres = str(extrakt.weiteres);
 
   const wissen = [
     angebot && ("Angebot: " + angebot),
+    leistungen.length && ("Leistungen:\n- " + leistungen.join("\n- ")),
+    preise && ("Preise: " + preise),
+    team && ("Team: " + team),
+    besonderheiten && ("Besonderheiten: " + besonderheiten),
     weiteres && ("Weiteres:\n" + weiteres),
   ].filter(Boolean).join("\n\n");
 
   return {
-    name, angebot, oeffnungszeiten, adresse, kontakt, faq, weiteres, wissen,
+    name, angebot, oeffnungszeiten, adresse, kontakt, faq,
+    leistungen, preise, team, besonderheiten, weiteres, wissen, hinweis,
     farbe1: farben.farbe1,
     farbe2: farben.farbe2,
     gescannt: [url, ...unterseiten],
@@ -225,4 +396,5 @@ module.exports = {
   scanneWebseite,
   // einzelne Helfer exportiert für Unit-Tests
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
+  parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,
 };

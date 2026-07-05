@@ -122,10 +122,42 @@
     // Der Scan läuft serverseitig als Background-Function (kein 10s-Limit). Das
     // Frontend stößt ihn an und fragt danach den Status ab, bis "done"/"error".
     const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
+    // Scan-Qualitätsbericht (Milestone 7): zeigt pro Kategorie, ob der Scan etwas
+    // gefunden hat — so sieht die Firma sofort, was ihr Agent noch NICHT weiß.
+    function zeigeScanBericht(d) {
+      const box = document.getElementById("scanBericht");
+      if (!box) return;
+      box.textContent = "";
+      const zeilen = [
+        ["Name", d.name], ["Angebot", d.angebot],
+        ["Öffnungszeiten", d.oeffnungszeiten], ["Adresse", d.adresse],
+        ["Kontakt", d.kontakt], ["Leistungen", (d.leistungen || []).length],
+        ["Preise", d.preise], ["FAQ", (d.faq || []).length],
+        ["Team", d.team], ["Besonderheiten", d.besonderheiten],
+      ];
+      for (const [titel, wert] of zeilen) {
+        const z = document.createElement("div");
+        const ok = !!wert;
+        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : " — bitte ergänzen");
+        z.style.color = ok ? "var(--gruen)" : "#b45309";
+        box.appendChild(z);
+      }
+      if (d.hinweis) {
+        const h = document.createElement("div");
+        h.textContent = "⚠ " + d.hinweis;
+        h.style.cssText = "grid-column:1/-1;color:#b45309;margin-top:0.3rem;";
+        box.appendChild(h);
+      }
+      box.hidden = false;
+    }
     function uebernehmeScan(d) {
       daten.name = d.name||""; daten.angebot = d.angebot||"";
       daten.oeffnungszeiten = d.oeffnungszeiten||""; daten.adresse = d.adresse||"";
       daten.kontakt = d.kontakt||""; daten.faq = d.faq||[]; daten.weiteres = d.weiteres||""; daten.wissen = d.wissen||"";
+      // Milestone 7: zusätzliche Scan-Felder — fließen beim Speichern in die Scan-Quelle.
+      daten.leistungen = Array.isArray(d.leistungen) ? d.leistungen : [];
+      daten.preise = d.preise||""; daten.team = d.team||""; daten.besonderheiten = d.besonderheiten||"";
+      zeigeScanBericht(d);
       document.getElementById("p-name").value = daten.name;
       document.getElementById("p-angebot").value = daten.angebot;
       document.getElementById("p-oeffnung").value = daten.oeffnungszeiten;
@@ -490,7 +522,17 @@
       // So kann das Dashboard später einzelne Quellen aktualisieren oder löschen.
       const heute = new Date().toISOString().slice(0, 10);
       const wissensquellen = [];
-      const scanText = [daten.angebot && ("Angebot: " + daten.angebot), daten.weiteres].filter(Boolean).join("\n\n");
+      // Scan-Quelle aus ALLEN erkannten Kategorien (Milestone 7) + den vom
+      // Nutzer geprüften Feldern — das ist das Wissen, aus dem der Agent lebt.
+      const leistungen = Array.isArray(daten.leistungen) ? daten.leistungen : [];
+      const scanText = [
+        daten.angebot && ("Angebot: " + daten.angebot),
+        leistungen.length && ("Leistungen:\n- " + leistungen.join("\n- ")),
+        daten.preise && ("Preise: " + daten.preise),
+        daten.team && ("Team: " + daten.team),
+        daten.besonderheiten && ("Besonderheiten: " + daten.besonderheiten),
+        daten.weiteres,
+      ].filter(Boolean).join("\n\n");
       if (scanText) {
         wissensquellen.push({ id: "scan", typ: daten.webseite ? "scan" : "manuell",
           titel: "Webseite & eigene Angaben", quelle: daten.webseite || "", stand: heute, text: scanText });

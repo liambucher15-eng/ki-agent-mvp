@@ -113,3 +113,86 @@ test("ermittleFarben: nichts gefunden -> null", () => {
   assert.equal(farbe1, null);
   assert.equal(farbe2, null);
 });
+
+// --- Milestone 7: Sitemap, JSON-LD, og-Meta ---
+const {
+  parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,
+} = require("../netlify/functions/lib/webseiteScannen");
+
+test("parseSitemapLocs: zieht loc-Einträge aus urlset und sitemapindex", () => {
+  const xml = `<?xml version="1.0"?><urlset>
+    <url><loc>https://firma.ch/leistungen</loc></url>
+    <url><loc> https://firma.ch/team </loc></url></urlset>`;
+  assert.deepEqual(parseSitemapLocs(xml), ["https://firma.ch/leistungen", "https://firma.ch/team"]);
+});
+
+test("findeSitemapSeiten: robots.txt -> Sitemap -> Seiten (fremde Hosts + Assets raus)", async () => {
+  const antworten = {
+    "https://firma.ch/robots.txt": "User-agent: *\nSitemap: https://firma.ch/meine-sitemap.xml",
+    "https://firma.ch/meine-sitemap.xml": `<urlset>
+      <url><loc>https://firma.ch/preise</loc></url>
+      <url><loc>https://firma.ch/logo.png</loc></url>
+      <url><loc>https://andere.ch/seite</loc></url>
+      <url><loc>https://firma.ch/blog/artikel-1</loc></url></urlset>`,
+  };
+  const holeFn = async (u) => { if (antworten[u]) return antworten[u]; throw new Error("404"); };
+  const seiten = await findeSitemapSeiten("https://firma.ch", holeFn);
+  assert.ok(seiten.includes("https://firma.ch/preise"));
+  assert.ok(seiten.includes("https://firma.ch/blog/artikel-1"));
+  assert.ok(!seiten.some((s) => s.includes("logo.png") || s.includes("andere.ch")));
+  // "preise" ist wichtig -> steht vor dem Blog-Artikel
+  assert.ok(seiten.indexOf("https://firma.ch/preise") < seiten.indexOf("https://firma.ch/blog/artikel-1"));
+});
+
+test("findeSitemapSeiten: ohne robots.txt wird /sitemap.xml probiert; Fehler -> leere Liste", async () => {
+  const holeFn = async (u) => {
+    if (u === "https://firma.ch/sitemap.xml") return "<urlset><url><loc>https://firma.ch/faq</loc></url></urlset>";
+    throw new Error("404");
+  };
+  assert.deepEqual(await findeSitemapSeiten("https://firma.ch", holeFn), ["https://firma.ch/faq"]);
+  const nichts = async () => { throw new Error("404"); };
+  assert.deepEqual(await findeSitemapSeiten("https://firma.ch", nichts), []);
+});
+
+test("extrahiereJsonLd: parst Blöcke, @graph wird aufgefaltet, kaputtes JSON ignoriert", () => {
+  const html = `
+    <script type="application/ld+json">{"@type":"Organization","name":"Salbei"}</script>
+    <script type="application/ld+json">{"@graph":[{"@type":"Restaurant","name":"Graph-Kind"}]}</script>
+    <script type="application/ld+json">{kaputt</script>`;
+  const objekte = extrahiereJsonLd(html);
+  assert.ok(objekte.some((o) => o.name === "Salbei"));
+  assert.ok(objekte.some((o) => o.name === "Graph-Kind"));
+});
+
+test("strukturierteDaten: LocalBusiness liefert Name/Adresse/Kontakt/Öffnungszeiten", () => {
+  const html = `<script type="application/ld+json">{
+    "@type": "Restaurant", "name": "Salbei",
+    "telephone": "+41 44 111 22 33", "email": "hallo@salbei.ch",
+    "address": {"streetAddress": "Gassenweg 3", "postalCode": "8001", "addressLocality": "Zürich"},
+    "openingHoursSpecification": [{"dayOfWeek": ["https://schema.org/Tuesday", "https://schema.org/Saturday"], "opens": "11:30", "closes": "14:00"}]
+  }</script>`;
+  const d = strukturierteDaten([html]);
+  assert.equal(d.name, "Salbei");
+  assert.match(d.adresse, /Gassenweg 3/);
+  assert.match(d.adresse, /8001 Zürich/);
+  assert.match(d.kontakt, /\+41 44 111 22 33/);
+  assert.match(d.kontakt, /hallo@salbei\.ch/);
+  assert.match(d.oeffnungszeiten, /Tuesday, Saturday 11:30–14:00/);
+});
+
+test("strukturierteDaten: Nicht-Firmen-Typen (Article/WebSite) werden ignoriert", () => {
+  const html = `<script type="application/ld+json">{"@type":"Article","name":"Blogpost"}</script>`;
+  const d = strukturierteDaten([html]);
+  assert.equal(d.name, "");
+});
+
+test("ogMeta: liest og:title/description/site_name", () => {
+  const html = `<head>
+    <meta property="og:title" content="Salbei — Restaurant" />
+    <meta property="og:description" content="Saisonale Küche in Zürich" />
+    <meta property="og:site_name" content="Salbei" /></head>`;
+  const og = ogMeta(html);
+  assert.equal(og.titel, "Salbei — Restaurant");
+  assert.equal(og.beschreibung, "Saisonale Küche in Zürich");
+  assert.equal(og.name, "Salbei");
+});
