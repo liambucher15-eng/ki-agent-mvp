@@ -44,6 +44,7 @@ im Katalog + ein Handler, kein firmenspezifischer Code.
    - `ANTHROPIC_API_KEY` (console.anthropic.com)
    - `SUPABASE_URL` + `SUPABASE_ANON_KEY` (Supabase → Project Settings → API)
    - `SUPABASE_SERVICE_KEY` (service_role — GEHEIM, nur serverseitig!)
+   - `GEMINI_API_KEY` (aistudio.google.com — Charakter-Generierung, Milestone 6)
 4. **Supabase einrichten:** `schema.sql` einmal im Supabase-SQL-Editor ausführen
    (legt `firmen`, `scan_jobs`, `rate_limits` + Storage-Bucket `charaktere` an)
    und **Anonymous sign-ins** aktivieren (Authentication → Providers).
@@ -86,6 +87,10 @@ Bezahlung noch nicht eingerichtet ist (Checkout gibt `501`).
 **Backend (`netlify/functions/`)**
 - `chat.js` — Chat-Proxy: lädt Firma serverseitig, baut Prompt, ruft Claude
 - `scan-background.js` / `scan-status.js` — Webseiten-Scan (Job + Polling)
+- `charakter-background.js` — echte Charakter-Generierung + Einzelbild-Edit
+  (Gemini, Milestone 6; nutzt dasselbe Job/Polling-Muster wie der Scan)
+- `lib/gemini.js` / `lib/bilderSpeicher.js` — Gemini-Image-Client + Server-Upload
+  der generierten Bilder in den Storage-Bucket
 - `dokument-lesen.js` — liest hochgeladene Menükarten/PDFs via Claude Vision
 - `firma.js` — öffentliche Firmen-Präsentation fürs Chatfenster
 - `lib/webseiteScannen.js` — Scan-Logik (Fetch + Farben + Claude-Extraktion)

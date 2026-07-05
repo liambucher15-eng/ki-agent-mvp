@@ -312,7 +312,95 @@
       document.querySelectorAll("#figurEditor .tab-inhalt").forEach((x) => { x.hidden = (x.dataset.tab !== t.dataset.tab); });
     }));
 
-    // Weg 1: Bild hochladen -> ein Bild gilt für alle 4 Ausdrücke (wie der Stub)
+    // --- Charakter-Generierung (Milestone 6: echte Bilder via Background-Job) ---
+    // Gleiches Muster wie der Scan: Job anstoßen (202) -> scan-status pollen.
+    // Generieren dauert 30-90s (4 Bilder), Edits ~10-30s (1 Bild).
+    const CHAR_ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
+    const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
+    let charReferenzBild = null; // Data-URL des Uploads, dient auch als KI-Vorlage
+
+    async function charJob(payload, maxVersuche) {
+      const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                     : Date.now() + "-" + Math.random().toString(36).slice(2));
+      const start = await fetch("/.netlify/functions/charakter-background", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jobId, firmaId: daten.id || undefined, farbe: daten.farbe1, ...payload }),
+      });
+      if (start.status === 429) throw new Error("Limit erreicht — bitte später erneut versuchen.");
+      if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");
+      for (let versuch = 0; versuch < (maxVersuche || 90); versuch++) {
+        await schlaf(2000);
+        let s;
+        try {
+          const r = await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId));
+          s = await r.json();
+        } catch { continue; } // kurzer Netz-Hänger -> weiter pollen
+        if (s.status === "done") return s.ergebnis;
+        if (s.status === "error") throw new Error(s.fehler || "Fehlgeschlagen");
+      }
+      throw new Error("Zeitüberschreitung.");
+    }
+
+    // 4-Bilder-Raster: jedes Bild prüfen und einzeln per Anweisung nachbessern.
+    function zeigeCharGrid() {
+      const grid = document.getElementById("charGrid");
+      grid.textContent = "";
+      const bilder = daten.charakterBilder || {};
+      if (!bilder.idle) { grid.hidden = true; return; }
+      grid.hidden = false;
+      CHAR_ZUSTAENDE.forEach((z) => {
+        const zelle = document.createElement("div");
+        zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:10px;padding:0.5rem;text-align:center;";
+        const im = document.createElement("img");
+        im.src = bilder[z] || bilder.idle; im.alt = z;
+        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#fafafa;";
+        const lbl = document.createElement("div");
+        lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.78rem;margin:0.3rem 0;color:#555;";
+        const reihe = document.createElement("div");
+        reihe.style.cssText = "display:flex;gap:0.3rem;";
+        const inp = document.createElement("input");
+        inp.type = "text"; inp.placeholder = "z.B. Mütze blau machen";
+        inp.maxLength = 300;
+        inp.style.cssText = "flex:1;min-width:0;font-size:0.75rem;padding:0.3rem 0.4rem;border:1px solid #e5e7eb;border-radius:7px;";
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.textContent = "Ändern";
+        btn.style.cssText = "font-size:0.75rem;padding:0.3rem 0.55rem;border:1px solid var(--vor-f1,#333);border-radius:7px;background:#fff;cursor:pointer;";
+        btn.addEventListener("click", async () => {
+          const anweisung = inp.value.trim();
+          if (!anweisung) { inp.focus(); return; }
+          btn.disabled = true; btn.textContent = "…"; im.style.opacity = 0.4;
+          try {
+            const erg = await charJob({ aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z }, 45);
+            daten.charakterBilder[z] = erg.bild;
+            zeigeCharGrid(); aktualisiereAgentVorschau();
+          } catch (e) {
+            btn.disabled = false; btn.textContent = "Ändern"; im.style.opacity = 1;
+            alert("Bearbeiten fehlgeschlagen: " + e.message);
+          }
+        });
+        reihe.appendChild(inp); reihe.appendChild(btn);
+        zelle.appendChild(im); zelle.appendChild(lbl); zelle.appendChild(reihe);
+        grid.appendChild(zelle);
+      });
+    }
+
+    async function starteGenerierung({ beschreibung, referenzBild, status, btn }) {
+      btn.disabled = true; status.style.color = "";
+      status.textContent = "Dein Charakter wird erstellt — das dauert etwa eine Minute…";
+      try {
+        const erg = await charJob({ aktion: "generieren", beschreibung, bild: referenzBild || undefined }, 90);
+        daten.charakterBilder = erg.bilder;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ Fertig! Prüfe die 4 Ausdrücke — jedes Bild lässt sich einzeln anpassen.";
+        zeigeCharGrid(); aktualisiereAgentVorschau();
+      } catch (e) {
+        status.style.color = "#e11d48";
+        status.textContent = "Konnte den Charakter nicht erstellen: " + e.message;
+      } finally { btn.disabled = false; }
+    }
+
+    // Weg 1: Bild hochladen -> direkt nutzen (ein Bild für alle Ausdrücke)
+    // ODER als Vorlage für die KI-Generierung (Knopf erscheint nach dem Upload).
     document.getElementById("charBild").addEventListener("change", (e) => {
       const f = e.target.files[0]; if (!f) return;
       const status = document.getElementById("charBildStatus");
@@ -320,47 +408,35 @@
       const r = new FileReader();
       r.onload = () => {
         const url = r.result;
+        charReferenzBild = url;
         daten.charakterBilder = { idle: url, denken: url, sprechen: url, verlegen: url };
         status.style.color = "var(--gruen)"; status.textContent = "✓ Bild übernommen.";
-        aktualisiereAgentVorschau();
+        document.getElementById("charAusBild").hidden = false;
+        zeigeCharGrid(); aktualisiereAgentVorschau();
       };
       r.readAsDataURL(f);
       e.target.value = "";
     });
+    document.getElementById("charAusBild").addEventListener("click", () => {
+      if (!charReferenzBild) return;
+      starteGenerierung({
+        beschreibung: document.getElementById("charBeschr").value.trim(),
+        referenzBild: charReferenzBild,
+        status: document.getElementById("charBildStatus"),
+        btn: document.getElementById("charAusBild"),
+      });
+    });
 
-    // Weg 2: Charakter erstellen -> Stub liefert 4 SVG-Vorschauen + fertige Bild-Prompts
-    document.getElementById("charErstellen").addEventListener("click", async () => {
+    // Weg 2: Charakter aus Beschreibung erstellen (echte KI-Generierung).
+    document.getElementById("charErstellen").addEventListener("click", () => {
       const beschr = document.getElementById("charBeschr").value.trim();
       const status = document.getElementById("charErstellenStatus");
       if (!beschr) { status.style.color = "#e11d48"; status.textContent = "Bitte kurz beschreiben."; return; }
-      const btn = document.getElementById("charErstellen");
-      btn.disabled = true; status.style.color = ""; status.textContent = "Erstelle Vorschau…";
-      try {
-        const res = await fetch("/.netlify/functions/charakter-generieren", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ modus: "text", beschreibung: beschr, farbe: daten.farbe1, akzent: daten.farbe2 }),
-        });
-        const d = await res.json();
-        if (!res.ok) throw new Error(d.error || "Fehler");
-        daten.charakterBilder = d.bilder;
-        aktualisiereAgentVorschau();
-        status.style.color = "var(--gruen)";
-        status.textContent = d.stub ? "Vorschau erstellt — finale Bilder folgen." : "Erstellt.";
-        const box = document.getElementById("charPrompts");
-        box.hidden = false; box.textContent = "";
-        const lbl = document.createElement("label"); lbl.className = "feld"; lbl.textContent = "Bild-Prompts (z.B. für Higgsfield):";
-        box.appendChild(lbl);
-        Object.entries(d.prompts || {}).forEach(([z, p]) => {
-          const el = document.createElement("div"); el.className = "prompt-box";
-          const copy = document.createElement("button"); copy.type = "button"; copy.className = "copy"; copy.textContent = "Kopieren";
-          copy.addEventListener("click", () => { navigator.clipboard.writeText(p); copy.textContent = "Kopiert ✓"; });
-          const strong = document.createElement("strong"); strong.textContent = z + ": ";
-          el.appendChild(copy); el.appendChild(strong); el.appendChild(document.createTextNode(p));
-          box.appendChild(el);
-        });
-      } catch (e) {
-        status.style.color = "#e11d48"; status.textContent = "Konnte keine Vorschau erstellen: " + e.message;
-      } finally { btn.disabled = false; }
+      starteGenerierung({
+        beschreibung: beschr,
+        status,
+        btn: document.getElementById("charErstellen"),
+      });
     });
 
     aktualisiereAgentVorschau(); // Anfangszustand (Orb)

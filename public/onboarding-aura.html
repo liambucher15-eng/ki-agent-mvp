@@ -372,17 +372,19 @@
                 <button type="button" class="tab" data-tab="erstellen">Charakter erstellen</button>
               </div>
               <div class="tab-inhalt" data-tab="upload">
-                <label class="drop" for="charBild">Bild hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">Ein Bild reicht — gilt für alle Ausdrücke</div></label>
+                <label class="drop" for="charBild">Bild hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">Logo oder Foto — als Figur direkt nutzen oder als Vorlage für die KI</div></label>
                 <input type="file" id="charBild" accept="image/*" style="display:none" />
                 <p class="mini" id="charBildStatus" style="text-align:left;"></p>
+                <button type="button" class="btn btn-primar" id="charAusBild" hidden style="margin-top:0.4rem;">✨ Daraus Charakter mit 4 Ausdrücken erstellen</button>
               </div>
               <div class="tab-inhalt" data-tab="erstellen" hidden>
                 <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
                 <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
-                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">Vorschau erstellen</button>
+                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">Charakter erstellen</button>
                 <p class="mini" id="charErstellenStatus" style="text-align:left;"></p>
-                <div class="prompts" id="charPrompts" hidden></div>
               </div>
+              <!-- 4 generierte Ausdruck-Bilder: prüfen + einzeln per Anweisung nachbessern -->
+              <div id="charGrid" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem;"></div>
             </div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
