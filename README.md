@@ -48,7 +48,8 @@ im Katalog + ein Handler, kein firmenspezifischer Code.
 4. **Supabase einrichten:** `schema.sql` einmal im Supabase-SQL-Editor ausführen
    (legt `firmen`, `scan_jobs`, `rate_limits` + Storage-Bucket `charaktere` an)
    und **Anonymous sign-ins** aktivieren (Authentication → Providers).
-   Bestehende Projekte: stattdessen `migration-m0.sql` + `migration-m1.sql`.
+   Bestehende Projekte: stattdessen `migration-m0.sql` … `migration-m8.sql` der
+   Reihe nach ausführen (siehe Kommentar-Kopf jeder Datei für den Inhalt).
 5. `netlify dev` starten (Frontend + Functions zusammen, meist http://localhost:8888).
 6. Onboarding testen: `/onboarding-aura.html`. Chat einer Seed-Firma:
    `/?firma=salbei` (oder `?firma=nordlicht`). Widget-Demo: `/test-einbetten.html`.
@@ -91,6 +92,8 @@ Bezahlung noch nicht eingerichtet ist (Checkout gibt `501`).
   (Gemini, Milestone 6; nutzt dasselbe Job/Polling-Muster wie der Scan)
 - `lib/gemini.js` / `lib/bilderSpeicher.js` — Gemini-Image-Client + Server-Upload
   der generierten Bilder in den Storage-Bucket
+- `seiten-hinweis.js` / `lib/hinweisSpeicher.js` — proaktive, KI-generierte
+  Eröffnungsfrage pro (Firma, Seite), gecacht (Milestone 8)
 - `dokument-lesen.js` — liest hochgeladene Menükarten/PDFs via Claude Vision
 - `firma.js` — öffentliche Firmen-Präsentation fürs Chatfenster
 - `lib/webseiteScannen.js` — Scan-Logik (Fetch + Farben + Claude-Extraktion)

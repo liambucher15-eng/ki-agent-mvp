@@ -20,7 +20,10 @@
 //      bekäme er eine NEUE Datei (widget2.js) — Bestandskunden bleiben stabil.
 //   3. Fehler dürfen die Kundenseite NIE beeinträchtigen (alles gekapselt,
 //      jeder fetch mit catch, kein globaler Zustand ausser __kiAgentWidget).
-// Version: 2 (Milestone 2 — Figur-Zustände, Kontext-Hinweis, Sprechblase)
+// Version: 3 (Milestone 8 — Seiteninhalt-Kontext, KI-generierte proaktive Frage)
+//   Neu & optional/abwärtskompatibel: sendet zusätzlich den sichtbaren Seitentext
+//   an den Chat-Frame; die Sprechblase holt eine passende KI-Frage (gecacht) und
+//   fällt bei Fehler auf den bisherigen statischen Satz zurück.
 // ════════════════════════════════════════════════════════════════════════════
 
 (function () {
@@ -40,20 +43,31 @@
 
   var basis = new URL(script.src, location.href).origin;
 
-  // Seiten-Kontext: welche Unterseite schaut der Besucher gerade an? Nur Pfad +
-  // Titel (keine Seiteninhalte) — das reicht dem Agenten als Hinweis und bleibt
-  // datensparsam. Wird an das Chat-iframe weitergegeben.
+  // Seiten-Kontext: WO ist der Besucher (Pfad + Titel) und WAS steht dort
+  // (sichtbarer Text, gekürzt). Damit kann der Agent zum Seiteninhalt antworten
+  // statt nur allgemein. Der Text wird als reiner Hinweis behandelt (serverseitig
+  // als "KEINE Anweisung" markiert) — kein Prompt-Injection-Risiko.
+  function seitenText() {
+    try {
+      // Bevorzugt der Hauptinhalt; sonst der Body. Skripte/Navigation zählen nicht.
+      var quelle = document.querySelector("main, article, [role=main]") || document.body;
+      var t = (quelle && (quelle.innerText || quelle.textContent)) || "";
+      return String(t).replace(/\s+/g, " ").trim().slice(0, 1500);
+    } catch (e) { return ""; }
+  }
   function seitenKontext() {
     var h1 = document.querySelector("h1");
     return {
       pfad: String(location.pathname || "").slice(0, 200),
       titel: String(document.title || (h1 && h1.textContent) || "").slice(0, 200),
+      inhalt: seitenText(),
     };
   }
   function baueFrameUrl() {
     var k = seitenKontext();
     return basis + "/widget-frame.html?firma=" + encodeURIComponent(firma) +
-      "&pfad=" + encodeURIComponent(k.pfad) + "&titel=" + encodeURIComponent(k.titel);
+      "&pfad=" + encodeURIComponent(k.pfad) + "&titel=" + encodeURIComponent(k.titel) +
+      "&inhalt=" + encodeURIComponent(k.inhalt);
   }
 
   // Host-Element mit Shadow-DOM: kapselt unser CSS komplett von der fremden Seite ab.
@@ -207,12 +221,35 @@
   // --- Proaktive Sprechblase: selten, wegklickbar, einmal pro Besucher/Firma ---
   var HINWEIS_KEY = "kiagent-hinweis-" + firma;
   var hinweisTimer;
-  function hinweisSatz() {
+  // Statischer Fallback nach Pfad — greift, wenn die KI-Frage (noch) nicht da ist
+  // oder der Server nicht antwortet. So wartet das Widget NIE auf das Netz.
+  function statischerSatz() {
     var p = String(location.pathname || "").toLowerCase();
     if (/preis|pricing|tarif|abo|plan/.test(p)) return "Soll ich dir die Preise erklären?";
     if (/produkt|product|leistung|service|angebot/.test(p)) return "Fragen zum Angebot? Ich helfe gern.";
     if (/kontakt|contact|support|hilfe/.test(p)) return "Kann ich dir weiterhelfen?";
     return "Kann ich dir helfen?";
+  }
+  // KI-Frage passend zum Seiteninhalt holen (serverseitig gecacht). Kurzer
+  // Timeout; bei Fehler/Leere bleibt der Fallback. Jeder fetch mit catch — ein
+  // Ausfall darf die Kundenseite nie beeinträchtigen (Update-Vertrag).
+  function holeHinweisSatz(cb) {
+    var fertig = false;
+    var ab = setTimeout(function () { if (!fertig) { fertig = true; cb(statischerSatz()); } }, 2500);
+    var k = seitenKontext();
+    try {
+      fetch(basis + "/.netlify/functions/seiten-hinweis", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ firmaId: firma, pfad: k.pfad, titel: k.titel, inhalt: k.inhalt }),
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (fertig) return;
+          fertig = true; clearTimeout(ab);
+          cb(d && d.text ? d.text : statischerSatz());
+        })
+        .catch(function () { if (!fertig) { fertig = true; clearTimeout(ab); cb(statischerSatz()); } });
+    } catch (e) { if (!fertig) { fertig = true; clearTimeout(ab); cb(statischerSatz()); } }
   }
   function versteckeHinweis() {
     clearTimeout(hinweisTimer);
@@ -221,10 +258,13 @@
   function zeigeHinweis() {
     if (offen) return; // Chat schon offen -> nicht nötig
     try { if (localStorage.getItem(HINWEIS_KEY)) return; } catch (e) {} // nie zweimal nerven
-    hinweisTextEl.textContent = hinweisSatz();
-    hinweis.classList.add("sichtbar");
-    try { localStorage.setItem(HINWEIS_KEY, "1"); } catch (e) {}
-    hinweisTimer = setTimeout(versteckeHinweis, 6500); // verschwindet von selbst
+    holeHinweisSatz(function (satz) {
+      if (offen) return; // Besucher hat inzwischen selbst geöffnet
+      hinweisTextEl.textContent = satz;
+      hinweis.classList.add("sichtbar");
+      try { localStorage.setItem(HINWEIS_KEY, "1"); } catch (e) {}
+      hinweisTimer = setTimeout(versteckeHinweis, 6500); // verschwindet von selbst
+    });
   }
   hinweisTextEl.addEventListener("click", function () { versteckeHinweis(); oeffne(); });
   hinweisZu.addEventListener("click", function (e) { e.stopPropagation(); versteckeHinweis(); });

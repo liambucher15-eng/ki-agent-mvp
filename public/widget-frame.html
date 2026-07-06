@@ -114,8 +114,13 @@
 
     const _p = new URLSearchParams(location.search);
     const FIRMA_ID = _p.get("firma") || "salbei";
-    // Seiten-Kontext vom Widget (welche Unterseite schaut der Besucher an?)
-    const seiteInfo = { pfad: _p.get("pfad") || "", titel: _p.get("titel") || "" };
+    // Seiten-Kontext vom Widget: welche Unterseite (pfad/titel) UND was steht
+    // dort (inhalt, gekürzt) — damit der Agent zum Seiteninhalt antworten kann.
+    const seiteInfo = {
+      pfad: _p.get("pfad") || "",
+      titel: _p.get("titel") || "",
+      inhalt: _p.get("inhalt") || "",
+    };
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
 
     // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---
