@@ -1,13 +1,18 @@
 // Tests für die Stripe-Webhook-Signaturprüfung — sicherheitskritisch:
 // ein gefälschtes "bezahlt"-Event darf NICHT durchkommen.
 
-const { test } = require("node:test");
+const { test, afterEach } = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-// Secret VOR dem Require setzen (das Modul liest es beim Laden).
+// Env VOR dem (einzigen) Require setzen — das Modul liest sie beim Laden und
+// wird danach aus dem Require-Cache bedient (weitere process.env-Änderungen
+// hätten also keine Wirkung mehr).
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_geheim";
-const { verifiziereWebhook } = require("../netlify/functions/lib/stripe");
+process.env.STRIPE_SECRET_KEY = "sk_test_x";
+process.env.STRIPE_PREIS_BASIS = "price_basis_123";
+process.env.STRIPE_PREIS_PLUS = "price_plus_456";
+const { verifiziereWebhook, erstelleCheckout, konfiguriert } = require("../netlify/functions/lib/stripe");
 
 function signiere(body, secret, t) {
   t = t || Math.floor(Date.now() / 1000);
@@ -44,4 +49,44 @@ test("veralteter Zeitstempel (>5 min) -> abgelehnt", () => {
 
 test("fehlende Signatur -> abgelehnt", () => {
   assert.throws(() => verifiziereWebhook("{}", ""), /unvollständig/i);
+});
+
+// --- Milestone 10: zwei Produkte (Basis/Plus) ---
+const echterFetch = global.fetch;
+afterEach(() => { global.fetch = echterFetch; });
+
+function mockCheckoutAntwort() {
+  global.fetch = async (url, opts) => {
+    mockCheckoutAntwort.letzterAufruf = { url, opts };
+    return { ok: true, json: async () => ({ id: "cs_test", url: "https://checkout.stripe.com/x" }) };
+  };
+}
+
+test("erstelleCheckout: plan 'plus' -> nutzt STRIPE_PREIS_PLUS, plan+firma in Metadata", async () => {
+  mockCheckoutAntwort();
+  await erstelleCheckout({ firmaId: "salbei", plan: "plus", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" });
+  const body = new URLSearchParams(mockCheckoutAntwort.letzterAufruf.opts.body);
+  assert.equal(body.get("line_items[0][price]"), "price_plus_456");
+  assert.equal(body.get("metadata[plan]"), "plus");
+  assert.equal(body.get("metadata[firma_id]"), "salbei");
+  assert.equal(body.get("subscription_data[metadata][plan]"), "plus");
+});
+
+test("erstelleCheckout: plan 'basis' -> nutzt STRIPE_PREIS_BASIS", async () => {
+  mockCheckoutAntwort();
+  await erstelleCheckout({ firmaId: "x", plan: "basis", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" });
+  const body = new URLSearchParams(mockCheckoutAntwort.letzterAufruf.opts.body);
+  assert.equal(body.get("line_items[0][price]"), "price_basis_123");
+  assert.equal(body.get("metadata[plan]"), "basis");
+});
+
+test("erstelleCheckout: unbekannter/fehlender plan-Wert fällt auf 'plus'", async () => {
+  mockCheckoutAntwort();
+  await erstelleCheckout({ firmaId: "x", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" });
+  const body = new URLSearchParams(mockCheckoutAntwort.letzterAufruf.opts.body);
+  assert.equal(body.get("line_items[0][price]"), "price_plus_456");
+});
+
+test("konfiguriert: true, sobald mindestens ein Preis + Secret gesetzt sind", () => {
+  assert.equal(konfiguriert(), true);
 });

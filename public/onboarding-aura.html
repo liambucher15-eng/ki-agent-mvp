@@ -146,6 +146,9 @@
     .agent-opt.gesperrt { opacity: 0.7; }
     .agent-opt-titel { font-weight: 700; font-size: 0.92rem; }
     .agent-opt-sub { font-size: 0.76rem; color: var(--grau); line-height: 1.3; }
+    .agent-preis { font-size: 0.8rem; font-weight: 700; color: var(--indigo); margin-top: 0.1rem; }
+    .agent-features { margin: 0.35rem 0 0; padding-left: 1.05rem; font-size: 0.76rem; color: var(--grau); line-height: 1.45; }
+    .agent-features li { margin-bottom: 0.05rem; }
     .agent-badge { position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.66rem; font-weight: 700;
                    color: #fff; background: linear-gradient(135deg, var(--indigo), var(--coral)); border-radius: 999px; padding: 0.1rem 0.5rem; }
     .agent-orb-mini { width: 46px; height: 46px; border-radius: 50%; margin-bottom: 0.35rem;
@@ -356,17 +359,27 @@
             <div class="agent-wahl">
               <button type="button" class="agent-opt aktiv" data-typ="orb" id="optOrb">
                 <span class="agent-orb-mini"></span>
-                <span class="agent-opt-titel">Leucht-Orb</span>
-                <span class="agent-opt-sub">In deinen Farben. Im Basis-Plan enthalten.</span>
+                <span class="agent-opt-titel">Basis — Leucht-Orb</span>
+                <span class="agent-preis" id="preisBasis">ab CHF …/Monat</span>
+                <ul class="agent-features">
+                  <li>Leuchtender Orb in deinen Farben</li>
+                  <li>Voller Chat mit deinem Wissen</li>
+                  <li>Kontaktanfragen (Leads) aufnehmen</li>
+                </ul>
               </button>
-              <button type="button" class="agent-opt gesperrt" data-typ="figur" id="optFigur">
+              <button type="button" class="agent-opt" data-typ="figur" id="optFigur">
                 <span class="agent-badge">Plus</span>
                 <span class="agent-figur-mini" id="figurMini">★</span>
-                <span class="agent-opt-titel">Eigene Figur</span>
-                <span class="agent-opt-sub">Bild hochladen oder erstellen.</span>
+                <span class="agent-opt-titel">Plus — Eigene Figur</span>
+                <span class="agent-preis" id="preisPlus">ab CHF …/Monat</span>
+                <ul class="agent-features">
+                  <li>Alles aus Basis</li>
+                  <li>KI-generierter Charakter (4 Ausdrücke)</li>
+                  <li>Einzelne Bilder per Anweisung anpassen</li>
+                </ul>
               </button>
             </div>
-            <p class="mini" id="plusHinweis" style="text-align:left;"><a class="link" id="plusTesten">Plus testen (Simulation) →</a></p>
+            <p class="mini" style="text-align:left;">Du kannst beides gleich hier testen — bezahlt wird erst am Ende, wenn dein Agent fertig ist.</p>
 
             <div id="figurEditor" hidden>
               <div class="tabs">
@@ -399,6 +412,13 @@
             <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
+            <!-- Bezahlung (Milestone 10): erscheint erst NACH erfolgreichem Speichern.
+                 Der Agent bleibt bis dahin nutzbar zum Testen — Zahlung ist der letzte Schritt. -->
+            <div id="checkoutBox" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.7rem 0.85rem;margin-top:0.5rem;">
+              <p class="mini" id="checkoutText" style="text-align:left;margin:0 0 0.5rem;"></p>
+              <button type="button" class="btn btn-primar" id="checkoutBtn" style="width:100%;"></button>
+              <p class="mini" id="checkoutStatus" style="text-align:left;min-height:1.1em;"></p>
+            </div>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard →</a></p>
             <div class="grow"></div>
           </div>

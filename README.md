@@ -55,21 +55,24 @@ im Katalog + ein Handler, kein firmenspezifischer Code.
    `/?firma=salbei` (oder `?firma=nordlicht`). Widget-Demo: `/test-einbetten.html`.
 7. Tests: `npm test` (Node-Testrunner, `test/*.test.js`).
 
-## Abo / Bezahlung (Stripe, Milestone 5)
-Der Plus-Plan (eigene Figur) wird über Stripe verkauft. Der **Plan ist Server-
-Wahrheit**: nur der Stripe-Webhook setzt `firmen.plan` (Column-REVOKE in
-`migration-m5.sql`), und `firma.js` liefert die Figur-Bilder nur bei `plan=plus`.
-Einrichtung:
-1. Stripe-Konto → ein wiederkehrendes Produkt/Preis anlegen (`price_...`).
-2. `STRIPE_SECRET_KEY` + `STRIPE_PREIS_ID` als Netlify-Env setzen.
+## Abo / Bezahlung (Stripe, Milestone 5+10)
+Basis (Orb) und Plus (eigene Figur) werden je über ein eigenes Stripe-Abo
+verkauft. Der **Plan ist Server-Wahrheit**: nur der Stripe-Webhook setzt
+`firmen.plan` (Column-REVOKE in `migration-m5.sql`), und `firma.js` liefert die
+Figur-Bilder nur bei `plan=plus`. Einrichtung:
+1. Stripe-Konto → zwei wiederkehrende Produkte/Preise anlegen (`price_...`),
+   eines für Basis, eines für Plus. Es reicht auch erstmal nur eines.
+2. `STRIPE_SECRET_KEY` + `STRIPE_PREIS_BASIS` + `STRIPE_PREIS_PLUS` als
+   Netlify-Env setzen.
 3. Webhook-Endpoint auf `https://DEINE-DOMAIN/.netlify/functions/stripe-webhook`
    zeigen lassen; Events `checkout.session.completed`,
    `customer.subscription.deleted`, `customer.subscription.updated` abonnieren;
    den Signing-Secret als `STRIPE_WEBHOOK_SECRET` setzen.
 4. `migration-m5.sql` ausführen (sperrt `plan` für Kunden, legt `stripe_kunde` an).
 
-Ohne diese Werte bleibt alles nutzbar — der Upgrade-Button meldet nur, dass die
-Bezahlung noch nicht eingerichtet ist (Checkout gibt `501`).
+Ohne diese Werte bleibt alles nutzbar — der Checkout (Onboarding-Ende oder
+Dashboard-Button) meldet nur, dass die Bezahlung noch nicht eingerichtet ist
+(gibt `501`).
 
 ## Deploy (Netlify)
 - Netlify-Konto erstellen, Repo verbinden.

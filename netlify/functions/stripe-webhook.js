@@ -24,9 +24,12 @@ exports.handler = async (event) => {
   try {
     const obj = stripeEvent.data?.object || {};
     if (stripeEvent.type === "checkout.session.completed") {
-      // Bezahlt -> Plus. firma_id kommt aus den Metadaten der Session.
+      // Bezahlt -> der Plan, der tatsächlich gekauft wurde (Milestone 10: zwei
+      // Produkte). Fallback "plus" für Sessions von VOR der Umstellung, die noch
+      // kein plan-Metadatum kannten.
       const firmaId = obj.metadata?.firma_id || obj.client_reference_id;
-      if (firmaId) await setzePlanServer(firmaId, "plus", obj.customer || null);
+      const plan = obj.metadata?.plan === "basis" ? "basis" : "plus";
+      if (firmaId) await setzePlanServer(firmaId, plan, obj.customer || null);
     } else if (
       stripeEvent.type === "customer.subscription.deleted" ||
       (stripeEvent.type === "customer.subscription.updated" && obj.status !== "active" && obj.status !== "trialing")

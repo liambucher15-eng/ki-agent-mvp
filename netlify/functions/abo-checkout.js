@@ -16,18 +16,22 @@ exports.handler = async (event) => {
     return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
   }
 
-  let firmaId, basis;
-  try { ({ firmaId, basis } = JSON.parse(event.body || "{}")); }
+  let firmaId, basis, plan;
+  try { ({ firmaId, basis, plan } = JSON.parse(event.body || "{}")); }
   catch { return json(400, { error: "Ungültiges JSON" }); }
   if (!firmaId || typeof firmaId !== "string") return json(400, { error: "firmaId fehlt" });
+  // Default "plus" (Rückwärtskompatibilität: der bisherige Dashboard-Button
+  // schickte nie einen plan-Parameter — er meinte immer das Plus-Upgrade).
+  plan = plan === "basis" ? "basis" : "plus";
 
-  // Rücksprung-URLs: zurück ins Dashboard. basis kommt vom Frontend (location.origin).
+  // Rücksprung-URLs: zurück ins Dashboard. basis kommt vom Frontend (location.origin,
+  // die Variable heisst hier "basis" wie "Basis-URL" — NICHT der Plan "Basis").
   const ziel = (typeof basis === "string" && /^https?:\/\//.test(basis)) ? basis : "";
   const erfolgUrl = ziel + "/dashboard.html?bezahlt=1";
   const abbruchUrl = ziel + "/dashboard.html?abbruch=1";
 
   try {
-    const session = await erstelleCheckout({ firmaId, erfolgUrl, abbruchUrl });
+    const session = await erstelleCheckout({ firmaId, plan, erfolgUrl, abbruchUrl });
     return json(200, { url: session.url });
   } catch (e) {
     return json(502, { error: e.message });

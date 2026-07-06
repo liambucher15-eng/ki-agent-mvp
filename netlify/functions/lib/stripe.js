@@ -4,17 +4,28 @@
 //
 // Benötigte Env-Variablen (Netlify / .env), alle GEHEIM:
 //   STRIPE_SECRET_KEY      – sk_live_... / sk_test_...
-//   STRIPE_PREIS_ID        – price_... (das Plus-Abo)
+//   STRIPE_PREIS_BASIS     – price_... (das Basis-Abo, Orb)
+//   STRIPE_PREIS_PLUS      – price_... (das Plus-Abo, eigene Figur)
 //   STRIPE_WEBHOOK_SECRET  – whsec_... (aus dem Webhook-Endpoint)
+// STRIPE_PREIS_ID (alt, Milestone 5) bleibt als Fallback für STRIPE_PREIS_PLUS
+// gültig, damit bereits konfigurierte Deployments nicht brechen.
 
 const crypto = require("crypto");
 
 const SECRET = process.env.STRIPE_SECRET_KEY || "";
-const PREIS = process.env.STRIPE_PREIS_ID || "";
+const PREIS_PLUS = process.env.STRIPE_PREIS_PLUS || process.env.STRIPE_PREIS_ID || "";
+const PREIS_BASIS = process.env.STRIPE_PREIS_BASIS || "";
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+function preisFuer(plan) {
+  return plan === "basis" ? PREIS_BASIS : PREIS_PLUS;
+}
+
+// "Eingerichtet" heisst: mindestens EIN Preis ist konfiguriert (meist zuerst Plus,
+// da Basis historisch kostenlos war). erstelleCheckout prüft den konkret gewählten
+// Preis selbst und wirft einen klaren Fehler, falls DER fehlt.
 function konfiguriert() {
-  return !!SECRET && !!PREIS;
+  return !!SECRET && (!!PREIS_PLUS || !!PREIS_BASIS);
 }
 
 // Objekt -> flaches x-www-form-urlencoded (Stripe erwartet metadata[firma_id]=... usw.)
@@ -28,18 +39,23 @@ function formCodieren(obj, praefix, ziel) {
   return ziel;
 }
 
-// Erzeugt eine Checkout-Session fürs Plus-Abo. firmaId wandert in die Metadaten,
-// damit der Webhook später weiß, welche Firma bezahlt hat.
-async function erstelleCheckout({ firmaId, erfolgUrl, abbruchUrl }) {
+// Erzeugt eine Checkout-Session für den gewählten Plan ("basis" oder "plus").
+// firmaId UND plan wandern in die Metadaten — der Webhook setzt firmen.plan
+// exakt auf den bezahlten Plan (nicht hart auf "plus"), erkennbar allein am
+// Event, ohne einen zusätzlichen Stripe-API-Aufruf für die Preis-Zuordnung.
+async function erstelleCheckout({ firmaId, plan, erfolgUrl, abbruchUrl }) {
+  const zielPlan = plan === "basis" ? "basis" : "plus";
+  const preis = preisFuer(zielPlan);
+  if (!preis) throw new Error("Für den Plan '" + zielPlan + "' ist kein Stripe-Preis eingerichtet.");
   const body = formCodieren({
     mode: "subscription",
-    "line_items": [{ price: PREIS, quantity: 1 }],
+    "line_items": [{ price: preis, quantity: 1 }],
     success_url: erfolgUrl,
     cancel_url: abbruchUrl,
     client_reference_id: firmaId,
-    metadata: { firma_id: firmaId },
-    // Firma-ID auch am Abo hinterlegen -> Kündigungs-Webhook findet sie wieder.
-    subscription_data: { metadata: { firma_id: firmaId } },
+    metadata: { firma_id: firmaId, plan: zielPlan },
+    // Firma-ID + Plan auch am Abo hinterlegen -> Kündigungs-Webhook findet sie wieder.
+    subscription_data: { metadata: { firma_id: firmaId, plan: zielPlan } },
   });
   const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",

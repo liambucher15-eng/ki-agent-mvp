@@ -3,6 +3,15 @@
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
     const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", plan:"basis", charakterBilder:null };
 
+    // Preise (Milestone 10): PLATZHALTER, bis die finale Preisentscheidung steht
+    // (siehe Fertigstellungs-Plan, Punkt "Preise" — bewusst vertagt). Eine Stelle
+    // hier zu ändern reicht, wenn die echten Zahlen feststehen.
+    const PREISE = { basis: 29, plus: 49 };
+    const elPreisBasis = document.getElementById("preisBasis");
+    const elPreisPlus = document.getElementById("preisPlus");
+    if (elPreisBasis) elPreisBasis.textContent = "CHF " + PREISE.basis + ".–/Monat";
+    if (elPreisPlus) elPreisPlus.textContent = "CHF " + PREISE.plus + ".–/Monat";
+
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
       professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
@@ -296,7 +305,6 @@
     const vorFigurImg = document.getElementById("vorFigurImg");
     const vorLabel = document.getElementById("vorLabel");
     const figurMini = document.getElementById("figurMini");
-    let plusFrei = false;
 
     function setVorschauFarben() {
       [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='6']")].forEach((el) => {
@@ -318,8 +326,9 @@
         vorLabel.textContent = daten.plan === "plus" ? "Lade ein Bild hoch oder erstelle einen Charakter" : "Dein Leucht-Orb";
       }
     }
+    // Beide Pläne sind sofort wählbar und testbar (Milestone 10: kein Fake-Gate
+    // mehr) — bezahlt wird erst am Ende im Fertig-Schritt, nicht schon hier.
     function waehleTyp(typ) {
-      if (typ === "figur" && !plusFrei) { document.getElementById("plusTesten").focus(); return; }
       daten.plan = (typ === "figur") ? "plus" : "basis";
       optOrb.classList.toggle("aktiv", typ === "orb");
       optFigur.classList.toggle("aktiv", typ === "figur");
@@ -328,15 +337,6 @@
     }
     optOrb.addEventListener("click", () => waehleTyp("orb"));
     optFigur.addEventListener("click", () => waehleTyp("figur"));
-    document.getElementById("plusTesten").addEventListener("click", () => {
-      plusFrei = true;
-      optFigur.classList.remove("gesperrt");
-      const h = document.getElementById("plusHinweis");
-      h.textContent = ""; const ok = document.createElement("span");
-      ok.style.color = "var(--gruen)"; ok.style.fontWeight = "600"; ok.textContent = "✓ Plus (Simulation) aktiv";
-      h.appendChild(ok);
-      waehleTyp("figur");
-    });
 
     // Tabs im Figur-Editor
     document.querySelectorAll("#figurEditor .tab").forEach((t) => t.addEventListener("click", () => {
@@ -553,12 +553,49 @@
         Store.setNutzer(daten.email);
         status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
         window.open("index.html?firma=" + encodeURIComponent(daten.id), "_blank");
+        zeigeCheckoutBox(); // Bezahlung ist der letzte Schritt — Agent ist schon nutzbar
       } catch (e) {
         status.style.color = "#e11d48"; status.textContent = "Konnte nicht gespeichert werden: " + e.message;
       } finally {
         btn.disabled = false;
       }
     });
+
+    // --- Bezahlung (Milestone 10): nach dem Speichern, für den gewählten Plan ---
+    // Der Agent funktioniert bereits (Test-Chat); Bezahlen aktiviert ihn dauerhaft/live.
+    function zeigeCheckoutBox() {
+      const box = document.getElementById("checkoutBox");
+      const text = document.getElementById("checkoutText");
+      const btn = document.getElementById("checkoutBtn");
+      const preis = daten.plan === "plus" ? PREISE.plus : PREISE.basis;
+      const planName = daten.plan === "plus" ? "Plus" : "Basis";
+      text.textContent = "Dein " + planName + "-Agent ist bereit. Damit er dauerhaft live bleibt, schliesse das Abo ab.";
+      btn.textContent = "Jetzt " + planName + " abonnieren — CHF " + preis + ".–/Monat";
+      btn.onclick = () => starteCheckout(btn);
+      box.hidden = false;
+    }
+    async function starteCheckout(btn) {
+      const status = document.getElementById("checkoutStatus");
+      btn.disabled = true; status.textContent = "Weiterleiten…"; status.style.color = "";
+      try {
+        const res = await fetch("/.netlify/functions/abo-checkout", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ firmaId: daten.id, plan: daten.plan, basis: location.origin }),
+        });
+        const d = await res.json();
+        if (res.status === 501) {
+          status.style.color = "#e11d48";
+          status.textContent = "Bezahlung ist noch nicht eingerichtet — du kannst den Agenten trotzdem weiter testen.";
+          btn.disabled = false;
+          return;
+        }
+        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
+        location.href = d.url; // ab zu Stripe
+      } catch (e) {
+        status.style.color = "#e11d48"; status.textContent = "Bezahlung fehlgeschlagen: " + e.message;
+        btn.disabled = false;
+      }
+    }
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();

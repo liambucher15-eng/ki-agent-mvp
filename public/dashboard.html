@@ -219,7 +219,7 @@
       try {
         const res = await fetch("/.netlify/functions/abo-checkout", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: firma.id, basis: location.origin }),
+          body: JSON.stringify({ firmaId: firma.id, plan: "plus", basis: location.origin }),
         });
         const d = await res.json();
         if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); btn.disabled = false; btn.textContent = "Auf Plus upgraden"; return; }
