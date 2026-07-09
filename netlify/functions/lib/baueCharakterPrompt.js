@@ -27,7 +27,14 @@ function baueCharakterPrompt({ beschreibung, farbe } = {}) {
       `ändere NUR den Gesichtsausdruck/die Pose zu: ${ausdruck}. ` +
       `Hintergrund unverändert einfarbig hell.`;
   }
-  return { stil, prompts, edits };
+  // Klappmaul-Frame (Milestone 12): Mund-offen-Variante des Sprechen-Bilds.
+  // Wird beim Sprechen mit dem (geschlossenen) Sprechen-Bild abgewechselt, damit
+  // sich der Mund des Maskottchens wirklich bewegt (nicht nur wippt).
+  const mundOffenEdit =
+    `Exakt dieselbe Figur, derselbe Stil, dieselben Farben, dieselbe Pose — ` +
+    `öffne NUR den Mund weit, als würde die Figur gerade einen Vokal sprechen. ` +
+    `Sonst absolut identisch, Hintergrund unverändert einfarbig hell.`;
+  return { stil, prompts, edits, mundOffenEdit };
 }
 
 module.exports = { baueCharakterPrompt, AUSDRUECKE };

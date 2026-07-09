@@ -65,7 +65,7 @@ async function holeBildFuerEdit(bild) {
 }
 
 async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
-  const { stil, prompts, edits } = baueCharakterPrompt({ beschreibung, farbe });
+  const { stil, prompts, edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe });
 
   // 1) Basisbild (idle). Mit Referenzbild: Figur an der Vorlage ausrichten.
   const idlePrompt = referenzBild
@@ -88,9 +88,19 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
     roh[zustand] = { base64: r.bildBase64, mimeType: r.mimeType };
   }
 
-  // 3) Alle 4 hochladen -> öffentliche URLs.
+  // 2b) Klappmaul-Frame: Mund-offen-Variante des SPRECHEN-Bilds (nicht des idle),
+  //     damit Pose und Mund zusammenpassen. Optional — schlägt es fehl, wippt die
+  //     Figur eben nur; das ist kein harter Fehler (Bild bleibt trotzdem nutzbar).
+  const so = await mitWiederholung(() => bearbeiteBild({
+    bild: roh.sprechen.base64,
+    mimeType: roh.sprechen.mimeType,
+    anweisung: mundOffenEdit,
+  }));
+  if (so.ok) roh.sprechen_offen = { base64: so.bildBase64, mimeType: so.mimeType };
+
+  // 3) Alle erzeugten Bilder hochladen -> öffentliche URLs.
   const bilder = {};
-  for (const zustand of ZUSTAENDE) {
+  for (const zustand of Object.keys(roh)) {
     const endung = (roh[zustand].mimeType.split("/")[1] || "png").split(";")[0];
     bilder[zustand] = await speichereBild(
       "generiert/" + jobId + "/" + zustand + "." + endung,

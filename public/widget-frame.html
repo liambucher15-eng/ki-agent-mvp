@@ -230,15 +230,30 @@
     // --- Charakter-Steuerung (Bild wenn vorhanden, sonst Platzhalter-SVG) ---
     // Die Zustands-KLASSE wird immer gesetzt (auch im Bild-Modus), damit
     // Bühnen-Animationen wie das Sprech-Wippen für beide Darstellungen greifen.
+    // Klappmaul: solange gesprochen wird, zwischen dem Sprechen-Bild (Mund zu)
+    // und dem sprechen_offen-Bild (Mund offen) wechseln -> das Maskottchen
+    // bewegt wirklich den Mund. Nur wenn beide Bilder vorhanden sind; sonst
+    // wippt die Figur (CSS) wie bisher.
+    let flapTimer;
+    function stopFlap() { clearInterval(flapTimer); flapTimer = null; }
+
     let revertTimer;
     function setCharakter(zustand, dauer) {
       clearTimeout(revertTimer);
+      stopFlap();
       avatar.className = zustand === "idle" ? "" : zustand;
       const bildKey = zustand === "idle" ? "idle" : zustand;
       if (bilder && (bilder[bildKey] || bilder.idle)) {
         avatarImg.src = bilder[bildKey] || bilder.idle;
         avatarImg.style.display = "block";
         avatar.querySelector("svg").style.display = "none";
+        if (zustand === "sprechen" && bilder.sprechen_offen && bilder.sprechen) {
+          let auf = false;
+          flapTimer = setInterval(() => {
+            auf = !auf;
+            avatarImg.src = auf ? bilder.sprechen_offen : bilder.sprechen;
+          }, 180);
+        }
       } else {
         avatarImg.style.display = "none";
         avatar.querySelector("svg").style.display = "";
