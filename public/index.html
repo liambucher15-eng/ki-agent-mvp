@@ -5,11 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KI-Agent MVP</title>
   <style>
-    /* Standard-Farben — werden pro Firma aus den Daten überschrieben. */
-    :root { --farbe: #2D5694; --akzent: #9db8dd; }
-
-    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { font-size: 1.2rem; color: #444; text-align: center; }
+    /* Standard-Farben — werden pro Firma aus den Daten überschrieben.
+       Premium-Look (Milestone 9): Töne per color-mix aus --farbe abgeleitet. */
+    :root {
+      --farbe: #2D5694; --akzent: #9db8dd;
+      --linie: color-mix(in srgb, var(--farbe) 14%, #e8eaed);
+      --farbe-dunkel: color-mix(in srgb, var(--farbe) 82%, #000);
+    }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased;
+           max-width: 620px; margin: 0 auto; padding: 1.5rem 1rem 2rem; color: #0f172a; min-height: 100vh;
+           background:
+             radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--farbe) 8%, transparent), transparent 55%),
+             linear-gradient(180deg, color-mix(in srgb, var(--farbe) 4%, #fff), #f7f8fa); }
+    h1 { font-size: 1.15rem; color: #475569; text-align: center; font-weight: 650; letter-spacing: 0.01em; }
 
     /* --- Charakter --- */
     #avatar-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 0.5rem; }
@@ -53,15 +61,33 @@
     @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-12px); } }
 
     /* --- Chat --- */
-    #chat { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; height: 340px; overflow-y: auto; }
-    .msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 8px; max-width: 80%; white-space: pre-wrap; }
-    .user { background: var(--farbe); color: #fff; margin-left: auto; }
-    .bot  { background: #f0f0f0; }
-    .meta { color: #999; font-style: italic; }
-    form { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-    input { flex: 1; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px; }
-    button { padding: 0.6rem 1rem; border: 0; border-radius: 8px; background: var(--farbe); color: #fff; cursor: pointer; }
+    #chat { border: 1px solid var(--linie); border-radius: 18px; padding: 1.1rem; height: 360px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 0.55rem; background: rgba(255,255,255,0.7);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: 0 10px 34px -18px rgba(15,23,42,0.35); }
+    #chat::-webkit-scrollbar { width: 6px; }
+    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
+    .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 82%; white-space: pre-wrap; line-height: 1.45;
+           animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1) both; }
+    @keyframes msgRein { from { opacity: 0; transform: translateY(7px) scale(0.98); } to { opacity: 1; transform: none; } }
+    .user { align-self: flex-end; color: #fff; border-bottom-right-radius: 5px;
+            background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
+            box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--farbe) 70%, transparent); }
+    .bot  { align-self: flex-start; background: #fff; border: 1px solid var(--linie); border-bottom-left-radius: 5px;
+            box-shadow: 0 4px 14px -10px rgba(15,23,42,0.4); }
+    .meta { color: #94a3b8; font-style: italic; box-shadow: none; background: transparent; }
+    form { display: flex; gap: 0.5rem; margin-top: 0.85rem; align-items: center; }
+    input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
+            background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus { outline: none; border-color: var(--farbe);
+                  box-shadow: 0 0 0 3px color-mix(in srgb, var(--farbe) 18%, transparent); }
+    button { padding: 0.7rem 1.2rem; border: 0; border-radius: 999px; color: #fff; cursor: pointer; font-weight: 600;
+             background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
+             box-shadow: 0 5px 14px -6px color-mix(in srgb, var(--farbe) 70%, transparent);
+             transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
+    button:hover:not(:disabled) { transform: translateY(-1px); }
     button:disabled { opacity: 0.5; cursor: default; }
+    @media (prefers-reduced-motion: reduce) { .msg, #avatar svg, .augen { animation: none !important; } }
   </style>
 </head>
 <body>

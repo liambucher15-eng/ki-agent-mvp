@@ -31,11 +31,14 @@ window.ChatUI = (function () {
     stilDa = true;
     const s = document.createElement("style");
     s.textContent =
-      ".ki-vorschlaege{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}" +
-      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:6px 11px;border-radius:999px;" +
-      "border:1px solid var(--farbe,#4F46E5);background:#fff;color:var(--farbe,#4F46E5);" +
-      "transition:background .15s,color .15s}" +
-      ".ki-vorschlag:hover{background:var(--farbe,#4F46E5);color:#fff}";
+      ".ki-vorschlaege{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 2px}" +
+      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:7px 13px;border-radius:999px;" +
+      "border:1px solid color-mix(in srgb,var(--farbe,#4F46E5) 30%,transparent);" +
+      "background:color-mix(in srgb,var(--farbe,#4F46E5) 6%,#fff);color:var(--farbe,#4F46E5);" +
+      "box-shadow:0 2px 6px -4px color-mix(in srgb,var(--farbe,#4F46E5) 60%,transparent);" +
+      "transition:background .18s,color .18s,transform .18s,box-shadow .18s}" +
+      ".ki-vorschlag:hover{background:var(--farbe,#4F46E5);color:#fff;transform:translateY(-1px);" +
+      "box-shadow:0 5px 12px -5px color-mix(in srgb,var(--farbe,#4F46E5) 70%,transparent)}";
     document.head.appendChild(s);
   }
 

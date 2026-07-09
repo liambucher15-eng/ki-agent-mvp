@@ -5,26 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat</title>
   <style>
-    /* Standard-Farben — werden pro Firma aus den Daten überschrieben. */
-    :root { --farbe: #3f7d5a; --akzent: #a8d5b9; }
+    /* ══ Modern-Premium (Milestone 9) ═══════════════════════════════════════
+       Alle Töne werden per color-mix AUS der Markenfarbe --farbe abgeleitet,
+       damit das Widget in jeder Firmenfarbe stimmig aussieht. Kein externer
+       Font, keine Lib — reines CSS (das Widget lädt in fremden Seiten). */
+    :root {
+      --farbe: #3f7d5a; --akzent: #a8d5b9;
+      --tint:  color-mix(in srgb, var(--farbe) 7%, #ffffff);
+      --tint2: color-mix(in srgb, var(--farbe) 4%, #ffffff);
+      --linie: color-mix(in srgb, var(--farbe) 14%, #e8eaed);
+      --farbe-dunkel: color-mix(in srgb, var(--farbe) 82%, #000);
+      --schrift: 0.9rem;
+    }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column;
-           background: #fafaf9; color: #111827; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      display: flex; flex-direction: column; color: #0f172a;
+      /* weicher Verlauf aus der Markenfarbe */
+      background:
+        radial-gradient(130% 90% at 100% 0%, var(--tint), transparent 55%),
+        linear-gradient(180deg, var(--tint2), #f7f8fa);
+    }
 
-    /* --- Kopfzeile --- */
-    #kopf { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem;
-            background: var(--farbe); color: #fff; flex-shrink: 0; }
-    #kopf-avatar { width: 40px; height: 40px; flex-shrink: 0; }
+    /* --- Kopfzeile: Glas + Markenverlauf --- */
+    #kopf { display: flex; align-items: center; gap: 0.7rem; padding: 0.82rem 1rem; flex-shrink: 0;
+            color: #fff; position: relative; z-index: 3;
+            background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
+            box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--farbe) 65%, transparent); }
+    #kopf-avatar { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%;
+                   background: rgba(255,255,255,0.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+                   overflow: hidden; display: grid; place-items: center; }
     #kopf-avatar svg, #kopf-avatar img { width: 100%; height: 100%; display: block; }
     #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
-    #kopf-img { object-fit: contain; display: none; }
+    #kopf-img { object-fit: cover; display: none; }
     #kopf-text { flex: 1; min-width: 0; }
-    #kopf-name { font-weight: 600; font-size: 0.95rem; line-height: 1.2; }
-    #kopf-status { font-size: 0.72rem; opacity: 0.85; }
-    #schliessen { background: transparent; border: 0; color: #fff; cursor: pointer; font-size: 1.4rem;
-                  line-height: 1; padding: 0.2rem 0.4rem; opacity: 0.85; }
-    #schliessen:hover { opacity: 1; }
+    #kopf-name { font-weight: 650; font-size: 0.98rem; line-height: 1.2; letter-spacing: 0.01em; }
+    #kopf-status { font-size: 0.72rem; opacity: 0.9; display: flex; align-items: center; gap: 0.32rem; }
+    #kopf-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+                           box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: puls 2.4s ease-out infinite; }
+    @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); } 70%,100% { box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
+    #schliessen { background: rgba(255,255,255,0.14); border: 0; color: #fff; cursor: pointer; font-size: 1.15rem;
+                  line-height: 1; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+                  opacity: 0.9; transition: background 0.2s, opacity 0.2s, transform 0.2s; }
+    #schliessen:hover { opacity: 1; background: rgba(255,255,255,0.28); transform: rotate(90deg); }
 
     /* Avatar-Zustände (vom Hauptchat übernommen) */
     @keyframes atmen { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
@@ -43,28 +68,53 @@
     @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
 
     /* --- Chatverlauf --- */
-    #chat { flex: 1; overflow-y: auto; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .msg { padding: 0.55rem 0.75rem; border-radius: 14px; max-width: 82%; white-space: pre-wrap;
-           font-size: 0.9rem; line-height: 1.4; }
-    .user { background: var(--farbe); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-    .bot  { background: #fff; border: 1px solid #e5e7eb; align-self: flex-start; border-bottom-left-radius: 4px; }
-    .meta { color: #9ca3af; font-style: italic; background: transparent; border: 0; }
+    #chat { flex: 1; overflow-y: auto; padding: 1rem 0.9rem; display: flex; flex-direction: column; gap: 0.55rem;
+            scroll-behavior: smooth; }
+    #chat::-webkit-scrollbar { width: 6px; }
+    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
+    .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 84%; white-space: pre-wrap;
+           font-size: var(--schrift); line-height: 1.45; animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1) both; }
+    @keyframes msgRein { from { opacity: 0; transform: translateY(7px) scale(0.98); } to { opacity: 1; transform: none; } }
+    .user { align-self: flex-end; color: #fff; border-bottom-right-radius: 5px;
+            background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
+            box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--farbe) 70%, transparent); }
+    .bot  { align-self: flex-start; background: rgba(255,255,255,0.9); border: 1px solid var(--linie);
+            border-bottom-left-radius: 5px; box-shadow: 0 4px 14px -10px rgba(15,23,42,0.4);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .meta { color: #94a3b8; font-style: italic; background: transparent; border: 0; box-shadow: none; padding: 0.3rem 0.4rem; }
 
     /* "tippt…" Punkte */
-    .tippt { display: inline-flex; gap: 3px; align-items: center; }
-    .tippt span { width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; animation: tip 1.2s infinite; }
-    .tippt span:nth-child(2) { animation-delay: 0.2s; }
-    .tippt span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes tip { 0%,60%,100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+    .tippt { display: inline-flex; gap: 4px; align-items: center; padding: 0.15rem 0.1rem; }
+    .tippt span { width: 7px; height: 7px; border-radius: 50%;
+                  background: color-mix(in srgb, var(--farbe) 55%, #94a3b8); animation: tip 1.3s infinite; }
+    .tippt span:nth-child(2) { animation-delay: 0.18s; }
+    .tippt span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes tip { 0%,60%,100% { opacity: 0.28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
 
-    /* --- Eingabe --- */
-    #form { display: flex; gap: 0.5rem; padding: 0.7rem; background: #fff; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
-    #input { flex: 1; padding: 0.6rem 0.7rem; border: 1px solid #d1d5db; border-radius: 10px; font: inherit; }
-    #input:focus { outline: none; border-color: var(--farbe); }
-    #send { padding: 0 0.9rem; border: 0; border-radius: 10px; background: var(--farbe); color: #fff; cursor: pointer; }
-    #send:disabled { opacity: 0.5; cursor: default; }
-    .fuss { text-align: center; font-size: 0.65rem; color: #b0b0b0; padding: 0 0 0.5rem; background: #fff; }
+    /* --- Eingabe: Glasleiste --- */
+    #form { display: flex; gap: 0.5rem; padding: 0.7rem 0.75rem; flex-shrink: 0; align-items: center;
+            background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+            border-top: 1px solid var(--linie); }
+    #input { flex: 1; padding: 0.65rem 0.9rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
+             font-size: var(--schrift); background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
+    #input:focus { outline: none; border-color: var(--farbe);
+                   box-shadow: 0 0 0 3px color-mix(in srgb, var(--farbe) 18%, transparent); }
+    #send { width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; color: #fff;
+            cursor: pointer; font-size: 1.1rem; display: grid; place-items: center;
+            background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
+            box-shadow: 0 5px 14px -5px color-mix(in srgb, var(--farbe) 70%, transparent);
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
+    #send:hover:not(:disabled) { transform: translateY(-1px) scale(1.05);
+            box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--farbe) 75%, transparent); }
+    #send:disabled { opacity: 0.45; cursor: default; }
+    .fuss { text-align: center; font-size: 0.64rem; color: #9aa3af; padding: 0.35rem 0 0.5rem;
+            background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
     .fuss a { color: inherit; text-decoration: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #kopf-avatar svg, .augen, .msg, #kopf-status::before, .tippt span { animation: none !important; }
+      #chat { scroll-behavior: auto; }
+    }
   </style>
 </head>
 <body>
