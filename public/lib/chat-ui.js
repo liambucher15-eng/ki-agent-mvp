@@ -91,6 +91,9 @@ window.ChatUI = (function () {
   //   tipptAn?()  -> Element     – Tipp-Anzeige einfügen (Standard: Text-Bubble)
   //   holeFirmaConfig?() -> obj  – optionaler Entwurf/Vorschau-Config fürs Backend
   //   seiteInfo?  { pfad, titel } – auf welcher Unterseite ist der Besucher
+  //   chipsZiel?  Element         – wohin die Vorschlags-Chips (Standard: chat)
+  //   onFrage?(text)              – Besucher hat gefragt (für die Charakter-Bühne)
+  //   onAntwort?(text, unsicher)  – Agent hat geantwortet (Bühne/Stimme steuern)
   // Rückgabe: { addBubble, messages, zeigeVorschlaege }
   function starten(cfg) {
     const messages = [];
@@ -127,7 +130,8 @@ window.ChatUI = (function () {
         });
         box.appendChild(b);
       });
-      cfg.chat.appendChild(box);
+      const ziel = cfg.chipsZiel || cfg.chat;
+      ziel.appendChild(box);
       cfg.chat.scrollTop = cfg.chat.scrollHeight;
       vorschlaegeEl = box;
     }
@@ -142,6 +146,7 @@ window.ChatUI = (function () {
       messages.push({ role: "user", content: text });
       cfg.input.value = "";
       cfg.send.disabled = true;
+      if (cfg.onFrage) cfg.onFrage(text);
 
       cfg.avatar("denken");
       const tippt = tipptAnzeigen();
@@ -166,7 +171,9 @@ window.ChatUI = (function () {
         } else {
           addBubble(data.reply, "bot");
           messages.push({ role: "assistant", content: data.reply });
-          cfg.avatar(istUnsicher(data.reply) ? "verlegen" : "sprechen", 3000);
+          const unsicher = istUnsicher(data.reply);
+          cfg.avatar(unsicher ? "verlegen" : "sprechen", 3000);
+          if (cfg.onAntwort) cfg.onAntwort(data.reply, unsicher);
         }
       } catch (err) {
         tippt.remove();

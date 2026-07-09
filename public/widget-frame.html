@@ -29,27 +29,57 @@
         linear-gradient(180deg, var(--tint2), #f7f8fa);
     }
 
-    /* --- Kopfzeile: Glas + Markenverlauf --- */
-    #kopf { display: flex; align-items: center; gap: 0.7rem; padding: 0.82rem 1rem; flex-shrink: 0;
+    /* --- Kopfzeile: schlank, Glas + Markenverlauf --- */
+    #kopf { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 0.9rem; flex-shrink: 0;
             color: #fff; position: relative; z-index: 3;
             background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
             box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--farbe) 65%, transparent); }
-    #kopf-avatar { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%;
-                   background: rgba(255,255,255,0.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
-                   overflow: hidden; display: grid; place-items: center; }
-    #kopf-avatar svg, #kopf-avatar img { width: 100%; height: 100%; display: block; }
-    #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
-    #kopf-img { object-fit: cover; display: none; }
     #kopf-text { flex: 1; min-width: 0; }
-    #kopf-name { font-weight: 650; font-size: 0.98rem; line-height: 1.2; letter-spacing: 0.01em; }
+    #kopf-name { font-weight: 650; font-size: 0.95rem; line-height: 1.2; letter-spacing: 0.01em; }
     #kopf-status { font-size: 0.72rem; opacity: 0.9; display: flex; align-items: center; gap: 0.32rem; }
     #kopf-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
                            box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: puls 2.4s ease-out infinite; }
     @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); } 70%,100% { box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
-    #schliessen { background: rgba(255,255,255,0.14); border: 0; color: #fff; cursor: pointer; font-size: 1.15rem;
-                  line-height: 1; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-                  opacity: 0.9; transition: background 0.2s, opacity 0.2s, transform 0.2s; }
-    #schliessen:hover { opacity: 1; background: rgba(255,255,255,0.28); transform: rotate(90deg); }
+    .kopf-btn { background: rgba(255,255,255,0.14); border: 0; color: #fff; cursor: pointer; width: 30px; height: 30px;
+                border-radius: 50%; display: grid; place-items: center; opacity: 0.9; flex-shrink: 0; padding: 0;
+                transition: background 0.2s, opacity 0.2s, transform 0.2s; }
+    .kopf-btn:hover { opacity: 1; background: rgba(255,255,255,0.28); }
+    .kopf-btn svg { width: 17px; height: 17px; display: block; }
+    #schliessen { font-size: 1.15rem; line-height: 1; }
+    #schliessen:hover { transform: rotate(90deg); }
+    #stimme.an { background: #fff; color: var(--farbe); opacity: 1; }
+
+    /* --- Charakter-Bühne: der Agent ist die Hauptfigur --- */
+    #buehne { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.65rem;
+              padding: 1.15rem 1rem 0.95rem; text-align: center;
+              background: radial-gradient(125% 92% at 50% 0%, var(--tint), transparent 72%); }
+    #kopf-avatar { width: 118px; height: 118px; flex-shrink: 0;
+                   filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--farbe) 30%, transparent)); }
+    #kopf-avatar svg, #kopf-avatar img { width: 100%; height: 100%; display: block; }
+    #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
+    #kopf-img { object-fit: contain; display: none; border-radius: 18px; }
+    #kopf-avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
+    @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    /* Schallwellen — nur beim Vorlesen sichtbar */
+    #welle { display: none; gap: 3px; align-items: center; height: 15px; }
+    #welle span { width: 3px; height: 15px; border-radius: 2px; background: var(--farbe);
+                  animation: welle 0.5s ease-in-out infinite; }
+    #welle span:nth-child(2){animation-delay:.1s} #welle span:nth-child(3){animation-delay:.2s}
+    #welle span:nth-child(4){animation-delay:.15s} #welle span:nth-child(5){animation-delay:.05s}
+    @keyframes welle { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+    /* Große Sprechblase mit der aktuellen Antwort */
+    #blase { background: rgba(255,255,255,0.92); border: 1px solid var(--linie); border-radius: 16px;
+             padding: 0.72rem 1rem; font-size: 0.92rem; line-height: 1.5; color: #0f172a; max-width: 300px;
+             box-shadow: 0 8px 20px -14px rgba(15,23,42,0.55);
+             -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    #blase.rein { animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1); }
+    #blase .tippt span { background: color-mix(in srgb, var(--farbe) 55%, #94a3b8); }
+    /* Vorschlags-Chips auf der Bühne */
+    #chips:empty { display: none; }
+    #chips { margin-top: 0.15rem; }
+    /* Trenner zum nachlesbaren Verlauf */
+    #verlaufKopf { flex-shrink: 0; text-align: center; font-size: 0.7rem; color: #9aa3af; letter-spacing: 0.04em;
+                   text-transform: uppercase; padding: 0.5rem 0 0.1rem; }
 
     /* Avatar-Zustände (vom Hauptchat übernommen) */
     @keyframes atmen { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
@@ -67,9 +97,10 @@
     #kopf-avatar.freuen svg { animation: huepf 0.6s ease; }
     @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
 
-    /* --- Chatverlauf --- */
-    #chat { flex: 1; overflow-y: auto; padding: 1rem 0.9rem; display: flex; flex-direction: column; gap: 0.55rem;
-            scroll-behavior: smooth; }
+    /* --- Nachlesbarer Gesprächsverlauf (kompakt, unter der Bühne) --- */
+    #chat { flex: 1; overflow-y: auto; padding: 0.5rem 0.9rem 0.9rem; display: flex; flex-direction: column;
+            gap: 0.45rem; scroll-behavior: smooth; }
+    #chat .msg { font-size: 0.82rem; }
     #chat::-webkit-scrollbar { width: 6px; }
     #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
     .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 84%; white-space: pre-wrap;
@@ -112,13 +143,27 @@
     .fuss a { color: inherit; text-decoration: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      #kopf-avatar svg, .augen, .msg, #kopf-status::before, .tippt span { animation: none !important; }
+      #kopf-avatar svg, #kopf-avatar.sprechen, .augen, .msg, #blase.rein,
+      #kopf-status::before, .tippt span, #welle span { animation: none !important; }
       #chat { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
   <div id="kopf">
+    <div id="kopf-text">
+      <div id="kopf-name">Assistent</div>
+      <div id="kopf-status">online</div>
+    </div>
+    <button id="stimme" class="kopf-btn" aria-label="Vorlesen einschalten" aria-pressed="false" title="Antworten vorlesen">
+      <svg id="stimme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    </button>
+    <button id="schliessen" class="kopf-btn" aria-label="Schliessen" title="Schliessen">×</button>
+  </div>
+
+  <!-- Charakter-Bühne: der Agent gross und zentral; die Antwort erscheint als
+       seine Sprechblase, optional laut vorgelesen. -->
+  <div id="buehne">
     <div id="kopf-avatar">
       <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
         <ellipse class="koerper" cx="60" cy="62" rx="44" ry="42" fill="var(--akzent)" />
@@ -133,13 +178,12 @@
       </svg>
       <img id="kopf-img" alt="Charakter" />
     </div>
-    <div id="kopf-text">
-      <div id="kopf-name">Assistent</div>
-      <div id="kopf-status">online</div>
-    </div>
-    <button id="schliessen" aria-label="Schliessen" title="Schliessen">×</button>
+    <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div id="blase">Hallo! Wie kann ich dir helfen?</div>
+    <div id="chips"></div>
   </div>
 
+  <div id="verlaufKopf">Gesprächsverlauf</div>
   <div id="chat"></div>
 
   <form id="form">
@@ -161,6 +205,10 @@
     const avatar = document.getElementById("kopf-avatar");
     const avatarImg = document.getElementById("kopf-img");
     const kopfName = document.getElementById("kopf-name");
+    const blase = document.getElementById("blase");
+    const chips = document.getElementById("chips");
+    const welle = document.getElementById("welle");
+    const stimmeBtn = document.getElementById("stimme");
 
     const _p = new URLSearchParams(location.search);
     const FIRMA_ID = _p.get("firma") || "salbei";
@@ -175,27 +223,93 @@
 
     // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---
     document.getElementById("schliessen").addEventListener("click", () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel(); // nicht weiterreden
       parent.postMessage({ type: "ki-agent-schliessen" }, "*");
     });
 
     // --- Charakter-Steuerung (Bild wenn vorhanden, sonst Platzhalter-SVG) ---
+    // Die Zustands-KLASSE wird immer gesetzt (auch im Bild-Modus), damit
+    // Bühnen-Animationen wie das Sprech-Wippen für beide Darstellungen greifen.
     let revertTimer;
     function setCharakter(zustand, dauer) {
       clearTimeout(revertTimer);
-      const svgKlasse = zustand === "idle" ? "" : zustand;
+      avatar.className = zustand === "idle" ? "" : zustand;
       const bildKey = zustand === "idle" ? "idle" : zustand;
       if (bilder && (bilder[bildKey] || bilder.idle)) {
         avatarImg.src = bilder[bildKey] || bilder.idle;
         avatarImg.style.display = "block";
         avatar.querySelector("svg").style.display = "none";
       } else {
-        avatar.className = svgKlasse;
+        avatarImg.style.display = "none";
+        avatar.querySelector("svg").style.display = "";
       }
       // Auch dem Eltern-Fenster (widget.js) melden: Die Launcher-FIGUR auf der
       // Kundenseite spiegelt den Zustand (denkt/spricht mit), wenn die Firma
       // eigene Zustands-Bilder hat.
       try { parent.postMessage({ type: "ki-agent-zustand", zustand: zustand }, "*"); } catch (e) {}
       if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
+    }
+
+    // --- Sprechblase der Bühne: aktuelle Antwort / Denk-Anzeige ---
+    function setzeBlase(text) {
+      blase.textContent = text;
+      blase.classList.remove("rein"); void blase.offsetWidth; blase.classList.add("rein");
+    }
+    function zeigeDenken() {
+      blase.classList.remove("rein"); void blase.offsetWidth; blase.classList.add("rein");
+      blase.textContent = "";
+      const d = document.createElement("span");
+      d.className = "tippt"; d.innerHTML = "<span></span><span></span><span></span>";
+      blase.appendChild(d);
+    }
+
+    // --- Stimme: der Charakter liest die Antwort laut vor (Browser-TTS).
+    // Standardmässig AUS (fremde Firmenseite -> keine Überraschung); der Besucher
+    // schaltet sie per Knopf ein. Wahl bleibt pro Browser gemerkt. ---
+    const TTS = ("speechSynthesis" in window);
+    let stimmeAn = false;
+    try { stimmeAn = localStorage.getItem("kiagent-stimme") === "1"; } catch (e) {}
+    if (!TTS) { stimmeBtn.style.display = "none"; }
+    function malStimmeKnopf() {
+      stimmeBtn.classList.toggle("an", stimmeAn);
+      stimmeBtn.setAttribute("aria-pressed", String(stimmeAn));
+      stimmeBtn.setAttribute("aria-label", stimmeAn ? "Vorlesen ausschalten" : "Vorlesen einschalten");
+      const ic = document.getElementById("stimme-icon");
+      // an: Lautsprecher mit Wellen; aus: durchgestrichen
+      ic.innerHTML = stimmeAn
+        ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/>'
+        : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    }
+    malStimmeKnopf();
+    stimmeBtn.addEventListener("click", () => {
+      stimmeAn = !stimmeAn;
+      try { localStorage.setItem("kiagent-stimme", stimmeAn ? "1" : "0"); } catch (e) {}
+      malStimmeKnopf();
+      if (!stimmeAn && TTS) { window.speechSynthesis.cancel(); welle.style.display = "none"; }
+    });
+    let sprechTimer;
+    function beendeSprechen() {
+      clearTimeout(sprechTimer);
+      welle.style.display = "none";
+      setCharakter("idle");
+    }
+    function liesVor(text) {
+      if (!stimmeAn || !TTS || !text) return false;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "de-DE";
+        setCharakter("sprechen");            // Zustand halten, solange gesprochen wird
+        welle.style.display = "flex";
+        u.onend = beendeSprechen;
+        u.onerror = beendeSprechen;
+        // Sicherheitsnetz: feuert onend nie (kein Audiogerät / Browser-Eigenheit),
+        // wird der Sprech-Zustand nach einer geschätzten Dauer trotzdem beendet.
+        clearTimeout(sprechTimer);
+        sprechTimer = setTimeout(beendeSprechen, Math.min(30000, 2500 + text.length * 90));
+        window.speechSynthesis.speak(u);
+        return true;
+      } catch (e) { beendeSprechen(); return false; }
     }
 
     function addTipptAnzeige() {
@@ -229,18 +343,24 @@
         }
       } catch (e) { /* Aussehen ist nicht kritisch */ }
       setCharakter("freuen", 700);
-      ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
+      const gruss = "Hallo! Wie kann ich dir helfen?";
+      setzeBlase(gruss);                       // gross auf der Bühne
+      ui.addBubble(gruss, "bot");              // und im nachlesbaren Verlauf
       ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
     }
 
-    // Gemeinsame Chat-Logik aus lib/chat-ui.js. Avatar + Tipp-Anzeige (Punkte)
-    // bleiben lokal, weil das Widget eine eigene DOM-Struktur hat.
+    // Gemeinsame Chat-Logik aus lib/chat-ui.js. Die Bühne (grosse Sprechblase +
+    // Stimme) wird über die onFrage/onAntwort-Hooks gesteuert; der Verlauf (#chat)
+    // füllt sich weiter über addBubble — so bleibt beides in einer Quelle.
     const ui = ChatUI.starten({
       chat, form, input, send,
       firmaId: FIRMA_ID,
       avatar: setCharakter,
       tipptAn: addTipptAnzeige,
       seiteInfo: seiteInfo,
+      chipsZiel: chips,                        // Vorschläge erscheinen auf der Bühne
+      onFrage: () => { zeigeDenken(); },       // Charakter denkt sichtbar nach
+      onAntwort: (text) => { setzeBlase(text); liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
 
