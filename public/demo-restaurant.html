@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Pizzeria Vorstädtli — Frische Pizza aus dem Holzofen</title>
+  <meta name="description" content="Familiäre Pizzeria im Herzen von Winterthur: handgemachte Pizza aus dem Holzofen, hausgemachte Pasta, Mittagsmenüs und ein sonniger Gartensitzplatz." />
+  <!-- Bewusst schlichtes Test-Layout: es geht nur um die Infos, damit der Agent
+       Kontext hat und man das eingebettete Widget auf einer echten Seite testet. -->
+  <style>
+    body { font-family: Georgia, "Times New Roman", serif; max-width: 820px; margin: 0 auto;
+           padding: 1.5rem 1.2rem 5rem; color: #222; line-height: 1.6; }
+    header { border-bottom: 3px solid #b23a2e; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+    h1 { color: #b23a2e; margin: 0 0 0.2rem; font-size: 1.9rem; }
+    .tagline { color: #666; font-style: italic; }
+    h2 { color: #b23a2e; border-bottom: 1px solid #eee; padding-bottom: 0.3rem; margin-top: 2.2rem; }
+    h3 { margin-bottom: 0.3rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
+    td { padding: 0.35rem 0.6rem; border-bottom: 1px solid #eee; }
+    td.preis { text-align: right; white-space: nowrap; color: #444; }
+    .box { background: #faf6f2; border: 1px solid #ecdfd6; border-radius: 6px; padding: 0.8rem 1rem; margin: 1rem 0; }
+    footer { margin-top: 3rem; border-top: 1px solid #eee; padding-top: 1rem; color: #777; font-size: 0.9rem; }
+    a { color: #b23a2e; }
+    .hinweis { background: #fffbe6; border: 1px solid #f0e0a0; border-radius: 6px; padding: 0.6rem 0.9rem;
+               font-family: system-ui, sans-serif; font-size: 0.85rem; color: #7a5c00; margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="hinweis">
+    🧪 <strong>Test-Seite.</strong> Unten rechts schwebt der KI-Agent. Standardmässig lädt er die Firma
+    <code>firma</code>. Andere Firma testen: <code>?firma=salbei</code> an die URL hängen
+    (Salbei = Plus mit Maskottchen).
+  </div>
+
+  <header>
+    <h1>Restaurant Pizzeria Vorstädtli</h1>
+    <div class="tagline">Frische Pizza aus dem Holzofen — familiär, saisonal, mitten in Winterthur.</div>
+  </header>
+
+  <section id="ueber-uns">
+    <h2>Über uns</h2>
+    <p>
+      Seit 1998 führt Familie Bernasconi die Pizzeria Vorstädtli im Herzen der Winterthurer Altstadt.
+      Was als kleines Quartierlokal mit sechs Tischen begann, ist heute ein beliebter Treffpunkt für
+      Familien, Studierende und alle, die echte italienische Küche schätzen. Unser Teig ruht 48 Stunden,
+      die Pizza backt bei 450 °C im original Holzofen, und die Zutaten beziehen wir wo immer möglich
+      aus der Region oder direkt aus Italien.
+    </p>
+    <p>
+      Wir legen Wert auf eine ehrliche, unkomplizierte Küche ohne Schnickschnack — dafür mit viel Herz.
+      Im Sommer sitzen Sie bei uns auf dem sonnigen Gartensitzplatz unter alten Kastanienbäumen.
+    </p>
+  </section>
+
+  <section id="speisekarte">
+    <h2>Speisekarte (Auszug)</h2>
+
+    <h3>Pizza (32 cm)</h3>
+    <table>
+      <tr><td>Margherita — Tomaten, Mozzarella, Basilikum</td><td class="preis">16.50</td></tr>
+      <tr><td>Prosciutto — Tomaten, Mozzarella, Hinterschinken</td><td class="preis">19.50</td></tr>
+      <tr><td>Diavola — Tomaten, Mozzarella, scharfe Salami</td><td class="preis">20.00</td></tr>
+      <tr><td>Quattro Formaggi — vier Käsesorten</td><td class="preis">21.00</td></tr>
+      <tr><td>Verdura — Tomaten, Mozzarella, Grillgemüse (vegan auf Wunsch)</td><td class="preis">19.00</td></tr>
+      <tr><td>Tartufo — Mozzarella, Trüffelcreme, Champignons, Rucola</td><td class="preis">24.50</td></tr>
+    </table>
+
+    <h3>Pasta (hausgemacht)</h3>
+    <table>
+      <tr><td>Spaghetti Napoli — Tomatensugo, Basilikum (vegan)</td><td class="preis">16.00</td></tr>
+      <tr><td>Tagliatelle al Ragù — Rindfleisch-Bolognese</td><td class="preis">21.00</td></tr>
+      <tr><td>Ravioli Ricotta e Spinaci — Salbeibutter</td><td class="preis">22.50</td></tr>
+    </table>
+
+    <h3>Salate &amp; Dessert</h3>
+    <table>
+      <tr><td>Insalata Mista</td><td class="preis">9.50</td></tr>
+      <tr><td>Tiramisù (hausgemacht)</td><td class="preis">8.50</td></tr>
+      <tr><td>Panna Cotta mit Beeren</td><td class="preis">8.00</td></tr>
+    </table>
+
+    <p><em>Glutenfreie Pizza (+3.00) und laktosefreier Mozzarella sind auf Anfrage erhältlich.
+    Alle Preise in CHF, inkl. MwSt.</em></p>
+  </section>
+
+  <section id="mittagsmenu">
+    <h2>Mittagsmenü</h2>
+    <div class="box">
+      Montag bis Freitag von 11:30 bis 14:00 bieten wir ein wechselndes <strong>Mittagsmenü für 18.50 CHF</strong> an
+      (Tagespizza oder Tagespasta inkl. kleinem Salat und einem Glas Hauswein oder Mineralwasser).
+      Das aktuelle Menü hängt an der Tür und steht auf unserer Facebook-Seite.
+    </div>
+  </section>
+
+  <section id="oeffnungszeiten">
+    <h2>Öffnungszeiten</h2>
+    <table>
+      <tr><td>Montag</td><td class="preis">Ruhetag</td></tr>
+      <tr><td>Dienstag – Freitag</td><td class="preis">11:30 – 14:00 &amp; 17:30 – 23:00</td></tr>
+      <tr><td>Samstag</td><td class="preis">17:30 – 23:30</td></tr>
+      <tr><td>Sonntag</td><td class="preis">17:00 – 22:00</td></tr>
+    </table>
+    <p>Die Küche schliesst jeweils 30 Minuten vor Lokalschluss.</p>
+  </section>
+
+  <section id="reservation">
+    <h2>Reservation</h2>
+    <p>
+      Wir empfehlen an Wochenenden und für Gruppen ab 4 Personen eine Reservation. Am einfachsten
+      telefonisch unter <strong>052 212 34 56</strong> oder per E-Mail an
+      <a href="mailto:hallo@vorstaedtli.ch">hallo@vorstaedtli.ch</a>. Für grössere Gesellschaften
+      (ab 12 Personen) haben wir ein separates Nebenzimmer — bitte frühzeitig anfragen.
+    </p>
+  </section>
+
+  <section id="lieferung">
+    <h2>Take-away &amp; Lieferung</h2>
+    <p>
+      Alle Pizzen und Pastagerichte gibt es auch zum Mitnehmen (10 % Rabatt auf Abholung).
+      Lieferung bieten wir selbst im Umkreis von 3 km ab einem Bestellwert von 30 CHF an —
+      die Lieferung ist kostenlos und dauert in der Regel 30–45 Minuten. Bestellungen für
+      Take-away und Lieferung nehmen wir telefonisch entgegen.
+    </p>
+  </section>
+
+  <section id="standort">
+    <h2>Standort &amp; Kontakt</h2>
+    <p>
+      Restaurant Pizzeria Vorstädtli<br />
+      Untertor 22, 8400 Winterthur<br />
+      Telefon: 052 212 34 56<br />
+      E-Mail: <a href="mailto:hallo@vorstaedtli.ch">hallo@vorstaedtli.ch</a>
+    </p>
+    <p>
+      Wir sind 5 Gehminuten vom Bahnhof Winterthur entfernt. Parkplätze finden Sie im
+      Parkhaus Altstadt (3 Min. zu Fuss). Das Lokal ist rollstuhlgängig; der Gartensitzplatz
+      leider nur eingeschränkt.
+    </p>
+  </section>
+
+  <section id="faq">
+    <h2>Häufige Fragen</h2>
+
+    <h3>Habt ihr vegetarische und vegane Gerichte?</h3>
+    <p>Ja, viele. Die Verdura und die Spaghetti Napoli sind vegan zubereitbar, und wir haben
+    laktosefreien Mozzarella. Sprechen Sie uns einfach an.</p>
+
+    <h3>Kann ich mit Kindern kommen?</h3>
+    <p>Sehr gerne — wir haben Hochstühle, kleine Kinderportionen und Malstifte. Familien sind bei uns
+    ausdrücklich willkommen.</p>
+
+    <h3>Nehmt ihr Kreditkarten und Twint?</h3>
+    <p>Ja, wir akzeptieren die gängigen Kreditkarten (Visa, Mastercard), Twint und natürlich Bargeld.</p>
+
+    <h3>Gibt es einen Ruhetag?</h3>
+    <p>Ja, montags ist Ruhetag. An den restlichen Tagen sind wir wie oben angegeben für Sie da.</p>
+
+    <h3>Sind Hunde erlaubt?</h3>
+    <p>Gut erzogene Hunde sind auf dem Gartensitzplatz und im Eingangsbereich willkommen.</p>
+  </section>
+
+  <footer>
+    Restaurant Pizzeria Vorstädtli · Untertor 22, 8400 Winterthur · 052 212 34 56 ·
+    Familie Bernasconi seit 1998
+  </footer>
+
+  <!-- KI-Agent-Widget einbetten. Die Firma kommt aus ?firma=… (Standard: "firma").
+       Genau so würde ein echter Kunde die eine Zeile in seine Seite einbauen. -->
+  <script>
+    (function () {
+      var firma = new URLSearchParams(location.search).get("firma") || "firma";
+      var s = document.createElement("script");
+      s.src = "/widget.js";
+      s.setAttribute("data-firma", firma);
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>
