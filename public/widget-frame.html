@@ -232,7 +232,9 @@
       const svgEl = avatar.querySelector("svg");
       const orbEl = document.getElementById("orb");
       if (bilder && (bilder[bildKey] || bilder.idle)) {
-        // Plus-Firma: generiertes Maskottchen
+        // Plus-Firma: generiertes Maskottchen. Lädt ein Bild nicht (kaputte/
+        // abgelaufene URL), NICHT leer/durchsichtig bleiben -> auf den Orb zurück.
+        avatarImg.onerror = () => { avatarImg.style.display = "none"; orbEl.style.display = "block"; };
         avatarImg.src = bilder[bildKey] || bilder.idle;
         avatarImg.style.display = "block";
         svgEl.style.display = "none";

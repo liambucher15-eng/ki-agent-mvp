@@ -123,10 +123,12 @@
     "}",
     ".bubble.sichtbar:hover .figur { box-shadow: 0 10px 26px rgba(0,0,0,0.30), 0 0 0 3px #fff, 0 0 18px 4px " + farbe + "80; }",
 
-    // Chat-Fenster (fährt aus der Orb-Ecke auf)
+    // Chat-Fenster (fährt aus der Orb-Ecke auf). Gross: reicht nach unten, rechts
+    // und oben nahe an den Rand; Höhe = fast volle Fensterhöhe.
     ".panel {",
-    "  position: fixed; bottom: 96px; right: 24px;",
-    "  width: 380px; height: 560px; max-height: calc(100vh - 130px);",
+    "  position: fixed; bottom: 20px; right: 20px;",
+    "  width: 440px; max-width: calc(100vw - 40px);",
+    "  height: calc(100dvh - 40px); max-height: calc(100dvh - 40px);",
     "  border: 0; border-radius: 16px; overflow: hidden; z-index: 2147483000;",
     "  box-shadow: 0 12px 40px rgba(0,0,0,0.28); background: #fff;",
     "  display: none; opacity: 0; transform: translateY(12px) scale(0.96); transform-origin: bottom right;",
@@ -151,7 +153,7 @@
 
     "@media (max-width: 480px) {",
     "  .hinweis { display: none; }",
-    "  .panel { right: 0; bottom: 0; width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }",
+    "  .panel { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }",
     "  .bubble { bottom: 18px; right: 18px; }",
     "}",
     "</style>",
@@ -207,12 +209,15 @@
       geladen = true;
     }
     panel.classList.add("auf");
+    // Grosses Fenster deckt die Orb-Ecke ab -> Launcher ausblenden, solange offen
+    // (zu wird über das × im Chat-Kopf). Beim Schliessen kommt er wieder.
+    bubble.classList.remove("sichtbar");
     bubble.setAttribute("aria-label", "Chat schliessen");
     offen = true;
   }
   function schliesse() {
-    // Nur das Fenster verschwindet — der Orb bleibt sichtbar und ansprechbar.
     panel.classList.remove("auf");
+    bubble.classList.add("sichtbar"); // Orb wieder zeigen
     bubble.setAttribute("aria-label", "Chat öffnen");
     offen = false;
   }
