@@ -118,6 +118,7 @@
     // Figur-Launcher (Plus-Plan): eigenes Bild statt Orb.
     ".figur {",
     "  width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center;",
+    "  background-color: #fff;", // weisser Grund -> auch transparente Figur-Bilder sind sichtbar
     "  box-shadow: 0 8px 22px rgba(0,0,0,0.28), 0 0 0 3px #fff, 0 0 0 5px " + farbe + "40;",
     "  animation: kiorb-schweben 5s ease-in-out infinite; transition: box-shadow 0.3s ease;",
     "}",
@@ -126,9 +127,9 @@
     // Chat-Fenster (fährt aus der Orb-Ecke auf). Gross: reicht nach unten, rechts
     // und oben nahe an den Rand; Höhe = fast volle Fensterhöhe.
     ".panel {",
-    "  position: fixed; bottom: 20px; right: 20px;",
-    "  width: 440px; max-width: calc(100vw - 40px);",
-    "  height: calc(100dvh - 40px); max-height: calc(100dvh - 40px);",
+    "  position: fixed; bottom: 12px; right: 12px;",
+    "  width: 480px; max-width: calc(100vw - 24px);",
+    "  height: calc(100dvh - 24px); max-height: calc(100dvh - 24px);",
     "  border: 0; border-radius: 16px; overflow: hidden; z-index: 2147483000;",
     "  box-shadow: 0 12px 40px rgba(0,0,0,0.28); background: #fff;",
     "  display: none; opacity: 0; transform: translateY(12px) scale(0.96); transform-origin: bottom right;",
@@ -185,12 +186,20 @@
     .then(function (f) {
       var bilder = f && f.plan === "plus" && f.charakter && f.charakter.bilder;
       if (bilder && bilder.idle) {
-        figurBilder = bilder;
-        // Alle Zustands-Bilder vorladen -> Zustandswechsel später ohne Flackern.
-        for (var z in bilder) { if (bilder[z]) { var im = new Image(); im.src = bilder[z]; } }
-        setFigurBild("idle");
-        figurEl.hidden = false;
-        orbEl.hidden = true;
+        // ERST prüfen, ob das Bild wirklich lädt. Nur dann auf die Figur wechseln;
+        // bei kaputter/abgelaufener URL bleibt der (immer sichtbare) Orb stehen —
+        // sonst wäre der Launcher leer/durchsichtig.
+        var probe = new Image();
+        probe.onload = function () {
+          figurBilder = bilder;
+          // restliche Zustands-Bilder vorladen -> Wechsel später ohne Flackern
+          for (var z in bilder) { if (bilder[z]) { var im = new Image(); im.src = bilder[z]; } }
+          setFigurBild("idle");
+          figurEl.hidden = false;
+          orbEl.hidden = true;
+        };
+        probe.onerror = function () { /* Bild kaputt -> Orb bleibt sichtbar */ };
+        probe.src = bilder.idle;
       }
     })
     .catch(function () { /* Orb bleibt — kein Problem */ });
