@@ -55,6 +55,15 @@
     #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
     /* Quadratische Figur-Bilder im Kreis: cover füllt den Kreis, Rest wird maskiert. */
     #kopf-img { object-fit: cover; object-position: center 12%; display: none; }
+    /* Basis-Firmen: leuchtender Orb (in Markenfarbe) statt Platzhalter-SVG.
+       Plus-Firmen zeigen stattdessen ihr generiertes Maskottchen (Bild). */
+    #orb { width: 100%; height: 100%; border-radius: 50%; position: relative; overflow: hidden; display: none;
+           background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.6), rgba(255,255,255,0) 46%),
+                       radial-gradient(circle at 70% 78%, var(--akzent), var(--farbe) 74%); }
+    #orb::before { content: ""; position: absolute; inset: -30%;
+                   background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.35), transparent 42%);
+                   animation: orbDreh 9s linear infinite; opacity: 0.5; }
+    @keyframes orbDreh { to { transform: rotate(360deg); } }
     #kopf-avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     #kopf-name { font-weight: 600; font-size: 0.9rem; color: #334155; }
@@ -127,7 +136,7 @@
     .fuss a { color: inherit; text-decoration: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      #kopf-avatar svg, #kopf-avatar.sprechen, .augen, .msg,
+      #kopf-avatar svg, #kopf-avatar.sprechen, #orb::before, .augen, .msg,
       .tippt span, #welle span { animation: none !important; }
       #chat { scroll-behavior: auto; }
     }
@@ -157,6 +166,7 @@
         <ellipse class="mund" cx="60" cy="73" rx="9" ry="5" fill="#1b2a22" />
       </svg>
       <img id="kopf-img" alt="Charakter" />
+      <div id="orb" aria-hidden="true"></div>
     </div>
     <div id="kopf-name">Assistent</div>
     <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
@@ -219,10 +229,14 @@
       stopFlap();
       avatar.className = zustand === "idle" ? "" : zustand;
       const bildKey = zustand === "idle" ? "idle" : zustand;
+      const svgEl = avatar.querySelector("svg");
+      const orbEl = document.getElementById("orb");
       if (bilder && (bilder[bildKey] || bilder.idle)) {
+        // Plus-Firma: generiertes Maskottchen
         avatarImg.src = bilder[bildKey] || bilder.idle;
         avatarImg.style.display = "block";
-        avatar.querySelector("svg").style.display = "none";
+        svgEl.style.display = "none";
+        orbEl.style.display = "none";
         if (zustand === "sprechen" && bilder.sprechen_offen && bilder.sprechen) {
           let auf = false;
           flapTimer = setInterval(() => {
@@ -231,8 +245,10 @@
           }, 180);
         }
       } else {
+        // Basis-Firma: leuchtender Orb in Markenfarbe (kein Platzhalter-SVG)
         avatarImg.style.display = "none";
-        avatar.querySelector("svg").style.display = "";
+        svgEl.style.display = "none";
+        orbEl.style.display = "block";
       }
       // Auch dem Eltern-Fenster (widget.js) melden: Die Launcher-FIGUR auf der
       // Kundenseite spiegelt den Zustand (denkt/spricht mit), wenn die Firma
