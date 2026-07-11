@@ -324,6 +324,24 @@
             <div class="grow"></div>
             <h1>Gestalte<br>deine Marke</h1>
             <div class="hinweis-box"><span>Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</span></div>
+            <label class="feld" for="agentName">Wie soll dein Assistent heissen? *</label>
+            <input type="text" id="agentName" placeholder="z.B. Pino, Lia, Concierge" maxlength="40" />
+            <p class="mini" id="agentNameHinweis" style="text-align:left;min-height:1em;"></p>
+            <label class="feld" for="agentRolle">Rolle</label>
+            <select class="select" id="agentRolle">
+              <option value="Gastgeber">Gastgeber</option>
+              <option value="Gastgeberin">Gastgeberin</option>
+              <option value="Berater">Berater</option>
+              <option value="Beraterin">Beraterin</option>
+              <option value="Service-Team">Service-Team</option>
+              <option value="Concierge">Concierge</option>
+              <option value="Assistent">Assistent</option>
+            </select>
+            <label class="feld">Ansprache</label>
+            <div class="pers" id="anredeListe">
+              <button type="button" class="pers-chip aktiv" data-anrede="du">Du (locker)</button>
+              <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
+            </div>
             <label class="feld">Persönlichkeit — wie soll dein Agent klingen?</label>
             <div class="pers" id="persListe">
               <button type="button" class="pers-chip" data-ton="professionell">Professionell</button>

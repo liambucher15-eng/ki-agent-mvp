@@ -82,3 +82,11 @@ test("Fallback: ohne wissensquellen zählt weiter der wissen-String (Seeds)", ()
   const p = baueSystemPrompt({ ...firma, wissensquellen: [] });
   assert.match(p, /WEITERE INFOS:\nAngebot: saisonale Küche/);
 });
+
+// Welle 1, §3: Anrede (Du/Sie) fliesst in den Prompt
+test("Anrede 'sie' erzeugt Sie-Regel, Standard ist Du", () => {
+  const mitSie = baueSystemPrompt({ name: "X", persona: { name: "A", rolle: "Gastgeber", ansprache: "sie" } });
+  assert.match(mitSie, /mit .?Sie.? an/i);
+  const standard = baueSystemPrompt({ name: "X", persona: { name: "A", rolle: "Gastgeber" } });
+  assert.match(standard, /mit .?Du.? an/i);
+});

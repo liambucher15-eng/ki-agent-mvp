@@ -1,7 +1,7 @@
 // Onboarding-Wizard — Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", plan:"basis", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", plan:"basis", charakterBilder:null };
 
     // Preise (Milestone 10): PLATZHALTER, bis die finale Preisentscheidung steht
     // (siehe Fertigstellungs-Plan, Punkt "Preise" — bewusst vertagt). Eine Stelle
@@ -60,8 +60,24 @@
         }});
       aktuell = n; updateProgress();
       if (n === AGENT_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls leer.
+      if (n === 5 && !daten.agentName && daten.name) {
+        const el = document.getElementById("agentName");
+        if (el && !el.value) { el.value = daten.name; daten.agentName = daten.name; }
+      }
     }
-    document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { sammle(); zeige(aktuell+1, 1); }));
+    document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
+      // §3: Agenten-Name ist Pflicht — beim Verlassen des Marke-Schritts (5) prüfen.
+      if (aktuell === 5) {
+        const el = document.getElementById("agentName");
+        if (el && !el.value.trim()) {
+          const h = document.getElementById("agentNameHinweis");
+          h.textContent = "Bitte gib deinem Assistenten einen Namen."; h.style.color = "#e11d48";
+          el.focus(); return;
+        }
+      }
+      sammle(); zeige(aktuell+1, 1);
+    }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
     // Anmelden: echten Bestätigungs-Link schicken, wenn Supabase konfiguriert ist
@@ -286,8 +302,24 @@
       document.getElementById("fontVorschau").style.fontFamily = '"' + e.target.value + '", sans-serif';
     });
 
-    // --- Persönlichkeit wählen ---
-    const persChips = document.querySelectorAll(".pers-chip");
+    // --- Agenten-Identität (Welle 1, §3): Name (Pflicht), Rolle, Anrede ---
+    const agentNameEl = document.getElementById("agentName");
+    const agentRolleEl = document.getElementById("agentRolle");
+    agentNameEl.addEventListener("input", () => {
+      daten.agentName = agentNameEl.value.trim();
+      document.getElementById("agentNameHinweis").textContent = "";
+    });
+    agentRolleEl.addEventListener("change", () => { daten.agentRolle = agentRolleEl.value; });
+    const anredeChips = document.querySelectorAll("#anredeListe .pers-chip");
+    function waehleAnrede(a) {
+      daten.agentAnrede = a;
+      anredeChips.forEach((c) => c.classList.toggle("aktiv", c.dataset.anrede === a));
+    }
+    anredeChips.forEach((c) => c.addEventListener("click", () => waehleAnrede(c.dataset.anrede)));
+    waehleAnrede(daten.agentAnrede);
+
+    // --- Persönlichkeit (Ton) wählen — NUR die Chips in #persListe ---
+    const persChips = document.querySelectorAll("#persListe .pers-chip");
     function waehlePers(ton) {
       daten.persoenlichkeit = ton;
       persChips.forEach((c) => c.classList.toggle("aktiv", c.dataset.ton === ton));
@@ -488,6 +520,10 @@
       daten.weiteres = wert("p-weiteres");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
+      // Agenten-Identität (§3): Name Pflicht (mit Firmenname als Fallback),
+      // Rolle + Anrede aus den Feldern.
+      daten.agentName = wert("agentName") || daten.name || "Assistent";
+      daten.agentRolle = wert("agentRolle") || daten.agentRolle || "Assistent";
       daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
       document.getElementById("embed-text").textContent =
         '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
@@ -542,7 +578,7 @@
       const firma = {
         id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
         plan: daten.plan,
-        persona: { name: (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: "der Assistent von " + (daten.name || "der Firma"), ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
+        persona: { name: daten.agentName || (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: daten.agentRolle || "Assistent", ansprache: daten.agentAnrede || "du", ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
         fakten, faq: daten.faq, wissensquellen,
         // Jeder Agent kann von Anfang an Kontaktanfragen aufnehmen (Lead-Capture).
         faehigkeiten: ["kontakt"],

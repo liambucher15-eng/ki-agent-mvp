@@ -34,6 +34,12 @@ function baueSystemPrompt(firma) {
   const p = firma.persona || {};
   const wissen = baueWissensText(firma);
 
+  // Ansprache (Du/Sie) — vom Kunden im Onboarding gewählt. Standard: Du.
+  const spr = p.sprache || "Deutsch";
+  const anredeRegel = p.ansprache === "sie"
+    ? `Sprich die Besucher mit „Sie“ an (höflich-professionell).`
+    : `Sprich die Besucher mit „Du“ an (locker-nahbar).`;
+
   const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
   const kontaktRegel = kannKontakt
     ? `\n- Wenn du eine Frage NICHT beantworten kannst oder der Besucher kontaktiert werden ` +
@@ -42,7 +48,7 @@ function baueSystemPrompt(firma) {
     : "";
 
   return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
-Ton: ${p.ton}. Sprich ${p.sprache || "Deutsch"}, warm und knapp.
+Ton: ${p.ton}. Sprich ${spr}, warm und knapp. ${anredeRegel}
 
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
