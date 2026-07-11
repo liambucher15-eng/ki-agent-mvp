@@ -43,30 +43,48 @@
     #schliessen:hover { transform: rotate(90deg); }
     #stimme.an { background: var(--farbe); color: #fff; border-color: transparent; }
 
-    /* Charakter: runder Avatar, mittig oben, mit leuchtendem Ring. */
-    #held { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-            padding: 0.2rem 1rem 0.9rem; text-align: center; }
-    #kopf-avatar { width: 122px; height: 122px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
-                   background: radial-gradient(circle at 50% 35%, #fff, var(--tint));
-                   box-shadow: 0 0 0 4px color-mix(in srgb, var(--farbe) 13%, #fff),
-                               0 0 30px 5px color-mix(in srgb, var(--farbe) 28%, transparent),
-                               0 10px 24px -10px rgba(15,23,42,0.4); }
-    #kopf-avatar svg, #kopf-avatar img { width: 100%; height: 100%; display: block; }
-    #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
-    /* Quadratische Figur-Bilder im Kreis: cover füllt den Kreis, Rest wird maskiert. */
-    #kopf-img { object-fit: cover; object-position: center 12%; display: none; }
-    /* Basis-Firmen: leuchtender Orb (in Markenfarbe) statt Platzhalter-SVG.
-       Plus-Firmen zeigen stattdessen ihr generiertes Maskottchen (Bild). */
-    #orb { width: 100%; height: 100%; border-radius: 50%; position: relative; overflow: hidden; display: none;
+    /* Charakter-Bühne: die Figur steht FREI (kein harter Kreis) auf einem weichen,
+       aus --farbe abgeleiteten Schein. Der Orb bringt seinen eigenen Kreis mit. */
+    #held { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+            padding: 0.35rem 1rem 0.9rem; text-align: center; transition: padding 0.35s ease;
+            background: radial-gradient(78% 58% at 50% 24%, color-mix(in srgb, var(--farbe) 17%, transparent), transparent 72%); }
+    /* Sizing-Box ohne Kreis-Clip -> freigestellte Figur. */
+    #kopf-avatar { width: 152px; height: 152px; flex-shrink: 0; position: relative;
+                   transition: width 0.35s ease, height 0.35s ease; }
+    #kopf-avatar svg, #kopf-avatar img, #orb { width: 100%; height: 100%; display: block; }
+    #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite;
+                       filter: drop-shadow(0 10px 15px color-mix(in srgb, var(--farbe) 30%, transparent)); }
+    /* Freigestellte Figur: ganze Figur zeigen (contain), kein Kreis. */
+    #kopf-img { object-fit: contain; display: none;
+                filter: drop-shadow(0 12px 16px color-mix(in srgb, var(--farbe) 38%, transparent)); }
+    /* Basis-Firmen: leuchtender Orb (mit eigenem Kreis + Ring). */
+    #orb { border-radius: 50%; position: relative; overflow: hidden; display: none;
            background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.6), rgba(255,255,255,0) 46%),
-                       radial-gradient(circle at 70% 78%, var(--akzent), var(--farbe) 74%); }
+                       radial-gradient(circle at 70% 78%, var(--akzent), var(--farbe) 74%);
+           box-shadow: 0 0 0 4px color-mix(in srgb, var(--farbe) 13%, #fff),
+                       0 0 28px 5px color-mix(in srgb, var(--farbe) 28%, transparent),
+                       0 10px 22px -10px rgba(15,23,42,0.4); }
     #orb::before { content: ""; position: absolute; inset: -30%;
                    background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.35), transparent 42%);
                    animation: orbDreh 9s linear infinite; opacity: 0.5; }
     @keyframes orbDreh { to { transform: rotate(360deg); } }
     #kopf-avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-    #kopf-name { font-weight: 600; font-size: 0.9rem; color: #334155; }
+    #kopf-name { font-weight: 650; font-size: 1.05rem; color: #1f2937; line-height: 1.2; margin-top: 0.15rem;
+                 transition: font-size 0.3s ease; }
+    #kopf-rolle { font-size: 0.8rem; color: #64748b; }
+    #kopf-online { font-size: 0.72rem; color: #2e7d32; display: flex; align-items: center; gap: 0.32rem; justify-content: center; }
+    #kopf-online::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
+                           box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: puls 2.4s ease-out infinite; }
+    @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); } 70%,100% { box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
+    /* Vorschlags-Chips: nur im Begrüssungszustand (auf der Bühne). */
+    #chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 0.5rem; }
+    #chips:empty { display: none; }
+    /* Sobald ein Gespräch läuft: Bühne + Figur kompakter, Rolle/Chips weg. */
+    body.hat-verlauf #kopf-avatar { width: 96px; height: 96px; }
+    body.hat-verlauf #kopf-name { font-size: 0.92rem; }
+    body.hat-verlauf #kopf-rolle, body.hat-verlauf #chips { display: none; }
+    body.hat-verlauf #held { padding-bottom: 0.55rem; }
     /* Schallwellen — nur beim Vorlesen sichtbar */
     #welle { display: none; gap: 3px; align-items: center; height: 13px; margin-top: 0.05rem; }
     #welle span { width: 3px; height: 13px; border-radius: 2px; background: var(--farbe);
@@ -136,7 +154,7 @@
     .fuss a { color: inherit; text-decoration: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      #kopf-avatar svg, #kopf-avatar.sprechen, #orb::before, .augen, .msg,
+      #kopf-avatar svg, #kopf-avatar.sprechen, #orb::before, #kopf-online::before, .augen, .msg,
       .tippt span, #welle span { animation: none !important; }
       #chat { scroll-behavior: auto; }
     }
@@ -169,7 +187,10 @@
       <div id="orb" aria-hidden="true"></div>
     </div>
     <div id="kopf-name">Assistent</div>
+    <div id="kopf-rolle"></div>
+    <div id="kopf-online">Online</div>
     <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div id="chips"></div>
   </div>
 
   <div id="chat"></div>
@@ -193,6 +214,8 @@
     const avatar = document.getElementById("kopf-avatar");
     const avatarImg = document.getElementById("kopf-img");
     const kopfName = document.getElementById("kopf-name");
+    const kopfRolle = document.getElementById("kopf-rolle");
+    const chips = document.getElementById("chips");
     const welle = document.getElementById("welle");
     const stimmeBtn = document.getElementById("stimme");
 
@@ -336,6 +359,7 @@
           setFarben(f.charakter || {});
           if (f.persona) kopfName.textContent = f.persona;
           else if (f.name) kopfName.textContent = f.name;
+          if (f.rolle) kopfRolle.textContent = f.rolle;
         }
       } catch (e) { /* Aussehen ist nicht kritisch */ }
       setCharakter("freuen", 700);
@@ -345,13 +369,16 @@
 
     // Gemeinsame Chat-Logik aus lib/chat-ui.js. Der Charakter oben reagiert über
     // den avatar-Callback (denken/sprechen); onAntwort liest optional laut vor.
-    // Die Nachrichten erscheinen als Chatverlauf unter dem Charakter.
+    // Chips erscheinen auf der Bühne; sobald der Besucher fragt, wird die Bühne
+    // kompakt (hat-verlauf) und die Nachrichten erscheinen im Chatverlauf.
     const ui = ChatUI.starten({
       chat, form, input, send,
       firmaId: FIRMA_ID,
       avatar: setCharakter,
       tipptAn: addTipptAnzeige,
       seiteInfo: seiteInfo,
+      chipsZiel: chips,
+      onFrage: () => { document.body.classList.add("hat-verlauf"); },
       onAntwort: (text) => { liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);

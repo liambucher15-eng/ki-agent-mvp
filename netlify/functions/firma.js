@@ -42,6 +42,7 @@ exports.handler = async (event) => {
   return json(200, {
     name: firma.name,
     persona: firma.persona?.name || "",
+    rolle: firma.persona?.rolle || "",
     charakter,
     plan,
     faq: Array.isArray(firma.faq) ? firma.faq : [],
