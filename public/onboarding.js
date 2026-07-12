@@ -60,6 +60,7 @@
         }});
       aktuell = n; updateProgress();
       if (n === AGENT_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
       // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls leer.
       if (n === 5 && !daten.agentName && daten.name) {
         const el = document.getElementById("agentName");
@@ -596,6 +597,55 @@
     document.getElementById("charZustaende").addEventListener("click", generiereZustaendeAusRichtung);
 
     aktualisiereAgentVorschau(); // Anfangszustand (Orb)
+
+    // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
+    // Vor dem Live-Gehen sieht die Firma gebündelt, was der Agent schon kann und was
+    // ihm fehlt. Kritische Lücken (Name, Angebot, Wissen) lösen eine Warnung aus — der
+    // Agent bleibt trotzdem testbar; das ist ein Hinweis, keine Sperre.
+    function pruefeStartklar() {
+      const box = document.getElementById("startklar");
+      const banner = document.getElementById("startklarBanner");
+      const liste = document.getElementById("startklarListe");
+      if (!box || !banner || !liste) return;
+      sammle(); // Felder -> daten, damit der Check den aktuellen Stand prüft
+      const hatWissen = !!(daten.angebot || (daten.leistungen && daten.leistungen.length) ||
+        daten.weiteres || daten.besonderheiten || daten.preise ||
+        (daten.dokumente && daten.dokumente.length) || (daten.faq && daten.faq.length));
+      // kritisch: ohne diese ist der Agent nicht wirklich brauchbar
+      const kritisch = [
+        ["Name deiner Firma", !!daten.name],
+        ["Was du anbietest", !!daten.angebot],
+        ["Wissen (Scan, Infos oder Dokumente)", hatWissen],
+        ["Name deines Agenten", !!daten.agentName],
+      ];
+      // empfohlen: macht den Agenten deutlich hilfreicher, ist aber kein Muss
+      const empfohlen = [
+        ["Öffnungszeiten", !!daten.oeffnungszeiten],
+        ["Kontaktmöglichkeit", !!daten.kontakt],
+        ["Adresse", !!daten.adresse],
+        ["Häufige Fragen", !!(daten.faq && daten.faq.length)],
+      ];
+      liste.textContent = "";
+      const zeile = (titel, ok, kritischFehlt) => {
+        const z = document.createElement("div");
+        z.textContent = (ok ? "✓ " : (kritischFehlt ? "✗ " : "○ ")) + titel;
+        z.style.color = ok ? "var(--gruen)" : (kritischFehlt ? "#b45309" : "var(--grau)");
+        liste.appendChild(z);
+      };
+      for (const [t, ok] of kritisch) zeile(t, ok, true);
+      for (const [t, ok] of empfohlen) zeile(t, ok, false);
+      const fehlendKritisch = kritisch.filter(([, ok]) => !ok).map(([t]) => t);
+      if (fehlendKritisch.length) {
+        banner.textContent = "⚠ Bevor du live gehst, fehlen wichtige Infos: " +
+          fehlendKritisch.join(", ") + ". Der Agent funktioniert trotzdem, aber ergänze das " +
+          "am besten jetzt (zurück) oder später im Dashboard.";
+        banner.style.color = "#b45309";
+      } else {
+        banner.textContent = "✓ Startklar — dein Agent kennt alles Wichtige.";
+        banner.style.color = "var(--gruen)";
+      }
+      box.hidden = false;
+    }
 
     function sammle() {
       // Die Felder sind die WAHRHEIT: direkte Übernahme (kein "||"-Fallback,

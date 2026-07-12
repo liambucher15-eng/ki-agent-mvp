@@ -488,6 +488,13 @@
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
+            <!-- §8 Veröffentlichungs-Checkliste: zeigt vor dem Live-Gehen, was der
+                 Agent schon kann und warnt bei fehlenden kritischen Infos. Blockiert
+                 nicht — der Agent bleibt testbar, die Warnung ist ein Hinweis. -->
+            <div id="startklar" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.75rem 0.9rem;margin-bottom:0.6rem;">
+              <div id="startklarBanner" style="font-size:0.86rem;font-weight:600;margin-bottom:0.55rem;"></div>
+              <div id="startklarListe" style="display:grid;grid-template-columns:1fr 1fr;gap:0.22rem 0.9rem;font-size:0.82rem;"></div>
+            </div>
             <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
