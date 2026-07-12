@@ -333,8 +333,8 @@
           <!-- 6 Anpassen -->
           <div class="schritt-links" data-step="5" hidden>
             <div class="grow"></div>
-            <h1>Gestalte<br>deine Marke</h1>
-            <div class="hinweis-box"><span>Die Farben deiner Webseite sind schon übernommen. Du kannst alles frei anpassen.</span></div>
+            <h1>Wer ist<br>dein Agent?</h1>
+            <p class="sub">Name und Persönlichkeit. Alles ist sinnvoll vorbelegt — du kannst jederzeit ändern.</p>
             <label class="feld" for="agentName">Wie soll dein Assistent heissen? *</label>
             <input type="text" id="agentName" placeholder="z.B. Pino, Lia, Concierge" maxlength="40" />
             <p class="mini" id="agentNameHinweis" style="text-align:left;min-height:1em;"></p>
@@ -363,9 +363,15 @@
               <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
             </div>
             <p class="pers-hinweis" id="persHinweis"></p>
-            <div class="einstellungs-gruppe">
-              <div class="einstellungs-titel">Antwortstil</div>
-              <p class="einstellungs-hilfe">Lege fest, wie dein Assistent schreibt. Du kannst das später jederzeit ändern.</p>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 6 Antwortstil -->
+          <div class="schritt-links" data-step="6" hidden>
+            <div class="grow"></div>
+            <h1>Wie soll er<br>antworten?</h1>
+            <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten — justiere nur, was du möchtest.</p>
               <label class="feld">Antwortlänge</label>
               <div class="pers" id="laengenListe">
                 <button type="button" class="pers-chip" data-laenge="kurz">Kurz & direkt</button>
@@ -393,10 +399,15 @@
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
               <div class="antwort-vorschau" id="antwortVorschau"></div>
-            </div>
-            <div class="einstellungs-gruppe">
-              <div class="einstellungs-titel">Chat-Design</div>
-              <p class="einstellungs-hilfe">Wir übernehmen die Farben deiner Webseite. Wähle nur, wie viel du selbst gestalten möchtest.</p>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="grow"></div>
+          </div>
+
+          <!-- 7 Chat-Design -->
+          <div class="schritt-links" data-step="7" hidden>
+            <div class="grow"></div>
+            <h1>Wie sieht<br>der Chat aus?</h1>
+            <p class="sub">Wir übernehmen die Farben deiner Webseite. Wähle nur, wie viel du selbst gestalten möchtest.</p>
               <div class="pers" id="designListe">
                 <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch aus Website</button>
                 <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
@@ -406,7 +417,6 @@
                 <button type="button" class="pers-chip aktiv" data-layout="sidebar">Seitenleiste</button>
                 <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
               </div>
-            </div>
             <label class="feld">Farben</label>
             <div class="farben">
               <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
@@ -427,7 +437,7 @@
           </div>
 
           <!-- 7 Dein Agent -->
-          <div class="schritt-links" data-step="6" id="schrittAgent" hidden>
+          <div class="schritt-links" data-step="8" id="schrittAgent" hidden>
             <h1 class="klein">Wie sieht dein<br>Agent aus?</h1>
             <div class="agent-wahl">
               <button type="button" class="agent-opt aktiv" data-typ="orb" id="optOrb">
@@ -483,8 +493,8 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 8 Fertig -->
-          <div class="schritt-links" data-step="7" hidden>
+          <!-- 10 Fertig -->
+          <div class="schritt-links" data-step="9" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
@@ -523,13 +533,15 @@
         <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
         <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
         <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
-        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="vorschau">
+        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
+        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
+        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-orb" id="vorOrb"></div>
           <div class="vorschau-figur" id="vorFigur" hidden><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
           <div class="vorschau-label" id="vorLabel">Dein Leucht-Orb</div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
       </div>
 
     </div>

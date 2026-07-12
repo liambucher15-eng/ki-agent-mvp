@@ -367,7 +367,7 @@
     const figurMini = document.getElementById("figurMini");
 
     function setVorschauFarben() {
-      [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='6']")].forEach((el) => {
+      [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='8']")].forEach((el) => {
         if (!el) return;
         el.style.setProperty("--vor-f1", daten.farbe1);
         el.style.setProperty("--vor-f2", daten.farbe2);
