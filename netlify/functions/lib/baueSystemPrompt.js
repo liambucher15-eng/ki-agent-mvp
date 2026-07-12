@@ -41,10 +41,32 @@ function baueSystemPrompt(firma) {
     : `Sprich die Besucher mit „Du“ an (locker-nahbar).`;
 
   const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
-  const kontaktRegel = kannKontakt
+  const uebergabe = p.uebergabe || (kannKontakt ? "kontakt" : "ehrlich");
+  const kontaktRegel = kannKontakt && uebergabe === "kontakt"
     ? `\n- Wenn du eine Frage NICHT beantworten kannst oder der Besucher kontaktiert werden ` +
       `möchte (Rückruf, Reservierung, Anfrage), nimm seine Kontaktdaten mit dem Werkzeug ` +
       `„kontakt_hinterlassen" auf, statt ihn wegzuschicken.`
+    : uebergabe === "kontaktinfo"
+      ? `\n- Wenn du nicht weiterhelfen kannst, weise freundlich auf die vorhandenen Kontaktinformationen hin.`
+      : "";
+
+  const laengeRegel = {
+    kurz: "Halte Antworten kurz: meistens ein bis zwei Sätze, nur auf Nachfrage mehr.",
+    ausgewogen: "Antworte klar mit den wichtigsten Details; vermeide unnötige Wiederholungen.",
+    ausfuehrlich: "Erkläre bei Bedarf ausführlich und vollständig, bleibe dabei gut lesbar.",
+  }[p.antwortLaenge] || "Antworte klar mit den wichtigsten Details; vermeide unnötige Wiederholungen.";
+  const emojiRegel = {
+    keine: "Verwende keine Emojis.",
+    dezent: "Verwende höchstens ein passendes Emoji, nur wenn es natürlich wirkt.",
+    lebendig: "Du darfst Emojis warm und passend einsetzen, aber übertreibe nicht.",
+  }[p.emojiStil] || "Verwende höchstens ein passendes Emoji, nur wenn es natürlich wirkt.";
+  const formatRegel = {
+    absatz: "Schreibe in kurzen, gut lesbaren Absätzen.",
+    listen: "Nutze kurze Listen, wenn sie Informationen verständlicher machen.",
+    fliessend: "Schreibe bevorzugt als zusammenhängenden, natürlichen Text.",
+  }[p.antwortFormat] || "Schreibe in kurzen, gut lesbaren Absätzen.";
+  const grenzenRegel = typeof p.grenzen === "string" && p.grenzen.trim()
+    ? `\n- Beachte diese zusätzlichen Grenzen: ${p.grenzen.trim()}`
     : "";
 
   return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
@@ -54,6 +76,9 @@ So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
 - ANTWORTE nur aus den Informationen unten.${kontaktRegel}
+- ${laengeRegel}
+- ${emojiRegel}
+- ${formatRegel}${grenzenRegel}
 
 WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
 dass du es nicht weisst, und biete an, das Team zu fragen.

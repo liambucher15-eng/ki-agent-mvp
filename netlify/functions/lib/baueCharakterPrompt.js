@@ -37,4 +37,23 @@ function baueCharakterPrompt({ beschreibung, farbe } = {}) {
   return { stil, prompts, edits, mundOffenEdit };
 }
 
-module.exports = { baueCharakterPrompt, AUSDRUECKE };
+// Vier bewusst UNTERSCHIEDLICHE Stil-Richtungen für die Vorschau (Welle 1, §4).
+// Der Kunde wählt eine, erst dann werden daraus die 5 Zustände erzeugt — so gibt
+// es mehr Auswahl und weniger Kosten (nicht 5 Bilder pro verworfener Richtung).
+const RICHTUNGEN = [
+  { key: "rund",    label: "Freundlich & rund",       zusatz: "sehr freundlich, runde weiche Formen, grosse Kulleraugen, einladend und niedlich" },
+  { key: "elegant", label: "Elegant & hochwertig",    zusatz: "elegant, hochwertig, edel und reduziert, feine Linien, dezente Farben" },
+  { key: "mutig",   label: "Verspielt & mutig",       zusatz: "verspielt und mutig, kräftige satte Farben, dynamische Pose, ausdrucksstark" },
+  { key: "modern",  label: "Zurückhaltend & modern",  zusatz: "zurückhaltend und modern, minimalistisch, klare geometrische Formen, ruhig" },
+];
+
+function baueRichtungen({ beschreibung, farbe } = {}) {
+  const { stil } = baueCharakterPrompt({ beschreibung, farbe });
+  return RICHTUNGEN.map((r) => ({
+    key: r.key,
+    label: r.label,
+    prompt: `${stil} Stil-Richtung: ${r.zusatz}. Neutraler, freundlicher Ruheausdruck, schaut nach vorne.`,
+  }));
+}
+
+module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN };

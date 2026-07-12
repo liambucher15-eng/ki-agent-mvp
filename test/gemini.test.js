@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
 
 process.env.GEMINI_API_KEY = "test-key";
 const { generiereBild, bearbeiteBild, zerlegeBase64, MODELL } = require("../netlify/functions/lib/gemini");
-const { baueCharakterPrompt, AUSDRUECKE } = require("../netlify/functions/lib/baueCharakterPrompt");
+const { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN } = require("../netlify/functions/lib/baueCharakterPrompt");
 
 const echterFetch = global.fetch;
 afterEach(() => { global.fetch = echterFetch; });
@@ -97,4 +97,20 @@ test("baueCharakterPrompt: liefert Prompts UND Edit-Anweisungen für alle 4 Zust
     assert.ok(edits[z].includes(AUSDRUECKE[z]));
   }
   assert.match(stil, /#123456/);
+});
+
+// Welle 1, §4: vier UNTERSCHIEDLICHE Richtungs-Prompts
+test("baueRichtungen: liefert 4 verschiedene Richtungen mit Prompt + Label", () => {
+  const rs = baueRichtungen({ beschreibung: "Fuchs", farbe: "#123456" });
+  assert.equal(rs.length, 4);
+  assert.equal(rs.length, RICHTUNGEN.length);
+  const keys = rs.map((r) => r.key);
+  assert.equal(new Set(keys).size, 4, "keys eindeutig");
+  const prompts = rs.map((r) => r.prompt);
+  assert.equal(new Set(prompts).size, 4, "prompts unterscheiden sich");
+  for (const r of rs) {
+    assert.ok(r.label && r.prompt);
+    assert.match(r.prompt, /#123456/);       // Markenfarbe steckt drin
+    assert.match(r.prompt, /Stil-Richtung:/); // Richtungs-Zusatz gesetzt
+  }
 });

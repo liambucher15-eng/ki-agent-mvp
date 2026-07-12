@@ -163,6 +163,17 @@
     .tab { font: inherit; font-size: 0.85rem; font-weight: 600; background: none; border: 0; cursor: pointer;
            padding: 0.4rem 0.6rem; color: var(--grau); border-bottom: 2px solid transparent; margin-bottom: -1.5px; }
     .tab.aktiv { color: var(--indigo); border-bottom-color: var(--indigo); }
+    .einstellungs-gruppe { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+    .einstellungs-titel { font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
+    .einstellungs-hilfe { color: var(--grau); font-size: 0.82rem; line-height: 1.4; margin: 0.25rem 0 0.5rem; }
+    .richtungs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.75rem; }
+    .richtungs-karte { position: relative; overflow: hidden; padding: 0; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; text-align: left; font: inherit; }
+    .richtungs-karte:hover { border-color: var(--indigo); }
+    .richtungs-karte.aktiv { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+    .richtungs-karte img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #f8fafc; }
+    .richtungs-karte span { display: block; padding: 0.5rem 0.6rem; font-size: 0.8rem; font-weight: 600; }
+    .richtungs-karte.aktiv::after { content: "✓"; position: absolute; top: 0.4rem; right: 0.4rem; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--indigo); color: #fff; font-weight: 800; }
+    .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
     .prompts { margin-top: 0.6rem; }
     .prompt-box { background: #0f1424; color: #e5e7eb; border-radius: 10px; padding: 0.6rem 0.7rem; font-size: 0.72rem;
                   line-height: 1.45; white-space: pre-wrap; position: relative; margin-bottom: 0.4rem; }
@@ -352,6 +363,50 @@
               <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
             </div>
             <p class="pers-hinweis" id="persHinweis"></p>
+            <div class="einstellungs-gruppe">
+              <div class="einstellungs-titel">Antwortstil</div>
+              <p class="einstellungs-hilfe">Lege fest, wie dein Assistent schreibt. Du kannst das später jederzeit ändern.</p>
+              <label class="feld">Antwortlänge</label>
+              <div class="pers" id="laengenListe">
+                <button type="button" class="pers-chip" data-laenge="kurz">Kurz & direkt</button>
+                <button type="button" class="pers-chip aktiv" data-laenge="ausgewogen">Ausgewogen</button>
+                <button type="button" class="pers-chip" data-laenge="ausfuehrlich">Ausführlich</button>
+              </div>
+              <label class="feld">Emojis</label>
+              <div class="pers" id="emojiListe">
+                <button type="button" class="pers-chip" data-emoji="keine">Keine</button>
+                <button type="button" class="pers-chip aktiv" data-emoji="dezent">Dezent</button>
+                <button type="button" class="pers-chip" data-emoji="lebendig">Lebendig</button>
+              </div>
+              <label class="feld">Formatierung</label>
+              <div class="pers" id="formatListe">
+                <button type="button" class="pers-chip aktiv" data-format="absatz">Kurze Absätze</button>
+                <button type="button" class="pers-chip" data-format="listen">Listen bei Bedarf</button>
+                <button type="button" class="pers-chip" data-format="fliessend">Fließtext</button>
+              </div>
+              <label class="feld">Wenn der Agent nicht weiterweiß</label>
+              <select class="select" id="uebergabe">
+                <option value="kontakt">Kontaktdaten aufnehmen</option>
+                <option value="kontaktinfo">Kontaktinformationen zeigen</option>
+                <option value="ehrlich">Ehrlich sagen, dass die Information fehlt</option>
+              </select>
+              <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
+              <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
+              <div class="antwort-vorschau" id="antwortVorschau"></div>
+            </div>
+            <div class="einstellungs-gruppe">
+              <div class="einstellungs-titel">Chat-Design</div>
+              <p class="einstellungs-hilfe">Wir übernehmen die Farben deiner Webseite. Wähle nur, wie viel du selbst gestalten möchtest.</p>
+              <div class="pers" id="designListe">
+                <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch aus Website</button>
+                <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
+              </div>
+              <label class="feld">Startansicht</label>
+              <div class="pers" id="layoutListe">
+                <button type="button" class="pers-chip aktiv" data-layout="sidebar">Seitenleiste</button>
+                <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
+              </div>
+            </div>
             <label class="feld">Farben</label>
             <div class="farben">
               <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
@@ -413,8 +468,14 @@
               <div class="tab-inhalt" data-tab="erstellen" hidden>
                 <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
                 <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
-                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">Charakter erstellen</button>
+                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">4 Stilrichtungen vorschlagen</button>
                 <p class="mini" id="charErstellenStatus" style="text-align:left;"></p>
+                <div id="richtungenBox" hidden>
+                  <p class="sub" style="font-size:0.84rem;">Wähle eine Richtung. Erst danach erzeugen wir die passenden Ausdrücke – das spart Zeit und Bild-Credits.</p>
+                  <div class="richtungs-grid" id="richtungsGrid"></div>
+                  <button type="button" class="btn btn-primar" id="charZustaende" disabled style="margin-top:0.75rem;">Diese Richtung auswählen</button>
+                  <p class="mini" id="charRichtungenStatus" style="text-align:left;"></p>
+                </div>
               </div>
               <!-- 4 generierte Ausdruck-Bilder: prüfen + einzeln per Anweisung nachbessern -->
               <div id="charGrid" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem;"></div>

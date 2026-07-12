@@ -1,7 +1,7 @@
 // Onboarding-Wizard — Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", plan:"basis", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"basis", charakterBilder:null };
 
     // Preise (Milestone 10): PLATZHALTER, bis die finale Preisentscheidung steht
     // (siehe Fertigstellungs-Plan, Punkt "Preise" — bewusst vertagt). Eine Stelle
@@ -328,6 +328,33 @@
     persChips.forEach((c) => c.addEventListener("click", () => waehlePers(c.dataset.ton)));
     waehlePers(daten.persoenlichkeit); // Standard vorwählen
 
+    // Antwortstil: einfache Auswahlfelder statt eines technischen Prompt-Editors.
+    function chipGruppe(selector, eigenschaft, datenAttribut) {
+      const chips = document.querySelectorAll(selector);
+      function waehle(wert) {
+        daten[eigenschaft] = wert;
+        chips.forEach((c) => c.classList.toggle("aktiv", c.dataset[datenAttribut] === wert));
+        aktualisiereAntwortVorschau();
+      }
+      chips.forEach((c) => c.addEventListener("click", () => waehle(c.dataset[datenAttribut])));
+      waehle(daten[eigenschaft]);
+    }
+    function aktualisiereAntwortVorschau() {
+      const el = document.getElementById("antwortVorschau");
+      if (!el) return;
+      const laenge = { kurz: "kurz und direkt", ausgewogen: "klar mit den wichtigsten Details", ausfuehrlich: "ausführlich und erklärend" }[daten.antwortLaenge];
+      const emoji = { keine: "ohne Emojis", dezent: "mit einzelnen passenden Emojis", lebendig: "mit einer lebendigen Emoji-Nutzung" }[daten.emojiStil];
+      const format = { absatz: "in kurzen Absätzen", listen: "mit Listen, wenn sie helfen", fliessend: "als zusammenhängender Text" }[daten.antwortFormat];
+      el.textContent = "Vorschau: Dein Agent antwortet " + laenge + ", " + format + " und " + emoji + ".";
+    }
+    chipGruppe("#laengenListe .pers-chip", "antwortLaenge", "laenge");
+    chipGruppe("#emojiListe .pers-chip", "emojiStil", "emoji");
+    chipGruppe("#formatListe .pers-chip", "antwortFormat", "format");
+    chipGruppe("#designListe .pers-chip", "chatDesign", "design");
+    chipGruppe("#layoutListe .pers-chip", "chatLayout", "layout");
+    document.getElementById("uebergabe").addEventListener("change", (e) => { daten.uebergabe = e.target.value; });
+    document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
+
     // --- Schritt "Dein Agent": Orb (Basis) vs. eigene Figur (Plus) ---
     const optOrb = document.getElementById("optOrb");
     const optFigur = document.getElementById("optFigur");
@@ -382,6 +409,8 @@
     const CHAR_ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
     const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
     let charReferenzBild = null; // Data-URL des Uploads, dient auch als KI-Vorlage
+    let charRichtungen = [];
+    let gewaehltRichtung = null;
 
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
@@ -448,6 +477,10 @@
       });
     }
 
+    // Ein Bild-Upload ist bereits eine klare Stilentscheidung. Für eine
+    // Beschreibung zeigen wir dagegen erst vier Richtungen und erzeugen die
+    // teuren Zustandsbilder erst nach der Auswahl.
+    // Upload-Weg: aus einem Referenzbild direkt die 5 Zustände (eine Richtung).
     async function starteGenerierung({ beschreibung, referenzBild, status, btn }) {
       btn.disabled = true; status.style.color = "";
       status.textContent = "Dein Charakter wird erstellt — das dauert etwa eine Minute…";
@@ -460,6 +493,64 @@
       } catch (e) {
         status.style.color = "#e11d48";
         status.textContent = "Konnte den Charakter nicht erstellen: " + e.message;
+      } finally { btn.disabled = false; }
+    }
+
+    function zeigeRichtungen(richtungen) {
+      const box = document.getElementById("richtungenBox");
+      const grid = document.getElementById("richtungsGrid");
+      const weiter = document.getElementById("charZustaende");
+      charRichtungen = Array.isArray(richtungen) ? richtungen : [];
+      gewaehltRichtung = null;
+      grid.textContent = "";
+      charRichtungen.forEach((richtung) => {
+        const karte = document.createElement("button");
+        karte.type = "button"; karte.className = "richtungs-karte";
+        const bild = document.createElement("img");
+        bild.src = richtung.bild; bild.alt = richtung.label;
+        const label = document.createElement("span"); label.textContent = richtung.label;
+        karte.append(bild, label);
+        karte.addEventListener("click", () => {
+          gewaehltRichtung = richtung;
+          grid.querySelectorAll(".richtungs-karte").forEach((el) => el.classList.toggle("aktiv", el === karte));
+          weiter.disabled = false;
+        });
+        grid.appendChild(karte);
+      });
+      box.hidden = false;
+      weiter.disabled = true;
+    }
+
+    async function starteRichtungen({ beschreibung, status, btn }) {
+      btn.disabled = true; status.style.color = "";
+      status.textContent = "Wir entwickeln vier unterschiedliche Richtungen — das dauert ungefähr eine Minute…";
+      try {
+        const erg = await charJob({ aktion: "richtungen", beschreibung }, 120);
+        zeigeRichtungen(erg.richtungen);
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ Wähle die Richtung, die am besten zu deiner Marke passt.";
+      } catch (e) {
+        status.style.color = "#e11d48";
+        status.textContent = "Konnte die Vorschläge nicht erstellen: " + e.message;
+      } finally { btn.disabled = false; }
+    }
+
+    async function generiereZustaendeAusRichtung() {
+      if (!gewaehltRichtung) return;
+      const beschreibung = document.getElementById("charBeschr").value.trim();
+      const status = document.getElementById("charRichtungenStatus");
+      const btn = document.getElementById("charZustaende");
+      btn.disabled = true; status.style.color = "";
+      status.textContent = "Wir erzeugen die Ausdrücke für deine gewählte Figur…";
+      try {
+        const erg = await charJob({ aktion: "zustaende", beschreibung, bild: gewaehltRichtung.bild }, 120);
+        daten.charakterBilder = erg.bilder;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ Fertig! Du kannst jeden Ausdruck unten gezielt anpassen.";
+        zeigeCharGrid(); aktualisiereAgentVorschau();
+      } catch (e) {
+        status.style.color = "#e11d48";
+        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message;
       } finally { btn.disabled = false; }
     }
 
@@ -496,12 +587,13 @@
       const beschr = document.getElementById("charBeschr").value.trim();
       const status = document.getElementById("charErstellenStatus");
       if (!beschr) { status.style.color = "#e11d48"; status.textContent = "Bitte kurz beschreiben."; return; }
-      starteGenerierung({
+      starteRichtungen({
         beschreibung: beschr,
         status,
         btn: document.getElementById("charErstellen"),
       });
     });
+    document.getElementById("charZustaende").addEventListener("click", generiereZustaendeAusRichtung);
 
     aktualisiereAgentVorschau(); // Anfangszustand (Orb)
 
@@ -520,6 +612,8 @@
       daten.weiteres = wert("p-weiteres");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
+      daten.uebergabe = wert("uebergabe") || daten.uebergabe;
+      daten.grenzen = wert("agentGrenzen");
       // Agenten-Identität (§3): Name Pflicht (mit Firmenname als Fallback),
       // Rolle + Anrede aus den Feldern.
       daten.agentName = wert("agentName") || daten.name || "Assistent";
@@ -578,11 +672,22 @@
       const firma = {
         id: daten.id, name: daten.name || daten.id, email: daten.email, webseite: daten.webseite,
         plan: daten.plan,
-        persona: { name: daten.agentName || (daten.name ? daten.name + "-Assistent" : "Assistent"), rolle: daten.agentRolle || "Assistent", ansprache: daten.agentAnrede || "du", ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich), sprache: "Deutsch" },
+        persona: {
+          name: daten.agentName || (daten.name ? daten.name + "-Assistent" : "Assistent"),
+          rolle: daten.agentRolle || "Assistent",
+          ansprache: daten.agentAnrede || "du",
+          ton: (TON_TEXTE[daten.persoenlichkeit] || TON_TEXTE.freundlich),
+          sprache: "Deutsch",
+          antwortLaenge: daten.antwortLaenge,
+          emojiStil: daten.emojiStil,
+          antwortFormat: daten.antwortFormat,
+          uebergabe: daten.uebergabe,
+          grenzen: daten.grenzen,
+        },
         fakten, faq: daten.faq, wissensquellen,
         // Jeder Agent kann von Anfang an Kontaktanfragen aufnehmen (Lead-Capture).
         faehigkeiten: ["kontakt"],
-        charakter,
+        charakter: { ...charakter, chatDesign: daten.chatDesign, chatLayout: daten.chatLayout },
       };
       try {
         await Store.saveFirma(firma);

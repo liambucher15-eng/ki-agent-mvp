@@ -22,7 +22,7 @@
 
 const { generiereBild, bearbeiteBild, konfiguriert: geminiOk, zerlegeBase64 } = require("./lib/gemini");
 const { speichereBild, istEigeneBildUrl, konfiguriert: storageOk } = require("./lib/bilderSpeicher");
-const { baueCharakterPrompt } = require("./lib/baueCharakterPrompt");
+const { baueCharakterPrompt, baueRichtungen } = require("./lib/baueCharakterPrompt");
 const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
 const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
@@ -131,6 +131,48 @@ async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
   return { bild: url, zustand: zustand || null };
 }
 
+// §4 Schritt 1: vier UNTERSCHIEDLICHE Richtungs-Vorschauen (je 1 Bild).
+async function generiereRichtungen({ jobId, beschreibung, farbe }) {
+  const richtungen = baueRichtungen({ beschreibung, farbe });
+  const ergebnisse = await Promise.all(richtungen.map(async (r) => {
+    const g = await mitWiederholung(() => generiereBild({ prompt: r.prompt }), 2);
+    if (!g.ok) return null;
+    const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
+    const url = await speichereBild("richtungen/" + jobId + "/" + r.key + "." + endung, g.bildBase64, g.mimeType);
+    return { key: r.key, label: r.label, bild: url };
+  }));
+  const ok = ergebnisse.filter(Boolean);
+  if (ok.length < 2) throw new Error("Konnte keine Vorschläge erzeugen. Bitte nochmal versuchen.");
+  return { richtungen: ok };
+}
+
+// §4 Schritt 2: aus der GEWÄHLTEN Richtung (idle-Bild aus unserem Bucket) die
+// restlichen Zustände + Klappmaul erzeugen. idle bleibt die gewählte URL.
+async function generiereZustaende({ jobId, bild, beschreibung, farbe }) {
+  const quelle = await holeBildFuerEdit(bild);
+  const { edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe });
+  const roh = {};
+  for (const zustand of ["denken", "sprechen", "verlegen"]) {
+    const r = await mitWiederholung(() => bearbeiteBild({
+      bild: quelle.base64, mimeType: quelle.mimeType, anweisung: edits[zustand],
+    }));
+    if (!r.ok) throw new Error("Ausdruck '" + zustand + "': " + r.fehler);
+    roh[zustand] = { base64: r.bildBase64, mimeType: r.mimeType };
+  }
+  const so = await mitWiederholung(() => bearbeiteBild({
+    bild: roh.sprechen.base64, mimeType: roh.sprechen.mimeType, anweisung: mundOffenEdit,
+  }));
+  if (so.ok) roh.sprechen_offen = { base64: so.bildBase64, mimeType: so.mimeType };
+
+  const bilder = { idle: bild }; // gewählte Richtung ist schon in unserem Bucket
+  for (const zustand of Object.keys(roh)) {
+    const endung = (roh[zustand].mimeType.split("/")[1] || "png").split(";")[0];
+    bilder[zustand] = await speichereBild(
+      "generiert/" + jobId + "/" + zustand + "." + endung, roh[zustand].base64, roh[zustand].mimeType);
+  }
+  return { bilder };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405 };
   if (!originErlaubt(event)) return { statusCode: 403 };
@@ -140,7 +182,8 @@ exports.handler = async (event) => {
   const { jobId, aktion, firmaId, beschreibung, bild, anweisung, zustand, farbe } = body;
 
   if (typeof jobId !== "string" || !jobId || jobId.length > 100) return { statusCode: 400 };
-  if (aktion !== "generieren" && aktion !== "bearbeiten") return { statusCode: 400 };
+  const AKTIONEN = ["generieren", "bearbeiten", "richtungen", "zustaende"];
+  if (!AKTIONEN.includes(aktion)) return { statusCode: 400 };
 
   // Input-Limits VOR jedem teuren Schritt.
   if (beschreibung != null && (typeof beschreibung !== "string" || beschreibung.length > MAX_BESCHREIBUNG))
@@ -152,9 +195,10 @@ exports.handler = async (event) => {
   if (firmaId != null && (typeof firmaId !== "string" || firmaId.length > 100))
     return { statusCode: 400 };
 
-  // Kosten-Bremsen: pro IP und (wenn bekannt) pro Firma.
+  // Kosten-Bremsen: pro IP und (wenn bekannt) pro Firma. Alles ausser dem
+  // Einzelbild-"bearbeiten" gilt als (teurere) Generierung.
   const ip = holeIp(event);
-  const istGen = aktion === "generieren";
+  const istGen = aktion !== "bearbeiten";
   if (!(await rateOk((istGen ? "chargen:" : "charedit:") + ip, istGen ? 3 : 10, 3600)))
     return { statusCode: 429 };
   if (firmaId &&
@@ -174,9 +218,11 @@ exports.handler = async (event) => {
     if (!geminiOk()) throw new Error("Bild-Generierung ist noch nicht eingerichtet (GEMINI_API_KEY fehlt).");
     if (!storageOk()) throw new Error("Bild-Speicher ist nicht eingerichtet (SUPABASE_SERVICE_KEY fehlt).");
 
-    const ergebnis = istGen
-      ? await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe })
-      : await bearbeiteEines({ jobId, bild, anweisung, zustand });
+    let ergebnis;
+    if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe });
+    else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe });
+    else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe });
+    else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand });
 
     await setzeJob(jobId, { status: "done", ergebnis, fehler: null });
   } catch (e) {
