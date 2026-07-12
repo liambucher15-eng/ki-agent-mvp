@@ -81,7 +81,8 @@
     ":host { all: initial; }",
     "* { box-sizing: border-box; }",
 
-    // Launcher (der Orb). Erscheint verzögert per .sichtbar.
+    // Launcher. Erscheint verzögert per .sichtbar. Zeigt den Charakter der Firma;
+    // solange dessen Bild nicht geladen ist (oder fehlt), ein schlichtes Initial.
     ".bubble {",
     "  position: fixed; bottom: 24px; right: 24px; width: 62px; height: 62px;",
     "  padding: 0; border: 0; background: transparent; cursor: pointer; z-index: 2147483000;",
@@ -91,31 +92,7 @@
     ".bubble.sichtbar { opacity: 1; transform: scale(1); }",
     ".bubble.sichtbar:hover { transform: scale(1.08); }",
 
-    ".orb {",
-    "  position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden;",
-    "  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0) 45%),",
-    "              radial-gradient(circle at 72% 78%, " + farbe2 + ", " + farbe + " 72%);",
-    "  box-shadow: 0 8px 22px rgba(0,0,0,0.28), 0 0 0 5px " + farbe + "1f,",
-    "              inset 0 -6px 14px rgba(0,0,0,0.20), inset 0 6px 12px rgba(255,255,255,0.28);",
-    "  animation: kiorb-schweben 5s ease-in-out infinite;",
-    "  transition: box-shadow 0.3s ease;",
-    "}",
-    ".bubble.sichtbar:hover .orb { box-shadow: 0 10px 26px rgba(0,0,0,0.30), 0 0 22px 5px " + farbe + "80,",
-    "  inset 0 -6px 14px rgba(0,0,0,0.20), inset 0 6px 12px rgba(255,255,255,0.30); }",
-    // dezenter, langsam rotierender Glanz für "Leben"
-    ".orb::before {",
-    "  content: ''; position: absolute; inset: -30%;",
-    "  background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.35), transparent 42%);",
-    "  animation: kiorb-dreh 9s linear infinite; opacity: 0.5;",
-    "}",
-
-    "@keyframes kiorb-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }",
-    "@keyframes kiorb-dreh { to { transform: rotate(360deg); } }",
-    "@media (prefers-reduced-motion: reduce) {",
-    "  .orb, .orb::before, .figur { animation: none; }",
-    "}",
-
-    // Figur-Launcher (Plus-Plan): eigenes Bild statt Orb.
+    // Charakter-Launcher: das eigene Figur-Bild.
     ".figur {",
     "  width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center;",
     "  background-color: #fff;", // weisser Grund -> auch transparente Figur-Bilder sind sichtbar
@@ -123,6 +100,22 @@
     "  animation: kiorb-schweben 5s ease-in-out infinite; transition: box-shadow 0.3s ease;",
     "}",
     ".bubble.sichtbar:hover .figur { box-shadow: 0 10px 26px rgba(0,0,0,0.30), 0 0 0 3px #fff, 0 0 18px 4px " + farbe + "80; }",
+
+    // Notfall-Anzeige, falls das Charakterbild (noch) nicht lädt: Initial in
+    // Markenfarbe. Kein Orb — nur damit der Launcher nie leer/unsichtbar ist.
+    ".initial {",
+    "  width: 100%; height: 100%; border-radius: 50%;",
+    "  display: flex; align-items: center; justify-content: center;",
+    "  font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 26px; color: #fff;",
+    "  background: " + farbe + ";",
+    "  box-shadow: 0 8px 22px rgba(0,0,0,0.28), 0 0 0 5px " + farbe + "1f;",
+    "  animation: kiorb-schweben 5s ease-in-out infinite; transition: box-shadow 0.3s ease;",
+    "}",
+
+    "@keyframes kiorb-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }",
+    "@media (prefers-reduced-motion: reduce) {",
+    "  .figur, .initial { animation: none; }",
+    "}",
 
     // Chat-Fenster (fährt aus der Orb-Ecke auf). Gross: reicht nach unten, rechts
     // und oben nahe an den Rand; Höhe = fast volle Fensterhöhe.
@@ -160,22 +153,28 @@
     "</style>",
     '<div class="panel" id="panel"></div>',
     '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span></div>',
-    '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="orb" id="orb"></span><span class="figur" id="figur" hidden></span></button>',
+    '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="figur" id="figur" hidden></span><span class="initial" id="initial"></span></button>',
   ].join("");
 
   var bubble = root.getElementById("bubble");
   var panel = root.getElementById("panel");
-  var orbEl = root.getElementById("orb");
   var figurEl = root.getElementById("figur");
+  var initialEl = root.getElementById("initial");
+  function setInitial(txt) {
+    var s = (txt || firma || "•").trim();
+    initialEl.textContent = (s.charAt(0) || "•").toUpperCase();
+  }
+  setInitial(firma); // sofort etwas Sichtbares, bevor /firma antwortet
   var hinweis = root.getElementById("hinweis");
   var hinweisTextEl = root.getElementById("hinweisText");
   var hinweisZu = root.getElementById("hinweisZu");
   var offen = false;
   var geladen = false;
 
-  // Launcher-Darstellung: Plus-Firmen mit eigenem Bild zeigen eine Figur statt
-  // des Orbs. Dafür einmal die öffentliche Firmen-Info holen (Name/Charakter/Plan).
-  var figurBilder = null; // Zustands-Bilder (idle/denken/sprechen/verlegen), wenn Plus
+  // Launcher-Darstellung: der eigene Charakter (Zustands-Bilder). Dafür einmal die
+  // öffentliche Firmen-Info holen (Name/Charakter). Lädt das Bild nicht, bleibt das
+  // Initial in Markenfarbe stehen — der Launcher ist so nie leer/unsichtbar.
+  var figurBilder = null; // Zustands-Bilder (idle/denken/sprechen/verlegen)
   function setFigurBild(zustand) {
     if (!figurBilder) return;
     var bild = figurBilder[zustand] || figurBilder.idle;
@@ -184,11 +183,11 @@
   fetch(basis + "/.netlify/functions/firma?id=" + encodeURIComponent(firma))
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (f) {
-      var bilder = f && f.plan === "plus" && f.charakter && f.charakter.bilder;
+      if (f && f.name) setInitial(f.name); // Initial aus dem echten Firmennamen
+      var bilder = f && f.charakter && f.charakter.bilder;
       if (bilder && bilder.idle) {
         // ERST prüfen, ob das Bild wirklich lädt. Nur dann auf die Figur wechseln;
-        // bei kaputter/abgelaufener URL bleibt der (immer sichtbare) Orb stehen —
-        // sonst wäre der Launcher leer/durchsichtig.
+        // bei kaputter/abgelaufener URL bleibt das Initial stehen.
         var probe = new Image();
         probe.onload = function () {
           figurBilder = bilder;
@@ -196,13 +195,13 @@
           for (var z in bilder) { if (bilder[z]) { var im = new Image(); im.src = bilder[z]; } }
           setFigurBild("idle");
           figurEl.hidden = false;
-          orbEl.hidden = true;
+          initialEl.hidden = true;
         };
-        probe.onerror = function () { /* Bild kaputt -> Orb bleibt sichtbar */ };
+        probe.onerror = function () { /* Bild kaputt -> Initial bleibt sichtbar */ };
         probe.src = bilder.idle;
       }
     })
-    .catch(function () { /* Orb bleibt — kein Problem */ });
+    .catch(function () { /* Initial bleibt — kein Problem */ });
 
   // Verzögertes, ruhiges Erscheinen (kein aufdringliches Sofort-Pop-up).
   setTimeout(function () { bubble.classList.add("sichtbar"); }, 2500);
@@ -282,12 +281,12 @@
   }
   hinweisTextEl.addEventListener("click", function () { versteckeHinweis(); oeffne(); });
   hinweisZu.addEventListener("click", function (e) { e.stopPropagation(); versteckeHinweis(); });
-  setTimeout(zeigeHinweis, 9000); // ruhig ein paar Sekunden nach dem Orb
+  setTimeout(zeigeHinweis, 9000); // ruhig ein paar Sekunden nach dem Erscheinen
 
   // Nachrichten aus dem Chat-iframe:
   //  - "ki-agent-schliessen": ×-Button im Chat-Header
   //  - "ki-agent-zustand": Avatar-Zustand (denken/sprechen/…) -> die Launcher-
-  //    Figur macht mit (nur Plus-Firmen mit eigenen Zustands-Bildern).
+  //    Figur macht mit (sofern die Charakterbilder geladen sind).
   window.addEventListener("message", function (e) {
     if (!e.data) return;
     if (e.data.type === "ki-agent-schliessen") schliesse();

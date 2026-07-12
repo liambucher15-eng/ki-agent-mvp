@@ -189,10 +189,10 @@
     }
     $("zurueck").addEventListener("click", zeigeListe);
 
-    // ---------- Plan-Badge + Upgrade auf Plus ----------
-    // Der Plan ist Server-Wahrheit (Stripe). Nach dem Kauf setzt der Webhook
-    // firmen.plan="plus" — hier wird er über /firma frisch geladen (nicht aus
-    // dem evtl. veralteten daten-Objekt).
+    // ---------- Abo-Status + Aktivieren ----------
+    // Es gibt nur EINE Variante (den KI-Charakter). Der Abo-Status ist Server-
+    // Wahrheit (Stripe): nach dem Kauf setzt der Webhook firmen.plan="plus".
+    // "plus" = Abo aktiv, sonst noch nicht abgeschlossen. Frisch über /firma laden.
     async function aktuellerPlan() {
       try {
         const f = await (await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(firma.id) + "&t=" + Date.now())).json();
@@ -202,14 +202,14 @@
     async function zeigePlan() {
       const el = $("plan-bereich");
       el.textContent = "";
-      const plan = await aktuellerPlan();
+      const aktiv = (await aktuellerPlan()) === "plus";
       const badge = document.createElement("span");
-      badge.className = "badge " + (plan === "plus" ? "scan" : "manuell");
-      badge.textContent = "Plan: " + (plan === "plus" ? "Plus" : "Basis");
+      badge.className = "badge " + (aktiv ? "scan" : "manuell");
+      badge.textContent = aktiv ? "Abo aktiv" : "Abo nicht aktiv";
       el.appendChild(badge);
-      if (plan !== "plus") {
+      if (!aktiv) {
         const btn = document.createElement("button");
-        btn.className = "btn klein"; btn.style.marginLeft = "0.6rem"; btn.textContent = "Auf Plus upgraden";
+        btn.className = "btn klein"; btn.style.marginLeft = "0.6rem"; btn.textContent = "Abo abschliessen";
         btn.addEventListener("click", () => starteCheckout(btn));
         el.appendChild(btn);
       }
@@ -222,12 +222,12 @@
           body: JSON.stringify({ firmaId: firma.id, plan: "plus", basis: location.origin }),
         });
         const d = await res.json();
-        if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); btn.disabled = false; btn.textContent = "Auf Plus upgraden"; return; }
+        if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); btn.disabled = false; btn.textContent = "Abo abschliessen"; return; }
         if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
         location.href = d.url; // ab zu Stripe
       } catch (e) {
-        alert("Upgrade fehlgeschlagen: " + e.message);
-        btn.disabled = false; btn.textContent = "Auf Plus upgraden";
+        alert("Abo konnte nicht gestartet werden: " + e.message);
+        btn.disabled = false; btn.textContent = "Abo abschliessen";
       }
     }
 

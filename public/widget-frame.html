@@ -51,23 +51,18 @@
     /* Sizing-Box ohne Kreis-Clip -> freigestellte Figur. */
     #kopf-avatar { width: 152px; height: 152px; flex-shrink: 0; position: relative;
                    transition: width 0.35s ease, height 0.35s ease; }
-    #kopf-avatar svg, #kopf-avatar img, #orb { width: 100%; height: 100%; display: block; }
+    #kopf-avatar svg, #kopf-avatar img, #initial { width: 100%; height: 100%; display: block; }
     #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite;
                        filter: drop-shadow(0 10px 15px color-mix(in srgb, var(--farbe) 30%, transparent)); }
     /* Freigestellte Figur: ganze Figur zeigen (contain), kein Kreis. */
     #kopf-img { object-fit: contain; display: none;
                 filter: drop-shadow(0 12px 16px color-mix(in srgb, var(--farbe) 38%, transparent)); }
-    /* Basis-Firmen: leuchtender Orb (mit eigenem Kreis + Ring). */
-    #orb { border-radius: 50%; position: relative; overflow: hidden; display: none;
-           background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.6), rgba(255,255,255,0) 46%),
-                       radial-gradient(circle at 70% 78%, var(--akzent), var(--farbe) 74%);
-           box-shadow: 0 0 0 4px color-mix(in srgb, var(--farbe) 13%, #fff),
-                       0 0 28px 5px color-mix(in srgb, var(--farbe) 28%, transparent),
-                       0 10px 22px -10px rgba(15,23,42,0.4); }
-    #orb::before { content: ""; position: absolute; inset: -30%;
-                   background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.35), transparent 42%);
-                   animation: orbDreh 9s linear infinite; opacity: 0.5; }
-    @keyframes orbDreh { to { transform: rotate(360deg); } }
+    /* Notfall-Anzeige, falls (noch) kein Charakterbild lädt: Initial in Markenfarbe.
+       Kein Orb — nur damit die Bühne nie leer/durchsichtig ist. */
+    #initial { border-radius: 50%; display: none; align-items: center; justify-content: center;
+               font-weight: 700; font-size: 58px; color: #fff; background: var(--farbe);
+               box-shadow: 0 0 0 4px color-mix(in srgb, var(--farbe) 13%, #fff),
+                           0 10px 22px -10px rgba(15,23,42,0.4); }
     #kopf-avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     #kopf-name { font-weight: 650; font-size: 1.05rem; color: #1f2937; line-height: 1.2; margin-top: 0.15rem;
@@ -154,7 +149,7 @@
     .fuss a { color: inherit; text-decoration: none; }
 
     @media (prefers-reduced-motion: reduce) {
-      #kopf-avatar svg, #kopf-avatar.sprechen, #orb::before, #kopf-online::before, .augen, .msg,
+      #kopf-avatar svg, #kopf-avatar.sprechen, #kopf-online::before, .augen, .msg,
       .tippt span, #welle span { animation: none !important; }
       #chat { scroll-behavior: auto; }
     }
@@ -184,7 +179,7 @@
         <ellipse class="mund" cx="60" cy="73" rx="9" ry="5" fill="#1b2a22" />
       </svg>
       <img id="kopf-img" alt="Charakter" />
-      <div id="orb" aria-hidden="true"></div>
+      <div id="initial" aria-hidden="true"></div>
     </div>
     <div id="kopf-name">Assistent</div>
     <div id="kopf-rolle"></div>
@@ -253,15 +248,18 @@
       avatar.className = zustand === "idle" ? "" : zustand;
       const bildKey = zustand === "idle" ? "idle" : zustand;
       const svgEl = avatar.querySelector("svg");
-      const orbEl = document.getElementById("orb");
+      const initialEl = document.getElementById("initial");
+      // Initial (Notfall) aus dem Agenten-Namen ableiten.
+      const nm = (kopfName.textContent || FIRMA_ID || "•").trim();
+      initialEl.textContent = (nm.charAt(0) || "•").toUpperCase();
       if (bilder && (bilder[bildKey] || bilder.idle)) {
-        // Plus-Firma: generiertes Maskottchen. Lädt ein Bild nicht (kaputte/
-        // abgelaufene URL), NICHT leer/durchsichtig bleiben -> auf den Orb zurück.
-        avatarImg.onerror = () => { avatarImg.style.display = "none"; orbEl.style.display = "block"; };
+        // Generiertes Maskottchen. Lädt ein Bild nicht (kaputte/abgelaufene URL),
+        // NICHT leer/durchsichtig bleiben -> auf das Initial zurück.
+        avatarImg.onerror = () => { avatarImg.style.display = "none"; initialEl.style.display = "flex"; };
         avatarImg.src = bilder[bildKey] || bilder.idle;
         avatarImg.style.display = "block";
         svgEl.style.display = "none";
-        orbEl.style.display = "none";
+        initialEl.style.display = "none";
         if (zustand === "sprechen" && bilder.sprechen_offen && bilder.sprechen) {
           let auf = false;
           flapTimer = setInterval(() => {
@@ -270,10 +268,10 @@
           }, 180);
         }
       } else {
-        // Basis-Firma: leuchtender Orb in Markenfarbe (kein Platzhalter-SVG)
+        // Noch kein Charakterbild (z.B. Abo nicht aktiv): Initial in Markenfarbe.
         avatarImg.style.display = "none";
         svgEl.style.display = "none";
-        orbEl.style.display = "block";
+        initialEl.style.display = "flex";
       }
       // Auch dem Eltern-Fenster (widget.js) melden: Die Launcher-FIGUR auf der
       // Kundenseite spiegelt den Zustand (denkt/spricht mit), wenn die Firma

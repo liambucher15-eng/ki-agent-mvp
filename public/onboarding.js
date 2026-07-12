@@ -1,16 +1,11 @@
 // Onboarding-Wizard — Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"basis", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
 
-    // Preise (Milestone 10): PLATZHALTER, bis die finale Preisentscheidung steht
-    // (siehe Fertigstellungs-Plan, Punkt "Preise" — bewusst vertagt). Eine Stelle
-    // hier zu ändern reicht, wenn die echten Zahlen feststehen.
-    const PREISE = { basis: 29, plus: 49 };
-    const elPreisBasis = document.getElementById("preisBasis");
-    const elPreisPlus = document.getElementById("preisPlus");
-    if (elPreisBasis) elPreisBasis.textContent = "CHF " + PREISE.basis + ".–/Monat";
-    if (elPreisPlus) elPreisPlus.textContent = "CHF " + PREISE.plus + ".–/Monat";
+    // Preis (EINE Variante: der KI-Charakter — unser USP). PLATZHALTER, bis die
+    // finale Preisentscheidung steht. Nur diese eine Stelle ändern.
+    const PREIS = 49;
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -75,6 +70,16 @@
           const h = document.getElementById("agentNameHinweis");
           h.textContent = "Bitte gib deinem Assistenten einen Namen."; h.style.color = "#e11d48";
           el.focus(); return;
+        }
+      }
+      // Charakter-Schritt (8): der Charakter ist Pflicht — ohne fertige Bilder
+      // geht es nicht weiter (eine Variante, Charakter = Produkt).
+      if (aktuell === AGENT_STEP) {
+        const fertig = daten.charakterBilder && daten.charakterBilder.idle;
+        if (!fertig) {
+          const h = document.getElementById("charPflichtHinweis");
+          if (h) h.textContent = "Bitte erstelle zuerst deinen Charakter — lade ein Bild hoch oder beschreibe ihn und generiere die Ausdrücke.";
+          return;
         }
       }
       sammle(); zeige(aktuell+1, 1);
@@ -356,15 +361,11 @@
     document.getElementById("uebergabe").addEventListener("change", (e) => { daten.uebergabe = e.target.value; });
     document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
 
-    // --- Schritt "Dein Agent": Orb (Basis) vs. eigene Figur (Plus) ---
-    const optOrb = document.getElementById("optOrb");
-    const optFigur = document.getElementById("optFigur");
-    const figurEditor = document.getElementById("figurEditor");
-    const vorOrb = document.getElementById("vorOrb");
+    // --- Schritt "Charakter erstellen" (eine Variante: KI-Charakter, Pflicht) ---
+    // Es gibt kein Orb-/Basis-Angebot mehr. Der eigene Charakter IST das Produkt.
     const vorFigur = document.getElementById("vorFigur");
     const vorFigurImg = document.getElementById("vorFigurImg");
     const vorLabel = document.getElementById("vorLabel");
-    const figurMini = document.getElementById("figurMini");
 
     function setVorschauFarben() {
       [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='8']")].forEach((el) => {
@@ -376,27 +377,15 @@
     function aktualisiereAgentVorschau() {
       setVorschauFarben();
       const bild = daten.charakterBilder && daten.charakterBilder.idle;
-      if (daten.plan === "plus" && bild) {
-        vorFigurImg.src = bild; vorFigur.hidden = false; vorOrb.hidden = true;
-        vorLabel.textContent = "Deine Figur";
-        figurMini.textContent = "";
-        const im = document.createElement("img"); im.src = bild; im.alt = ""; figurMini.appendChild(im);
+      if (bild) {
+        vorFigurImg.src = bild; vorFigurImg.style.visibility = "visible";
+        vorLabel.textContent = "Dein Charakter";
       } else {
-        vorFigur.hidden = true; vorOrb.hidden = false;
-        vorLabel.textContent = daten.plan === "plus" ? "Lade ein Bild hoch oder erstelle einen Charakter" : "Dein Leucht-Orb";
+        vorFigurImg.removeAttribute("src"); vorFigurImg.style.visibility = "hidden";
+        vorLabel.textContent = "Noch kein Charakter — erstelle ihn links";
       }
     }
-    // Beide Pläne sind sofort wählbar und testbar (Milestone 10: kein Fake-Gate
-    // mehr) — bezahlt wird erst am Ende im Fertig-Schritt, nicht schon hier.
-    function waehleTyp(typ) {
-      daten.plan = (typ === "figur") ? "plus" : "basis";
-      optOrb.classList.toggle("aktiv", typ === "orb");
-      optFigur.classList.toggle("aktiv", typ === "figur");
-      figurEditor.hidden = (typ !== "figur");
-      aktualisiereAgentVorschau();
-    }
-    optOrb.addEventListener("click", () => waehleTyp("orb"));
-    optFigur.addEventListener("click", () => waehleTyp("figur"));
+    aktualisiereAgentVorschau(); // Startzustand der Vorschau setzen
 
     // Tabs im Figur-Editor
     document.querySelectorAll("#figurEditor .tab").forEach((t) => t.addEventListener("click", () => {
@@ -685,7 +674,7 @@
       if (daten.adresse) fakten["Adresse"] = daten.adresse;
       if (daten.kontakt) fakten["Kontakt"] = daten.kontakt;
       const charakter = { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift };
-      if (daten.plan === "plus" && daten.charakterBilder && daten.charakterBilder.idle) {
+      if (daten.charakterBilder && daten.charakterBilder.idle) {
         // Data-URLs zuerst in den Storage hochladen -> kleine öffentliche URLs.
         // Die firmen-Zeile hat ein Größenlimit; Base64 gehört nicht in die DB.
         try {
@@ -758,10 +747,8 @@
       const box = document.getElementById("checkoutBox");
       const text = document.getElementById("checkoutText");
       const btn = document.getElementById("checkoutBtn");
-      const preis = daten.plan === "plus" ? PREISE.plus : PREISE.basis;
-      const planName = daten.plan === "plus" ? "Plus" : "Basis";
-      text.textContent = "Dein " + planName + "-Agent ist bereit. Damit er dauerhaft live bleibt, schliesse das Abo ab.";
-      btn.textContent = "Jetzt " + planName + " abonnieren — CHF " + preis + ".–/Monat";
+      text.textContent = "Dein Agent ist bereit. Damit dein Charakter dauerhaft live bleibt, schliesse das Abo ab.";
+      btn.textContent = "Jetzt abonnieren — CHF " + PREIS + ".–/Monat";
       btn.onclick = () => starteCheckout(btn);
       box.hidden = false;
     }

@@ -438,33 +438,10 @@
 
           <!-- 7 Dein Agent -->
           <div class="schritt-links" data-step="8" id="schrittAgent" hidden>
-            <h1 class="klein">Wie sieht dein<br>Agent aus?</h1>
-            <div class="agent-wahl">
-              <button type="button" class="agent-opt aktiv" data-typ="orb" id="optOrb">
-                <span class="agent-orb-mini"></span>
-                <span class="agent-opt-titel">Basis — Leucht-Orb</span>
-                <span class="agent-preis" id="preisBasis">ab CHF …/Monat</span>
-                <ul class="agent-features">
-                  <li>Leuchtender Orb in deinen Farben</li>
-                  <li>Voller Chat mit deinem Wissen</li>
-                  <li>Kontaktanfragen (Leads) aufnehmen</li>
-                </ul>
-              </button>
-              <button type="button" class="agent-opt" data-typ="figur" id="optFigur">
-                <span class="agent-badge">Plus</span>
-                <span class="agent-figur-mini" id="figurMini">★</span>
-                <span class="agent-opt-titel">Plus — Eigene Figur</span>
-                <span class="agent-preis" id="preisPlus">ab CHF …/Monat</span>
-                <ul class="agent-features">
-                  <li>Alles aus Basis</li>
-                  <li>KI-generierter Charakter (4 Ausdrücke)</li>
-                  <li>Einzelne Bilder per Anweisung anpassen</li>
-                </ul>
-              </button>
-            </div>
-            <p class="mini" style="text-align:left;">Du kannst beides gleich hier testen — bezahlt wird erst am Ende, wenn dein Agent fertig ist.</p>
+            <h1 class="klein">Erstelle deinen<br>Charakter</h1>
+            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn kurz oder lade ein Bild hoch; die KI macht daraus vier lebendige Ausdrücke.</p>
 
-            <div id="figurEditor" hidden>
+            <div id="figurEditor">
               <div class="tabs">
                 <button type="button" class="tab aktiv" data-tab="upload">Bild hochladen</button>
                 <button type="button" class="tab" data-tab="erstellen">Charakter erstellen</button>
@@ -490,6 +467,7 @@
               <!-- 4 generierte Ausdruck-Bilder: prüfen + einzeln per Anweisung nachbessern -->
               <div id="charGrid" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem;"></div>
             </div>
+            <p class="mini" id="charPflichtHinweis" style="text-align:left;min-height:1em;color:#e11d48;"></p>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
@@ -537,9 +515,8 @@
         <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
         <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
         <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vorschau">
-          <div class="vorschau-orb" id="vorOrb"></div>
-          <div class="vorschau-figur" id="vorFigur" hidden><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
-          <div class="vorschau-label" id="vorLabel">Dein Leucht-Orb</div>
+          <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
+          <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
         </div></div></div>
         <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
       </div>

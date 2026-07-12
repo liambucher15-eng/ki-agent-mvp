@@ -16,7 +16,7 @@ exports.handler = async (event) => {
     headers: {
       "content-type": "application/json",
       // Öffentliche Infos -> darf das Widget von der KUNDEN-Domain aus
-      // (cross-origin) abrufen, um den Launcher (Orb vs. Figur) zu bestimmen.
+      // (cross-origin) abrufen, um den Charakter-Launcher aufzubauen.
       "access-control-allow-origin": "*",
       // Firmendaten aendern sich selten -> kurzer Cache entlastet Function + DB
       // bei jedem Seitenaufruf auf Kundenseiten deutlich.
@@ -29,12 +29,12 @@ exports.handler = async (event) => {
   const firma = await ladeFirmaServer(id);
   if (!firma) return json(404, { error: `Unbekannte Firma: ${id}` });
 
-  // PLUS-GATE (Milestone 5): Die eigene Figur (charakter.bilder) ist ein
-  // Plus-Feature. Der Plan kommt aus der SERVER-Spalte firmen.plan (nicht aus
-  // vom Client geschriebenen Daten) — künftig gesetzt vom Stripe-Webhook. Hier
-  // werden die Bilder für Nicht-Plus-Firmen entfernt: Das Widget zeigt dann den
-  // Orb, egal was in den Daten steht. Das ist die ECHTE Durchsetzung, nicht die
-  // Client-Simulation im Onboarding.
+  // ABO-GATE (Milestone 5): Es gibt nur EINE Variante (den KI-Charakter). Der
+  // Charakter (charakter.bilder) wird nur bei aktivem Abo live ausgeliefert.
+  // Der Status kommt aus der SERVER-Spalte firmen.plan ("plus" = Abo aktiv,
+  // gesetzt vom Stripe-Webhook), NICHT aus vom Client geschriebenen Daten. Ohne
+  // aktives Abo werden die Bilder entfernt -> das Widget zeigt das Initial in
+  // Markenfarbe. Das ist die ECHTE Durchsetzung, nicht die Onboarding-Vorschau.
   const plan = firma.plan || "basis";
   const charakter = { ...(firma.charakter || {}) };
   if (plan !== "plus") delete charakter.bilder;
