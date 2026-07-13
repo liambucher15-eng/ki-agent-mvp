@@ -124,6 +124,38 @@ Desktop: der **Bezahl-Button** („Jetzt freischalten — CHF 49/Monat") liegt 1
 
 ---
 
+## Nachher: Struktur-Paket umgesetzt (13.07.2026)
+
+Umgesetzt wurden: **Sticky-„Weiter"-Navigation** auf allen Schritten (mit Verlaufs-Affordance), **Fortschrittsbalken statt 10 Punkten** (startet bei ~18 % — „Konto & Zahlung ✓", da die Zahlung vor dem Onboarding passiert), **Mobile-Fix** (weisse Lücke behoben, Deko-Bild auf 96-px-Markenband reduziert), **exklusives Akkordeon** in Schritt 3, Kartenhöhe 600 → 720 px, und die **Checkout-Box in Schritt 9 wurde entfernt** (Zahlung passiert vor dem Onboarding; das Dashboard bleibt Sicherheitsnetz für Nicht-Zahler). Der E-Mail-Schritt blieb unverändert an Position 1.
+
+**Neue Messwerte** ([messungen-nachher.json](messungen-nachher.json), Screenshots in [bilder-nachher/](bilder-nachher/)):
+
+| Schritt | Desktop-Überlauf (vorher → nachher) | Mobile (vorher → nachher) | „Weiter" sichtbar? |
+|---|---|---|---|
+| 0 Willkommen | 0 → 0 | 0 → 0 | ✅ überall |
+| 1 Anmelden | 0 → 0 | 51 → 0 | ✅ |
+| 2 Scannen | 0 → 0 | 30 → 0 | ✅ |
+| 3 Stimmt das so? | 208 → 92 | 404 → 45 | ✅ |
+| 3 (Karte offen) | 643 → 527¹ | 859 → 500¹ | ✅ |
+| 4 Dokumente | 0 → 0 | 88 → 0 | ✅ |
+| 5 Wer ist dein Agent? | 140 → 24 | 367 → 8 | ✅ |
+| 6 Antwortstil | 222 → 106 | 515 → 156 | ✅ |
+| 7 Chat-Design | 110 → 0 | 381 → 22 | ✅ |
+| 8 Charakter | 524 → 408 | 663 → 304 | ✅ |
+| 9 Agent bereit | 138 → 0 | 376 → 0 | ✅ |
+
+**Der „Weiter"-Button ist jetzt auf allen 10 Schritten in beiden Viewports sofort sichtbar** — der Rest-Überlauf ist normal scrollender Inhalt mit sichtbarem Ziel und Scroll-Affordance. ¹ Die Messung öffnet 2 Karten gleichzeitig; im echten Verhalten ist durch das exklusive Akkordeon nur noch 1 offen, der Wert liegt real tiefer.
+
+Der verbleibende Überlauf in Schritt 6 (Antwortstil) und 8 (Charakter) wird erst durch das noch offene Smart-Defaults-Paket kleiner (Schritt 6 hinter „Stil anpassen"-Aufklapper, Schritt 8 ersetzt Zustände statt sie zu stapeln).
+
+| Vergleich | Vorher | Nachher |
+|---|---|---|
+| Schritt 3 offen (Desktop) | ![](bilder/d-step3-offen.webp) | ![](bilder-nachher/d-step3-offen.webp) |
+| Schritt 3 (Mobile) | ![](bilder/m-step3.webp) | ![](bilder-nachher/m-step3.webp) |
+| Schritt 9 (Desktop) | ![](bilder/d-step9.webp) | ![](bilder-nachher/d-step9.webp) |
+
+---
+
 ## Alle Screenshots
 
 | Schritt | Desktop | Mobile |

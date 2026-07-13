@@ -1,0 +1,165 @@
+{
+  "desktop": {
+    "step0": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    },
+    "step1": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    },
+    "step2": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    },
+    "step3": {
+      "overflow": 92,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 662
+    },
+    "step3-offen": {
+      "overflow": 527,
+      "navVisible": true,
+      "hidden": [
+        "Karte „Häufige Fragen\"",
+        "Karte „Weitere Infos\""
+      ],
+      "clientHeight": 570,
+      "scrollHeight": 1097
+    },
+    "step4": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    },
+    "step5": {
+      "overflow": 24,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 594
+    },
+    "step6": {
+      "overflow": 106,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 676
+    },
+    "step7": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    },
+    "step8": {
+      "overflow": 408,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 978
+    },
+    "step9": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 570,
+      "scrollHeight": 570
+    }
+  },
+  "mobile": {
+    "step0": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 617
+    },
+    "step1": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 617
+    },
+    "step2": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 617
+    },
+    "step3": {
+      "overflow": 45,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 662
+    },
+    "step3-offen": {
+      "overflow": 500,
+      "navVisible": true,
+      "hidden": [
+        "Karte „Weitere Infos\""
+      ],
+      "clientHeight": 617,
+      "scrollHeight": 1117
+    },
+    "step4": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 617
+    },
+    "step5": {
+      "overflow": 8,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 625
+    },
+    "step6": {
+      "overflow": 156,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 773
+    },
+    "step7": {
+      "overflow": 22,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 639
+    },
+    "step8": {
+      "overflow": 304,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 921
+    },
+    "step9": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 617,
+      "scrollHeight": 617
+    }
+  }
+}

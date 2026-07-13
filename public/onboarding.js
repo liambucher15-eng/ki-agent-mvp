@@ -3,10 +3,6 @@
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
     const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
 
-    // Preis (EINE Variante: der KI-Charakter — unser USP). PLATZHALTER, bis die
-    // finale Preisentscheidung steht. Nur diese eine Stelle ändern.
-    const PREIS = 49;
-
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
       professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
@@ -30,10 +26,15 @@
     const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
     let aktuell = 0;
 
-    const progress = document.getElementById("progress");
-    for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
-    const dots = progress.querySelectorAll(".dot");
-    function updateProgress() { dots.forEach((d,i)=>{ d.classList.toggle("done", i<aktuell); d.classList.toggle("aktiv", i===aktuell); }); }
+    // Fortschritt startet nie bei 0: Konto & Zahlung sind vor dem Onboarding
+    // schon erledigt und zählen als PROGRESS_OFFSET erledigte Schritte.
+    const PROGRESS_OFFSET = 2;
+    const progressFuellung = document.getElementById("progressFuellung");
+    const progressLabel = document.getElementById("progressLabel");
+    function updateProgress() {
+      progressFuellung.style.width = (((aktuell + PROGRESS_OFFSET) / (ANZAHL - 1 + PROGRESS_OFFSET)) * 100) + "%";
+      progressLabel.textContent = aktuell === ANZAHL - 1 ? "Geschafft ✓" : "Konto & Zahlung ✓";
+    }
 
     gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
     gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
@@ -101,8 +102,14 @@
       });
     });
 
-    // Überprüfen: Karten auf/zu + "Passt"-Haken
-    document.querySelectorAll(".pk-kopf").forEach(k => k.addEventListener("click", () => k.parentElement.classList.toggle("auf")));
+    // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,
+    // damit die Seite nie um mehr als eine Kartenhöhe wächst.
+    document.querySelectorAll(".pk-kopf").forEach(k => k.addEventListener("click", () => {
+      const pk = k.parentElement;
+      const warOffen = pk.classList.contains("auf");
+      document.querySelectorAll(".pk.auf").forEach(p => p.classList.remove("auf"));
+      if (!warOffen) pk.classList.add("auf");
+    }));
     document.querySelectorAll(".pk-passt").forEach(b => b.addEventListener("click", () => {
       const pk = b.closest(".pk"); pk.classList.add("geprueft"); pk.classList.remove("auf");
     }));
@@ -733,7 +740,6 @@
         Store.setNutzer(daten.email);
         status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
         window.open("index.html?firma=" + encodeURIComponent(daten.id), "_blank");
-        zeigeCheckoutBox(); // Bezahlung ist der letzte Schritt — Agent ist schon nutzbar
       } catch (e) {
         status.style.color = "#e11d48"; status.textContent = "Konnte nicht gespeichert werden: " + e.message;
       } finally {
@@ -741,39 +747,8 @@
       }
     });
 
-    // --- Bezahlung (Milestone 10): nach dem Speichern, für den gewählten Plan ---
-    // Der Agent funktioniert bereits (Test-Chat); Bezahlen aktiviert ihn dauerhaft/live.
-    function zeigeCheckoutBox() {
-      const box = document.getElementById("checkoutBox");
-      const text = document.getElementById("checkoutText");
-      const btn = document.getElementById("checkoutBtn");
-      text.textContent = "Dein Agent ist bereit. Damit dein Charakter dauerhaft live bleibt, schliesse das Abo ab.";
-      btn.textContent = "Jetzt abonnieren — CHF " + PREIS + ".–/Monat";
-      btn.onclick = () => starteCheckout(btn);
-      box.hidden = false;
-    }
-    async function starteCheckout(btn) {
-      const status = document.getElementById("checkoutStatus");
-      btn.disabled = true; status.textContent = "Weiterleiten…"; status.style.color = "";
-      try {
-        const res = await fetch("/.netlify/functions/abo-checkout", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: daten.id, plan: daten.plan, basis: location.origin }),
-        });
-        const d = await res.json();
-        if (res.status === 501) {
-          status.style.color = "#e11d48";
-          status.textContent = "Bezahlung ist noch nicht eingerichtet — du kannst den Agenten trotzdem weiter testen.";
-          btn.disabled = false;
-          return;
-        }
-        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
-        location.href = d.url; // ab zu Stripe
-      } catch (e) {
-        status.style.color = "#e11d48"; status.textContent = "Bezahlung fehlgeschlagen: " + e.message;
-        btn.disabled = false;
-      }
-    }
+    // Bezahlung findet VOR dem Onboarding statt — kein Checkout mehr in
+    // Schritt 9. Fallback für Nicht-Zahler: Abo-Bereich im Dashboard.
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();

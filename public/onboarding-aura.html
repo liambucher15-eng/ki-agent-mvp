@@ -25,7 +25,7 @@
       filter: blur(65px); opacity: 0.45; will-change: transform; }
     .card { position: relative; z-index: 1; background: #fff; border-radius: 26px;
       box-shadow: 0 30px 80px -30px rgba(17,24,39,0.25);
-      display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; height: min(600px, calc(100dvh - 4rem)); }
+      display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; height: min(720px, calc(100dvh - 4rem)); }
 
     .card-links { display: flex; flex-direction: column; padding: 2rem 2.4rem 2.2rem; min-width: 0; }
     .kopf { display: flex; align-items: center; margin-bottom: 1rem; }
@@ -33,11 +33,14 @@
     .logo .mark { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 0.85rem;
       background: linear-gradient(135deg, var(--indigo), var(--coral) 60%, var(--orange)); }
 
-    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.2rem 0 1.5rem; }
-    .progress .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border);
-                     transition: width 0.45s cubic-bezier(0.4,0,0.2,1), background 0.35s; }
-    .progress .dot.done { background: var(--indigo); }
-    .progress .dot.aktiv { width: 38px; background: linear-gradient(90deg, var(--indigo), var(--indigo-hell)); }
+    /* Fortschritt: Balken statt Punkte — startet nie bei 0 %, weil Konto &
+       Zahlung vor dem Onboarding schon erledigt sind (Goal-Gradient). */
+    .progress { display: flex; gap: 0.7rem; align-items: center; margin: 0.2rem 0 1.5rem; }
+    .progress-track { flex: 1; height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
+    .progress-fuellung { display: block; height: 100%; width: 0; border-radius: 999px;
+                         background: linear-gradient(90deg, var(--indigo), var(--indigo-hell));
+                         transition: width 0.45s cubic-bezier(0.4,0,0.2,1); }
+    .progress-label { font-size: 0.72rem; font-weight: 600; color: var(--gruen); white-space: nowrap; }
 
     .links-inhalt { position: relative; flex: 1; min-height: 0; }
     .schritt-links { position: absolute; inset: 0; display: flex; flex-direction: column; overflow-y: auto;
@@ -68,7 +71,11 @@
     .btn-primar { color: #fff; width: 100%; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
                   box-shadow: 0 12px 24px -8px rgba(79,70,229,0.55); }
     .btn-primar:hover { transform: translateY(-1px); box-shadow: 0 16px 30px -8px rgba(79,70,229,0.65); }
-    .nav { display: flex; align-items: center; gap: 0.7rem; margin-top: 1.2rem; }
+    /* Sticky am unteren Rand des Scroll-Bereichs: der Weiter-Button ist auf
+       jedem Schritt sofort sichtbar; der Verlauf signalisiert Inhalt darunter. */
+    .nav { display: flex; align-items: center; gap: 0.7rem; margin-top: auto; padding-top: 1.2rem;
+           position: sticky; bottom: 0; z-index: 2;
+           background: linear-gradient(to top, #fff 70%, rgba(255,255,255,0)); }
     .btn-zurueck { background: transparent; color: var(--grau); width: auto; padding: 0.9rem 0.5rem; box-shadow: none; flex-shrink: 0; }
     .btn-zurueck:hover { color: var(--text); transform: none; }
     .mini { font-size: 0.84rem; color: var(--grau); margin-top: 0.9rem; text-align: center; }
@@ -220,8 +227,11 @@
       body { padding: 0; }
       .stage { max-width: 100%; }
       .glow { display: none; }
-      .card { grid-template-columns: 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
-      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 200px; max-height: 32vh; }
+      /* Zeile 1 (Deko-Band) nur so hoch wie nötig, Zeile 2 (Formular) bekommt
+         den Rest — behebt die weisse Lücke durch die gestreckte Grid-Zeile. */
+      .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
+      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0; height: 96px; max-height: none; }
+      .card-rechts .platzhalter, .card-rechts .vorschau { display: none; }
       .card-links { padding: 1.5rem 1.4rem; }
       h1 { font-size: 1.8rem; }
     }
@@ -235,7 +245,10 @@
       <!-- LINKS -->
       <div class="card-links">
         <div class="kopf"><div class="logo"><span class="mark">A</span><span>AuraChat</span></div></div>
-        <div class="progress" id="progress"></div>
+        <div class="progress" id="progress">
+          <div class="progress-track"><span class="progress-fuellung" id="progressFuellung"></span></div>
+          <span class="progress-label" id="progressLabel">Konto &amp; Zahlung ✓</span>
+        </div>
 
         <div class="links-inhalt" id="linksInhalt">
 
@@ -256,8 +269,8 @@
             <label class="feld" for="email">E-Mail-Adresse</label>
             <input type="email" id="email" placeholder="name@firma.ch" />
             <p class="mini" id="loginStatus" style="text-align:left;min-height:1.1em;"></p>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" data-next>Login-Link senden</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" data-next>Login-Link senden</button></div>
           </div>
 
           <!-- 3 Webseite scannen -->
@@ -269,8 +282,8 @@
             <input type="url" id="webseite" placeholder="https://deine-firma.ch" />
             <div class="scan-loader" id="scanLoader"><span class="spinner"></span><span id="scanStatus">Wird gelesen</span></div>
             <div class="balken" id="scanBalken"><span></span></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
           </div>
 
           <!-- 4 Überprüfen -->
@@ -325,9 +338,9 @@
             <label class="drop" for="docs">Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
             <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
             <div id="doc-liste"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <p class="mini"><a class="link" data-next>Diesen Schritt überspringen</a></p>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6 Anpassen -->
@@ -363,8 +376,8 @@
               <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
             </div>
             <p class="pers-hinweis" id="persHinweis"></p>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6 Antwortstil -->
@@ -399,8 +412,8 @@
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
               <div class="antwort-vorschau" id="antwortVorschau"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 7 Chat-Design -->
@@ -432,8 +445,8 @@
               <option value="Lora">Lora (Serif)</option>
             </select>
             <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 7 Dein Agent -->
@@ -484,17 +497,10 @@
               <div id="startklarListe" style="display:grid;grid-template-columns:1fr 1fr;gap:0.22rem 0.9rem;font-size:0.82rem;"></div>
             </div>
             <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
-            <!-- Bezahlung (Milestone 10): erscheint erst NACH erfolgreichem Speichern.
-                 Der Agent bleibt bis dahin nutzbar zum Testen — Zahlung ist der letzte Schritt. -->
-            <div id="checkoutBox" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.7rem 0.85rem;margin-top:0.5rem;">
-              <p class="mini" id="checkoutText" style="text-align:left;margin:0 0 0.5rem;"></p>
-              <button type="button" class="btn btn-primar" id="checkoutBtn" style="width:100%;"></button>
-              <p class="mini" id="checkoutStatus" style="text-align:left;min-height:1.1em;"></p>
-            </div>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard →</a></p>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
           </div>
 
         </div>
