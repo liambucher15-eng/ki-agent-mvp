@@ -80,21 +80,27 @@
     "<style>",
     ":host { all: initial; }",
     "* { box-sizing: border-box; }",
+    // WICHTIG: Author-Styles wie .initial{display:flex} überstimmen sonst das
+    // UA-[hidden] — das Initial würde den geladenen Charakter dauerhaft verdecken.
+    "[hidden] { display: none !important; }",
 
     // Launcher. Erscheint verzögert per .sichtbar. Zeigt den Charakter der Firma;
     // solange dessen Bild nicht geladen ist (oder fehlt), ein schlichtes Initial.
     ".bubble {",
     "  position: fixed; bottom: 24px; right: 24px; width: 62px; height: 62px;",
     "  padding: 0; border: 0; background: transparent; cursor: pointer; z-index: 2147483000;",
-    "  opacity: 0; transform: scale(0.5);",
+    // pointer-events wie bei .hinweis: unsichtbar = auch nicht klickbar. Sonst
+    // schwebt der ausgeblendete Launcher über der Senden-Ecke des offenen Chats
+    // und jeder Klick dort schliesst das Panel statt zu senden.
+    "  opacity: 0; transform: scale(0.5); pointer-events: none;",
     "  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);",
     "}",
-    ".bubble.sichtbar { opacity: 1; transform: scale(1); }",
+    ".bubble.sichtbar { opacity: 1; transform: scale(1); pointer-events: auto; }",
     ".bubble.sichtbar:hover { transform: scale(1.08); }",
 
     // Charakter-Launcher: das eigene Figur-Bild.
     ".figur {",
-    "  width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center;",
+    "  display: block; width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-position: center;",
     "  background-color: #fff;", // weisser Grund -> auch transparente Figur-Bilder sind sichtbar
     "  box-shadow: 0 8px 22px rgba(0,0,0,0.28), 0 0 0 3px #fff, 0 0 0 5px " + farbe + "40;",
     "  animation: kiorb-schweben 5s ease-in-out infinite; transition: box-shadow 0.3s ease;",
