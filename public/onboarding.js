@@ -477,14 +477,15 @@
         im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:#fafafa;";
         const lbl = document.createElement("div");
         lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.82rem;font-weight:600;margin:0.45rem 0 0.5rem;color:#374151;";
-        // Änderungs-Eingabe gestapelt statt in einer engen Zeile — volle Breite
-        // für den Wunschtext, Knopf darunter.
+        // Änderungs-Eingabe als mehrzeiliger Textbereich (Platz für 2–3 Sätze),
+        // Knopf in voller Breite darunter.
         const reihe = document.createElement("div");
         reihe.style.cssText = "display:flex;flex-direction:column;gap:0.4rem;";
-        const inp = document.createElement("input");
-        inp.type = "text"; inp.placeholder = "z.B. Mütze blau machen";
+        const inp = document.createElement("textarea");
+        inp.placeholder = "z.B. Mütze blau machen. Hintergrund heller. Freundlicher lächeln.";
         inp.maxLength = 300;
-        inp.style.cssText = "width:100%;font:inherit;font-size:0.85rem;padding:0.55rem 0.65rem;border:1.5px solid #e5e7eb;border-radius:9px;";
+        inp.style.cssText = "width:100%;font:inherit;font-size:0.85rem;line-height:1.45;padding:0.55rem 0.65rem;" +
+          "border:1.5px solid #e5e7eb;border-radius:9px;min-height:84px;resize:vertical;";
         const btn = document.createElement("button");
         btn.type = "button"; btn.textContent = "Ändern";
         btn.style.cssText = "width:100%;font:inherit;font-size:0.83rem;font-weight:600;padding:0.5rem 0.6rem;border:1.5px solid var(--vor-f1,#4F46E5);color:var(--vor-f1,#4F46E5);border-radius:9px;background:#fff;cursor:pointer;";
