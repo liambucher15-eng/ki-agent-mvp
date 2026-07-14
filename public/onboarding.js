@@ -46,6 +46,9 @@
       gsap.to([lAlt, rAlt], { autoAlpha: 0, x: -24 * richtung, duration: 0.22, ease: "power2.in",
         onComplete: () => {
           lAlt.hidden = true; rAlt.hidden = true; gsap.set([lAlt, rAlt], { x: 0 });
+          // Ausdrücke-Seite läuft über die volle Kartenbreite (Layout-Wechsel
+          // passiert hier, während beide Seiten unsichtbar sind -> kein Sprung).
+          document.querySelector(".card").classList.toggle("voll", n === AUSDRUECKE_STEP);
           lNeu.hidden = false; rNeu.hidden = false; lNeu.scrollTop = 0;
           gsap.fromTo([lNeu, rNeu], { autoAlpha: 0, x: 24 * richtung }, { autoAlpha: 1, x: 0, duration: 0.32, ease: "power2.out",
             onComplete: () => { istUebergang = false; } });
@@ -563,14 +566,17 @@
       document.getElementById("charGrid").hidden = true;
       status.style.color = ""; balken("zustaendeBalken", true);
       status.textContent = "Die Ausdrücke deiner Figur werden erzeugt — noch etwa eine Minute…";
-      // Vorfreude: die gewählte Variante sofort rechts in der Vorschau zeigen.
-      vorFigurImg.src = gewaehltRichtung.bild; vorFigurImg.style.visibility = "visible";
+      // Vorfreude: die gewählte Variante während des Wartens auf der Seite zeigen.
+      document.getElementById("gewaehlteVorschauImg").src = richtung.bild;
+      document.getElementById("gewaehlteVorschau").hidden = false;
+      vorFigurImg.src = richtung.bild; vorFigurImg.style.visibility = "visible";
       vorLabel.textContent = "Dein Charakter entsteht…";
       try {
-        const erg = await charJob({ aktion: "zustaende", beschreibung, bild: gewaehltRichtung.bild }, 120);
+        const erg = await charJob({ aktion: "zustaende", beschreibung, bild: richtung.bild }, 120);
         daten.charakterBilder = erg.bilder;
         status.style.color = "var(--gruen)";
         status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
+        document.getElementById("gewaehlteVorschau").hidden = true;
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
         status.style.color = "#e11d48";

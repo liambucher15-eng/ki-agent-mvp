@@ -159,9 +159,21 @@
                         display: flex; align-items: center; justify-content: center; color: var(--grau-hell); font-size: 1.4rem; overflow: hidden; }
     .agent-figur-mini img { width: 100%; height: 100%; object-fit: cover; }
 
+    /* Ausdrücke-Seite: volle Kartenbreite, damit alle 4 Emotionen auf einen
+       Blick sichtbar sind. Das rechte Verlaufs-Panel schrumpft zu einem
+       schmalen Akzent-Streifen am rechten Rand (Marken-Echo statt Deko-Spalte).
+       grid-template-rows: 1fr ist fürs Mobile-Layout nötig — dort hat .card
+       sonst auto/1fr-Zeilen und die Formular-Spalte würde ohne rechtes Panel
+       auf Inhaltshöhe kollabieren (die Schritte sind absolut positioniert). */
+    .card.voll { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+    .card.voll .card-rechts { display: none; }
+    .card.voll::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 10px;
+      background: linear-gradient(180deg, var(--indigo), var(--violett) 40%, var(--coral) 75%, var(--orange)); }
+
     /* Ausdrücke-Raster (Seite "Dein Charakter lebt") */
     .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.4rem; }
     .char-grid[hidden] { display: none; }
+    @media (min-width: 861px) { .char-grid { grid-template-columns: repeat(4, 1fr); } }
 
     /* Stilwahl-Pop-up */
     .modal-hintergrund { position: fixed; inset: 0; z-index: 60; background: rgba(17,24,39,0.55);
@@ -496,6 +508,10 @@
             <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie — jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
             <p class="mini" id="charZustandStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="zustaendeBalken"><span></span></div>
+            <!-- Während der Generierung: die gewählte Variante als Vorfreude-Bild. -->
+            <div id="gewaehlteVorschau" hidden style="margin:0.6rem auto 0;width:140px;">
+              <img id="gewaehlteVorschauImg" alt="Gewählte Variante" style="display:block;width:100%;border-radius:14px;border:1.5px solid var(--border);box-shadow:0 12px 26px -12px rgba(17,24,39,0.3);" />
+            </div>
             <div class="char-grid" id="charGrid" hidden></div>
             <p class="mini" id="andereRichtungZeile" hidden style="text-align:left;"><a class="link" id="andereRichtung">← Andere Stilrichtung wählen</a></p>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
