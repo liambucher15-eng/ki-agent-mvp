@@ -183,13 +183,22 @@
     .einstellungs-gruppe { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
     .einstellungs-titel { font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
     .einstellungs-hilfe { color: var(--grau); font-size: 0.82rem; line-height: 1.4; margin: 0.25rem 0 0.5rem; }
+    /* Varianten-Karten im Pop-up: jede Karte hat ihren eigenen Bestätigen-Knopf. */
     .richtungs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.75rem; }
-    .richtungs-karte { position: relative; overflow: hidden; padding: 0; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; text-align: left; font: inherit; }
-    .richtungs-karte:hover { border-color: var(--indigo); }
-    .richtungs-karte.aktiv { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+    .richtungs-karte { overflow: hidden; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; }
     .richtungs-karte img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #f8fafc; }
-    .richtungs-karte span { display: block; padding: 0.5rem 0.6rem; font-size: 0.8rem; font-weight: 600; }
-    .richtungs-karte.aktiv::after { content: "✓"; position: absolute; top: 0.4rem; right: 0.4rem; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--indigo); color: #fff; font-weight: 800; }
+    .richtungs-fuss { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; padding: 0.45rem 0.55rem; }
+    .richtungs-fuss span { font-size: 0.8rem; font-weight: 600; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .btn-waehlen { font: inherit; font-size: 0.75rem; font-weight: 700; color: #fff; border: 0; border-radius: 8px;
+                   padding: 0.38rem 0.65rem; cursor: pointer; flex-shrink: 0; white-space: nowrap;
+                   background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
+                   box-shadow: 0 6px 14px -6px rgba(79,70,229,0.55); transition: transform 0.13s, box-shadow 0.2s, opacity 0.2s; }
+    .btn-waehlen:hover { transform: translateY(-1px); }
+    .btn-waehlen:disabled { opacity: 0.55; cursor: default; transform: none; }
+    .btn-neu { font: inherit; font-size: 0.82rem; font-weight: 700; color: var(--indigo); cursor: pointer; flex-shrink: 0;
+               border: 1.5px solid var(--indigo); border-radius: 10px; background: #fff; padding: 0.45rem 0.75rem; }
+    .btn-neu:hover { background: rgba(79,70,229,0.06); }
+    .btn-neu:disabled { opacity: 0.55; cursor: default; }
     .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
     .prompts { margin-top: 0.6rem; }
     .prompt-box { background: #0f1424; color: #e5e7eb; border-radius: 10px; padding: 0.6rem 0.7rem; font-size: 0.72rem;
@@ -475,8 +484,10 @@
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="charBalken"><span></span></div>
             <p class="mini" id="charVariantenZeile" hidden style="text-align:left;"><a class="link" id="charVariantenOeffnen">Varianten ansehen →</a></p>
-            <p class="mini" id="charPflichtHinweis" style="text-align:left;min-height:1em;color:#e11d48;"></p>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <!-- Kein Weiter-Button: das Stilwahl-Pop-up öffnet sich automatisch,
+                 die Bestätigung einer Variante führt weiter. Für Rückkehrer mit
+                 fertigem Charakter gibt es den dezenten Link rechts. -->
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
           </div>
 
           <!-- 10 Ausdrücke: der Belohnungs-Moment — die gewählte Figur lebt. -->
@@ -546,8 +557,12 @@
       <h2 id="stilModalTitel">Wähle deine Stilrichtung</h2>
       <p class="sub" style="font-size:0.88rem;margin-top:0.25rem;">Vier Varianten deiner Figur. Wähle die, die am besten zu deiner Marke passt — daraus entstehen die Ausdrücke.</p>
       <div class="richtungs-grid" id="richtungsGrid"></div>
-      <button type="button" class="btn btn-primar" id="charZustaende" disabled style="margin-top:0.9rem;">Diese Richtung auswählen</button>
-      <p class="mini" style="margin-top:0.6rem;"><a class="link" id="richtungenNeu">Keine passt — Beschreibung anpassen &amp; neu erstellen</a></p>
+      <label class="feld" for="richtungenAnpassung" style="margin-top:1rem;">Keine passt? Beschreibe, was anders sein soll</label>
+      <div style="display:flex;gap:0.5rem;">
+        <input type="text" id="richtungenAnpassung" placeholder="z.B. verspielter, ohne Anzug, in Blau" maxlength="300" style="flex:1;min-width:0;" />
+        <button type="button" class="btn-neu" id="richtungenNeu">↻ 4 neue Varianten</button>
+      </div>
+      <p class="mini" id="richtungenNeuStatus" style="text-align:left;min-height:1.1em;margin-top:0.4rem;"></p>
     </div>
   </div>
 

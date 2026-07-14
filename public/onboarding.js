@@ -52,6 +52,11 @@
         }});
       aktuell = n; updateProgress();
       if (n === AGENT_STEP || n === AUSDRUECKE_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      // Rückkehrer mit fertigem Charakter: Link zur Ausdrücke-Seite zeigen.
+      if (n === AGENT_STEP) {
+        const l = document.getElementById("zuAusdruecken");
+        if (l) l.hidden = !(daten.charakterBilder && daten.charakterBilder.idle);
+      }
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
       // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls
       // das FELD leer ist. (daten.agentName ist hier durch den sammle()-Fallback
@@ -71,23 +76,9 @@
           el.focus(); return;
         }
       }
-      // Charakter-Schritt: der Charakter ist Pflicht — ohne fertige Bilder geht
-      // es nicht weiter (eine Variante, Charakter = Produkt). Liegen schon
-      // Varianten vor, führt der Hinweis direkt zurück ins Stilwahl-Pop-up.
-      if (aktuell === AGENT_STEP) {
-        const fertig = daten.charakterBilder && daten.charakterBilder.idle;
-        if (!fertig) {
-          const h = document.getElementById("charPflichtHinweis");
-          if (charRichtungen.length) {
-            if (h) h.textContent = "Wähle zuerst eine Stilrichtung aus deinen Varianten.";
-            oeffneStilModal();
-          } else if (h) {
-            h.textContent = "Bitte erstelle zuerst deinen Charakter — beschreibe ihn und/oder lade ein Bild hoch.";
-          }
-          return;
-        }
-      }
       // Ausdrücke-Schritt: erst weiter, wenn die Generierung fertig ist.
+      // (Der Charakter-Schritt selbst hat keinen Weiter-Knopf — die Stilwahl
+      // im Pop-up führt automatisch hierher, Charakter bleibt Pflicht.)
       if (aktuell === AUSDRUECKE_STEP) {
         if (!(daten.charakterBilder && daten.charakterBilder.idle)) {
           const s = document.getElementById("charZustandStatus");
@@ -418,11 +409,21 @@
     stilModal.addEventListener("click", (e) => { if (e.target === stilModal) schliesseStilModal(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !stilModal.hidden) schliesseStilModal(); });
     document.getElementById("charVariantenOeffnen").addEventListener("click", oeffneStilModal);
+    // "4 neue Varianten": Änderungswunsch fliesst in die Beschreibung ein,
+    // dann läuft die Generierung erneut (Pop-up öffnet sich automatisch wieder).
     document.getElementById("richtungenNeu").addEventListener("click", () => {
+      const anpassung = document.getElementById("richtungenAnpassung").value.trim();
+      const beschrFeld = document.getElementById("charBeschr");
+      if (anpassung) {
+        beschrFeld.value = (beschrFeld.value.trim() ? beschrFeld.value.trim() + " — " + anpassung : anpassung).slice(0, 500);
+        document.getElementById("richtungenAnpassung").value = "";
+      }
       schliesseStilModal();
-      document.getElementById("charBeschr").focus();
-      const status = document.getElementById("charErstellenStatus");
-      status.style.color = ""; status.textContent = "Passe die Beschreibung an und erstelle neue Varianten.";
+      starteRichtungen({
+        beschreibung: beschrFeld.value.trim(),
+        status: document.getElementById("charErstellenStatus"),
+        btn: document.getElementById("charErstellen"),
+      });
     });
 
     function balken(id, an) { document.getElementById(id).classList.toggle("an", !!an); }
@@ -501,28 +502,27 @@
       });
     }
 
-    // Varianten ins Pop-up rendern; Auswahl aktiviert den Bestätigungs-Knopf.
+    // Varianten ins Pop-up rendern — jede Karte hat ihren eigenen
+    // Bestätigen-Knopf, der die Wahl direkt auslöst.
     function zeigeRichtungen(richtungen) {
       const grid = document.getElementById("richtungsGrid");
-      const weiter = document.getElementById("charZustaende");
       charRichtungen = Array.isArray(richtungen) ? richtungen : [];
       gewaehltRichtung = null;
       grid.textContent = "";
       charRichtungen.forEach((richtung) => {
-        const karte = document.createElement("button");
-        karte.type = "button"; karte.className = "richtungs-karte";
+        const karte = document.createElement("div");
+        karte.className = "richtungs-karte";
         const bild = document.createElement("img");
         bild.src = richtung.bild; bild.alt = richtung.label;
+        const fuss = document.createElement("div"); fuss.className = "richtungs-fuss";
         const label = document.createElement("span"); label.textContent = richtung.label;
-        karte.append(bild, label);
-        karte.addEventListener("click", () => {
-          gewaehltRichtung = richtung;
-          grid.querySelectorAll(".richtungs-karte").forEach((el) => el.classList.toggle("aktiv", el === karte));
-          weiter.disabled = false;
-        });
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "btn-waehlen"; btn.textContent = "✓ Diese wählen";
+        btn.addEventListener("click", () => generiereZustaendeAusRichtung(richtung));
+        fuss.append(label, btn);
+        karte.append(bild, fuss);
         grid.appendChild(karte);
       });
-      weiter.disabled = true;
       document.getElementById("charVariantenZeile").hidden = false;
     }
 
@@ -536,7 +536,6 @@
         zeigeRichtungen(erg.richtungen);
         status.style.color = "var(--gruen)";
         status.textContent = "✓ Deine Varianten sind bereit.";
-        document.getElementById("charPflichtHinweis").textContent = "";
         oeffneStilModal();
       } catch (e) {
         status.style.color = "#e11d48";
@@ -548,16 +547,16 @@
       }
     }
 
-    // Schritt 2 (nach der Stilwahl im Pop-up): sofort auf die Ausdrücke-Seite
-    // wechseln; die Bilder erscheinen dort, sobald sie fertig sind.
+    // Schritt 2 (Bestätigung einer Variante im Pop-up): sofort auf die
+    // Ausdrücke-Seite wechseln; die Bilder erscheinen dort, sobald sie fertig sind.
     let zustaendeLaufen = false;
-    async function generiereZustaendeAusRichtung() {
-      if (!gewaehltRichtung || zustaendeLaufen) return;
+    async function generiereZustaendeAusRichtung(richtung) {
+      if (!richtung || zustaendeLaufen) return;
       zustaendeLaufen = true;
+      gewaehltRichtung = richtung;
       const beschreibung = document.getElementById("charBeschr").value.trim();
       const status = document.getElementById("charZustandStatus");
-      const weiter = document.getElementById("charZustaende");
-      weiter.disabled = true;
+      document.querySelectorAll("#richtungsGrid .btn-waehlen").forEach((b) => { b.disabled = true; });
       schliesseStilModal();
       zeige(AUSDRUECKE_STEP, 1);
       document.getElementById("andereRichtungZeile").hidden = false;
@@ -579,7 +578,10 @@
       } finally {
         balken("zustaendeBalken", false);
         zustaendeLaufen = false;
-        weiter.disabled = !gewaehltRichtung;
+        document.querySelectorAll("#richtungsGrid .btn-waehlen").forEach((b) => { b.disabled = false; });
+        // Charakter ist da -> Rückkehrer-Link auf der Erstell-Seite freischalten.
+        const l = document.getElementById("zuAusdruecken");
+        if (l && daten.charakterBilder && daten.charakterBilder.idle) l.hidden = false;
       }
     }
 
@@ -619,11 +621,11 @@
       }
       starteRichtungen({ beschreibung: beschr, status, btn: document.getElementById("charErstellen") });
     });
-    document.getElementById("charZustaende").addEventListener("click", generiereZustaendeAusRichtung);
     document.getElementById("andereRichtung").addEventListener("click", () => {
       zeige(AGENT_STEP, -1);
       oeffneStilModal();
     });
+    document.getElementById("zuAusdruecken").addEventListener("click", () => zeige(AUSDRUECKE_STEP, 1));
 
     // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
     // Vor dem Live-Gehen sieht die Firma gebündelt, was der Agent schon kann und was
