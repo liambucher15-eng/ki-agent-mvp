@@ -132,10 +132,14 @@ async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
 }
 
 // §4 Schritt 1: vier UNTERSCHIEDLICHE Richtungs-Vorschauen (je 1 Bild).
-async function generiereRichtungen({ jobId, beschreibung, farbe }) {
+// Mit Referenzbild (Upload): jede Richtung orientiert sich an der Vorlage.
+async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild }) {
   const richtungen = baueRichtungen({ beschreibung, farbe });
   const ergebnisse = await Promise.all(richtungen.map(async (r) => {
-    const g = await mitWiederholung(() => generiereBild({ prompt: r.prompt }), 2);
+    const prompt = referenzBild
+      ? r.prompt + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
+      : r.prompt;
+    const g = await mitWiederholung(() => generiereBild({ prompt, referenzBild }), 2);
     if (!g.ok) return null;
     const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
     const url = await speichereBild("richtungen/" + jobId + "/" + r.key + "." + endung, g.bildBase64, g.mimeType);
@@ -219,7 +223,7 @@ exports.handler = async (event) => {
     if (!storageOk()) throw new Error("Bild-Speicher ist nicht eingerichtet (SUPABASE_SERVICE_KEY fehlt).");
 
     let ergebnis;
-    if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe });
+    if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe, referenzBild: bild });
     else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe });
     else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe });
     else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand });

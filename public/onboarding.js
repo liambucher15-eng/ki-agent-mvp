@@ -24,6 +24,7 @@
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
     const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
+    const AUSDRUECKE_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAusdruecke");
     let aktuell = 0;
 
     // Fortschritt startet nie bei 0: Konto & Zahlung sind vor dem Onboarding
@@ -55,12 +56,14 @@
             onComplete: () => { istUebergang = false; } });
         }});
       aktuell = n; updateProgress();
-      if (n === AGENT_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      if (n === AGENT_STEP || n === AUSDRUECKE_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
-      // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls leer.
-      if (n === 5 && !daten.agentName && daten.name) {
+      // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls
+      // das FELD leer ist. (daten.agentName ist hier durch den sammle()-Fallback
+      // oft schon belegt — entscheidend ist, was der Nutzer im Feld sieht.)
+      if (n === 5 && daten.name) {
         const el = document.getElementById("agentName");
-        if (el && !el.value) { el.value = daten.name; daten.agentName = daten.name; }
+        if (el && !el.value.trim()) { el.value = daten.name; daten.agentName = daten.name; }
       }
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
@@ -73,13 +76,27 @@
           el.focus(); return;
         }
       }
-      // Charakter-Schritt (8): der Charakter ist Pflicht — ohne fertige Bilder
-      // geht es nicht weiter (eine Variante, Charakter = Produkt).
+      // Charakter-Schritt: der Charakter ist Pflicht — ohne fertige Bilder geht
+      // es nicht weiter (eine Variante, Charakter = Produkt). Liegen schon
+      // Varianten vor, führt der Hinweis direkt zurück ins Stilwahl-Pop-up.
       if (aktuell === AGENT_STEP) {
         const fertig = daten.charakterBilder && daten.charakterBilder.idle;
         if (!fertig) {
           const h = document.getElementById("charPflichtHinweis");
-          if (h) h.textContent = "Bitte erstelle zuerst deinen Charakter — lade ein Bild hoch oder beschreibe ihn und generiere die Ausdrücke.";
+          if (charRichtungen.length) {
+            if (h) h.textContent = "Wähle zuerst eine Stilrichtung aus deinen Varianten.";
+            oeffneStilModal();
+          } else if (h) {
+            h.textContent = "Bitte erstelle zuerst deinen Charakter — beschreibe ihn und/oder lade ein Bild hoch.";
+          }
+          return;
+        }
+      }
+      // Ausdrücke-Schritt: erst weiter, wenn die Generierung fertig ist.
+      if (aktuell === AUSDRUECKE_STEP) {
+        if (!(daten.charakterBilder && daten.charakterBilder.idle)) {
+          const s = document.getElementById("charZustandStatus");
+          if (s) { s.style.color = "#e11d48"; s.textContent = "Die Ausdrücke werden noch erstellt — einen Moment bitte."; }
           return;
         }
       }
@@ -375,7 +392,8 @@
     const vorLabel = document.getElementById("vorLabel");
 
     function setVorschauFarben() {
-      [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='8']")].forEach((el) => {
+      [document.getElementById("schrittAgent"), document.getElementById("schrittAusdruecke"),
+       document.querySelector(".schritt-rechts[data-step='9']")].forEach((el) => {
         if (!el) return;
         el.style.setProperty("--vor-f1", daten.farbe1);
         el.style.setProperty("--vor-f2", daten.farbe2);
@@ -394,11 +412,25 @@
     }
     aktualisiereAgentVorschau(); // Startzustand der Vorschau setzen
 
-    // Tabs im Figur-Editor
-    document.querySelectorAll("#figurEditor .tab").forEach((t) => t.addEventListener("click", () => {
-      document.querySelectorAll("#figurEditor .tab").forEach((x) => x.classList.toggle("aktiv", x === t));
-      document.querySelectorAll("#figurEditor .tab-inhalt").forEach((x) => { x.hidden = (x.dataset.tab !== t.dataset.tab); });
-    }));
+    // Stilwahl-Pop-up: öffnet sich, wenn die Varianten fertig sind. Schliessen
+    // ist erlaubt — die Varianten bleiben über den Link auf der Seite erreichbar
+    // (keine Bild-Credits verlieren). Funktions-Deklaration: wird auch im
+    // data-next-Handler weiter oben gebraucht.
+    const stilModal = document.getElementById("stilModal");
+    function oeffneStilModal() { if (charRichtungen.length) stilModal.hidden = false; }
+    function schliesseStilModal() { stilModal.hidden = true; }
+    document.getElementById("stilModalZu").addEventListener("click", schliesseStilModal);
+    stilModal.addEventListener("click", (e) => { if (e.target === stilModal) schliesseStilModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !stilModal.hidden) schliesseStilModal(); });
+    document.getElementById("charVariantenOeffnen").addEventListener("click", oeffneStilModal);
+    document.getElementById("richtungenNeu").addEventListener("click", () => {
+      schliesseStilModal();
+      document.getElementById("charBeschr").focus();
+      const status = document.getElementById("charErstellenStatus");
+      status.style.color = ""; status.textContent = "Passe die Beschreibung an und erstelle neue Varianten.";
+    });
+
+    function balken(id, an) { document.getElementById(id).classList.toggle("an", !!an); }
 
     // --- Charakter-Generierung (Milestone 6: echte Bilder via Background-Job) ---
     // Gleiches Muster wie der Scan: Job anstoßen (202) -> scan-status pollen.
@@ -474,27 +506,8 @@
       });
     }
 
-    // Ein Bild-Upload ist bereits eine klare Stilentscheidung. Für eine
-    // Beschreibung zeigen wir dagegen erst vier Richtungen und erzeugen die
-    // teuren Zustandsbilder erst nach der Auswahl.
-    // Upload-Weg: aus einem Referenzbild direkt die 5 Zustände (eine Richtung).
-    async function starteGenerierung({ beschreibung, referenzBild, status, btn }) {
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Dein Charakter wird erstellt — das dauert etwa eine Minute…";
-      try {
-        const erg = await charJob({ aktion: "generieren", beschreibung, bild: referenzBild || undefined }, 90);
-        daten.charakterBilder = erg.bilder;
-        status.style.color = "var(--gruen)";
-        status.textContent = "✓ Fertig! Prüfe die 4 Ausdrücke — jedes Bild lässt sich einzeln anpassen.";
-        zeigeCharGrid(); aktualisiereAgentVorschau();
-      } catch (e) {
-        status.style.color = "#e11d48";
-        status.textContent = "Konnte den Charakter nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
-    }
-
+    // Varianten ins Pop-up rendern; Auswahl aktiviert den Bestätigungs-Knopf.
     function zeigeRichtungen(richtungen) {
-      const box = document.getElementById("richtungenBox");
       const grid = document.getElementById("richtungsGrid");
       const weiter = document.getElementById("charZustaende");
       charRichtungen = Array.isArray(richtungen) ? richtungen : [];
@@ -514,85 +527,108 @@
         });
         grid.appendChild(karte);
       });
-      box.hidden = false;
       weiter.disabled = true;
+      document.getElementById("charVariantenZeile").hidden = false;
     }
 
+    // Schritt 1: Beschreibung und/oder Bild-Vorlage -> 4 Stil-Varianten,
+    // danach öffnet sich das Stilwahl-Pop-up.
     async function starteRichtungen({ beschreibung, status, btn }) {
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Wir entwickeln vier unterschiedliche Richtungen — das dauert ungefähr eine Minute…";
+      btn.disabled = true; status.style.color = ""; balken("charBalken", true);
+      status.textContent = "Wir entwickeln vier Stil-Varianten deiner Figur — das dauert ungefähr eine Minute…";
       try {
-        const erg = await charJob({ aktion: "richtungen", beschreibung }, 120);
+        const erg = await charJob({ aktion: "richtungen", beschreibung, bild: charReferenzBild || undefined }, 120);
         zeigeRichtungen(erg.richtungen);
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ Wähle die Richtung, die am besten zu deiner Marke passt.";
+        status.textContent = "✓ Deine Varianten sind bereit.";
+        document.getElementById("charPflichtHinweis").textContent = "";
+        oeffneStilModal();
       } catch (e) {
         status.style.color = "#e11d48";
-        status.textContent = "Konnte die Vorschläge nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
+        status.textContent = "Konnte die Varianten nicht erstellen: " + e.message;
+      } finally {
+        balken("charBalken", false);
+        btn.disabled = false;
+        if (charRichtungen.length) btn.textContent = "↻ Neue Varianten erstellen";
+      }
     }
 
+    // Schritt 2 (nach der Stilwahl im Pop-up): sofort auf die Ausdrücke-Seite
+    // wechseln; die Bilder erscheinen dort, sobald sie fertig sind.
+    let zustaendeLaufen = false;
     async function generiereZustaendeAusRichtung() {
-      if (!gewaehltRichtung) return;
+      if (!gewaehltRichtung || zustaendeLaufen) return;
+      zustaendeLaufen = true;
       const beschreibung = document.getElementById("charBeschr").value.trim();
-      const status = document.getElementById("charRichtungenStatus");
-      const btn = document.getElementById("charZustaende");
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Wir erzeugen die Ausdrücke für deine gewählte Figur…";
+      const status = document.getElementById("charZustandStatus");
+      const weiter = document.getElementById("charZustaende");
+      weiter.disabled = true;
+      schliesseStilModal();
+      zeige(AUSDRUECKE_STEP, 1);
+      document.getElementById("andereRichtungZeile").hidden = false;
+      document.getElementById("charGrid").hidden = true;
+      status.style.color = ""; balken("zustaendeBalken", true);
+      status.textContent = "Die Ausdrücke deiner Figur werden erzeugt — noch etwa eine Minute…";
+      // Vorfreude: die gewählte Variante sofort rechts in der Vorschau zeigen.
+      vorFigurImg.src = gewaehltRichtung.bild; vorFigurImg.style.visibility = "visible";
+      vorLabel.textContent = "Dein Charakter entsteht…";
       try {
         const erg = await charJob({ aktion: "zustaende", beschreibung, bild: gewaehltRichtung.bild }, 120);
         daten.charakterBilder = erg.bilder;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ Fertig! Du kannst jeden Ausdruck unten gezielt anpassen.";
+        status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
         status.style.color = "#e11d48";
-        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
+        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message + " — wähle nochmal eine Richtung.";
+      } finally {
+        balken("zustaendeBalken", false);
+        zustaendeLaufen = false;
+        weiter.disabled = !gewaehltRichtung;
+      }
     }
 
-    // Weg 1: Bild hochladen -> direkt nutzen (ein Bild für alle Ausdrücke)
-    // ODER als Vorlage für die KI-Generierung (Knopf erscheint nach dem Upload).
+    // Bild-Upload: dient als Vorlage für die Varianten — ODER (dezenter
+    // Zweitweg) direkt als Figur, ganz ohne KI.
     document.getElementById("charBild").addEventListener("change", (e) => {
       const f = e.target.files[0]; if (!f) return;
       const status = document.getElementById("charBildStatus");
       if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; e.target.value = ""; return; }
       const r = new FileReader();
       r.onload = () => {
-        const url = r.result;
-        charReferenzBild = url;
-        daten.charakterBilder = { idle: url, denken: url, sprechen: url, verlegen: url };
-        status.style.color = "var(--gruen)"; status.textContent = "✓ Bild übernommen.";
-        document.getElementById("charAusBild").hidden = false;
-        zeigeCharGrid(); aktualisiereAgentVorschau();
+        charReferenzBild = r.result;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ „" + f.name + "“ übernommen — fliesst als Vorlage in die Varianten ein.";
+        document.getElementById("charDirektZeile").hidden = false;
       };
       r.readAsDataURL(f);
       e.target.value = "";
     });
-    document.getElementById("charAusBild").addEventListener("click", () => {
+    document.getElementById("charDirekt").addEventListener("click", () => {
       if (!charReferenzBild) return;
-      starteGenerierung({
-        beschreibung: document.getElementById("charBeschr").value.trim(),
-        referenzBild: charReferenzBild,
-        status: document.getElementById("charBildStatus"),
-        btn: document.getElementById("charAusBild"),
-      });
+      daten.charakterBilder = { idle: charReferenzBild, denken: charReferenzBild, sprechen: charReferenzBild, verlegen: charReferenzBild };
+      const status = document.getElementById("charZustandStatus");
+      status.style.color = ""; status.textContent = "Dein Bild wird für alle Ausdrücke verwendet — du kannst es unten per Anweisung variieren.";
+      zeigeCharGrid(); aktualisiereAgentVorschau();
+      zeige(AUSDRUECKE_STEP, 1);
     });
 
-    // Weg 2: Charakter aus Beschreibung erstellen (echte KI-Generierung).
+    // "4 Varianten erstellen": Beschreibung ODER Bild-Vorlage reicht.
     document.getElementById("charErstellen").addEventListener("click", () => {
       const beschr = document.getElementById("charBeschr").value.trim();
       const status = document.getElementById("charErstellenStatus");
-      if (!beschr) { status.style.color = "#e11d48"; status.textContent = "Bitte kurz beschreiben."; return; }
-      starteRichtungen({
-        beschreibung: beschr,
-        status,
-        btn: document.getElementById("charErstellen"),
-      });
+      if (!beschr && !charReferenzBild) {
+        status.style.color = "#e11d48";
+        status.textContent = "Beschreibe deine Figur kurz oder lade ein Bild als Vorlage hoch.";
+        return;
+      }
+      starteRichtungen({ beschreibung: beschr, status, btn: document.getElementById("charErstellen") });
     });
     document.getElementById("charZustaende").addEventListener("click", generiereZustaendeAusRichtung);
-
-    aktualisiereAgentVorschau(); // Anfangszustand (Orb)
+    document.getElementById("andereRichtung").addEventListener("click", () => {
+      zeige(AGENT_STEP, -1);
+      oeffneStilModal();
+    });
 
     // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
     // Vor dem Live-Gehen sieht die Firma gebündelt, was der Agent schon kann und was

@@ -166,10 +166,27 @@
                         display: flex; align-items: center; justify-content: center; color: var(--grau-hell); font-size: 1.4rem; overflow: hidden; }
     .agent-figur-mini img { width: 100%; height: 100%; object-fit: cover; }
 
-    .tabs { display: flex; gap: 0.3rem; margin: 0.9rem 0 0.6rem; border-bottom: 1.5px solid var(--border); }
-    .tab { font: inherit; font-size: 0.85rem; font-weight: 600; background: none; border: 0; cursor: pointer;
-           padding: 0.4rem 0.6rem; color: var(--grau); border-bottom: 2px solid transparent; margin-bottom: -1.5px; }
-    .tab.aktiv { color: var(--indigo); border-bottom-color: var(--indigo); }
+    /* Ausdrücke-Raster (Seite "Dein Charakter lebt") */
+    .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.4rem; }
+    .char-grid[hidden] { display: none; }
+
+    /* Stilwahl-Pop-up */
+    .modal-hintergrund { position: fixed; inset: 0; z-index: 60; background: rgba(17,24,39,0.55);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 1.2rem; }
+    .modal-hintergrund[hidden] { display: none; }
+    .modal-karte { position: relative; background: #fff; border-radius: 20px; padding: 1.5rem 1.6rem 1.4rem;
+      width: 100%; max-width: 540px; max-height: calc(100dvh - 2rem); overflow-y: auto;
+      box-shadow: 0 30px 80px -20px rgba(17,24,39,0.45); }
+    .modal-karte h2 { font-family: var(--display); font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
+    .modal-schliessen { position: absolute; top: 0.65rem; right: 0.8rem; background: none; border: 0;
+      font-size: 1.5rem; line-height: 1; color: var(--grau-hell); cursor: pointer; padding: 0.2rem; }
+    .modal-schliessen:hover { color: var(--text); }
+    @media (prefers-reduced-motion: no-preference) {
+      .modal-karte { animation: modal-auf 0.28s cubic-bezier(0.34, 1.4, 0.64, 1); }
+      @keyframes modal-auf { from { transform: scale(0.94) translateY(12px); opacity: 0; } }
+    }
+
     .einstellungs-gruppe { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
     .einstellungs-titel { font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
     .einstellungs-hilfe { color: var(--grau); font-size: 0.82rem; line-height: 1.4; margin: 0.25rem 0 0.5rem; }
@@ -449,43 +466,43 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 7 Dein Agent -->
+          <!-- 9 Charakter erstellen: EINE Fläche (Beschreibung + optionale Bild-
+               Vorlage) -> 4 Stil-Varianten -> Auswahl im Pop-up (#stilModal) ->
+               Ausdrücke auf der eigenen Folgeseite (#schrittAusdruecke). -->
           <div class="schritt-links" data-step="8" id="schrittAgent" hidden>
             <h1 class="klein">Erstelle deinen<br>Charakter</h1>
-            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn kurz oder lade ein Bild hoch; die KI macht daraus vier lebendige Ausdrücke.</p>
+            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
 
-            <div id="figurEditor">
-              <div class="tabs">
-                <button type="button" class="tab aktiv" data-tab="upload">Bild hochladen</button>
-                <button type="button" class="tab" data-tab="erstellen">Charakter erstellen</button>
-              </div>
-              <div class="tab-inhalt" data-tab="upload">
-                <label class="drop" for="charBild">Bild hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">Logo oder Foto — als Figur direkt nutzen oder als Vorlage für die KI</div></label>
-                <input type="file" id="charBild" accept="image/*" style="display:none" />
-                <p class="mini" id="charBildStatus" style="text-align:left;"></p>
-                <button type="button" class="btn btn-primar" id="charAusBild" hidden style="margin-top:0.4rem;">✨ Daraus Charakter mit 4 Ausdrücken erstellen</button>
-              </div>
-              <div class="tab-inhalt" data-tab="erstellen" hidden>
-                <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
-                <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
-                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">4 Stilrichtungen vorschlagen</button>
-                <p class="mini" id="charErstellenStatus" style="text-align:left;"></p>
-                <div id="richtungenBox" hidden>
-                  <p class="sub" style="font-size:0.84rem;">Wähle eine Richtung. Erst danach erzeugen wir die passenden Ausdrücke – das spart Zeit und Bild-Credits.</p>
-                  <div class="richtungs-grid" id="richtungsGrid"></div>
-                  <button type="button" class="btn btn-primar" id="charZustaende" disabled style="margin-top:0.75rem;">Diese Richtung auswählen</button>
-                  <p class="mini" id="charRichtungenStatus" style="text-align:left;"></p>
-                </div>
-              </div>
-              <!-- 4 generierte Ausdruck-Bilder: prüfen + einzeln per Anweisung nachbessern -->
-              <div id="charGrid" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem;"></div>
-            </div>
+            <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
+            <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
+
+            <label class="feld">Bild als Vorlage <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
+            <label class="drop" for="charBild" id="charDrop" style="padding:1rem;">Logo oder Foto hier ablegen</label>
+            <input type="file" id="charBild" accept="image/*" style="display:none" />
+            <p class="mini" id="charBildStatus" style="text-align:left;min-height:1.1em;margin-top:0.35rem;"></p>
+            <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
+
+            <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.8rem;">✨ 4 Varianten erstellen</button>
+            <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
+            <div class="balken" id="charBalken"><span></span></div>
+            <p class="mini" id="charVariantenZeile" hidden style="text-align:left;"><a class="link" id="charVariantenOeffnen">Varianten ansehen →</a></p>
             <p class="mini" id="charPflichtHinweis" style="text-align:left;min-height:1em;color:#e11d48;"></p>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 10 Fertig -->
-          <div class="schritt-links" data-step="9" hidden>
+          <!-- 10 Ausdrücke: der Belohnungs-Moment — die gewählte Figur lebt. -->
+          <div class="schritt-links" data-step="9" id="schrittAusdruecke" hidden>
+            <h1 class="klein">Dein Charakter<br>lebt</h1>
+            <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie — jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
+            <p class="mini" id="charZustandStatus" style="text-align:left;min-height:1.1em;"></p>
+            <div class="balken" id="zustaendeBalken"><span></span></div>
+            <div class="char-grid" id="charGrid" hidden></div>
+            <p class="mini" id="andereRichtungZeile" hidden style="text-align:left;"><a class="link" id="andereRichtung">← Andere Stilrichtung wählen</a></p>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 11 Fertig -->
+          <div class="schritt-links" data-step="10" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
@@ -520,13 +537,28 @@
         <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
         <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
         <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vorschau">
+        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: 4 Stil-Varianten</div><div class="ph-text">deine Figur in vier Richtungen</div></div></div></div>
+        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
           <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Stilwahl-Pop-up: erscheint, sobald die 4 Charakter-Varianten fertig sind.
+       Schliessen ist erlaubt (Varianten bleiben über den Link auf der Seite
+       erreichbar), damit keine Bild-Credits verloren gehen. -->
+  <div class="modal-hintergrund" id="stilModal" hidden>
+    <div class="modal-karte" role="dialog" aria-modal="true" aria-labelledby="stilModalTitel">
+      <button type="button" class="modal-schliessen" id="stilModalZu" aria-label="Schliessen">×</button>
+      <h2 id="stilModalTitel">Wähle deine Stilrichtung</h2>
+      <p class="sub" style="font-size:0.88rem;margin-top:0.25rem;">Vier Varianten deiner Figur. Wähle die, die am besten zu deiner Marke passt — daraus entstehen die Ausdrücke.</p>
+      <div class="richtungs-grid" id="richtungsGrid"></div>
+      <button type="button" class="btn btn-primar" id="charZustaende" disabled style="margin-top:0.9rem;">Diese Richtung auswählen</button>
+      <p class="mini" style="margin-top:0.6rem;"><a class="link" id="richtungenNeu">Keine passt — Beschreibung anpassen &amp; neu erstellen</a></p>
     </div>
   </div>
 
