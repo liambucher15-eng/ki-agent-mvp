@@ -27,15 +27,10 @@
     const AUSDRUECKE_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAusdruecke");
     let aktuell = 0;
 
-    // Fortschritt startet nie bei 0: Konto & Zahlung sind vor dem Onboarding
-    // schon erledigt und zählen als PROGRESS_OFFSET erledigte Schritte.
-    const PROGRESS_OFFSET = 2;
-    const progressFuellung = document.getElementById("progressFuellung");
-    const progressLabel = document.getElementById("progressLabel");
-    function updateProgress() {
-      progressFuellung.style.width = (((aktuell + PROGRESS_OFFSET) / (ANZAHL - 1 + PROGRESS_OFFSET)) * 100) + "%";
-      progressLabel.textContent = aktuell === ANZAHL - 1 ? "Geschafft ✓" : "Konto & Zahlung ✓";
-    }
+    const progress = document.getElementById("progress");
+    for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
+    const dots = progress.querySelectorAll(".dot");
+    function updateProgress() { dots.forEach((d,i)=>{ d.classList.toggle("done", i<aktuell); d.classList.toggle("aktiv", i===aktuell); }); }
 
     gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
     gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
