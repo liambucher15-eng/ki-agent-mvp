@@ -471,21 +471,23 @@
       grid.hidden = false;
       CHAR_ZUSTAENDE.forEach((z) => {
         const zelle = document.createElement("div");
-        zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:10px;padding:0.5rem;text-align:center;";
+        zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:12px;padding:0.65rem;text-align:center;";
         const im = document.createElement("img");
         im.src = bilder[z] || bilder.idle; im.alt = z;
-        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#fafafa;";
+        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:#fafafa;";
         const lbl = document.createElement("div");
-        lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.78rem;margin:0.3rem 0;color:#555;";
+        lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.82rem;font-weight:600;margin:0.45rem 0 0.5rem;color:#374151;";
+        // Änderungs-Eingabe gestapelt statt in einer engen Zeile — volle Breite
+        // für den Wunschtext, Knopf darunter.
         const reihe = document.createElement("div");
-        reihe.style.cssText = "display:flex;gap:0.3rem;";
+        reihe.style.cssText = "display:flex;flex-direction:column;gap:0.4rem;";
         const inp = document.createElement("input");
         inp.type = "text"; inp.placeholder = "z.B. Mütze blau machen";
         inp.maxLength = 300;
-        inp.style.cssText = "flex:1;min-width:0;font-size:0.75rem;padding:0.3rem 0.4rem;border:1px solid #e5e7eb;border-radius:7px;";
+        inp.style.cssText = "width:100%;font:inherit;font-size:0.85rem;padding:0.55rem 0.65rem;border:1.5px solid #e5e7eb;border-radius:9px;";
         const btn = document.createElement("button");
         btn.type = "button"; btn.textContent = "Ändern";
-        btn.style.cssText = "font-size:0.75rem;padding:0.3rem 0.55rem;border:1px solid var(--vor-f1,#333);border-radius:7px;background:#fff;cursor:pointer;";
+        btn.style.cssText = "width:100%;font:inherit;font-size:0.83rem;font-weight:600;padding:0.5rem 0.6rem;border:1.5px solid var(--vor-f1,#4F46E5);color:var(--vor-f1,#4F46E5);border-radius:9px;background:#fff;cursor:pointer;";
         btn.addEventListener("click", async () => {
           const anweisung = inp.value.trim();
           if (!anweisung) { inp.focus(); return; }
