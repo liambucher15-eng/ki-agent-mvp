@@ -706,7 +706,13 @@
       // Rolle + Anrede aus den Feldern.
       daten.agentName = wert("agentName") || daten.name || "Assistent";
       daten.agentRolle = wert("agentRolle") || daten.agentRolle || "Assistent";
-      daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
+      // ID erst vergeben, wenn es eine echte Quelle (Name/Webseite) gibt.
+      // sammle() läuft bei JEDEM Weiter-Klick — auch ganz am Anfang, wenn noch
+      // alles leer ist. Ohne diese Bedingung bekäme jede Firma die ID "firma"
+      // (klebt wegen daten.id || …) und alle Kunden überschrieben sich gegenseitig.
+      if (!daten.id && (daten.name || daten.webseite)) {
+        daten.id = (daten.name || daten.webseite).toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24);
+      }
       document.getElementById("embed-text").textContent =
         '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
     }
@@ -715,6 +721,7 @@
     });
     document.getElementById("fertig").addEventListener("click", async () => {
       sammle();
+      daten.id = daten.id || "firma"; // letzter Fallback, falls gar nichts eingegeben wurde
       const status = document.getElementById("speicherStatus");
       const btn = document.getElementById("fertig");
       btn.disabled = true; status.textContent = "Speichern…"; status.style.color = "";
