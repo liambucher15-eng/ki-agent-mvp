@@ -19,14 +19,20 @@
       --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--sans); color: var(--text); background: var(--flaeche); min-height: 100dvh; }
-    /* Sanfter Marken-Schimmer hinter der App (wie der Glow im Onboarding) */
+    /* Marken-Verlauf als Seitenhintergrund (wie die Referenz): die App liegt
+       als abgerundete Karte darauf. Gleiche Farbreise wie der Onboarding-Glow. */
+    body { font-family: var(--sans); color: var(--text); min-height: 100dvh; padding: 1.6rem;
+           background: linear-gradient(140deg, #3730A3, var(--indigo) 26%, var(--violett) 52%, var(--coral) 80%, var(--orange));
+           background-attachment: fixed; }
+    /* Weiche Licht-Flecken im Verlauf, damit er lebt statt flach zu wirken */
     body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background: radial-gradient(60% 40% at 8% 0%, rgba(99,102,241,0.10), transparent 60%),
-                  radial-gradient(50% 35% at 100% 100%, rgba(251,113,133,0.08), transparent 60%); }
+      background: radial-gradient(45% 35% at 18% 12%, rgba(255,255,255,0.16), transparent 65%),
+                  radial-gradient(40% 30% at 85% 85%, rgba(255,255,255,0.12), transparent 65%); }
 
     .app { position: relative; z-index: 1; display: grid; grid-template-columns: 236px 1fr;
-           max-width: 1280px; margin: 0 auto; min-height: 100dvh; }
+           max-width: 1280px; margin: 0 auto; min-height: calc(100dvh - 3.2rem);
+           background: var(--flaeche); border-radius: 30px; overflow: clip;
+           box-shadow: 0 45px 100px -35px rgba(17,24,39,0.55); }
 
     /* ---------- Sidebar ---------- */
     .side { padding: 1.6rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -207,7 +213,8 @@
     .leer-gross h2 { font-family: var(--display); font-size: 1.4rem; margin-bottom: 0.5rem; }
 
     @media (max-width: 960px) {
-      .app { grid-template-columns: 1fr; }
+      body { padding: 0.55rem; }
+      .app { grid-template-columns: 1fr; border-radius: 22px; min-height: calc(100dvh - 1.1rem); }
       /* min-width:0: sonst drückt die nowrap-Navigation die Grid-Spalte breit
          und die ganze Seite scrollt horizontal. */
       .side { flex-direction: column; padding-bottom: 0; min-width: 0; }
