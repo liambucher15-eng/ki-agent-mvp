@@ -83,16 +83,23 @@
     .kopfzeile .mehr { margin-left: auto; font-size: 0.82rem; font-weight: 600; color: var(--indigo);
                        background: none; border: 0; cursor: pointer; }
 
-    /* Übersicht-Raster (wie die Referenz: Hero links, Statistiken rechts) */
+    /* Übersicht-Raster (wie die Referenz: Hero links, Statistiken rechts).
+       Zeilen-Raster mit stretch: Karten einer Zeile starten und enden auf
+       derselben Linie. */
     .raster { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; align-items: start; }
-    .spalte { display: grid; gap: 1rem; min-width: 0; }
+    .raster-ue { display: grid; grid-template-columns: 360px 1fr; gap: 1rem; align-items: stretch; }
+    .raster-ue > .karte { min-width: 0; }
+    .raster-ue > .voll { grid-column: 1 / -1; }
 
-    /* Hero-Karte (dunkles Indigo, wie "Balance details") */
+    /* Hero-Karte (dunkles Indigo, wie "Balance details"). Flex-Spalte, damit
+       die Aktions-Knöpfe bei gestreckter Zeile an der Unterkante bleiben. */
     .hero { position: relative; overflow: hidden; color: #fff; border: 0;
+            display: flex; flex-direction: column;
             background: linear-gradient(155deg, #312E81, var(--indigo) 52%, var(--violett)); }
     .hero::after { content: ""; position: absolute; left: -40px; bottom: -60px; width: 190px; height: 190px;
                    border-radius: 50%; background: radial-gradient(circle, rgba(251,113,133,0.5), transparent 70%); }
-    .hero .inhalt { position: relative; z-index: 1; padding-right: 104px; } /* Platz für die Figur oben rechts */
+    .hero .inhalt { position: relative; z-index: 1; padding-right: 104px; /* Platz für die Figur oben rechts */
+                    display: flex; flex-direction: column; flex: 1; }
     .hero .rolle { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
     .hero .agent { font-family: var(--display); font-size: 1.6rem; font-weight: 800; margin: 0.15rem 0 0.1rem; }
     .hero .firma { font-size: 0.88rem; opacity: 0.85; }
@@ -101,7 +108,7 @@
                    position: absolute; top: 0; right: 0; z-index: 2; border: 1px solid rgba(255,255,255,0.25); }
     .hero .figur img { width: 100%; height: 100%; object-fit: contain; }
     .hero .figur .initial { font-family: var(--display); font-size: 2rem; font-weight: 800; }
-    .hero .aktionen { display: flex; gap: 0.55rem; margin-top: 1.05rem; flex-wrap: wrap; }
+    .hero .aktionen { display: flex; gap: 0.55rem; margin-top: auto; padding-top: 1.05rem; flex-wrap: wrap; }
     .hero .aktionen a, .hero .aktionen button { font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer;
       border-radius: 10px; padding: 0.55rem 0.95rem; text-decoration: none; border: 0; }
     .hero .a1 { background: #fff; color: var(--indigo); }
@@ -222,7 +229,7 @@
       .nav-item { white-space: nowrap; }
       .side .grow, .promo { display: none; }
       .main { padding: 1rem 1rem 4rem; }
-      .raster { grid-template-columns: 1fr; }
+      .raster, .raster-ue { grid-template-columns: 1fr; }
       .checkliste { grid-template-columns: 1fr; }
     }
   </style>
@@ -277,39 +284,37 @@
 
       <!-- ===== Ansicht: Übersicht ===== -->
       <section class="ansicht" id="view-uebersicht" hidden>
-        <div class="raster">
-          <div class="spalte">
-            <div class="karte hero">
-              <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
-              <div class="inhalt">
-                <div class="rolle" id="heroRolle">Assistent</div>
-                <div class="agent" id="heroAgent">—</div>
-                <div class="firma" id="heroFirma">—</div>
-                <div class="aktionen">
-                  <a class="a1" id="heroChat" target="_blank">Agent testen</a>
-                  <button class="a2" data-geh="wissen">Wissen pflegen</button>
-                </div>
+        <!-- Echtes Zeilen-Raster: Karten einer Zeile starten UND enden auf
+             derselben Linie (stretch); die letzte Karte läuft über die volle Breite. -->
+        <div class="raster-ue">
+          <div class="karte hero">
+            <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
+            <div class="inhalt">
+              <div class="rolle" id="heroRolle">Assistent</div>
+              <div class="agent" id="heroAgent">—</div>
+              <div class="firma" id="heroFirma">—</div>
+              <div class="aktionen">
+                <a class="a1" id="heroChat" target="_blank">Agent testen</a>
+                <button class="a2" data-geh="wissen">Wissen pflegen</button>
               </div>
             </div>
-            <div class="karte">
-              <div class="kopfzeile"><h2>Startklar-Check</h2><button class="mehr" data-geh="wissen">Ergänzen →</button></div>
-              <p class="sub" id="startklarSatz"></p>
-              <div class="checkliste" id="startklarListe"></div>
-            </div>
           </div>
-          <div class="spalte">
-            <div class="karte">
-              <div class="kopfzeile"><h2>Dein Agent in Zahlen</h2></div>
-              <div class="statzeile" id="statzeile"></div>
-            </div>
-            <div class="karte">
-              <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2><button class="mehr" data-geh="persona">Anpassen →</button></div>
-              <div class="checkliste" id="einstellungsListe"></div>
-            </div>
-            <div class="karte">
-              <div class="kopfzeile"><h2>Letzte Gespräche</h2><button class="mehr" data-geh="gespraeche">Alle →</button></div>
-              <div id="uebersichtGespraeche"></div>
-            </div>
+          <div class="karte">
+            <div class="kopfzeile"><h2>Dein Agent in Zahlen</h2></div>
+            <div class="statzeile" id="statzeile"></div>
+          </div>
+          <div class="karte">
+            <div class="kopfzeile"><h2>Startklar-Check</h2><button class="mehr" data-geh="wissen">Ergänzen →</button></div>
+            <p class="sub" id="startklarSatz"></p>
+            <div class="checkliste" id="startklarListe"></div>
+          </div>
+          <div class="karte">
+            <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2><button class="mehr" data-geh="persona">Anpassen →</button></div>
+            <div class="checkliste" id="einstellungsListe"></div>
+          </div>
+          <div class="karte voll">
+            <div class="kopfzeile"><h2>Letzte Gespräche</h2><button class="mehr" data-geh="gespraeche">Alle →</button></div>
+            <div id="uebersichtGespraeche"></div>
           </div>
         </div>
       </section>
