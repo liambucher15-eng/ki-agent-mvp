@@ -194,6 +194,7 @@
     .btn:disabled { opacity: 0.5; cursor: default; }
     .btn.sek { background: #fff; color: var(--text); border: 1.5px solid var(--border); box-shadow: none; }
     .btn.klein { padding: 0.45rem 0.95rem; font-size: 0.83rem; }
+    .btn.icon { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; }
     .status { font-size: 0.85rem; min-height: 1.2em; }
     .mini-hinweis { font-size: 0.8rem; color: var(--grau); margin-top: 0.5rem; line-height: 1.5; }
     a { color: var(--indigo); }
@@ -345,7 +346,14 @@
         </div>
         <div class="rechts">
           <span class="badge basis" id="planBadge" hidden></span>
-          <a class="btn sek klein" id="chatlink" target="_blank" hidden>Test-Chat öffnen →</a>
+          <a class="btn sek klein icon" id="chatlink" target="_blank" hidden>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.9L3 21l1.9-5.7a8.38 8.38 0 1 1 16.1-3.8z"/></svg>
+            Vorschau deines Agenten
+          </a>
+          <button class="btn klein icon" id="agentBearbeiten" hidden>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+            Agent bearbeiten
+          </button>
           <div class="savewrap" id="saveleiste" hidden>
             <span class="status" id="saveStatus"></span>
             <button class="btn klein" id="speichern">✓ Speichern</button>
@@ -675,6 +683,7 @@
     function markiere() {
       geaendert = true;
       $("saveleiste").hidden = false;
+      $("agentBearbeiten").hidden = true; // Platz für den Speichern-Knopf
       $("saveStatus").textContent = "";
       $("saveStatus").style.color = "";
     }
@@ -1215,6 +1224,7 @@
       $("planAnzeigen").hidden = !aktiv;
     }
     $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
+    $("agentBearbeiten").addEventListener("click", () => zeigeAnsicht("persona"));
     async function starteCheckout(btn) {
       btn.disabled = true;
       try {
@@ -1264,6 +1274,7 @@
         geaendert = false;
         status.textContent = "";
         $("saveleiste").hidden = true;
+        $("agentBearbeiten").hidden = false;
         ladeFelder(); // Anzeige überall auffrischen (Hero, Übersicht, …)
         zeigeAnsicht(ansicht);
       } catch (e) {
@@ -1306,6 +1317,7 @@
       normalisiereQuellen();
       geaendert = false; $("saveleiste").hidden = true;
       $("chatlink").hidden = false;
+      $("agentBearbeiten").hidden = false;
       // Firmen-Chip unten in der Sidebar (wie das Mockup: Name + Domain)
       $("nutzerChip").hidden = false;
       $("nutzerName").textContent = firma.name || firma.id;
