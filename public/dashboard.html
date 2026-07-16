@@ -248,10 +248,11 @@
                       background: none; border: 0; cursor: pointer; padding: 0; }
 
     /* Design & Charakter */
-    .design-raster { display: grid; grid-template-columns: 400px 1fr; gap: 1rem; align-items: start; }
+    .design-raster { display: grid; grid-template-columns: 360px 1fr; gap: 1rem; align-items: start; }
     .farbfeld { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.78rem; font-weight: 600; }
     .farbfeld .hex { font-weight: 600; font-size: 0.72rem; color: var(--grau); }
-    .char-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
+    /* Immer alle 4 Ausdrücke nebeneinander (auf Mobile 2×2) */
+    .char-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
     .char-zelle { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.65rem; text-align: center; }
     .char-zelle .lbl { font-size: 0.84rem; font-weight: 700; margin: 0 0 0.5rem; color: #374151; }
     .char-zelle img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 9px; background: #fafafa; }
@@ -284,6 +285,7 @@
       .side .grow, .promo, .nutzer-side { display: none; }
       .main { padding: 1rem 1rem 4rem; }
       .raster-ue, .design-raster, .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
+      .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gzeile { grid-template-columns: 1fr; gap: 0.15rem; }
       .gzeile.gkopf { display: none; }
     }
