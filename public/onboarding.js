@@ -788,6 +788,9 @@
         await Store.saveFirma(firma);
         Store.setNutzer(daten.email);
         status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
+        // Übergabe ans Dashboard: Link zeigt direkt auf den frisch erstellten Agenten.
+        const dash = document.querySelector('a[href^="dashboard.html"]');
+        if (dash) dash.href = "dashboard.html?firma=" + encodeURIComponent(daten.id);
         window.open("index.html?firma=" + encodeURIComponent(daten.id), "_blank");
       } catch (e) {
         status.style.color = "#e11d48"; status.textContent = "Konnte nicht gespeichert werden: " + e.message;

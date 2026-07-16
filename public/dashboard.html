@@ -3,130 +3,514 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meine Agenten — Dashboard</title>
+  <title>AuraChat — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&family=DM+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Lora:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* Dashboard im Stil des Onboardings: gleiche Brand-Farben (Indigo/Coral),
+       Layout nach Referenz "Sidebar + Karten-Raster". Alles, was im Onboarding
+       eingestellt wird, ist hier sichtbar UND änderbar. */
     :root {
-      --indigo: #4F46E5; --gruen: #22C55E; --rot: #e11d48;
+      --indigo: #4F46E5; --indigo-hell: #6366F1; --violett: #8B5CF6;
+      --coral: #FB7185; --orange: #F97316; --gruen: #22C55E; --rot: #e11d48; --amber: #b45309;
       --text: #111827; --grau: #6B7280; --grau-hell: #9CA3AF; --border: #E5E7EB;
+      --flaeche: #F6F6FA;
+      --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
-    * { box-sizing: border-box; }
-    body { font-family: "Inter", system-ui, sans-serif; color: var(--text); background: #fafaf9;
-           max-width: 760px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
-    h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
-    h2 { font-size: 1.15rem; margin: 1.6rem 0 0.6rem; }
-    .sub { color: var(--grau); font-size: 0.92rem; line-height: 1.5; }
-    .karte { background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 1rem 1.1rem; margin: 0.6rem 0; }
-    .firma-knopf { display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
-                   background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 0.9rem 1.1rem;
-                   margin: 0.5rem 0; cursor: pointer; font: inherit; transition: border-color 0.15s; }
-    .firma-knopf:hover { border-color: var(--indigo); }
-    .firma-knopf .punkt { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .firma-knopf .name { font-weight: 600; }
-    .firma-knopf .id { color: var(--grau-hell); font-size: 0.82rem; margin-left: auto; }
-    .badge { font-size: 0.7rem; font-weight: 700; border-radius: 999px; padding: 0.12rem 0.55rem; }
-    .badge.scan { background: rgba(79,70,229,0.1); color: var(--indigo); }
-    .badge.dokument { background: rgba(34,197,94,0.12); color: #15803d; }
-    .badge.manuell { background: rgba(107,114,128,0.12); color: var(--grau); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); color: var(--text); background: var(--flaeche); min-height: 100dvh; }
+    /* Sanfter Marken-Schimmer hinter der App (wie der Glow im Onboarding) */
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(60% 40% at 8% 0%, rgba(99,102,241,0.10), transparent 60%),
+                  radial-gradient(50% 35% at 100% 100%, rgba(251,113,133,0.08), transparent 60%); }
+
+    .app { position: relative; z-index: 1; display: grid; grid-template-columns: 236px 1fr;
+           max-width: 1280px; margin: 0 auto; min-height: 100dvh; }
+
+    /* ---------- Sidebar ---------- */
+    .side { padding: 1.6rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .logo { font-family: var(--display); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em;
+            padding: 0 0.7rem 1.1rem; }
+    .logo b { background: linear-gradient(90deg, var(--indigo), var(--coral)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .agent-wahl { margin: 0 0.15rem 0.9rem; }
+    .agent-wahl select { width: 100%; font: inherit; font-size: 0.88rem; font-weight: 600; padding: 0.55rem 0.7rem;
+      border: 1.5px solid var(--border); border-radius: 11px; background: #fff; cursor: pointer; }
+    .nav-item { display: flex; align-items: center; gap: 0.65rem; width: 100%; text-align: left; font: inherit;
+      font-size: 0.92rem; font-weight: 600; color: var(--grau); background: none; border: 0; cursor: pointer;
+      padding: 0.68rem 0.85rem; border-radius: 12px; transition: background 0.15s, color 0.15s; }
+    .nav-item:hover { background: rgba(79,70,229,0.06); color: var(--text); }
+    .nav-item.aktiv { background: linear-gradient(135deg, var(--indigo), var(--indigo-hell)); color: #fff;
+                      box-shadow: 0 10px 20px -10px rgba(79,70,229,0.6); }
+    .nav-item .ic { width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-item .zahl { margin-left: auto; font-size: 0.72rem; font-weight: 700; background: var(--coral); color: #fff;
+                      border-radius: 999px; padding: 0.06rem 0.45rem; }
+    .side .grow { flex: 1; }
+    /* Promo-Karte unten (wie "Get Premium" in der Referenz) */
+    .promo { border-radius: 18px; padding: 1rem 1.05rem; color: #fff; position: relative; overflow: hidden;
+             background: linear-gradient(150deg, #312E81, var(--indigo) 55%, var(--violett)); }
+    .promo::after { content: ""; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px;
+                    border-radius: 50%; background: radial-gradient(circle, rgba(251,113,133,0.55), transparent 70%); }
+    .promo .t { font-family: var(--display); font-weight: 700; font-size: 0.98rem; }
+    .promo .s { font-size: 0.78rem; opacity: 0.85; margin: 0.25rem 0 0.7rem; line-height: 1.45; }
+    .promo button, .promo a.knopf { display: inline-block; font: inherit; font-size: 0.82rem; font-weight: 700; color: var(--indigo);
+      background: #fff; border: 0; border-radius: 9px; padding: 0.45rem 0.85rem; cursor: pointer; text-decoration: none; }
+
+    /* ---------- Hauptbereich ---------- */
+    .main { padding: 1.6rem 1.8rem 3.5rem; min-width: 0; }
+    .topbar { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.3rem; flex-wrap: wrap; }
+    .topbar h1 { font-family: var(--display); font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
+    .topbar .rechts { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .badge { font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 0.22rem 0.7rem; }
+    .badge.plus { background: rgba(34,197,94,0.13); color: #15803d; }
+    .badge.basis { background: rgba(107,114,128,0.13); color: var(--grau); }
+    .nutzer { display: flex; align-items: center; gap: 0.5rem; background: #fff; border: 1.5px solid var(--border);
+              border-radius: 999px; padding: 0.3rem 0.85rem 0.3rem 0.35rem; font-size: 0.82rem; font-weight: 600; }
+    .nutzer .avatar { width: 26px; height: 26px; border-radius: 50%; color: #fff; display: grid; place-items: center;
+                      font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, var(--indigo), var(--coral)); }
+
+    .karte { background: #fff; border: 1px solid rgba(17,24,39,0.05); border-radius: 18px; padding: 1.15rem 1.25rem;
+             box-shadow: 0 14px 34px -24px rgba(17,24,39,0.18); }
+    .karte h2 { font-family: var(--display); font-size: 1.02rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .karte .sub { color: var(--grau); font-size: 0.85rem; line-height: 1.5; }
+    .kopfzeile { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.6rem; }
+    .kopfzeile .mehr { margin-left: auto; font-size: 0.82rem; font-weight: 600; color: var(--indigo);
+                       background: none; border: 0; cursor: pointer; }
+
+    /* Übersicht-Raster (wie die Referenz: Hero links, Statistiken rechts) */
+    .raster { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; align-items: start; }
+    .spalte { display: grid; gap: 1rem; min-width: 0; }
+
+    /* Hero-Karte (dunkles Indigo, wie "Balance details") */
+    .hero { position: relative; overflow: hidden; color: #fff; border: 0;
+            background: linear-gradient(155deg, #312E81, var(--indigo) 52%, var(--violett)); }
+    .hero::after { content: ""; position: absolute; left: -40px; bottom: -60px; width: 190px; height: 190px;
+                   border-radius: 50%; background: radial-gradient(circle, rgba(251,113,133,0.5), transparent 70%); }
+    .hero .inhalt { position: relative; z-index: 1; padding-right: 104px; } /* Platz für die Figur oben rechts */
+    .hero .rolle { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+    .hero .agent { font-family: var(--display); font-size: 1.6rem; font-weight: 800; margin: 0.15rem 0 0.1rem; }
+    .hero .firma { font-size: 0.88rem; opacity: 0.85; }
+    .hero .figur { width: 96px; height: 96px; border-radius: 22px; background: rgba(255,255,255,0.14);
+                   backdrop-filter: blur(4px); display: grid; place-items: center; overflow: hidden;
+                   position: absolute; top: 0; right: 0; z-index: 2; border: 1px solid rgba(255,255,255,0.25); }
+    .hero .figur img { width: 100%; height: 100%; object-fit: contain; }
+    .hero .figur .initial { font-family: var(--display); font-size: 2rem; font-weight: 800; }
+    .hero .aktionen { display: flex; gap: 0.55rem; margin-top: 1.05rem; flex-wrap: wrap; }
+    .hero .aktionen a, .hero .aktionen button { font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer;
+      border-radius: 10px; padding: 0.55rem 0.95rem; text-decoration: none; border: 0; }
+    .hero .a1 { background: #fff; color: var(--indigo); }
+    .hero .a2 { background: rgba(255,255,255,0.14); color: #fff; border: 1px solid rgba(255,255,255,0.35) !important; }
+
+    /* Statistik-Kacheln mit Ring (wie die Donuts der Referenz) */
+    .statzeile { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+    .stat { display: flex; align-items: center; gap: 0.8rem; }
+    .stat .ring { flex-shrink: 0; }
+    .stat .w { font-family: var(--display); font-size: 1.3rem; font-weight: 800; line-height: 1.1; }
+    .stat .l { color: var(--grau); font-size: 0.78rem; margin-top: 0.1rem; }
+
+    .checkliste { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem; font-size: 0.86rem; margin-top: 0.6rem; }
+    .checkliste div { line-height: 1.6; }
+
+    .gespraech { border-left: 2px solid var(--border); padding: 0.3rem 0 0.3rem 0.75rem; margin: 0.6rem 0; }
+    .gespraech-f { font-weight: 600; font-size: 0.9rem; }
+    .gespraech-a { color: var(--grau); font-size: 0.85rem; margin-top: 0.2rem; line-height: 1.45; }
+    .gespraech-zeit { color: var(--grau-hell); font-size: 0.74rem; margin-top: 0.15rem; }
+    .leer { color: var(--grau-hell); font-size: 0.87rem; }
+
+    /* ---------- Formulare ---------- */
+    label.feld { display: block; font-size: 0.8rem; font-weight: 600; margin: 0.9rem 0 0.35rem; }
+    input[type=text], input[type=url], input[type=email], select.select, textarea {
+      width: 100%; font: inherit; font-size: 0.92rem; padding: 0.65rem 0.8rem; border: 1.5px solid var(--border);
+      border-radius: 10px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
+    select.select { cursor: pointer; }
+    textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
+    textarea.klein { min-height: 56px; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
+    input[type=color] { width: 46px; height: 34px; border: 1.5px solid var(--border); border-radius: 9px; background: #fff; padding: 2px; cursor: pointer; }
+    .zeile { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+    .pers { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
+    .pers-chip { font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+                 padding: 0.45rem 0.85rem; border-radius: 999px; border: 1.5px solid var(--border);
+                 background: #fff; color: var(--text); transition: border-color 0.15s, background 0.15s, color 0.15s; }
+    .pers-chip.aktiv { border-color: var(--indigo); background: rgba(79,70,229,0.08); color: var(--indigo); }
+    .btn { font: inherit; font-weight: 600; font-size: 0.9rem; border: 0; border-radius: 11px; cursor: pointer;
+           padding: 0.65rem 1.15rem; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell)); color: #fff;
+           box-shadow: 0 10px 20px -10px rgba(79,70,229,0.55); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn.sek { background: #fff; color: var(--text); border: 1.5px solid var(--border); box-shadow: none; }
+    .btn.klein { padding: 0.45rem 0.9rem; font-size: 0.83rem; }
+    .status { font-size: 0.85rem; min-height: 1.2em; }
+    .mini-hinweis { font-size: 0.8rem; color: var(--grau); margin-top: 0.4rem; line-height: 1.5; }
+    a { color: var(--indigo); }
+    [hidden] { display: none !important; }
+
+    /* Wissensquellen */
+    .quelle { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.85rem 0.95rem; margin: 0.6rem 0; }
     .quelle-kopf { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem; }
-    .quelle-kopf .titel { font-weight: 600; font-size: 0.92rem; }
-    .quelle-kopf .stand { color: var(--grau-hell); font-size: 0.78rem; }
+    .quelle-kopf .titel { font-weight: 600; font-size: 0.9rem; }
+    .quelle-kopf .stand { color: var(--grau-hell); font-size: 0.76rem; }
     .quelle-kopf .weg { margin-left: auto; background: none; border: 0; color: var(--grau-hell);
                         cursor: pointer; font-size: 1.05rem; line-height: 1; padding: 0.1rem 0.3rem; }
     .quelle-kopf .weg:hover { color: var(--rot); }
-    textarea, input[type=text], input[type=url] { width: 100%; font: inherit; font-size: 0.9rem; padding: 0.6rem 0.7rem;
-      border: 1.5px solid var(--border); border-radius: 10px; background: #fff; }
-    textarea { resize: vertical; min-height: 90px; line-height: 1.45; }
-    textarea:focus, input:focus { outline: none; border-color: var(--indigo); }
-    .btn { font: inherit; font-weight: 600; font-size: 0.92rem; border: 0; border-radius: 11px; cursor: pointer;
-           padding: 0.7rem 1.2rem; background: var(--indigo); color: #fff; }
-    .btn:disabled { opacity: 0.5; cursor: default; }
-    .btn.sek { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
-    .btn.klein { padding: 0.45rem 0.9rem; font-size: 0.85rem; }
-    .zeile { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
-    .status { font-size: 0.86rem; min-height: 1.2em; margin-top: 0.5rem; }
+    .tag { font-size: 0.68rem; font-weight: 700; border-radius: 999px; padding: 0.12rem 0.55rem; }
+    .tag.scan { background: rgba(79,70,229,0.1); color: var(--indigo); }
+    .tag.dokument { background: rgba(34,197,94,0.12); color: #15803d; }
+    .tag.manuell { background: rgba(107,114,128,0.12); color: var(--grau); }
     .vergleich { border: 1.5px dashed var(--indigo); border-radius: 14px; padding: 1rem 1.1rem; margin-top: 0.7rem; background: rgba(79,70,229,0.03); }
-    .vergleich h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
-    .vergleich pre { white-space: pre-wrap; font: inherit; font-size: 0.85rem; background: #fff;
+    .vergleich h3 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+    .vergleich pre { white-space: pre-wrap; font: inherit; font-size: 0.84rem; background: #fff;
                      border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 0.7rem;
-                     max-height: 220px; overflow-y: auto; margin: 0.3rem 0 0.7rem; }
-    a { color: var(--indigo); }
-    [hidden] { display: none !important; }
-    .lead { border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 0.9rem; margin: 0.5rem 0; }
+                     max-height: 200px; overflow-y: auto; margin: 0.3rem 0 0.7rem; }
+
+    /* FAQ-Editor */
+    .faq-eintrag { position: relative; border: 1.5px solid var(--border); border-radius: 11px; padding: 0.6rem 1.9rem 0.6rem 0.6rem; margin: 0.5rem 0; }
+    .faq-eintrag input { font-size: 0.87rem; font-weight: 600; padding: 0.5rem 0.6rem; margin-bottom: 0.4rem; }
+    .faq-eintrag textarea { font-size: 0.85rem; min-height: 44px; padding: 0.5rem 0.6rem; }
+    .faq-entfernen { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: 0; color: var(--grau-hell);
+                     cursor: pointer; font-size: 1rem; line-height: 1; padding: 0.1rem 0.3rem; }
+    .faq-entfernen:hover { color: var(--rot); }
+
+    /* Leads */
+    .lead { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.75rem 0.9rem; margin: 0.55rem 0; }
     .lead.erledigt { opacity: 0.55; }
-    .lead-kopf { display: flex; align-items: baseline; gap: 0.5rem; }
+    .lead-kopf { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
     .lead-name { font-weight: 600; }
-    .lead-kontakt { color: var(--indigo); font-size: 0.88rem; }
-    .lead-zeit { color: var(--grau-hell); font-size: 0.78rem; margin-left: auto; }
-    .lead-nachricht { font-size: 0.9rem; margin-top: 0.35rem; line-height: 1.45; }
-    .lead-erledigen { margin-top: 0.5rem; font-size: 0.82rem; font-weight: 600; color: var(--gruen);
+    .lead-kontakt { color: var(--indigo); font-size: 0.87rem; }
+    .lead-zeit { color: var(--grau-hell); font-size: 0.76rem; margin-left: auto; }
+    .lead-nachricht { font-size: 0.89rem; margin-top: 0.35rem; line-height: 1.45; }
+    .lead-erledigen { margin-top: 0.5rem; font-size: 0.81rem; font-weight: 600; color: var(--gruen);
                       background: none; border: 0; cursor: pointer; padding: 0; }
-    .gespraech { border-left: 2px solid var(--border); padding: 0.3rem 0 0.3rem 0.75rem; margin: 0.6rem 0; }
-    .gespraech-f { font-weight: 600; font-size: 0.9rem; }
-    .gespraech-a { color: var(--grau); font-size: 0.86rem; margin-top: 0.2rem; line-height: 1.45; }
-    .gespraech-zeit { color: var(--grau-hell); font-size: 0.75rem; margin-top: 0.15rem; }
-    .leer { color: var(--grau-hell); font-size: 0.88rem; }
-    .kopfzeile { display: flex; align-items: center; gap: 0.8rem; }
-    .kopfzeile .zurueck { background: none; border: 0; color: var(--grau); cursor: pointer; font: inherit; padding: 0.2rem 0.4rem; }
+
+    /* Charakter-Raster */
+    .char-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; margin-top: 0.8rem; }
+    .char-zelle { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.65rem; text-align: center; }
+    .char-zelle img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 9px; background: #fafafa; }
+    .char-zelle .lbl { font-size: 0.82rem; font-weight: 600; margin: 0.45rem 0 0.5rem; color: #374151; }
+    .char-zelle textarea { font-size: 0.83rem; min-height: 66px; }
+    .char-zelle button { width: 100%; font: inherit; font-size: 0.82rem; font-weight: 600; margin-top: 0.4rem;
+      padding: 0.45rem 0.6rem; border: 1.5px solid var(--indigo); color: var(--indigo); border-radius: 9px; background: #fff; cursor: pointer; }
+
+    .embed { background: #111827; color: #e5e7eb; font-family: ui-monospace, monospace; font-size: 0.8rem;
+             border-radius: 13px; padding: 0.9rem 1rem; word-break: break-all; line-height: 1.5; position: relative; }
+    .embed .kopieren { position: absolute; top: 0.55rem; right: 0.6rem; font: inherit; font-size: 0.74rem; font-weight: 600;
+      background: rgba(255,255,255,0.12); color: #fff; border: 0; border-radius: 7px; padding: 0.3rem 0.6rem; cursor: pointer; }
+
+    /* Speicher-Leiste (erscheint bei ungespeicherten Änderungen) */
+    .saveleiste { position: fixed; left: 50%; bottom: 1.1rem; transform: translateX(-50%); z-index: 50;
+      display: flex; align-items: center; gap: 0.8rem; background: #111827; color: #fff;
+      border-radius: 999px; padding: 0.55rem 0.7rem 0.55rem 1.2rem; box-shadow: 0 18px 40px -12px rgba(17,24,39,0.5); }
+    .saveleiste .txt { font-size: 0.86rem; font-weight: 600; }
+    .saveleiste .btn { box-shadow: none; padding: 0.55rem 1.1rem; }
+
+    .ansicht { display: grid; gap: 1rem; }
+    .leer-gross { text-align: center; padding: 4rem 1rem; }
+    .leer-gross h2 { font-family: var(--display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+      /* min-width:0: sonst drückt die nowrap-Navigation die Grid-Spalte breit
+         und die ganze Seite scrollt horizontal. */
+      .side { flex-direction: column; padding-bottom: 0; min-width: 0; }
+      .side nav { display: flex; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.4rem; }
+      .nav-item { white-space: nowrap; }
+      .side .grow, .promo { display: none; }
+      .main { padding: 1rem 1rem 4rem; }
+      .raster { grid-template-columns: 1fr; }
+      .checkliste { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <!-- ANSICHT 1: Liste meiner Agenten -->
-  <div id="liste-ansicht">
-    <h1>Meine Agenten</h1>
-    <p class="sub">Alle Agenten, die du in diesem Browser erstellt hast. Klick einen an, um sein Wissen zu pflegen.</p>
-    <div id="firmen-liste"></div>
-    <p class="sub" id="leer-hinweis" hidden>Noch kein Agent. <a href="onboarding-aura.html">Jetzt einen erstellen →</a></p>
+  <div class="app">
+    <!-- ================= Sidebar ================= -->
+    <aside class="side">
+      <div class="logo">Aura<b>Chat</b></div>
+      <div class="agent-wahl" id="agentWahlBox" hidden>
+        <select id="agentWahl" aria-label="Agent wählen"></select>
+      </div>
+      <nav id="nav">
+        <button class="nav-item aktiv" data-view="uebersicht"><span class="ic">▦</span> Übersicht</button>
+        <button class="nav-item" data-view="wissen"><span class="ic">📚</span> Wissen</button>
+        <button class="nav-item" data-view="persona"><span class="ic">💬</span> Persönlichkeit</button>
+        <button class="nav-item" data-view="design"><span class="ic">🎨</span> Design &amp; Charakter</button>
+        <button class="nav-item" data-view="posteingang"><span class="ic">📥</span> Posteingang <span class="zahl" id="leadBadge" hidden></span></button>
+        <button class="nav-item" data-view="gespraeche"><span class="ic">🗨</span> Gespräche</button>
+        <button class="nav-item" data-view="einstellungen"><span class="ic">⚙</span> Einstellungen</button>
+      </nav>
+      <div class="grow"></div>
+      <div class="promo" id="promoAbo" hidden>
+        <div class="t">Abo aktivieren ⭐</div>
+        <div class="s">Schalte deinen Agenten dauerhaft live und erhalte alle Funktionen.</div>
+        <button id="promoCheckout">Upgrade</button>
+      </div>
+      <div class="promo" id="promoTest" hidden>
+        <div class="t">Alles bereit ✓</div>
+        <div class="s">Dein Agent ist eingerichtet. Probier ihn im Test-Chat aus.</div>
+        <a class="knopf" id="promoChatlink" target="_blank">Agent testen</a>
+      </div>
+    </aside>
+
+    <!-- ================= Hauptbereich ================= -->
+    <main class="main">
+      <div class="topbar">
+        <h1 id="titel">Übersicht</h1>
+        <div class="rechts">
+          <span class="badge basis" id="planBadge" hidden></span>
+          <a class="btn sek klein" id="chatlink" target="_blank" hidden>Test-Chat öffnen →</a>
+          <div class="nutzer" id="nutzerChip" hidden><span class="avatar" id="nutzerAvatar">?</span><span id="nutzerMail"></span></div>
+        </div>
+      </div>
+
+      <!-- Leerzustand: noch kein Agent -->
+      <div id="leer" class="karte leer-gross" hidden>
+        <h2>Noch kein Agent</h2>
+        <p class="sub">Erstelle deinen ersten KI-Agenten im Onboarding — alle Einstellungen landen danach automatisch hier.</p>
+        <p style="margin-top:1.2rem;"><a class="btn" href="onboarding-aura.html" style="text-decoration:none;">Agent erstellen →</a></p>
+      </div>
+
+      <!-- ===== Ansicht: Übersicht ===== -->
+      <section class="ansicht" id="view-uebersicht" hidden>
+        <div class="raster">
+          <div class="spalte">
+            <div class="karte hero">
+              <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
+              <div class="inhalt">
+                <div class="rolle" id="heroRolle">Assistent</div>
+                <div class="agent" id="heroAgent">—</div>
+                <div class="firma" id="heroFirma">—</div>
+                <div class="aktionen">
+                  <a class="a1" id="heroChat" target="_blank">Agent testen</a>
+                  <button class="a2" data-geh="wissen">Wissen pflegen</button>
+                </div>
+              </div>
+            </div>
+            <div class="karte">
+              <div class="kopfzeile"><h2>Startklar-Check</h2><button class="mehr" data-geh="wissen">Ergänzen →</button></div>
+              <p class="sub" id="startklarSatz"></p>
+              <div class="checkliste" id="startklarListe"></div>
+            </div>
+          </div>
+          <div class="spalte">
+            <div class="karte">
+              <div class="kopfzeile"><h2>Dein Agent in Zahlen</h2></div>
+              <div class="statzeile" id="statzeile"></div>
+            </div>
+            <div class="karte">
+              <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2><button class="mehr" data-geh="persona">Anpassen →</button></div>
+              <div class="checkliste" id="einstellungsListe"></div>
+            </div>
+            <div class="karte">
+              <div class="kopfzeile"><h2>Letzte Gespräche</h2><button class="mehr" data-geh="gespraeche">Alle →</button></div>
+              <div id="uebersichtGespraeche"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Wissen ===== -->
+      <section class="ansicht" id="view-wissen" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Firma</h2></div>
+          <div class="raster" style="grid-template-columns: 1fr 1fr; gap: 0 1rem;">
+            <div><label class="feld" for="f-name">Firmenname</label><input type="text" id="f-name" /></div>
+            <div><label class="feld" for="f-webseite">Webseite</label><input type="url" id="f-webseite" placeholder="https://…" /></div>
+          </div>
+          <label class="feld" for="f-oeffnung">Öffnungszeiten</label>
+          <input type="text" id="f-oeffnung" placeholder="z.B. Mo–Fr 9–18 Uhr" />
+          <div class="raster" style="grid-template-columns: 1fr 1fr; gap: 0 1rem;">
+            <div><label class="feld" for="f-adresse">Adresse</label><input type="text" id="f-adresse" /></div>
+            <div><label class="feld" for="f-kontakt">Kontakt (Telefon / E-Mail)</label><input type="text" id="f-kontakt" /></div>
+          </div>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Häufige Fragen</h2><button class="mehr" id="faqNeu">+ Frage</button></div>
+          <p class="sub">Fragen, die dein Agent besonders gut beantworten soll.</p>
+          <div id="faqListe"></div>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Wissensquellen</h2><button class="mehr" id="quelleNeu">+ Eigene Notiz</button></div>
+          <p class="sub">Jede Quelle kennt ihre Herkunft und ihren Stand. Was du löschst, weiss der Agent ab sofort nicht mehr.</p>
+          <div id="quellenListe"></div>
+          <label class="feld" style="margin-top:1rem;">Dokument hinzufügen <span style="font-weight:400;color:var(--grau)">(PDF, TXT, MD — wird gelesen und zur Quelle)</span></label>
+          <input type="file" id="docNeu" multiple accept=".pdf,.txt,.md,.markdown,text/*,application/pdf" />
+          <div class="status" id="docStatus"></div>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Webseite neu scannen</h2></div>
+          <p class="sub">Liest deine Webseite erneut und schlägt einen aktualisierten Wissens-Text vor — du entscheidest, ob er übernommen wird.</p>
+          <div class="zeile" style="margin-top:0.7rem;">
+            <input type="url" id="rescanUrl" placeholder="https://deine-firma.ch" style="flex:1; min-width:220px;" />
+            <button class="btn sek" id="rescanBtn">Neu scannen</button>
+          </div>
+          <div class="status" id="rescanStatus" style="margin-top:0.5rem;"></div>
+          <div class="vergleich" id="vergleich" hidden>
+            <h3>Vorschlag aus dem neuen Scan</h3>
+            <div class="sub">Bisheriger Scan-Text:</div><pre id="vergleichAlt"></pre>
+            <div class="sub">Neuer Scan-Text:</div><pre id="vergleichNeu"></pre>
+            <div class="zeile">
+              <button class="btn klein" id="uebernehmen">Übernehmen</button>
+              <button class="btn sek klein" id="verwerfen">Verwerfen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Persönlichkeit ===== -->
+      <section class="ansicht" id="view-persona" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Identität</h2></div>
+          <div class="raster" style="grid-template-columns: 1fr 1fr; gap: 0 1rem;">
+            <div><label class="feld" for="a-name">Name deines Agenten</label><input type="text" id="a-name" /></div>
+            <div><label class="feld" for="a-rolle">Rolle</label>
+              <select class="select" id="a-rolle">
+                <option value="Gastgeber">Gastgeber</option><option value="Gastgeberin">Gastgeberin</option>
+                <option value="Berater">Berater</option><option value="Beraterin">Beraterin</option>
+                <option value="Service-Team">Service-Team</option><option value="Concierge">Concierge</option>
+                <option value="Assistent">Assistent</option>
+              </select>
+            </div>
+          </div>
+          <label class="feld">Anrede der Besucher</label>
+          <div class="pers" id="anredeListe">
+            <button type="button" class="pers-chip" data-anrede="du">Du (locker)</button>
+            <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
+          </div>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Ton &amp; Antwortstil</h2></div>
+          <label class="feld">Persönlichkeit</label>
+          <div class="pers" id="tonListe">
+            <button type="button" class="pers-chip" data-ton="professionell">Professionell</button>
+            <button type="button" class="pers-chip" data-ton="freundlich">Freundlich</button>
+            <button type="button" class="pers-chip" data-ton="humorvoll">Humorvoll</button>
+            <button type="button" class="pers-chip" data-ton="sachlich">Sachlich</button>
+            <button type="button" class="pers-chip" data-ton="motivierend">Motivierend</button>
+            <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
+          </div>
+          <p class="mini-hinweis" id="tonHinweis"></p>
+          <label class="feld">Antwortlänge</label>
+          <div class="pers" id="laengeListe">
+            <button type="button" class="pers-chip" data-laenge="kurz">Kurz &amp; direkt</button>
+            <button type="button" class="pers-chip" data-laenge="ausgewogen">Ausgewogen</button>
+            <button type="button" class="pers-chip" data-laenge="ausfuehrlich">Ausführlich</button>
+          </div>
+          <label class="feld">Emojis</label>
+          <div class="pers" id="emojiListe">
+            <button type="button" class="pers-chip" data-emoji="keine">Keine</button>
+            <button type="button" class="pers-chip" data-emoji="dezent">Dezent</button>
+            <button type="button" class="pers-chip" data-emoji="lebendig">Lebendig</button>
+          </div>
+          <label class="feld">Format</label>
+          <div class="pers" id="formatListe">
+            <button type="button" class="pers-chip" data-format="absatz">Kurze Absätze</button>
+            <button type="button" class="pers-chip" data-format="listen">Listen bei Bedarf</button>
+            <button type="button" class="pers-chip" data-format="fliessend">Fließtext</button>
+          </div>
+          <p class="mini-hinweis" id="antwortVorschau"></p>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Grenzen &amp; Übergabe</h2></div>
+          <label class="feld" for="a-uebergabe">Wenn der Agent nicht weiterweiss</label>
+          <select class="select" id="a-uebergabe">
+            <option value="kontakt">Kontaktdaten aufnehmen</option>
+            <option value="kontaktinfo">Kontaktinformationen zeigen</option>
+            <option value="ehrlich">Ehrlich sagen, dass die Information fehlt</option>
+          </select>
+          <label class="feld" for="a-grenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
+          <textarea class="klein" id="a-grenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Design & Charakter ===== -->
+      <section class="ansicht" id="view-design" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Farben &amp; Schrift</h2></div>
+          <div class="zeile" style="margin-top:0.5rem;">
+            <label style="font-size:0.85rem;font-weight:600;">Hauptfarbe <input type="color" id="d-farbe1" style="vertical-align:middle;margin-left:0.35rem;" /></label>
+            <label style="font-size:0.85rem;font-weight:600;">Akzentfarbe <input type="color" id="d-farbe2" style="vertical-align:middle;margin-left:0.35rem;" /></label>
+            <div id="farbVorschau" style="flex:1;min-width:140px;height:34px;border-radius:9px;"></div>
+          </div>
+          <label class="feld" for="d-schrift">Schrift im Chat</label>
+          <select class="select" id="d-schrift">
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option><option value="Inter">Inter</option>
+            <option value="Poppins">Poppins</option><option value="DM Sans">DM Sans</option>
+            <option value="Space Grotesk">Space Grotesk</option><option value="Lora">Lora</option>
+          </select>
+          <p id="schriftVorschau" style="margin-top:0.6rem;font-size:1.02rem;">Grüezi! So schreibt dein Agent im Chat.</p>
+          <label class="feld">Chat-Design</label>
+          <div class="pers" id="designListe">
+            <button type="button" class="pers-chip" data-design="auto">Automatisch aus Website</button>
+            <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
+          </div>
+          <label class="feld">Layout</label>
+          <div class="pers" id="layoutListe">
+            <button type="button" class="pers-chip" data-layout="sidebar">Seitenleiste</button>
+            <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
+          </div>
+        </div>
+
+        <div class="karte">
+          <div class="kopfzeile"><h2>Dein Charakter</h2></div>
+          <p class="sub">Die vier Ausdrücke deiner Figur im Chat. Jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
+          <div id="charLeer" class="leer" style="margin-top:0.7rem;" hidden>
+            Noch kein Charakter — <a href="onboarding-aura.html">im Onboarding erstellen →</a>
+          </div>
+          <div class="char-grid" id="charGrid"></div>
+          <div class="status" id="charStatus" style="margin-top:0.5rem;"></div>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Posteingang ===== -->
+      <section class="ansicht" id="view-posteingang" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Posteingang</h2><span class="sub" id="leadZahl"></span></div>
+          <p class="sub">Kontaktanfragen, die dein Agent für dich aufgenommen hat.</p>
+          <div id="leadsListe"></div>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Gespräche ===== -->
+      <section class="ansicht" id="view-gespraeche" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Letzte Gespräche</h2></div>
+          <p class="sub">Was Besucher deinen Agenten gefragt haben.</p>
+          <div id="gespraecheListe"></div>
+        </div>
+      </section>
+
+      <!-- ===== Ansicht: Einstellungen ===== -->
+      <section class="ansicht" id="view-einstellungen" hidden>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Konto</h2></div>
+          <div class="raster" style="grid-template-columns: 1fr 1fr; gap: 0 1rem;">
+            <div><label class="feld" for="e-email">E-Mail</label><input type="email" id="e-email" /></div>
+            <div><label class="feld">Agent-ID</label><input type="text" id="e-id" readonly style="background:#f9fafb;color:var(--grau);" /></div>
+          </div>
+          <label class="feld">Abo</label>
+          <div class="zeile">
+            <span class="badge basis" id="aboBadge"></span>
+            <button class="btn klein" id="aboCheckout" hidden>Abo abschliessen</button>
+          </div>
+        </div>
+        <div class="karte">
+          <div class="kopfzeile"><h2>Einbetten</h2></div>
+          <p class="sub">Füge diese eine Zeile in deine Webseite ein — der Agent ist sofort live.</p>
+          <div class="embed" style="margin-top:0.7rem;"><button class="kopieren" id="embedKopieren">Kopieren</button><span id="embedText"></span></div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- ANSICHT 2: Wissen einer Firma pflegen -->
-  <div id="editor-ansicht" hidden>
-    <div class="kopfzeile">
-      <button class="zurueck" id="zurueck">← Übersicht</button>
-      <h1 id="ed-name" style="margin:0;"></h1>
-    </div>
-    <p class="sub">
-      <a id="ed-chatlink" target="_blank">Test-Chat öffnen →</a>
-      <span id="plan-bereich" style="margin-left:0.8rem;"></span>
-    </p>
-
-    <h2>Posteingang <span id="lead-zahl" class="sub" style="font-weight:400;"></span></h2>
-    <p class="sub">Kontaktanfragen, die dein Agent für dich aufgenommen hat.</p>
-    <div id="leads-liste"></div>
-
-    <h2>Letzte Gespräche</h2>
-    <p class="sub">Was Besucher deinen Agenten gefragt haben.</p>
-    <div id="gespraeche-liste"></div>
-
-    <h2>Wissen (Quellen)</h2>
-    <p class="sub">Jede Quelle kennt ihre Herkunft und ihren Stand. Was du hier löschst, weiss der Agent ab sofort nicht mehr.</p>
-    <div id="quellen-liste"></div>
-    <div class="zeile" style="margin-top:0.6rem;">
-      <button class="btn sek klein" id="quelle-neu">+ Eigene Notiz hinzufügen</button>
-    </div>
-
-    <h2>Webseite neu scannen</h2>
-    <p class="sub">Liest deine Webseite erneut und schlägt einen aktualisierten Wissens-Text vor — du entscheidest, ob er übernommen wird.</p>
-    <div class="zeile">
-      <input type="url" id="rescan-url" placeholder="https://deine-firma.ch" style="flex:1; min-width: 220px;" />
-      <button class="btn sek" id="rescan-btn">Neu scannen</button>
-    </div>
-    <div class="status" id="rescan-status"></div>
-    <div class="vergleich" id="vergleich" hidden>
-      <h3>Vorschlag aus dem neuen Scan</h3>
-      <div class="sub">Bisheriger Scan-Text:</div>
-      <pre id="vergleich-alt"></pre>
-      <div class="sub">Neuer Scan-Text:</div>
-      <pre id="vergleich-neu"></pre>
-      <div class="zeile">
-        <button class="btn klein" id="uebernehmen">Übernehmen</button>
-        <button class="btn sek klein" id="verwerfen">Verwerfen</button>
-      </div>
-    </div>
-
-    <div style="margin-top:1.6rem;" class="zeile">
-      <button class="btn" id="speichern">Speichern</button>
-      <span class="status" id="speicher-status" style="margin-top:0;"></span>
-    </div>
+  <!-- Speicher-Leiste bei ungespeicherten Änderungen -->
+  <div class="saveleiste" id="saveleiste" hidden>
+    <span class="txt">Ungespeicherte Änderungen</span>
+    <span class="status" id="saveStatus" style="color:#a5b4fc;"></span>
+    <button class="btn" id="speichern">Speichern</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
@@ -134,207 +518,243 @@
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
   <script>
-    // Dashboard (Milestone 3): Wissensquellen einer Firma pflegen + Re-Scan.
-    // Bewusst schlank — bearbeitet NUR das Wissen. Persona/Farben/Charakter
-    // bleiben (noch) Sache des Onboardings.
-    let firma = null; // die gerade geöffnete Firma (komplettes daten-Objekt)
-
+    // Dashboard: ALLE Onboarding-Einstellungen im Überblick und änderbar.
+    // Die Firma wird 1:1 aus dem Store geladen (dieselbe Struktur, die das
+    // Onboarding speichert) und beim Speichern komplett zurückgeschrieben.
     const $ = (id) => document.getElementById(id);
     const heute = () => new Date().toISOString().slice(0, 10);
     const neueId = (p) => p + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+    const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    // ---------- Ansicht 1: Liste ----------
-    async function zeigeListe() {
-      $("editor-ansicht").hidden = true;
-      $("liste-ansicht").hidden = false;
-      const firmen = await Store.meineFirmen();
-      const liste = $("firmen-liste");
-      liste.textContent = "";
-      $("leer-hinweis").hidden = firmen.length > 0;
-      firmen.forEach((f) => {
-        const b = document.createElement("button");
-        b.className = "firma-knopf";
-        const punkt = document.createElement("span"); punkt.className = "punkt";
-        punkt.style.background = (f.charakter && f.charakter.farbe) || "#4F46E5";
-        const name = document.createElement("span"); name.className = "name"; name.textContent = f.name || f.id;
-        const id = document.createElement("span"); id.className = "id"; id.textContent = f.id;
-        b.appendChild(punkt); b.appendChild(name); b.appendChild(id);
-        b.addEventListener("click", () => oeffneFirma(f));
-        liste.appendChild(b);
-      });
+    // Ton-Texte wie im Onboarding (persona.ton speichert den TEXT, nicht den Schlüssel).
+    const TON_TEXTE = {
+      professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
+      freundlich:    "warm, freundlich und hilfsbereit; geduldig und zugänglich",
+      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern — aber immer hilfreich",
+      sachlich:      "sachlich, knapp und faktenorientiert, ohne Ausschmückungen",
+      motivierend:   "motivierend und begeisternd; ermutigt die Besucher",
+      luxurioes:     "gehoben, elegant und exklusiv; gewählte, diskrete Sprache",
+    };
+    const TON_HINWEIS = {
+      professionell: "Kompetent und verbindlich — für seriöse Marken.",
+      freundlich:    "Warm und nahbar — der Allrounder.",
+      humorvoll:     "Locker mit Augenzwinkern — für nahbare Marken.",
+      sachlich:      "Knapp und faktenorientiert — für technische Angebote.",
+      motivierend:   "Energiegeladen — für Coaching, Fitness, Bildung.",
+      luxurioes:     "Gehoben und exklusiv — für Premium-Marken.",
+    };
+    const tonSchluessel = (text) =>
+      (Object.entries(TON_TEXTE).find(([, t]) => t === text) || ["freundlich"])[0];
+
+    const CHAR_ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
+    const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
+
+    let firmen = [];       // alle Agenten des Nutzers
+    let firma = null;      // aktuell geöffnete Firma (komplettes daten-Objekt)
+    let geaendert = false; // ungespeicherte Änderungen?
+
+    const sb = (window.Auth && window.Auth.konfiguriert) ? window.Auth.client : null;
+    function zeit(iso) {
+      try { return new Date(iso).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" }); }
+      catch { return ""; }
     }
 
-    // ---------- Ansicht 2: Editor ----------
-    function oeffneFirma(f) {
-      firma = f;
-      // Alt-Format (ein wissen-String) einmalig in eine Quelle umwandeln.
+    // ---------- Änderungs-Verfolgung ----------
+    function markiere() {
+      geaendert = true;
+      $("saveleiste").hidden = false;
+      $("saveStatus").textContent = "";
+    }
+
+    // ---------- Navigation ----------
+    const TITEL = { uebersicht: "Übersicht", wissen: "Wissen", persona: "Persönlichkeit",
+      design: "Design & Charakter", posteingang: "Posteingang", gespraeche: "Gespräche", einstellungen: "Einstellungen" };
+    let ansicht = "uebersicht";
+    function zeigeAnsicht(name) {
+      ansicht = name;
+      document.querySelectorAll(".ansicht").forEach((s) => { s.hidden = s.id !== "view-" + name; });
+      document.querySelectorAll("#nav .nav-item").forEach((b) => b.classList.toggle("aktiv", b.dataset.view === name));
+      $("titel").textContent = TITEL[name] || "Dashboard";
+      if (name === "uebersicht") zeigeUebersicht();
+    }
+    document.querySelectorAll("#nav .nav-item").forEach((b) =>
+      b.addEventListener("click", () => zeigeAnsicht(b.dataset.view)));
+    document.querySelectorAll("[data-geh]").forEach((b) =>
+      b.addEventListener("click", () => zeigeAnsicht(b.dataset.geh)));
+
+    // ---------- Chip-Gruppen (gleiche Interaktion wie im Onboarding) ----------
+    // holen/setzen arbeiten direkt auf dem firma-Objekt.
+    function chipGruppe(containerId, attribut, setze, nachWahl) {
+      const chips = document.querySelectorAll("#" + containerId + " .pers-chip");
+      chips.forEach((c) => c.addEventListener("click", () => {
+        setze(c.dataset[attribut]);
+        chips.forEach((x) => x.classList.toggle("aktiv", x === c));
+        markiere();
+        if (nachWahl) nachWahl(c.dataset[attribut]);
+      }));
+      return {
+        waehle(wert) { chips.forEach((c) => c.classList.toggle("aktiv", c.dataset[attribut] === wert)); if (nachWahl) nachWahl(wert); },
+      };
+    }
+    const anredeChips = chipGruppe("anredeListe", "anrede", (w) => { firma.persona.ansprache = w; });
+    const tonChips = chipGruppe("tonListe", "ton", (w) => { firma.persona.ton = TON_TEXTE[w]; },
+      (w) => { $("tonHinweis").textContent = TON_HINWEIS[w] || ""; });
+    const laengeChips = chipGruppe("laengeListe", "laenge", (w) => { firma.persona.antwortLaenge = w; }, aktualisiereAntwortVorschau);
+    const emojiChips = chipGruppe("emojiListe", "emoji", (w) => { firma.persona.emojiStil = w; }, aktualisiereAntwortVorschau);
+    const formatChips = chipGruppe("formatListe", "format", (w) => { firma.persona.antwortFormat = w; }, aktualisiereAntwortVorschau);
+    const designChips = chipGruppe("designListe", "design", (w) => { firma.charakter.chatDesign = w; });
+    const layoutChips = chipGruppe("layoutListe", "layout", (w) => { firma.charakter.chatLayout = w; });
+
+    function aktualisiereAntwortVorschau() {
+      if (!firma) return;
+      const p = firma.persona;
+      const laenge = { kurz: "kurz und direkt", ausgewogen: "klar mit den wichtigsten Details", ausfuehrlich: "ausführlich und erklärend" }[p.antwortLaenge] || "klar";
+      const emoji = { keine: "ohne Emojis", dezent: "mit einzelnen passenden Emojis", lebendig: "mit einer lebendigen Emoji-Nutzung" }[p.emojiStil] || "";
+      const format = { absatz: "in kurzen Absätzen", listen: "mit Listen, wenn sie helfen", fliessend: "als zusammenhängender Text" }[p.antwortFormat] || "";
+      $("antwortVorschau").textContent = "Vorschau: Dein Agent antwortet " + laenge + ", " + format + " und " + emoji + ".";
+    }
+
+    // ---------- Eingabefelder an das firma-Objekt binden ----------
+    function binde(id, lies, schreib) {
+      const el = $(id);
+      el.addEventListener("input", () => { schreib(el.value); markiere(); });
+      return { lade() { el.value = lies() || ""; } };
+    }
+    const felder = [];
+    function bindeAlleFelder() {
+      felder.push(
+        binde("f-name", () => firma.name, (v) => { firma.name = v.trim(); }),
+        binde("f-webseite", () => firma.webseite, (v) => { firma.webseite = v.trim(); }),
+        binde("f-oeffnung", () => firma.fakten["Öffnungszeiten"], (v) => { setzeFakt("Öffnungszeiten", v); }),
+        binde("f-adresse", () => firma.fakten["Adresse"], (v) => { setzeFakt("Adresse", v); }),
+        binde("f-kontakt", () => firma.fakten["Kontakt"], (v) => { setzeFakt("Kontakt", v); }),
+        binde("a-name", () => firma.persona.name, (v) => { firma.persona.name = v.trim(); }),
+        binde("a-rolle", () => firma.persona.rolle, (v) => { firma.persona.rolle = v; }),
+        binde("a-uebergabe", () => firma.persona.uebergabe, (v) => { firma.persona.uebergabe = v; }),
+        binde("a-grenzen", () => firma.persona.grenzen, (v) => { firma.persona.grenzen = v.trim(); }),
+        binde("d-farbe1", () => firma.charakter.farbe, (v) => { firma.charakter.farbe = v; zeigeFarbVorschau(); }),
+        binde("d-farbe2", () => firma.charakter.akzent, (v) => { firma.charakter.akzent = v; zeigeFarbVorschau(); }),
+        binde("d-schrift", () => firma.charakter.schrift, (v) => { firma.charakter.schrift = v; zeigeSchriftVorschau(); }),
+        binde("e-email", () => firma.email, (v) => { firma.email = v.trim(); }),
+      );
+    }
+    bindeAlleFelder();
+    function setzeFakt(name, wert) {
+      wert = wert.trim();
+      if (wert) firma.fakten[name] = wert; else delete firma.fakten[name];
+    }
+    function zeigeFarbVorschau() {
+      $("farbVorschau").style.background =
+        "linear-gradient(90deg, " + firma.charakter.farbe + ", " + firma.charakter.akzent + ")";
+    }
+    function zeigeSchriftVorschau() {
+      $("schriftVorschau").style.fontFamily = '"' + firma.charakter.schrift + '", sans-serif';
+    }
+
+    // ---------- FAQ-Editor ----------
+    function zeigeFaq() {
+      const box = $("faqListe");
+      box.textContent = "";
+      (firma.faq || []).forEach((f, i) => {
+        const zeile = document.createElement("div"); zeile.className = "faq-eintrag";
+        const weg = document.createElement("button"); weg.type = "button"; weg.className = "faq-entfernen"; weg.title = "Entfernen"; weg.textContent = "×";
+        weg.addEventListener("click", () => { firma.faq.splice(i, 1); markiere(); zeigeFaq(); });
+        const frage = document.createElement("input"); frage.type = "text"; frage.placeholder = "Frage, die Kunden oft stellen"; frage.value = f.frage || "";
+        frage.addEventListener("input", () => { f.frage = frage.value.trim(); markiere(); });
+        const antwort = document.createElement("textarea"); antwort.placeholder = "Antwort, die der Agent geben soll"; antwort.value = f.antwort || "";
+        antwort.addEventListener("input", () => { f.antwort = antwort.value.trim(); markiere(); });
+        zeile.append(weg, frage, antwort);
+        box.appendChild(zeile);
+      });
+      if (!(firma.faq || []).length) {
+        const p = document.createElement("p"); p.className = "leer"; p.textContent = "Noch keine Fragen definiert.";
+        box.appendChild(p);
+      }
+    }
+    $("faqNeu").addEventListener("click", () => {
+      firma.faq = firma.faq || [];
+      firma.faq.push({ frage: "", antwort: "" });
+      markiere(); zeigeFaq();
+    });
+
+    // ---------- Wissensquellen ----------
+    function normalisiereQuellen() {
       if (!Array.isArray(firma.wissensquellen)) {
         firma.wissensquellen = firma.wissen
           ? [{ id: "legacy", typ: "manuell", titel: "Bisheriges Wissen", stand: "", text: firma.wissen }]
           : [];
         delete firma.wissen;
       }
-      $("liste-ansicht").hidden = true;
-      $("editor-ansicht").hidden = false;
-      $("ed-name").textContent = firma.name || firma.id;
-      $("ed-chatlink").href = "index.html?firma=" + encodeURIComponent(firma.id);
-      $("rescan-url").value = firma.webseite || "";
-      $("vergleich").hidden = true;
-      $("rescan-status").textContent = "";
-      $("speicher-status").textContent = "";
-      zeigeQuellen();
-      zeigePlan();
-      ladeLeads();
-      ladeGespraeche();
     }
-    $("zurueck").addEventListener("click", zeigeListe);
-
-    // ---------- Abo-Status + Aktivieren ----------
-    // Es gibt nur EINE Variante (den KI-Charakter). Der Abo-Status ist Server-
-    // Wahrheit (Stripe): nach dem Kauf setzt der Webhook firmen.plan="plus".
-    // "plus" = Abo aktiv, sonst noch nicht abgeschlossen. Frisch über /firma laden.
-    async function aktuellerPlan() {
-      try {
-        const f = await (await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(firma.id) + "&t=" + Date.now())).json();
-        return f.plan || "basis";
-      } catch { return firma.plan || "basis"; }
-    }
-    async function zeigePlan() {
-      const el = $("plan-bereich");
-      el.textContent = "";
-      const aktiv = (await aktuellerPlan()) === "plus";
-      const badge = document.createElement("span");
-      badge.className = "badge " + (aktiv ? "scan" : "manuell");
-      badge.textContent = aktiv ? "Abo aktiv" : "Abo nicht aktiv";
-      el.appendChild(badge);
-      if (!aktiv) {
-        const btn = document.createElement("button");
-        btn.className = "btn klein"; btn.style.marginLeft = "0.6rem"; btn.textContent = "Abo abschliessen";
-        btn.addEventListener("click", () => starteCheckout(btn));
-        el.appendChild(btn);
-      }
-    }
-    async function starteCheckout(btn) {
-      btn.disabled = true; btn.textContent = "Weiterleiten…";
-      try {
-        const res = await fetch("/.netlify/functions/abo-checkout", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: firma.id, plan: "plus", basis: location.origin }),
-        });
-        const d = await res.json();
-        if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); btn.disabled = false; btn.textContent = "Abo abschliessen"; return; }
-        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
-        location.href = d.url; // ab zu Stripe
-      } catch (e) {
-        alert("Abo konnte nicht gestartet werden: " + e.message);
-        btn.disabled = false; btn.textContent = "Abo abschliessen";
-      }
-    }
-
-    // ---------- Posteingang (Leads) + Gespräche ----------
-    // Beides ist NUR für den Firmen-Besitzer lesbar (RLS über die anonyme
-    // Sitzung). Ohne Supabase (Simulation) bleiben die Listen leer.
-    const sb = (window.Auth && window.Auth.konfiguriert) ? window.Auth.client : null;
-    function zeit(iso) {
-      try { return new Date(iso).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" }); }
-      catch { return ""; }
-    }
-    async function ladeLeads() {
-      const el = $("leads-liste"), zahl = $("lead-zahl");
-      el.textContent = ""; zahl.textContent = "";
-      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; return; }
-      const { data, error } = await sb.from("kontaktanfragen").select("*")
-        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
-      if (error || !data || !data.length) {
-        el.innerHTML = '<p class="leer">Noch keine Kontaktanfragen.</p>'; return;
-      }
-      const offen = data.filter((l) => !l.erledigt).length;
-      zahl.textContent = offen ? "· " + offen + " offen" : "";
-      data.forEach((lead) => {
-        const box = document.createElement("div");
-        box.className = "lead" + (lead.erledigt ? " erledigt" : "");
-        const kopf = document.createElement("div"); kopf.className = "lead-kopf";
-        const name = document.createElement("span"); name.className = "lead-name"; name.textContent = lead.name || "Ohne Namen";
-        const kontakt = document.createElement("span"); kontakt.className = "lead-kontakt"; kontakt.textContent = lead.kontakt || "";
-        const t = document.createElement("span"); t.className = "lead-zeit"; t.textContent = zeit(lead.erstellt);
-        kopf.appendChild(name); kopf.appendChild(kontakt); kopf.appendChild(t);
-        const nachricht = document.createElement("div"); nachricht.className = "lead-nachricht"; nachricht.textContent = lead.nachricht;
-        box.appendChild(kopf); box.appendChild(nachricht);
-        if (!lead.erledigt) {
-          const btn = document.createElement("button"); btn.className = "lead-erledigen"; btn.textContent = "✓ Als erledigt markieren";
-          btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            const { error: e2 } = await sb.from("kontaktanfragen").update({ erledigt: true }).eq("id", lead.id);
-            if (!e2) ladeLeads();
-          });
-          box.appendChild(btn);
-        }
-        el.appendChild(box);
-      });
-    }
-    async function ladeGespraeche() {
-      const el = $("gespraeche-liste");
-      el.textContent = "";
-      if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; return; }
-      const { data, error } = await sb.from("gespraeche").select("frage,antwort,erstellt")
-        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(30);
-      if (error || !data || !data.length) {
-        el.innerHTML = '<p class="leer">Noch keine Gespräche.</p>'; return;
-      }
-      data.forEach((g) => {
-        const box = document.createElement("div"); box.className = "gespraech";
-        const f = document.createElement("div"); f.className = "gespraech-f"; f.textContent = g.frage;
-        const a = document.createElement("div"); a.className = "gespraech-a"; a.textContent = g.antwort || "";
-        const t = document.createElement("div"); t.className = "gespraech-zeit"; t.textContent = zeit(g.erstellt);
-        box.appendChild(f); box.appendChild(a); box.appendChild(t);
-        el.appendChild(box);
-      });
-    }
-
     function zeigeQuellen() {
-      const liste = $("quellen-liste");
+      const liste = $("quellenListe");
       liste.textContent = "";
       if (!firma.wissensquellen.length) {
-        const p = document.createElement("p"); p.className = "sub";
+        const p = document.createElement("p"); p.className = "leer";
         p.textContent = "Noch keine Quellen — füge eine Notiz hinzu oder scanne die Webseite.";
-        liste.appendChild(p);
-        return;
+        liste.appendChild(p); return;
       }
       firma.wissensquellen.forEach((q) => {
-        const karte = document.createElement("div"); karte.className = "karte";
+        const karte = document.createElement("div"); karte.className = "quelle";
         const kopf = document.createElement("div"); kopf.className = "quelle-kopf";
-        const badge = document.createElement("span"); badge.className = "badge " + (q.typ || "manuell");
-        badge.textContent = q.typ === "scan" ? "Scan" : q.typ === "dokument" ? "Dokument" : "Notiz";
+        const tag = document.createElement("span"); tag.className = "tag " + (q.typ || "manuell");
+        tag.textContent = q.typ === "scan" ? "Scan" : q.typ === "dokument" ? "Dokument" : "Notiz";
         const titel = document.createElement("span"); titel.className = "titel"; titel.textContent = q.titel || "Quelle";
-        const stand = document.createElement("span"); stand.className = "stand";
-        stand.textContent = q.stand ? "Stand: " + q.stand : "";
+        const stand = document.createElement("span"); stand.className = "stand"; stand.textContent = q.stand ? "Stand: " + q.stand : "";
         const weg = document.createElement("button"); weg.className = "weg"; weg.title = "Quelle löschen"; weg.textContent = "×";
         weg.addEventListener("click", () => {
           if (!confirm('Quelle "' + (q.titel || "Quelle") + '" löschen? Der Agent kennt diese Infos dann nicht mehr.')) return;
           firma.wissensquellen = firma.wissensquellen.filter((x) => x.id !== q.id);
-          zeigeQuellen();
+          markiere(); zeigeQuellen();
         });
-        kopf.appendChild(badge); kopf.appendChild(titel); kopf.appendChild(stand); kopf.appendChild(weg);
+        kopf.append(tag, titel, stand, weg);
         const feld = document.createElement("textarea");
         feld.value = q.text || "";
-        feld.addEventListener("input", () => { q.text = feld.value; });
-        karte.appendChild(kopf); karte.appendChild(feld);
+        feld.addEventListener("input", () => { q.text = feld.value; markiere(); });
+        karte.append(kopf, feld);
         liste.appendChild(karte);
       });
     }
-
-    $("quelle-neu").addEventListener("click", () => {
+    $("quelleNeu").addEventListener("click", () => {
       firma.wissensquellen.push({ id: neueId("notiz"), typ: "manuell", titel: "Eigene Notiz", stand: heute(), text: "" });
-      zeigeQuellen();
+      markiere(); zeigeQuellen();
     });
 
-    // ---------- Re-Scan (nutzt den bestehenden Background-Job) ----------
-    const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
-    $("rescan-btn").addEventListener("click", async () => {
-      const url = $("rescan-url").value.trim();
-      const status = $("rescan-status");
+    // Dokument-Upload: gleiche Verarbeitung wie im Onboarding (dokument-lesen).
+    const MAX_DATEI = 4.5 * 1024 * 1024;
+    $("docNeu").addEventListener("change", async (e) => {
+      const status = $("docStatus");
+      for (const f of e.target.files) {
+        status.style.color = ""; status.textContent = "„" + f.name + "“ wird gelesen…";
+        try {
+          if (f.size > MAX_DATEI) throw new Error("zu gross (max. 4,5 MB)");
+          const istText = /\.(txt|md|markdown)$/i.test(f.name) || (f.type || "").startsWith("text/");
+          let text;
+          if (istText) {
+            text = (await f.text()).trim();
+          } else {
+            const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+            const resp = await fetch("/.netlify/functions/dokument-lesen", { method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ dateiname: f.name, mediaType: f.type, daten: String(dataUrl).split(",")[1] }) });
+            const d = await resp.json(); if (!resp.ok) throw new Error(d.error || "Fehler");
+            text = d.text || "";
+          }
+          firma.wissensquellen.push({ id: neueId("doc"), typ: "dokument", titel: f.name, text, stand: heute() });
+          status.style.color = "var(--gruen)"; status.textContent = "✓ „" + f.name + "“ hinzugefügt — denk ans Speichern.";
+          markiere(); zeigeQuellen();
+        } catch (err) {
+          status.style.color = "var(--rot)"; status.textContent = "„" + f.name + "“: " + (err.message || "Fehler");
+        }
+      }
+      e.target.value = "";
+    });
+
+    // ---------- Re-Scan (bestehender Background-Job) ----------
+    $("rescanBtn").addEventListener("click", async () => {
+      const url = $("rescanUrl").value.trim();
+      const status = $("rescanStatus");
       if (!url) { status.textContent = "Bitte Webseiten-Adresse eingeben."; return; }
-      const btn = $("rescan-btn");
+      const btn = $("rescanBtn");
       btn.disabled = true; status.style.color = ""; status.textContent = "Scan läuft (bis ~1 Minute)…";
       $("vergleich").hidden = true;
       try {
@@ -354,54 +774,407 @@
           if (s.status === "error") throw new Error(s.fehler || "Scan fehlgeschlagen");
         }
         if (!d) throw new Error("Zeitüberschreitung beim Scan");
-
         const neuText = [d.angebot && ("Angebot: " + d.angebot), d.weiteres].filter(Boolean).join("\n\n");
         if (!neuText) throw new Error("Der Scan hat keinen verwertbaren Text geliefert.");
         const scanQuelle = firma.wissensquellen.find((q) => q.typ === "scan");
-        $("vergleich-alt").textContent = scanQuelle ? scanQuelle.text : "(noch kein Scan-Text vorhanden)";
-        $("vergleich-neu").textContent = neuText;
+        $("vergleichAlt").textContent = scanQuelle ? scanQuelle.text : "(noch kein Scan-Text vorhanden)";
+        $("vergleichNeu").textContent = neuText;
         $("vergleich").hidden = false;
         status.textContent = "";
         $("uebernehmen").onclick = () => {
-          if (scanQuelle) {
-            scanQuelle.text = neuText; scanQuelle.stand = heute(); scanQuelle.quelle = url;
-          } else {
-            firma.wissensquellen.unshift({ id: "scan", typ: "scan", titel: "Webseiten-Scan",
-              quelle: url, stand: heute(), text: neuText });
-          }
-          firma.webseite = url;
+          if (scanQuelle) { scanQuelle.text = neuText; scanQuelle.stand = heute(); scanQuelle.quelle = url; }
+          else firma.wissensquellen.unshift({ id: "scan", typ: "scan", titel: "Webseiten-Scan", quelle: url, stand: heute(), text: neuText });
+          firma.webseite = url; $("f-webseite").value = url;
           $("vergleich").hidden = true;
-          status.style.color = "var(--gruen)";
-          status.textContent = "Übernommen — denk ans Speichern.";
-          zeigeQuellen();
+          status.style.color = "var(--gruen)"; status.textContent = "Übernommen — denk ans Speichern.";
+          markiere(); zeigeQuellen();
         };
         $("verwerfen").onclick = () => { $("vergleich").hidden = true; };
       } catch (e) {
-        status.style.color = "var(--rot)";
-        status.textContent = "Scan fehlgeschlagen: " + e.message;
+        status.style.color = "var(--rot)"; status.textContent = "Scan fehlgeschlagen: " + e.message;
       } finally {
         btn.disabled = false;
       }
+    });
+
+    // ---------- Charakter-Bilder (Nachbessern wie im Onboarding) ----------
+    async function charJob(payload, maxVersuche) {
+      const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+                     : Date.now() + "-" + Math.random().toString(36).slice(2));
+      const start = await fetch("/.netlify/functions/charakter-background", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jobId, firmaId: firma.id, farbe: firma.charakter.farbe, ...payload }),
+      });
+      if (start.status === 429) throw new Error("Limit erreicht — bitte später erneut versuchen.");
+      if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");
+      for (let versuch = 0; versuch < (maxVersuche || 60); versuch++) {
+        await schlaf(2000);
+        let s;
+        try { s = await (await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId))).json(); }
+        catch { continue; }
+        if (s.status === "done") return s.ergebnis;
+        if (s.status === "error") throw new Error(s.fehler || "Fehlgeschlagen");
+      }
+      throw new Error("Zeitüberschreitung.");
+    }
+    function zeigeCharGrid() {
+      const grid = $("charGrid");
+      grid.textContent = "";
+      const bilder = (firma.charakter && firma.charakter.bilder) || {};
+      const hatBilder = !!bilder.idle;
+      $("charLeer").hidden = hatBilder;
+      if (!hatBilder) return;
+      CHAR_ZUSTAENDE.forEach((z) => {
+        const zelle = document.createElement("div"); zelle.className = "char-zelle";
+        const im = document.createElement("img"); im.src = bilder[z] || bilder.idle; im.alt = z;
+        const lbl = document.createElement("div"); lbl.className = "lbl"; lbl.textContent = CHAR_LABELS[z];
+        const inp = document.createElement("textarea");
+        inp.placeholder = "z.B. Mütze blau machen. Freundlicher lächeln."; inp.maxLength = 300;
+        const btn = document.createElement("button"); btn.type = "button"; btn.textContent = "Ändern";
+        btn.addEventListener("click", async () => {
+          const anweisung = inp.value.trim();
+          if (!anweisung) { inp.focus(); return; }
+          btn.disabled = true; btn.textContent = "…"; im.style.opacity = 0.4;
+          try {
+            const erg = await charJob({ aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z }, 45);
+            firma.charakter.bilder[z] = erg.bild;
+            markiere(); zeigeCharGrid(); zeigeHero();
+          } catch (e) {
+            btn.disabled = false; btn.textContent = "Ändern"; im.style.opacity = 1;
+            $("charStatus").style.color = "var(--rot)";
+            $("charStatus").textContent = "Bearbeiten fehlgeschlagen: " + e.message;
+          }
+        });
+        zelle.append(im, lbl, inp, btn);
+        grid.appendChild(zelle);
+      });
+    }
+
+    // ---------- Posteingang + Gespräche (nur mit Supabase gefüllt) ----------
+    async function ladeLeads() {
+      const el = $("leadsListe"), zahl = $("leadZahl"), badge = $("leadBadge");
+      el.textContent = ""; zahl.textContent = ""; badge.hidden = true;
+      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; return; }
+      const { data, error } = await sb.from("kontaktanfragen").select("*")
+        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
+      if (error || !data || !data.length) { el.innerHTML = '<p class="leer">Noch keine Kontaktanfragen.</p>'; return; }
+      const offen = data.filter((l) => !l.erledigt).length;
+      zahl.textContent = offen ? "· " + offen + " offen" : "";
+      if (offen) { badge.textContent = offen; badge.hidden = false; }
+      data.forEach((lead) => {
+        const box = document.createElement("div");
+        box.className = "lead" + (lead.erledigt ? " erledigt" : "");
+        const kopf = document.createElement("div"); kopf.className = "lead-kopf";
+        const name = document.createElement("span"); name.className = "lead-name"; name.textContent = lead.name || "Ohne Namen";
+        const kontakt = document.createElement("span"); kontakt.className = "lead-kontakt"; kontakt.textContent = lead.kontakt || "";
+        const t = document.createElement("span"); t.className = "lead-zeit"; t.textContent = zeit(lead.erstellt);
+        kopf.append(name, kontakt, t);
+        const nachricht = document.createElement("div"); nachricht.className = "lead-nachricht"; nachricht.textContent = lead.nachricht;
+        box.append(kopf, nachricht);
+        if (!lead.erledigt) {
+          const btn = document.createElement("button"); btn.className = "lead-erledigen"; btn.textContent = "✓ Als erledigt markieren";
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            const { error: e2 } = await sb.from("kontaktanfragen").update({ erledigt: true }).eq("id", lead.id);
+            if (!e2) ladeLeads();
+          });
+          box.appendChild(btn);
+        }
+        el.appendChild(box);
+      });
+    }
+    let gespraecheDaten = [];
+    async function ladeGespraeche() {
+      const el = $("gespraecheListe");
+      el.textContent = ""; gespraecheDaten = [];
+      if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; zeigeUebersichtGespraeche(); return; }
+      const { data, error } = await sb.from("gespraeche").select("frage,antwort,erstellt")
+        .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(30);
+      if (error || !data || !data.length) { el.innerHTML = '<p class="leer">Noch keine Gespräche.</p>'; zeigeUebersichtGespraeche(); return; }
+      gespraecheDaten = data;
+      data.forEach((g) => el.appendChild(gespraechElement(g)));
+      zeigeUebersichtGespraeche();
+    }
+    function gespraechElement(g) {
+      const box = document.createElement("div"); box.className = "gespraech";
+      const f = document.createElement("div"); f.className = "gespraech-f"; f.textContent = g.frage;
+      const a = document.createElement("div"); a.className = "gespraech-a"; a.textContent = g.antwort || "";
+      const t = document.createElement("div"); t.className = "gespraech-zeit"; t.textContent = zeit(g.erstellt);
+      box.append(f, a, t);
+      return box;
+    }
+    function zeigeUebersichtGespraeche() {
+      const el = $("uebersichtGespraeche");
+      el.textContent = "";
+      if (!gespraecheDaten.length) { el.innerHTML = '<p class="leer">Noch keine Gespräche — teste deinen Agenten im Chat.</p>'; return; }
+      gespraecheDaten.slice(0, 3).forEach((g) => el.appendChild(gespraechElement(g)));
+    }
+
+    // ---------- Übersicht ----------
+    function donut(prozent, farbe) {
+      const r = 20, umfang = 2 * Math.PI * r;
+      const anteil = Math.max(0, Math.min(100, prozent)) / 100 * umfang;
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("width", "52"); svg.setAttribute("height", "52"); svg.setAttribute("viewBox", "0 0 52 52");
+      svg.classList.add("ring");
+      const mach = (col, dash, off) => {
+        const c = document.createElementNS(ns, "circle");
+        c.setAttribute("cx", "26"); c.setAttribute("cy", "26"); c.setAttribute("r", String(r));
+        c.setAttribute("fill", "none"); c.setAttribute("stroke", col); c.setAttribute("stroke-width", "6");
+        c.setAttribute("stroke-linecap", "round");
+        if (dash != null) { c.setAttribute("stroke-dasharray", dash + " " + umfang); c.setAttribute("transform", "rotate(-90 26 26)"); }
+        return c;
+      };
+      svg.appendChild(mach("#EEF0F4", null));
+      svg.appendChild(mach(farbe, anteil.toFixed(1)));
+      return svg;
+    }
+    function statKachel(wert, label, prozent, farbe) {
+      const box = document.createElement("div"); box.className = "stat";
+      box.appendChild(donut(prozent, farbe));
+      const txt = document.createElement("div");
+      const w = document.createElement("div"); w.className = "w"; w.textContent = wert;
+      const l = document.createElement("div"); l.className = "l"; l.textContent = label;
+      txt.append(w, l); box.appendChild(txt);
+      return box;
+    }
+
+    // Startklar-Check: gleiche Logik wie im Onboarding (§8), nur auf dem
+    // gespeicherten Objekt (angebot etc. leben in den Wissensquellen).
+    function startklarStatus() {
+      const hatWissen = firma.wissensquellen.some((q) => (q.text || "").trim());
+      const kritisch = [
+        ["Name deiner Firma", !!firma.name],
+        ["Wissen (Scan, Notizen oder Dokumente)", hatWissen],
+        ["Name deines Agenten", !!(firma.persona && firma.persona.name)],
+      ];
+      const empfohlen = [
+        ["Öffnungszeiten", !!firma.fakten["Öffnungszeiten"]],
+        ["Kontaktmöglichkeit", !!firma.fakten["Kontakt"]],
+        ["Adresse", !!firma.fakten["Adresse"]],
+        ["Häufige Fragen", !!(firma.faq && firma.faq.length)],
+        ["Eigener Charakter", !!(firma.charakter.bilder && firma.charakter.bilder.idle)],
+      ];
+      return { kritisch, empfohlen };
+    }
+    function zeigeStartklar() {
+      const { kritisch, empfohlen } = startklarStatus();
+      const liste = $("startklarListe");
+      liste.textContent = "";
+      const zeile = (titel, ok, kritischFehlt) => {
+        const z = document.createElement("div");
+        z.textContent = (ok ? "✓ " : (kritischFehlt ? "✗ " : "○ ")) + titel;
+        z.style.color = ok ? "var(--gruen)" : (kritischFehlt ? "var(--amber)" : "var(--grau)");
+        liste.appendChild(z);
+      };
+      kritisch.forEach(([t, ok]) => zeile(t, ok, true));
+      empfohlen.forEach(([t, ok]) => zeile(t, ok, false));
+      const fehlend = kritisch.filter(([, ok]) => !ok);
+      $("startklarSatz").textContent = fehlend.length
+        ? "Es fehlen noch wichtige Infos: " + fehlend.map(([t]) => t).join(", ") + "."
+        : "Dein Agent kennt alles Wichtige.";
+    }
+    function zeigeStats() {
+      const { kritisch, empfohlen } = startklarStatus();
+      const alle = [...kritisch, ...empfohlen];
+      const prozent = Math.round(alle.filter(([, ok]) => ok).length / alle.length * 100);
+      const z = $("statzeile");
+      z.textContent = "";
+      z.appendChild(statKachel(prozent + "%", "eingerichtet", prozent, "#4F46E5"));
+      z.appendChild(statKachel(String(firma.wissensquellen.length), "Wissensquellen", Math.min(100, firma.wissensquellen.length * 25), "#8B5CF6"));
+      z.appendChild(statKachel(String((firma.faq || []).length), "Häufige Fragen", Math.min(100, (firma.faq || []).length * 20), "#FB7185"));
+      z.appendChild(statKachel(String(gespraecheDaten.length), "Gespräche", Math.min(100, gespraecheDaten.length * 10), "#F97316"));
+    }
+    function zeigeEinstellungsliste() {
+      const p = firma.persona, c = firma.charakter;
+      const eintraege = [
+        ["Agent", (p.name || "—") + " · " + (p.rolle || "—") + " · " + (p.ansprache === "sie" ? "Sie" : "Du")],
+        ["Ton", tonSchluessel(p.ton)],
+        ["Antworten", (p.antwortLaenge || "—") + " · " + (p.emojiStil || "—") + " · " + (p.antwortFormat || "—")],
+        ["Übergabe", { kontakt: "Kontaktdaten aufnehmen", kontaktinfo: "Kontaktinfos zeigen", ehrlich: "ehrlich zugeben" }[p.uebergabe] || "—"],
+        ["Design", (c.chatDesign === "eigen" ? "selbst angepasst" : "automatisch") + " · " + (c.chatLayout === "fullscreen" ? "Fokusmodus" : "Seitenleiste")],
+        ["Schrift", c.schrift || "—"],
+      ];
+      const box = $("einstellungsListe");
+      box.textContent = "";
+      eintraege.forEach(([k, v]) => {
+        const z = document.createElement("div");
+        const b = document.createElement("b"); b.textContent = k + ": ";
+        z.appendChild(b); z.appendChild(document.createTextNode(v));
+        box.appendChild(z);
+      });
+    }
+    function zeigeHero() {
+      $("heroAgent").textContent = firma.persona.name || "Dein Agent";
+      $("heroRolle").textContent = firma.persona.rolle || "Assistent";
+      $("heroFirma").textContent = firma.name + (firma.webseite ? " · " + firma.webseite.replace(/^https?:\/\//, "") : "");
+      const chat = "index.html?firma=" + encodeURIComponent(firma.id);
+      $("heroChat").href = chat; $("chatlink").href = chat; $("promoChatlink").href = chat;
+      const bild = firma.charakter.bilder && firma.charakter.bilder.idle;
+      $("heroBild").hidden = !bild;
+      $("heroInitial").hidden = !!bild;
+      if (bild) $("heroBild").src = bild;
+      else $("heroInitial").textContent = (firma.persona.name || firma.name || "A").slice(0, 1).toUpperCase();
+    }
+    function zeigeUebersicht() {
+      zeigeHero(); zeigeStartklar(); zeigeStats(); zeigeEinstellungsliste(); zeigeUebersichtGespraeche();
+    }
+
+    // ---------- Abo + Einbett-Code ----------
+    async function aktuellerPlan() {
+      try {
+        const f = await (await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(firma.id) + "&t=" + Date.now())).json();
+        return f.plan || "basis";
+      } catch { return firma.plan || "basis"; }
+    }
+    async function zeigePlan() {
+      const aktiv = (await aktuellerPlan()) === "plus";
+      const badge = $("planBadge");
+      badge.hidden = false;
+      badge.className = "badge " + (aktiv ? "plus" : "basis");
+      badge.textContent = aktiv ? "Abo aktiv" : "Abo nicht aktiv";
+      const abo = $("aboBadge");
+      abo.className = badge.className; abo.textContent = badge.textContent;
+      $("aboCheckout").hidden = aktiv;
+      $("promoAbo").hidden = aktiv;
+      $("promoTest").hidden = !aktiv;
+    }
+    async function starteCheckout(btn) {
+      btn.disabled = true;
+      try {
+        const res = await fetch("/.netlify/functions/abo-checkout", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ firmaId: firma.id, plan: "plus", basis: location.origin }),
+        });
+        const d = await res.json();
+        if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); return; }
+        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
+        location.href = d.url;
+      } catch (e) {
+        alert("Abo konnte nicht gestartet werden: " + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    $("aboCheckout").addEventListener("click", (e) => starteCheckout(e.target));
+    $("promoCheckout").addEventListener("click", (e) => starteCheckout(e.target));
+
+    function zeigeEmbed() {
+      $("embedText").textContent = '<script src="' + location.origin + '/widget.js" data-firma="' + firma.id +
+        '" data-farbe="' + firma.charakter.farbe + '" data-farbe2="' + firma.charakter.akzent + '"><\/script>';
+      $("e-id").value = firma.id;
+    }
+    $("embedKopieren").addEventListener("click", (e) => {
+      navigator.clipboard.writeText($("embedText").textContent);
+      e.target.textContent = "Kopiert ✓";
+      setTimeout(() => { e.target.textContent = "Kopieren"; }, 1500);
     });
 
     // ---------- Speichern ----------
     $("speichern").addEventListener("click", async () => {
-      const status = $("speicher-status");
+      const status = $("saveStatus");
       const btn = $("speichern");
-      btn.disabled = true; status.style.color = ""; status.textContent = "Speichern…";
+      btn.disabled = true; status.textContent = "Speichern…";
       try {
-        // Leere Quellen nicht mitspeichern
+        // Leere manuelle Quellen und leere FAQ-Zeilen nicht mitspeichern.
         firma.wissensquellen = firma.wissensquellen.filter((q) => (q.text || "").trim() || q.typ !== "manuell");
+        firma.faq = (firma.faq || []).filter((f) => f.frage || f.antwort);
+        // Frisch bearbeitete Charakter-Bilder (Data-URLs) zuerst in den Storage.
+        if (firma.charakter.bilder && Object.values(firma.charakter.bilder).some((b) => String(b || "").startsWith("data:"))) {
+          status.textContent = "Bilder werden hochgeladen…";
+          firma.charakter.bilder = await Store.ladeBilderHoch(firma.id, firma.charakter.bilder);
+        }
         await Store.saveFirma(firma);
-        status.style.color = "var(--gruen)"; status.textContent = "Gespeichert.";
+        geaendert = false;
+        status.textContent = "";
+        $("saveleiste").hidden = true;
+        ladeFelder(); // Anzeige überall auffrischen (Hero, Übersicht, …)
+        zeigeAnsicht(ansicht);
       } catch (e) {
-        status.style.color = "var(--rot)"; status.textContent = "Fehler: " + e.message;
+        status.textContent = "Fehler: " + e.message;
       } finally {
         btn.disabled = false;
       }
     });
+    window.addEventListener("beforeunload", (e) => {
+      if (geaendert) { e.preventDefault(); e.returnValue = ""; }
+    });
 
-    zeigeListe();
+    // ---------- Firma öffnen / Agent-Wechsler ----------
+    function ladeFelder() {
+      felder.forEach((f) => f.lade());
+      anredeChips.waehle(firma.persona.ansprache || "du");
+      tonChips.waehle(tonSchluessel(firma.persona.ton));
+      laengeChips.waehle(firma.persona.antwortLaenge || "ausgewogen");
+      emojiChips.waehle(firma.persona.emojiStil || "dezent");
+      formatChips.waehle(firma.persona.antwortFormat || "absatz");
+      designChips.waehle(firma.charakter.chatDesign || "auto");
+      layoutChips.waehle(firma.charakter.chatLayout || "sidebar");
+      zeigeFarbVorschau(); zeigeSchriftVorschau();
+      zeigeFaq(); zeigeQuellen(); zeigeCharGrid(); zeigeEmbed();
+      $("rescanUrl").value = firma.webseite || "";
+      $("vergleich").hidden = true; $("rescanStatus").textContent = "";
+      zeigeUebersicht();
+    }
+    function oeffneFirma(f) {
+      firma = f;
+      // Fehlende Teil-Objekte robust ergänzen (ältere Speicherstände).
+      firma.persona = firma.persona || {};
+      firma.fakten = firma.fakten || {};
+      firma.faq = firma.faq || [];
+      firma.charakter = firma.charakter || {};
+      firma.charakter.farbe = firma.charakter.farbe || "#4F46E5";
+      firma.charakter.akzent = firma.charakter.akzent || "#FB7185";
+      firma.charakter.schrift = firma.charakter.schrift || "Plus Jakarta Sans";
+      normalisiereQuellen();
+      geaendert = false; $("saveleiste").hidden = true;
+      $("chatlink").hidden = false;
+      ladeFelder();
+      zeigePlan();
+      ladeLeads();
+      ladeGespraeche();
+      zeigeAnsicht("uebersicht");
+    }
+    $("agentWahl") && $("agentWahl").addEventListener("change", (e) => {
+      if (geaendert && !confirm("Ungespeicherte Änderungen verwerfen?")) {
+        e.target.value = firma.id; return;
+      }
+      const f = firmen.find((x) => x.id === e.target.value);
+      if (f) oeffneFirma(f);
+    });
+
+    // ---------- Start ----------
+    (async function start() {
+      const email = Store.aktuellerNutzer();
+      if (email) {
+        $("nutzerChip").hidden = false;
+        $("nutzerMail").textContent = email;
+        $("nutzerAvatar").textContent = email.slice(0, 1).toUpperCase();
+      }
+      firmen = await Store.meineFirmen();
+      if (!firmen.length) {
+        $("leer").hidden = false;
+        document.querySelectorAll("#nav .nav-item").forEach((b) => { b.disabled = true; b.style.opacity = 0.45; });
+        return;
+      }
+      // Neueste zuerst (localStorage liefert Einfüge-Reihenfolge).
+      if (!sb) firmen = firmen.slice().reverse();
+      if (firmen.length > 1) {
+        $("agentWahlBox").hidden = false;
+        const sel = $("agentWahl");
+        firmen.forEach((f) => {
+          const o = document.createElement("option");
+          o.value = f.id; o.textContent = f.name || f.id;
+          sel.appendChild(o);
+        });
+      }
+      // ?firma=… aus dem Onboarding direkt öffnen, sonst neueste Firma.
+      const wunsch = new URLSearchParams(location.search).get("firma");
+      const f = firmen.find((x) => x.id === wunsch) || firmen[0];
+      if (firmen.length > 1) $("agentWahl").value = f.id;
+      oeffneFirma(f);
+    })();
   </script>
 </body>
 </html>
