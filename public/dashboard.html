@@ -40,7 +40,8 @@
     .side { padding: 1.5rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem;
             background: #fff; border-right: 1px solid var(--linie); }
     .logo { display: flex; align-items: center; gap: 0.6rem; font-family: var(--display);
-            font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; padding: 0 0.5rem 1.2rem; }
+            font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; padding: 0 0.5rem 0.3rem; }
+    .logo-sub { color: var(--grau); font-size: 0.72rem; padding: 0 0.5rem 1.1rem; }
     .logo-ic { width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0; color: #fff;
                display: grid; place-items: center;
                background: linear-gradient(135deg, var(--indigo), var(--coral)); }
@@ -57,15 +58,14 @@
     .nav-item .zahl { margin-left: auto; font-size: 0.72rem; font-weight: 700; background: var(--coral); color: #fff;
                       border-radius: 999px; padding: 0.06rem 0.45rem; }
     .side .grow { flex: 1; }
-    /* Promo-Karte unten: heller Look mit Gradient-Icon (wie die Mockups) */
-    .promo { border: 1.5px solid var(--linie); border-radius: 16px; padding: 0.9rem 0.95rem; background: #fff; }
-    .promo .pk { display: flex; align-items: center; gap: 0.55rem; }
-    .promo .pic { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; display: grid; place-items: center;
-                  font-size: 0.9rem; background: linear-gradient(135deg, rgba(79,70,229,0.14), rgba(251,113,133,0.16)); }
-    .promo .t { font-family: var(--display); font-weight: 700; font-size: 0.88rem; }
-    .promo .s { font-size: 0.76rem; color: var(--grau); margin: 0.4rem 0 0.6rem; line-height: 1.45; }
-    .promo button, .promo a.knopf { display: inline-block; font: inherit; font-size: 0.8rem; font-weight: 700; color: #fff;
-      background: var(--indigo); border: 0; border-radius: 999px; padding: 0.45rem 0.95rem; cursor: pointer; text-decoration: none; }
+    /* Plan-Box unten in der Sidebar (wie das Mockup: "Dein Plan … Plan anzeigen") */
+    .plan-box { border: 1.5px solid var(--linie); border-radius: 14px; padding: 0.7rem 0.85rem; }
+    .pb-kopf { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.76rem; color: var(--grau); }
+    .pb-kopf b { font-family: var(--display); font-size: 1rem; color: var(--text); }
+    .pb-btn { width: 100%; margin-top: 0.55rem; font: inherit; font-size: 0.8rem; font-weight: 700; color: #fff;
+              background: var(--indigo); border: 0; border-radius: 999px; padding: 0.45rem; cursor: pointer; }
+    .pb-link { display: block; margin-top: 0.45rem; background: none; border: 0; color: var(--indigo);
+               font-weight: 600; font-size: 0.78rem; cursor: pointer; padding: 0; }
     /* Nutzer-Chip ganz unten in der Sidebar (wie die Mockups) */
     .nutzer-side { display: flex; align-items: center; gap: 0.55rem; margin-top: 0.7rem;
                    border: 1.5px solid var(--linie); border-radius: 14px; padding: 0.5rem 0.65rem; min-width: 0; }
@@ -236,16 +236,25 @@
                      cursor: pointer; font-size: 1.05rem; line-height: 1; padding: 0.1rem 0.3rem; }
     .faq-entfernen:hover { color: var(--rot); }
 
-    /* Leads */
-    .lead { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.75rem 0.9rem; margin: 0.55rem 0; }
-    .lead.erledigt { opacity: 0.55; }
-    .lead-kopf { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
-    .lead-name { font-weight: 600; }
-    .lead-kontakt { color: var(--indigo); font-size: 0.87rem; }
-    .lead-zeit { color: var(--grau-hell); font-size: 0.76rem; margin-left: auto; }
-    .lead-nachricht { font-size: 0.89rem; margin-top: 0.35rem; line-height: 1.45; }
-    .lead-erledigen { margin-top: 0.5rem; font-size: 0.81rem; font-weight: 600; color: var(--gruen);
-                      background: none; border: 0; cursor: pointer; padding: 0; }
+    /* Posteingang als Tabelle: Kontakt | Zeitpunkt | Nachricht | Aktion (wie das Mockup) */
+    .zahl-pill { background: rgba(79,70,229,0.1); color: var(--indigo); border-radius: 999px;
+                 font-size: 0.74rem; font-weight: 700; padding: 0.12rem 0.55rem; vertical-align: 2px; }
+    .lzeile { display: grid; grid-template-columns: 1.3fr 0.9fr 2fr auto; gap: 0.8rem; align-items: center;
+              padding: 0.6rem 0.2rem; border-bottom: 1px solid var(--linie); font-size: 0.86rem; }
+    .lzeile.lkopf { color: var(--grau-hell); font-size: 0.72rem; text-transform: uppercase;
+                    letter-spacing: 0.05em; font-weight: 700; }
+    .lzeile.erledigt { opacity: 0.55; }
+    .lkontaktblock { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .lavatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(79,70,229,0.1); color: var(--indigo);
+               font-weight: 700; display: grid; place-items: center; font-size: 0.85rem; flex-shrink: 0; }
+    .lnk { display: flex; flex-direction: column; min-width: 0; }
+    .lnk b { font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lnk span { color: var(--indigo); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lzeit { color: var(--grau); font-size: 0.8rem; white-space: nowrap; }
+    .laktion { color: var(--indigo); font-weight: 600; font-size: 0.8rem; background: none; border: 0;
+               cursor: pointer; white-space: nowrap; text-align: right; }
+    .laktion.fertig { color: var(--gruen); cursor: default; }
+    .lfuss { color: var(--grau-hell); font-size: 0.78rem; padding-top: 0.6rem; }
 
     /* Design & Charakter */
     .design-raster { display: grid; grid-template-columns: 360px 1fr; gap: 1rem; align-items: start; }
@@ -282,12 +291,15 @@
       .side { flex-direction: column; padding-bottom: 0.7rem; min-width: 0; border-right: 0; border-bottom: 1px solid var(--linie); }
       .side nav { display: flex; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.4rem; }
       .nav-item { white-space: nowrap; }
-      .side .grow, .promo, .nutzer-side { display: none; }
+      .side .grow, .plan-box, .nutzer-side, .logo-sub { display: none; }
       .main { padding: 1rem 1rem 4rem; }
       .raster-ue, .design-raster, .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
       .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gzeile { grid-template-columns: 1fr; gap: 0.15rem; }
       .gzeile.gkopf { display: none; }
+      .lzeile { grid-template-columns: 1fr; gap: 0.25rem; }
+      .lzeile.lkopf { display: none; }
+      .laktion { text-align: left; }
     }
   </style>
 </head>
@@ -299,6 +311,7 @@
         <span class="logo-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-9 8.4 8.5 8.5 0 0 1-3.5-.9L3 21l1.9-5.7a8.38 8.38 0 1 1 16.1-3.8z"/></svg></span>
         AuraChat
       </div>
+      <div class="logo-sub">Dein KI-Chat-Agent für dein Business.</div>
       <div class="agent-wahl" id="agentWahlBox" hidden>
         <select id="agentWahl" aria-label="Agent wählen"></select>
       </div>
@@ -312,19 +325,14 @@
         <button class="nav-item" data-view="einstellungen"><span class="ic">⚙</span> Einstellungen</button>
       </nav>
       <div class="grow"></div>
-      <div class="promo" id="promoAbo" hidden>
-        <div class="pk"><span class="pic">⭐</span><span class="t">Abo aktivieren</span></div>
-        <div class="s">Schalte deinen Agenten dauerhaft live und erhalte alle Funktionen.</div>
-        <button id="promoCheckout">Upgrade</button>
-      </div>
-      <div class="promo" id="promoTest" hidden>
-        <div class="pk"><span class="pic">✓</span><span class="t">Alles bereit</span></div>
-        <div class="s">Dein Agent ist eingerichtet. Probier ihn im Test-Chat aus.</div>
-        <a class="knopf" id="promoChatlink" target="_blank">Agent testen</a>
-      </div>
       <div class="nutzer-side" id="nutzerChip" hidden>
         <span class="avatar" id="nutzerAvatar">?</span>
-        <span class="nd"><b id="nutzerMail"></b><span id="nutzerFirma"></span></span>
+        <span class="nd"><b id="nutzerName"></b><span id="nutzerSub"></span></span>
+      </div>
+      <div class="plan-box" id="planBox" hidden style="margin-top:0.7rem;">
+        <div class="pb-kopf"><span>Dein Plan</span><b id="planName">—</b></div>
+        <button class="pb-btn" id="promoCheckout" hidden>Upgrade starten</button>
+        <button class="pb-link" id="planAnzeigen" hidden>Plan anzeigen →</button>
       </div>
     </aside>
 
@@ -578,9 +586,9 @@
       <!-- ===== Ansicht: Posteingang ===== -->
       <section class="ansicht" id="view-posteingang" hidden>
         <div class="karte">
-          <div class="kopfzeile"><h2>Posteingang</h2><span class="sub" id="leadZahl"></span></div>
-          <p class="sub">Kontaktanfragen, die dein Agent für dich aufgenommen hat.</p>
-          <div id="leadsListe"></div>
+          <div class="kopfzeile"><h2>Kontaktanfragen <span class="zahl-pill" id="leadZahl" hidden></span></h2></div>
+          <p class="sub">Alle Anfragen, die dein KI-Chat-Agent erhalten hat.</p>
+          <div id="leadsListe" style="margin-top:0.5rem;"></div>
         </div>
       </section>
 
@@ -969,36 +977,58 @@
 
     // ---------- Posteingang + Gespräche (nur mit Supabase gefüllt) ----------
     async function ladeLeads() {
-      const el = $("leadsListe"), zahl = $("leadZahl"), badge = $("leadBadge");
-      el.textContent = ""; zahl.textContent = ""; badge.hidden = true;
+      const el = $("leadsListe");
+      el.textContent = ""; $("leadZahl").hidden = true; $("leadBadge").hidden = true;
       if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; return; }
       const { data, error } = await sb.from("kontaktanfragen").select("*")
         .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
-      if (error || !data || !data.length) { el.innerHTML = '<p class="leer">Noch keine Kontaktanfragen.</p>'; return; }
+      if (error) { el.innerHTML = '<p class="leer">Konnte die Anfragen nicht laden.</p>'; return; }
+      zeigeLeadsListe(data || []);
+    }
+    // Rendern getrennt vom Laden — als Tabelle (Kontakt | Zeitpunkt | Nachricht | Aktion).
+    function zeigeLeadsListe(data) {
+      const el = $("leadsListe"), zahl = $("leadZahl"), badge = $("leadBadge");
+      el.textContent = "";
+      if (!data.length) { el.innerHTML = '<p class="leer">Noch keine Kontaktanfragen.</p>'; return; }
+      zahl.textContent = data.length; zahl.hidden = false;
       const offen = data.filter((l) => !l.erledigt).length;
-      zahl.textContent = offen ? "· " + offen + " offen" : "";
       if (offen) { badge.textContent = offen; badge.hidden = false; }
+      const kopf = document.createElement("div"); kopf.className = "lzeile lkopf";
+      ["Kontakt", "Zeitpunkt", "Nachricht", "Aktion"].forEach((t) => {
+        const s = document.createElement("span"); s.textContent = t; kopf.appendChild(s);
+      });
+      el.appendChild(kopf);
       data.forEach((lead) => {
-        const box = document.createElement("div");
-        box.className = "lead" + (lead.erledigt ? " erledigt" : "");
-        const kopf = document.createElement("div"); kopf.className = "lead-kopf";
-        const name = document.createElement("span"); name.className = "lead-name"; name.textContent = lead.name || "Ohne Namen";
-        const kontakt = document.createElement("span"); kontakt.className = "lead-kontakt"; kontakt.textContent = lead.kontakt || "";
-        const t = document.createElement("span"); t.className = "lead-zeit"; t.textContent = zeit(lead.erstellt);
-        kopf.append(name, kontakt, t);
-        const nachricht = document.createElement("div"); nachricht.className = "lead-nachricht"; nachricht.textContent = lead.nachricht;
-        box.append(kopf, nachricht);
-        if (!lead.erledigt) {
-          const btn = document.createElement("button"); btn.className = "lead-erledigen"; btn.textContent = "✓ Als erledigt markieren";
+        const z = document.createElement("div");
+        z.className = "lzeile" + (lead.erledigt ? " erledigt" : "");
+        const kb = document.createElement("div"); kb.className = "lkontaktblock";
+        const av = document.createElement("span"); av.className = "lavatar";
+        av.textContent = (lead.name || "?").slice(0, 1).toUpperCase();
+        const nk = document.createElement("span"); nk.className = "lnk";
+        const nm = document.createElement("b"); nm.textContent = lead.name || "Ohne Namen";
+        const ko = document.createElement("span"); ko.textContent = lead.kontakt || "";
+        nk.append(nm, ko); kb.append(av, nk);
+        const t = document.createElement("span"); t.className = "lzeit"; t.textContent = zeit(lead.erstellt);
+        const na = document.createElement("span"); na.textContent = lead.nachricht;
+        z.append(kb, t, na);
+        if (lead.erledigt) {
+          const fertig = document.createElement("span"); fertig.className = "laktion fertig"; fertig.textContent = "Erledigt ✓";
+          z.appendChild(fertig);
+        } else {
+          const btn = document.createElement("button"); btn.className = "laktion"; btn.textContent = "✓ Als erledigt markieren";
           btn.addEventListener("click", async () => {
+            if (!sb) return;
             btn.disabled = true;
             const { error: e2 } = await sb.from("kontaktanfragen").update({ erledigt: true }).eq("id", lead.id);
             if (!e2) ladeLeads();
           });
-          box.appendChild(btn);
+          z.appendChild(btn);
         }
-        el.appendChild(box);
+        el.appendChild(z);
       });
+      const fuss = document.createElement("div"); fuss.className = "lfuss";
+      fuss.textContent = "1–" + data.length + " von " + data.length + " Anfragen";
+      el.appendChild(fuss);
     }
     let gespraecheDaten = [];
     async function ladeGespraeche() {
@@ -1151,7 +1181,7 @@
       $("heroRolle").textContent = firma.persona.rolle || "Assistent";
       $("heroFirma").textContent = firma.name + (firma.webseite ? " · " + firma.webseite.replace(/^https?:\/\//, "") : "");
       const chat = "index.html?firma=" + encodeURIComponent(firma.id);
-      $("heroChat").href = chat; $("chatlink").href = chat; $("promoChatlink").href = chat;
+      $("heroChat").href = chat; $("chatlink").href = chat;
       const bild = firma.charakter.bilder && firma.charakter.bilder.idle;
       $("heroBild").hidden = !bild;
       $("heroInitial").hidden = !!bild;
@@ -1178,9 +1208,13 @@
       const abo = $("aboBadge");
       abo.className = badge.className; abo.textContent = badge.textContent;
       $("aboCheckout").hidden = aktiv;
-      $("promoAbo").hidden = aktiv;
-      $("promoTest").hidden = !aktiv;
+      // Plan-Box in der Sidebar (wie das Mockup: "Dein Plan … Plan anzeigen")
+      $("planBox").hidden = false;
+      $("planName").textContent = aktiv ? "Plus" : "Basis";
+      $("promoCheckout").hidden = aktiv;
+      $("planAnzeigen").hidden = !aktiv;
     }
+    $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
     async function starteCheckout(btn) {
       btn.disabled = true;
       try {
@@ -1272,7 +1306,11 @@
       normalisiereQuellen();
       geaendert = false; $("saveleiste").hidden = true;
       $("chatlink").hidden = false;
-      $("nutzerFirma").textContent = firma.name || firma.id;
+      // Firmen-Chip unten in der Sidebar (wie das Mockup: Name + Domain)
+      $("nutzerChip").hidden = false;
+      $("nutzerName").textContent = firma.name || firma.id;
+      $("nutzerSub").textContent = (firma.webseite || "").replace(/^https?:\/\//, "") || firma.email || firma.id;
+      $("nutzerAvatar").textContent = (firma.name || firma.id || "A").slice(0, 1).toUpperCase();
       ladeFelder();
       zeigePlan();
       ladeLeads();
@@ -1289,12 +1327,6 @@
 
     // ---------- Start ----------
     (async function start() {
-      const email = Store.aktuellerNutzer();
-      if (email) {
-        $("nutzerChip").hidden = false;
-        $("nutzerMail").textContent = email;
-        $("nutzerAvatar").textContent = email.slice(0, 1).toUpperCase();
-      }
       firmen = await Store.meineFirmen();
       if (!firmen.length) {
         $("leer").hidden = false;
