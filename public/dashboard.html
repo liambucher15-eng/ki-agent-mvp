@@ -788,7 +788,8 @@
     function zeigeFaq() {
       const box = $("faqListe");
       box.textContent = "";
-      (firma.faq || []).forEach((f, i) => {
+      if (!Array.isArray(firma.faq)) firma.faq = [];
+      firma.faq.forEach((f, i) => {
         const zeile = document.createElement("div"); zeile.className = "faq-eintrag";
         const frage = document.createElement("input"); frage.type = "text"; frage.placeholder = "Frage, die Kunden oft stellen"; frage.value = f.frage || "";
         frage.addEventListener("input", () => { f.frage = frage.value.trim(); markiere(); });
@@ -805,7 +806,7 @@
       }
     }
     $("faqNeu").addEventListener("click", () => {
-      firma.faq = firma.faq || [];
+      if (!Array.isArray(firma.faq)) firma.faq = [];
       firma.faq.push({ frage: "", antwort: "" });
       markiere(); zeigeFaq();
     });
@@ -1306,11 +1307,18 @@
     }
     function oeffneFirma(f) {
       firma = f;
-      // Fehlende Teil-Objekte robust ergänzen (ältere Speicherstände).
-      firma.persona = firma.persona || {};
-      firma.fakten = firma.fakten || {};
-      firma.faq = firma.faq || [];
-      firma.charakter = firma.charakter || {};
+      // Fehlende/kaputte Teil-Objekte robust ergänzen (ältere oder beschädigte
+      // Speicherstände). Typ-Prüfung statt "|| []": ein versehentlich als String
+      // gespeichertes faq würde sonst später .forEach werfen und das Dashboard sperren.
+      firma.persona = (firma.persona && typeof firma.persona === "object") ? firma.persona : {};
+      firma.fakten = (firma.fakten && typeof firma.fakten === "object") ? firma.fakten : {};
+      firma.faq = Array.isArray(firma.faq) ? firma.faq : [];
+      firma.charakter = (firma.charakter && typeof firma.charakter === "object") ? firma.charakter : {};
+      // Anzeigetexte immer als String — sonst wirft z.B. eine numerische ID/Name
+      // beim .slice() in Hero/Avatar und sperrt das Dashboard.
+      if (firma.name != null) firma.name = String(firma.name);
+      firma.id = String(firma.id == null ? "" : firma.id);
+      if (firma.persona.name != null) firma.persona.name = String(firma.persona.name);
       firma.charakter.farbe = firma.charakter.farbe || "#4F46E5";
       firma.charakter.akzent = firma.charakter.akzent || "#FB7185";
       firma.charakter.schrift = firma.charakter.schrift || "Plus Jakarta Sans";
