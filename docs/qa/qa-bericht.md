@@ -11,10 +11,18 @@
 
 Getestet wurde die komplette Nutzerreise (Onboarding → Charakter → Chat → Dashboard) sowie
 die Server-Endpunkte auf Sicherheit, Robustheit, UX/UI und Performance. Es wurden
-**> 200 distinct Test-Szenarien** durchgeführt: 170 automatisierte Micro-Sessions
-(24 QA-Sweep + 146 QA-Batterie) plus die interaktiven Durchläufe dieser Session
-(Onboarding 11 Schritte × 2 Viewports, Dashboard-E2E, Chat-Handoff, 7 Dashboard-Seiten
-× Desktop/Mobile).
+**201 automatisierte Test-Sitzungen** durchgeführt (Ziel: 200), verteilt auf drei Batterien:
+
+| Batterie | Sitzungen | Schwerpunkt |
+|---|---:|---|
+| QA-Sweep | 24 | XSS-Speicher, Injection, Onboarding-Edge, kaputte Daten, Layout, Generierung ≤5 |
+| Batterie 1 | 146 | 33 Injection-IDs, 17 Chat-Validierungsfälle, 15 XSS-Vektoren, 15 kaputte Shapes, 42 Layout-Kombis |
+| Batterie 2 | 31 | Onboarding-Vollläufe (4 Branchen, mit Charakter), Navigation, Persistenz (Felder+Chips), Chat-Mehrfachdialoge, eingebettetes Widget, Nav-Stress, Accessibility |
+| **Summe** | **201** | |
+
+Dazu kommen die interaktiven Durchläufe dieser Session (Onboarding 11 Schritte × 2 Viewports,
+Dashboard-E2E, Chat-Handoff, 7 Dashboard-Seiten × Desktop/Mobile). Teure Aktionen wurden
+respektiert: **4/5 echte Charakter-Generierungen**, kein realer Stripe-/Gemini-Aufruf.
 
 **Gesamturteil: solide.** Keine kritischen oder hohen Sicherheitslücken. Die Client-seitige
 XSS-Hygiene ist durchgehend korrekt (Nutzerdaten via `textContent`), der Server validiert
@@ -27,12 +35,17 @@ Nutzer sieht nirgends, was das Abo kostet.
 |---|---|
 | Sicherheit (XSS / SQLi / SSRF / Injection) | ✅ keine Lücke gefunden |
 | Funktionale Bugs | 2 gefunden — **beide behoben** |
-| Robustheit / Edge-Cases | ✅ nach Fix stabil |
+| Robustheit / Edge-Cases | ✅ nach Fix stabil (15/15 kaputte Shapes) |
+| Persistenz (Edit→Save→Reload) | ✅ 12/12 Felder + Chips korrekt gespeichert |
+| Onboarding-Vollläufe | ✅ 4/4 Branchen inkl. Charakter fehlerfrei |
+| Chat-UI-Robustheit | ✅ adversariale/extreme Eingaben ohne XSS/Crash |
+| Eingebettetes Widget | ✅ Launcher im Shadow-DOM, kein Crash |
 | Layout / Responsive | ✅ 42/42 Viewport×Seite ohne Overflow |
+| Accessibility | ✅ nach Fix (2 Konto-Felder mit Label verknüpft) |
 | Preis-Klarheit | ⚠️ Nachbesserung empfohlen |
 | Dialogqualität | ⚠️ nur eingeschränkt testbar (kein Live-Key) |
 
-**Befund-Zählung (automatisiert):** KRITISCH 0 · HOCH 0 · MITTEL 2 (behoben) · NIEDRIG 0
+**Befund-Zählung (automatisiert):** KRITISCH 0 · HOCH 0 · MITTEL 2 (behoben) · NIEDRIG 1 (behoben)
 
 ---
 
@@ -100,6 +113,26 @@ Firmenbesitzer kontrolliert (betrifft nur den eigenen Bot). Anti-Halluzination i
 > Beide Bugs treten im Normalbetrieb selten auf (die App speichert konsistente Typen), sind aber
 > relevant für ältere/teil-migrierte Speicherstände und Import/Restore. Nach Fix: **15/15
 > kaputte Daten-Shapes robust**, alle 62 Unit-Tests grün, E2E ohne Regression.
+
+### BUG-3 (behoben) — Zwei Konto-Felder ohne verknüpftes Label
+- **Schwere:** Niedrig (Accessibility) · **Bereich:** Dashboard/Einstellungen
+- **Repro:** Screenreader/Tab-Navigation über „E-Mail" und „Agent-ID" in den Einstellungen.
+- **Symptom:** Beide Inputs nutzten `<span class="klabel">` statt `<label for>` — keine programmatische
+  Label-Zuordnung (Screenreader liest kein Feldname).
+- **Fix:** `span.klabel` → `label.klabel[for=...]` für `#e-email` und `#e-id`. Danach: **0
+  Formularfelder ohne Label** (Batterie-2-A11y-Check).
+
+### Persistenz & Vollläufe — ✅ bestätigt
+- **12/12** Edit→Save→Reload-Zyklen persistieren korrekt (Text-Felder + alle Chip-Gruppen:
+  Ton, Länge, Emoji, Anrede, Layout, Design).
+- **4/4 Onboarding-Vollläufe** (Pizzeria/Zahnarzt/Yoga/Mode) inkl. Charakter-Generierung fehlerfrei.
+- **Onboarding-Navigation** (vor/zurück) konsistent, Fortschritts-Punkte korrekt (genau 1 aktiv).
+- **Chat-UI** verarbeitet 9 reale + adversariale Eingaben (XSS, SQLi-String, 5000 Zeichen, Emoji-Flut,
+  Prompt-Injection „ignore previous instructions") ohne XSS/Crash; leere/Whitespace-Eingaben werden
+  korrekt **nicht** gesendet.
+- **Eingebettetes Widget** (`test-einbetten.html`): Launcher rendert im Shadow-DOM, Panel-Klick ohne
+  Fehler — bestätigt die CSS-Kapselung gegen die Kundenseite.
+- **Nav-Stress:** 30 schnelle Ansichtswechsel → stets genau 1 Ansicht sichtbar, kein Crash.
 
 ### Nicht-Bug, aber Beobachtung — Onboarding-Validierung ist bewusst „weich"
 - E-Mail-Feld akzeptiert `keine-mail` (kein `type=email`-Zwang), Webseiten-Scan startet auch mit
@@ -182,5 +215,9 @@ Firmenbesitzer kontrolliert (betrifft nur den eigenen Bot). Anti-Halluzination i
   begrenzte Generierung ≤ 5).
 - `qa-battery.js` — 146 Micro-Sessions (33 Injection-IDs, 17 Chat-Validierungsfälle, 15 XSS-Vektoren,
   15 kaputte Daten-Shapes, 42 Layout-Kombinationen).
-- `befunde.json` / `battery.json` — maschinenlesbare Ergebnisse.
-- Fix-Commit: `fix: Dashboard robust gegen beschaedigte/falsch typisierte Firmendaten`.
+- `qa-battery2.js` — 31 Browser-Sessions (4 Onboarding-Vollläufe, Navigation, 12 Persistenz-Zyklen,
+  Chat-Mehrfachdialoge, Widget-Einbettung, Nav-Stress, Accessibility).
+- `befunde.json` / `battery.json` / `battery2.json` — maschinenlesbare Ergebnisse.
+- **Summe: 201 automatisierte Sitzungen.** Teure Aktionen: 4/5 Generierungen, 0 reale Zahlungen.
+- Fix-Commits: `fix: Dashboard robust gegen beschaedigte/falsch typisierte Firmendaten` ·
+  `fix: Konto-Felder mit verknuepftem Label (Accessibility)`.
