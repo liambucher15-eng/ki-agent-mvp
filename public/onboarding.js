@@ -32,6 +32,16 @@
     const dots = progress.querySelectorAll(".dot");
     function updateProgress() { dots.forEach((d,i)=>{ d.classList.toggle("done", i<aktuell); d.classList.toggle("aktiv", i===aktuell); }); }
 
+    // Szenen-Videos: nur das Video des sichtbaren Schritts läuft, immer von vorn.
+    function syncSzenenVideos(n) {
+      rechtsSchritte.forEach((el, i) => {
+        const v = el.querySelector("video");
+        if (!v) return;
+        if (i === n) { try { v.currentTime = 0; } catch (e) {} v.play().catch(() => {}); }
+        else { v.pause(); }
+      });
+    }
+
     gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
     gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
     gsap.to(".w2", { x: -34, y: 26, scale: 1.2, duration: 11, ease: "sine.inOut", repeat: -1, yoyo: true });
@@ -50,6 +60,7 @@
           // passiert hier, während beide Seiten unsichtbar sind -> kein Sprung).
           document.querySelector(".card").classList.toggle("voll", n === AUSDRUECKE_STEP);
           lNeu.hidden = false; rNeu.hidden = false; lNeu.scrollTop = 0;
+          syncSzenenVideos(n);
           gsap.fromTo([lNeu, rNeu], { autoAlpha: 0, x: 24 * richtung }, { autoAlpha: 1, x: 0, duration: 0.32, ease: "power2.out",
             onComplete: () => { istUebergang = false; } });
         }});
@@ -804,4 +815,5 @@
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();
+    syncSzenenVideos(0);
   

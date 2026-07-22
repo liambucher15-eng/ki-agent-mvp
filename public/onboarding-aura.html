@@ -250,6 +250,11 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; text-align: center; padding: 1rem; }
     .platzhalter .ph-titel { color: #fff; font-weight: 700; font-size: 0.9rem; }
     .platzhalter .ph-text { color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.35; }
+    /* Szenen-Video: schwebt als abgerundete Karte auf dem Marken-Verlauf */
+    .vid-karte { position: relative; z-index: 1; width: 84%; max-width: 340px; aspect-ratio: 3/4;
+      border-radius: 18px; overflow: hidden; background: #DDE0F7;
+      box-shadow: 0 18px 44px rgba(24,22,68,0.30); }
+    .vid-karte video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     @media (max-width: 860px) {
       body { padding: 0; }
@@ -259,7 +264,7 @@
          den Rest — behebt die weisse Lücke durch die gestreckte Grid-Zeile. */
       .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
       .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0; height: 96px; max-height: none; }
-      .card-rechts .platzhalter, .card-rechts .vorschau { display: none; }
+      .card-rechts .platzhalter, .card-rechts .vorschau, .card-rechts .vid-karte { display: none; }
       .card-links { padding: 1.5rem 1.4rem; }
       h1 { font-size: 1.8rem; }
     }
@@ -544,20 +549,20 @@
           <div class="feld-bg"></div>
           <div class="welle w1"></div><div class="welle w2"></div><div class="welle w3"></div>
         </div>
-        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Vorschau</div><div class="ph-text">Agent in Aktion mit Tagline</div></div></div></div>
-        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Glas-Umschlag</div><div class="ph-text">Sicher und passwortlos in Sekunden</div></div></div></div>
-        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
-        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
-        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
+        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="vid-karte"><video src="videos/szene1.mp4" muted loop playsinline preload="auto"></video></div></div></div>
+        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene2.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene3.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
         <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
-        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: 4 Stil-Varianten</div><div class="ph-text">deine Figur in vier Richtungen</div></div></div></div>
+        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
           <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
       </div>
 
     </div>
