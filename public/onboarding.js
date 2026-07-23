@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -135,14 +135,20 @@
     }));
     function kurz(t) { return t ? t.replace(/\s+/g," ").trim().slice(0,42) : "nichts erkannt"; }
     function updatePruefVorschau() {
-      document.getElementById("v-oeffnung").textContent = kurz(document.getElementById("p-oeffnung").value);
+      const vs = (vid, wert) => { const e = document.getElementById(vid); if (e) e.textContent = kurz(wert); };
+      vs("v-oeffnung", document.getElementById("p-oeffnung").value);
       const k = [document.getElementById("p-adresse").value, document.getElementById("p-kontakt").value].filter(Boolean).join(" · ");
-      document.getElementById("v-kontakt").textContent = kurz(k);
+      vs("v-kontakt", k);
       const faqAnzahl = faqListe.value().length;
       document.getElementById("v-faq").textContent = faqAnzahl ? faqAnzahl + (faqAnzahl === 1 ? " Frage definiert" : " Fragen definiert") : "noch keine Frage";
-      document.getElementById("v-weiteres").textContent = kurz(document.getElementById("p-weiteres").value);
+      vs("v-weiteres", document.getElementById("p-weiteres").value);
+      vs("v-leistungen", document.getElementById("p-leistungen").value);
+      vs("v-preise", document.getElementById("p-preise").value);
+      vs("v-team", document.getElementById("p-team").value);
+      vs("v-besonderheiten", document.getElementById("p-besonderheiten").value);
+      vs("v-regeln", document.getElementById("p-regeln").value);
     }
-    ["p-oeffnung","p-adresse","p-kontakt","p-weiteres"].forEach(id =>
+    ["p-oeffnung","p-adresse","p-kontakt","p-weiteres","p-leistungen","p-preise","p-team","p-besonderheiten","p-regeln"].forEach(id =>
       document.getElementById(id).addEventListener("input", updatePruefVorschau));
 
     // Überprüfen: Häufige Fragen als Liste von Frage/Antwort-Paaren
@@ -223,6 +229,12 @@
       document.getElementById("p-kontakt").value = daten.kontakt;
       faqListe.rendern(daten.faq);
       document.getElementById("p-weiteres").value = daten.weiteres;
+      // Detail-Felder mit dem Gefundenen vorbelegen, damit die Firma sieht und
+      // ergänzt, was der Agent schon weiss (statt dass es unsichtbar bleibt).
+      document.getElementById("p-leistungen").value = daten.leistungen.join("\n");
+      document.getElementById("p-preise").value = daten.preise;
+      document.getElementById("p-team").value = daten.team;
+      document.getElementById("p-besonderheiten").value = daten.besonderheiten;
       updatePruefVorschau();
       if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
       if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
@@ -755,6 +767,13 @@
       daten.kontakt = wert("p-kontakt");
       daten.faq = faqListe.value();
       daten.weiteres = wert("p-weiteres");
+      // Detail-Wissen (Milestone 7 sichtbar gemacht): Leistungen zeilenweise,
+      // der Rest als Freitext. Alles fliesst unten in scanText -> Agenten-Wissen.
+      daten.leistungen = wert("p-leistungen").split("\n").map((s) => s.trim()).filter(Boolean);
+      daten.preise = wert("p-preise");
+      daten.team = wert("p-team");
+      daten.besonderheiten = wert("p-besonderheiten");
+      daten.regeln = wert("p-regeln");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
       daten.uebergabe = wert("uebergabe") || daten.uebergabe;
@@ -813,6 +832,7 @@
         daten.preise && ("Preise: " + daten.preise),
         daten.team && ("Team: " + daten.team),
         daten.besonderheiten && ("Besonderheiten: " + daten.besonderheiten),
+        daten.regeln && ("Regeln: " + daten.regeln),
         daten.weiteres,
       ].filter(Boolean).join("\n\n");
       if (scanText) {
