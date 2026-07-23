@@ -15,6 +15,9 @@
       --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* hidden muss IMMER gewinnen: Elemente mit inline display (z.B. #scanBericht
+       display:grid) würden sonst trotz [hidden] als leere Box sichtbar bleiben. */
+    [hidden] { display: none !important; }
     html, body { height: 100%; overflow: hidden; }
     body { font-family: var(--sans); color: var(--text); background: #fff;
            display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 2rem; }
@@ -51,15 +54,19 @@
       background: rgba(79,70,229,0.09); padding: 0.32rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
     .willkommen .hero-titel { font-size: 2.55rem; }
     .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
-    .hero-punkte { list-style: none; margin: 1.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-    .hero-punkte li { font-size: 0.93rem; color: var(--text); font-weight: 500; }
+    .hero-punkte { list-style: none; margin: 1.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+    .hero-punkte li { position: relative; padding-left: 1.4rem; font-size: 0.93rem; color: var(--text); font-weight: 500; }
+    .hero-punkte li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 8px; height: 8px;
+      border-radius: 50%; background: linear-gradient(135deg, var(--indigo), var(--coral)); }
 
-    /* Teil-Zähler: zeigt "Teil 1 von 2" bei aufgeteilten Themen. */
-    .teil-zaehler { display: inline-flex; align-items: center; gap: 0.4rem; align-self: flex-start;
-      font-size: 0.72rem; font-weight: 700; color: var(--grau); text-transform: uppercase;
-      letter-spacing: 0.05em; margin-bottom: 0.7rem; }
+    /* Teil-Zähler: "Teil 1 von 2" bei aufgeteilten Themen. Sitzt per order UNTEN
+       direkt über der Nav, damit er nicht mit den Fortschritts-Dots oben kollidiert. */
+    .teil-zaehler { order: 100; display: inline-flex; align-items: center; gap: 0.4rem; align-self: center;
+      font-size: 0.72rem; font-weight: 700; color: var(--grau-hell); text-transform: uppercase;
+      letter-spacing: 0.05em; margin: 0.4rem auto 0.1rem; }
     .teil-zaehler .teil-punkt { width: 16px; height: 4px; border-radius: 999px; background: var(--border); }
     .teil-zaehler .teil-punkt.aktiv { background: var(--indigo); }
+    .nav { order: 101; }
     .sub { color: var(--grau); font-size: 0.96rem; line-height: 1.55; margin-top: 0.6rem; }
     .grow { flex: 1; }
 
@@ -73,9 +80,12 @@
     select.select { cursor: pointer; }
     textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
     textarea.klein { min-height: 52px; }
-    /* "Was ihr anbietet": grosses Feld, das beim Reinklicken mehr Platz gibt. */
-    #p-angebot { min-height: 110px; transition: min-height 0.22s ease; }
-    #p-angebot:focus { min-height: 190px; }
+    /* Textfelder werden beim Reinklicken grösser: mehr Platz zum Schreiben.
+       (JS scrollt das Feld danach ins Sichtfeld, siehe onboarding.js.) */
+    .schritt-links textarea { transition: min-height 0.22s ease, border-color 0.15s, box-shadow 0.15s; }
+    .schritt-links textarea:focus { min-height: 150px; }
+    #p-angebot { min-height: 110px; }
+    #p-angebot:focus { min-height: 200px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
 
     .btn { font: inherit; font-weight: 600; font-size: 0.96rem; border: 0; border-radius: 13px; cursor: pointer;
@@ -180,7 +190,7 @@
 
     /* Ausdrücke-Seite: volle Kartenbreite, damit alle 4 Emotionen auf einen
        Blick sichtbar sind (rechtes Verlaufs-Panel entfällt auf diesem Schritt).
-       grid-template-rows: 1fr ist fürs Mobile-Layout nötig — dort hat .card
+       grid-template-rows: 1fr ist fürs Mobile-Layout nötig, dort hat .card
        sonst auto/1fr-Zeilen und die Formular-Spalte würde ohne rechtes Panel
        auf Inhaltshöhe kollabieren (die Schritte sind absolut positioniert). */
     .card.voll { grid-template-columns: 1fr; grid-template-rows: 1fr; }
@@ -300,7 +310,7 @@
       .stage { max-width: 100%; }
       .glow { display: none; }
       /* Zeile 1 = Video-Band oben, Zeile 2 (Formular) bekommt den Rest. Das
-         Video ist der Wow-Moment und bleibt auch auf dem Handy sichtbar —
+         Video ist der Wow-Moment und bleibt auch auf dem Handy sichtbar -
          nur die rein dekorativen Platzhalter/Vorschauen werden ausgeblendet. */
       .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
       .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0;
@@ -330,11 +340,11 @@
             <div class="grow"></div>
             <span class="eyebrow">Dein eigener KI-Agent</span>
             <h1 class="hero-titel">Willkommen bei<br>AuraChat</h1>
-            <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent — er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
+            <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent, er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
             <ul class="hero-punkte">
-              <li>✨ Ein eigener Charakter als Gesicht deiner Marke</li>
-              <li>🧠 Kennt deine Website, Preise und häufigen Fragen</li>
-              <li>💬 Nimmt Kontakte auf, auch wenn du gerade schläfst</li>
+              <li>Ein eigener Charakter als Gesicht deiner Marke</li>
+              <li>Kennt deine Website, Preise und häufigen Fragen</li>
+              <li>Nimmt Kontakte auf, auch wenn du gerade schläfst</li>
             </ul>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
@@ -369,7 +379,7 @@
           <div class="schritt-links" data-step="3" hidden>
             <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
             <h1 class="klein">Stimmt das so?</h1>
-            <p class="sub">Das haben wir von eurer Website gelesen. Prüf kurz die Basics und ergänze frei, was fehlt — je mehr dein Agent weiss, desto besser hilft er.</p>
+            <p class="sub">Das haben wir von eurer Website gelesen. Prüf kurz die Basics und ergänze frei, was fehlt, je mehr dein Agent weiss, desto besser hilft er.</p>
             <!-- Scan-Qualitätsbericht (Milestone 7): was gefunden wurde und was fehlt -->
             <div id="scanBericht" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.65rem 0.8rem;margin-top:0.7rem;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.8rem;"></div>
             <label class="feld" for="p-name">Firmenname</label>
@@ -384,7 +394,7 @@
           <div class="schritt-links" data-step="4" hidden>
             <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
             <h1 class="klein">Noch ein paar<br>Details</h1>
-            <p class="sub">Öffnungszeiten, Kontakt und häufige Fragen. Klapp auf, was du prüfen oder ergänzen möchtest — alles optional.</p>
+            <p class="sub">Öffnungszeiten, Kontakt und häufige Fragen. Klapp auf, was du prüfen oder ergänzen möchtest, alles optional.</p>
             <div class="pruef">
               <div class="pk">
                 <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
@@ -421,7 +431,7 @@
           <div class="schritt-links" data-step="5" hidden>
             <div class="grow"></div>
             <h1 class="klein">Dokumente hochladen</h1>
-            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus — ganz optional.</p>
+            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus, ganz optional.</p>
             <label class="drop" for="docs">Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
             <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
             <div id="doc-liste"></div>
@@ -433,8 +443,8 @@
           <!-- 6a Identität: Name + Rolle (Teil 1 von 2) -->
           <div class="schritt-links" data-step="6" id="schrittIdentitaet" hidden>
             <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
-            <h1 class="klein">Wer ist<br>dein Agent?</h1>
-            <p class="sub">Gib deinem Agenten einen Namen und eine Rolle — das macht ihn nahbar. Alles ist vorbelegt, du kannst es jederzeit ändern.</p>
+            <h1 class="klein">Wer ist dein Agent?</h1>
+            <p class="sub">Gib deinem Agenten einen Namen und eine Rolle, das macht ihn nahbar. Alles ist vorbelegt, du kannst es jederzeit ändern.</p>
             <label class="feld" for="agentName">Wie soll dein Assistent heissen? *</label>
             <input type="text" id="agentName" placeholder="z.B. Pino, Lia, Concierge" maxlength="40" />
             <p class="mini" id="agentNameHinweis" style="text-align:left;min-height:1em;"></p>
@@ -455,14 +465,14 @@
           <!-- 6b Identität: Anrede + Persönlichkeit (Teil 2 von 2) -->
           <div class="schritt-links" data-step="7" id="schrittPersoenlichkeit" hidden>
             <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
-            <h1 class="klein">Wie soll dein<br>Agent klingen?</h1>
+            <h1 class="klein">Wie klingt dein Agent?</h1>
             <p class="sub">Anrede und Persönlichkeit prägen den Ton jeder Antwort. Auch hier ist alles sinnvoll vorbelegt.</p>
             <label class="feld">Ansprache</label>
             <div class="pers" id="anredeListe">
               <button type="button" class="pers-chip aktiv" data-anrede="du">Du (locker)</button>
               <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
             </div>
-            <label class="feld">Persönlichkeit — wie soll dein Agent klingen?</label>
+            <label class="feld">Persönlichkeit, wie soll dein Agent klingen?</label>
             <div class="pers" id="persListe">
               <button type="button" class="pers-chip" data-ton="professionell">Professionell</button>
               <button type="button" class="pers-chip" data-ton="freundlich">Freundlich</button>
@@ -480,7 +490,7 @@
           <div class="schritt-links" data-step="8" hidden>
             <div class="grow"></div>
             <h1>Wie soll er<br>antworten?</h1>
-            <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten — justiere nur, was du möchtest.</p>
+            <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten, justiere nur, was du möchtest.</p>
               <label class="feld">Antwortlänge</label>
               <div class="pers pers-3" id="laengenListe">
                 <button type="button" class="pers-chip" data-laenge="kurz">Kurz & direkt</button>
@@ -523,7 +533,7 @@
           <div class="schritt-links" data-step="9" hidden>
             <div class="grow"></div>
             <h1>Wie sieht<br>der Chat aus?</h1>
-            <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website — du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
+            <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website, du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
               <div class="pers" id="designListe">
                 <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch</button>
                 <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
@@ -555,7 +565,7 @@
                Ausdrücke auf der eigenen Folgeseite (#schrittAusdruecke). -->
           <div class="schritt-links" data-step="10" id="schrittAgent" hidden>
             <h1 class="klein">Erstelle deinen<br>Charakter</h1>
-            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
+            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten, und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
 
             <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
             <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
@@ -566,7 +576,7 @@
             <p class="mini" id="charBildStatus" style="text-align:left;min-height:1.1em;margin-top:0.35rem;"></p>
             <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
 
-            <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.8rem;">✨ 4 Varianten erstellen</button>
+            <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.8rem;">4 Varianten erstellen</button>
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="charBalken"><span></span></div>
             <p class="mini" id="charVariantenZeile" hidden style="text-align:left;"><a class="link" id="charVariantenOeffnen">Varianten ansehen →</a></p>
@@ -576,11 +586,11 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
           </div>
 
-          <!-- 10 Ausdrücke: der Belohnungs-Moment — die gewählte Figur lebt. -->
+          <!-- 10 Ausdrücke: der Belohnungs-Moment, die gewählte Figur lebt. -->
           <div class="schritt-links" data-step="11" id="schrittAusdruecke" hidden>
             <div class="grow"></div>
             <h1 class="klein">Dein Charakter<br>lebt</h1>
-            <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie — jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
+            <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie, jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
             <p class="mini" id="charZustandStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="zustaendeBalken"><span></span></div>
             <!-- Während der Generierung: die gewählte Variante als Vorfreude-Bild. -->
@@ -600,7 +610,7 @@
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
             <!-- §8 Veröffentlichungs-Checkliste: zeigt vor dem Live-Gehen, was der
                  Agent schon kann und warnt bei fehlenden kritischen Infos. Blockiert
-                 nicht — der Agent bleibt testbar, die Warnung ist ein Hinweis. -->
+                 nicht, der Agent bleibt testbar, die Warnung ist ein Hinweis. -->
             <div id="startklar" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.75rem 0.9rem;margin-bottom:0.6rem;">
               <div id="startklarBanner" style="font-size:0.86rem;font-weight:600;margin-bottom:0.55rem;"></div>
               <div id="startklarListe" style="display:grid;grid-template-columns:1fr 1fr;gap:0.22rem 0.9rem;font-size:0.82rem;"></div>
@@ -640,7 +650,7 @@
         <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="11" id="vorschauRechts" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
-          <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
+          <div class="vorschau-label" id="vorLabel">Noch kein Charakter, erstelle ihn links</div>
         </div></div></div>
         <div class="schritt-rechts" data-step="12" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
       </div>
@@ -655,7 +665,7 @@
     <div class="modal-karte" role="dialog" aria-modal="true" aria-labelledby="stilModalTitel">
       <button type="button" class="modal-schliessen" id="stilModalZu" aria-label="Schliessen">×</button>
       <h2 id="stilModalTitel">Wähle deine Stilrichtung</h2>
-      <p class="sub" style="font-size:0.88rem;margin-top:0.25rem;">Vier Varianten deiner Figur. Wähle die, die am besten zu deiner Marke passt — daraus entstehen die Ausdrücke.</p>
+      <p class="sub" style="font-size:0.88rem;margin-top:0.25rem;">Vier Varianten deiner Figur. Wähle die, die am besten zu deiner Marke passt, daraus entstehen die Ausdrücke.</p>
       <div class="richtungs-grid" id="richtungsGrid"></div>
       <label class="feld" for="richtungenAnpassung" style="margin-top:1rem;">Keine passt? Beschreibe, was anders sein soll</label>
       <div style="display:flex;gap:0.5rem;">

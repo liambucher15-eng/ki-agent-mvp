@@ -1,4 +1,4 @@
-// Onboarding-Wizard — Logik zu onboarding-aura.html.
+// Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
     const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
@@ -7,25 +7,25 @@
     const TON_TEXTE = {
       professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
       freundlich:    "warm, freundlich und hilfsbereit; geduldig und zugänglich",
-      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern — aber immer hilfreich",
+      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern, aber immer hilfreich",
       sachlich:      "sachlich, knapp und faktenorientiert, ohne Ausschmückungen",
       motivierend:   "motivierend und begeisternd; ermutigt die Besucher",
       luxurioes:     "gehoben, elegant und exklusiv; gewählte, diskrete Sprache",
     };
     const TON_HINWEIS = {
-      professionell: "Kompetent und verbindlich — für seriöse Marken.",
-      freundlich:    "Warm und nahbar — der Allrounder.",
-      humorvoll:     "Locker mit Augenzwinkern — für nahbare Marken.",
-      sachlich:      "Knapp und faktenorientiert — für technische Angebote.",
-      motivierend:   "Energiegeladen — für Coaching, Fitness, Bildung.",
-      luxurioes:     "Gehoben und exklusiv — für Premium-Marken.",
+      professionell: "Kompetent und verbindlich, für seriöse Marken.",
+      freundlich:    "Warm und nahbar, der Allrounder.",
+      humorvoll:     "Locker mit Augenzwinkern, für nahbare Marken.",
+      sachlich:      "Knapp und faktenorientiert, für technische Angebote.",
+      motivierend:   "Energiegeladen, für Coaching, Fitness, Bildung.",
+      luxurioes:     "Gehoben und exklusiv, für Premium-Marken.",
     };
     const linksSchritte = document.querySelectorAll(".schritt-links");
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
     const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
     const AUSDRUECKE_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAusdruecke");
-    // Identitäts-Schritt (Name Pflicht + Namensvorschlag) — ID-basiert, damit
+    // Identitäts-Schritt (Name Pflicht + Namensvorschlag), ID-basiert, damit
     // spätere Seiten-Splits die Schrittnummern verschieben können, ohne zu brechen.
     const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
     let aktuell = 0;
@@ -77,14 +77,14 @@
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
       // Identitäts-Schritt: Agenten-Name aus dem Firmennamen vorschlagen, falls
       // das FELD leer ist. (daten.agentName ist hier durch den sammle()-Fallback
-      // oft schon belegt — entscheidend ist, was der Nutzer im Feld sieht.)
+      // oft schon belegt, entscheidend ist, was der Nutzer im Feld sieht.)
       if (n === IDENTITAET_STEP && daten.name) {
         const el = document.getElementById("agentName");
         if (el && !el.value.trim()) { el.value = daten.name; daten.agentName = daten.name; }
       }
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
-      // §3: Agenten-Name ist Pflicht — beim Verlassen des Identitäts-Schritts prüfen.
+      // §3: Agenten-Name ist Pflicht, beim Verlassen des Identitäts-Schritts prüfen.
       if (aktuell === IDENTITAET_STEP) {
         const el = document.getElementById("agentName");
         if (el && !el.value.trim()) {
@@ -94,12 +94,12 @@
         }
       }
       // Ausdrücke-Schritt: erst weiter, wenn die Generierung fertig ist.
-      // (Der Charakter-Schritt selbst hat keinen Weiter-Knopf — die Stilwahl
+      // (Der Charakter-Schritt selbst hat keinen Weiter-Knopf, die Stilwahl
       // im Pop-up führt automatisch hierher, Charakter bleibt Pflicht.)
       if (aktuell === AUSDRUECKE_STEP) {
         if (!(daten.charakterBilder && daten.charakterBilder.idle)) {
           const s = document.getElementById("charZustandStatus");
-          if (s) { s.style.color = "#e11d48"; s.textContent = "Die Ausdrücke werden noch erstellt — einen Moment bitte."; }
+          if (s) { s.style.color = "#e11d48"; s.textContent = "Die Ausdrücke werden noch erstellt, einen Moment bitte."; }
           return;
         }
       }
@@ -108,7 +108,7 @@
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
     // Anmelden: echten Bestätigungs-Link schicken, wenn Supabase konfiguriert ist
-    // (sonst Simulation — es geht einfach weiter). Verknüpft die anonyme Sitzung
+    // (sonst Simulation, es geht einfach weiter). Verknüpft die anonyme Sitzung
     // mit der E-Mail, ohne die Nutzer-ID zu wechseln -> Besitz der Firma bleibt.
     // Fire-and-forget: der Ablauf wartet nicht auf die Mail.
     document.getElementById("loginBtn").addEventListener("click", () => {
@@ -117,8 +117,8 @@
       if (!email || !(window.Auth && window.Auth.konfiguriert)) return; // Simulation
       status.style.color = ""; status.textContent = "Bestätigungs-Link wird gesendet…";
       window.Auth.verknuepfeEmail(email, location.origin + "/dashboard.html").then((r) => {
-        if (r.ok) { status.style.color = "var(--gruen)"; status.textContent = "✓ Link an " + email + " gesendet — du kannst hier weitermachen."; }
-        else { status.style.color = "var(--grau)"; status.textContent = "Konnte den Link nicht senden (" + (r.error || "unbekannt") + ") — Onboarding läuft trotzdem weiter."; }
+        if (r.ok) { status.style.color = "var(--gruen)"; status.textContent = "✓ Link an " + email + " gesendet, du kannst hier weitermachen."; }
+        else { status.style.color = "var(--grau)"; status.textContent = "Konnte den Link nicht senden (" + (r.error || "unbekannt") + "), Onboarding läuft trotzdem weiter."; }
       });
     });
 
@@ -181,7 +181,7 @@
     // Frontend stößt ihn an und fragt danach den Status ab, bis "done"/"error".
     const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     // Scan-Qualitätsbericht (Milestone 7): zeigt pro Kategorie, ob der Scan etwas
-    // gefunden hat — so sieht die Firma sofort, was ihr Agent noch NICHT weiß.
+    // gefunden hat, so sieht die Firma sofort, was ihr Agent noch NICHT weiß.
     function zeigeScanBericht(d) {
       const box = document.getElementById("scanBericht");
       if (!box) return;
@@ -196,7 +196,7 @@
       for (const [titel, wert] of zeilen) {
         const z = document.createElement("div");
         const ok = !!wert;
-        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : " — bitte ergänzen");
+        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : ", bitte ergänzen");
         z.style.color = ok ? "var(--gruen)" : "#b45309";
         box.appendChild(z);
       }
@@ -212,7 +212,7 @@
       daten.name = d.name||""; daten.angebot = d.angebot||"";
       daten.oeffnungszeiten = d.oeffnungszeiten||""; daten.adresse = d.adresse||"";
       daten.kontakt = d.kontakt||""; daten.faq = d.faq||[]; daten.weiteres = d.weiteres||""; daten.wissen = d.wissen||"";
-      // Milestone 7: zusätzliche Scan-Felder — fließen beim Speichern in die Scan-Quelle.
+      // Milestone 7: zusätzliche Scan-Felder, fließen beim Speichern in die Scan-Quelle.
       daten.leistungen = Array.isArray(d.leistungen) ? d.leistungen : [];
       daten.preise = d.preise||""; daten.team = d.team||""; daten.besonderheiten = d.besonderheiten||"";
       zeigeScanBericht(d);
@@ -275,7 +275,7 @@
     });
 
     // --- Dokumente hochladen ---
-    // Jedes Dokument wird eine EIGENE Wissensquelle (daten.dokumente) — mit
+    // Jedes Dokument wird eine EIGENE Wissensquelle (daten.dokumente), mit
     // Herkunft und Stand, einzeln entfernbar. Nichts wird mehr in das Textfeld
     // "Weitere Infos" gemischt (Milestone 3: Jede Info kennt ihre Herkunft).
     const MAX_DATEI = 4.5 * 1024 * 1024;
@@ -300,7 +300,7 @@
     document.getElementById("docs").addEventListener("change", async (e) => {
       const liste = document.getElementById("doc-liste");
       for (const f of e.target.files) {
-        // Fortschritts-Zeile (Dateiname per textContent — nie innerHTML mit Nutzer-Daten)
+        // Fortschritts-Zeile (Dateiname per textContent, nie innerHTML mit Nutzer-Daten)
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
         const nameEl = document.createElement("span"); nameEl.textContent = f.name;
         const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "…";
@@ -351,7 +351,7 @@
     anredeChips.forEach((c) => c.addEventListener("click", () => waehleAnrede(c.dataset.anrede)));
     waehleAnrede(daten.agentAnrede);
 
-    // --- Persönlichkeit (Ton) wählen — NUR die Chips in #persListe ---
+    // --- Persönlichkeit (Ton) wählen, NUR die Chips in #persListe ---
     const persChips = document.querySelectorAll("#persListe .pers-chip");
     function waehlePers(ton) {
       daten.persoenlichkeit = ton;
@@ -377,7 +377,7 @@
     // sofort, was die Auswahl konkret bewirkt (statt einer abstrakten Beschreibung).
     function baueBeispielAntwort() {
       const nachLaenge = {
-        kurz: ["Ja, sonntags 10–16 Uhr."],
+        kurz: ["Ja, sonntags 10 bis 16 Uhr."],
         ausgewogen: ["Ja, sonntags haben wir von 10 bis 16 Uhr geöffnet.", "Komm gern vorbei!"],
         ausfuehrlich: [
           "Ja, sonntags sind wir von 10 bis 16 Uhr für dich da.",
@@ -404,9 +404,18 @@
     chipGruppe("#laengenListe .pers-chip", "antwortLaenge", "laenge");
     chipGruppe("#emojiListe .pers-chip", "emojiStil", "emoji");
     chipGruppe("#formatListe .pers-chip", "antwortFormat", "format");
+
+    // Aufklapp-Felder: beim Reinklicken wächst das Textfeld (CSS). Danach scrollen
+    // wir es in die Mitte des Schritts, damit man das vergrösserte Feld ganz sieht,
+    // ohne selbst runterscrollen zu müssen. Wartet die Wachstums-Transition (220ms) ab.
+    document.querySelectorAll(".schritt-links textarea").forEach((t) => {
+      t.addEventListener("focus", () => {
+        setTimeout(() => { try { t.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }, 240);
+      });
+    });
     // Chat-Design: "Automatisch" ist Standard (Farben von der Website). "Selbst
     // anpassen" blendet Farb-/Schrift-Steuerung ein. Keine Startansicht-Wahl mehr
-    // — das Widget schaltet auf dem Handy von selbst auf Vollbild (chatLayout bleibt
+    //, das Widget schaltet auf dem Handy von selbst auf Vollbild (chatLayout bleibt
     // "sidebar" als Default in daten).
     (function () {
       const chips = document.querySelectorAll("#designListe .pers-chip");
@@ -444,13 +453,13 @@
         vorLabel.textContent = "Dein Charakter";
       } else {
         vorFigurImg.removeAttribute("src"); vorFigurImg.style.visibility = "hidden";
-        vorLabel.textContent = "Noch kein Charakter — erstelle ihn links";
+        vorLabel.textContent = "Noch kein Charakter, erstelle ihn links";
       }
     }
     aktualisiereAgentVorschau(); // Startzustand der Vorschau setzen
 
     // Stilwahl-Pop-up: öffnet sich, wenn die Varianten fertig sind. Schliessen
-    // ist erlaubt — die Varianten bleiben über den Link auf der Seite erreichbar
+    // ist erlaubt, die Varianten bleiben über den Link auf der Seite erreichbar
     // (keine Bild-Credits verlieren). Funktions-Deklaration: wird auch im
     // data-next-Handler weiter oben gebraucht.
     const stilModal = document.getElementById("stilModal");
@@ -466,7 +475,7 @@
       const anpassung = document.getElementById("richtungenAnpassung").value.trim();
       const beschrFeld = document.getElementById("charBeschr");
       if (anpassung) {
-        beschrFeld.value = (beschrFeld.value.trim() ? beschrFeld.value.trim() + " — " + anpassung : anpassung).slice(0, 500);
+        beschrFeld.value = (beschrFeld.value.trim() ? beschrFeld.value.trim() + ", " + anpassung : anpassung).slice(0, 500);
         document.getElementById("richtungenAnpassung").value = "";
       }
       schliesseStilModal();
@@ -495,7 +504,7 @@
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jobId, firmaId: daten.id || undefined, farbe: daten.farbe1, ...payload }),
       });
-      if (start.status === 429) throw new Error("Limit erreicht — bitte später erneut versuchen.");
+      if (start.status === 429) throw new Error("Limit erreicht, bitte später erneut versuchen.");
       if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");
       for (let versuch = 0; versuch < (maxVersuche || 90); versuch++) {
         await schlaf(2000);
@@ -525,7 +534,7 @@
         im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:#fafafa;";
         const lbl = document.createElement("div");
         lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.82rem;font-weight:600;margin:0.45rem 0 0.5rem;color:#374151;";
-        // Änderungs-Eingabe als mehrzeiliger Textbereich (Platz für 2–3 Sätze),
+        // Änderungs-Eingabe als mehrzeiliger Textbereich (Platz für 2 bis 3 Sätze),
         // Knopf in voller Breite darunter.
         const reihe = document.createElement("div");
         reihe.style.cssText = "display:flex;flex-direction:column;gap:0.4rem;";
@@ -556,7 +565,7 @@
       });
     }
 
-    // Varianten ins Pop-up rendern — jede Karte hat ihren eigenen
+    // Varianten ins Pop-up rendern, jede Karte hat ihren eigenen
     // Bestätigen-Knopf, der die Wahl direkt auslöst.
     function zeigeRichtungen(richtungen) {
       const grid = document.getElementById("richtungsGrid");
@@ -584,7 +593,7 @@
     // danach öffnet sich das Stilwahl-Pop-up.
     async function starteRichtungen({ beschreibung, status, btn }) {
       btn.disabled = true; status.style.color = ""; balken("charBalken", true);
-      status.textContent = "Wir entwickeln vier Stil-Varianten deiner Figur — das dauert ungefähr eine Minute…";
+      status.textContent = "Wir entwickeln vier Stil-Varianten deiner Figur, das dauert ungefähr eine Minute…";
       try {
         const erg = await charJob({ aktion: "richtungen", beschreibung, bild: charReferenzBild || undefined }, 120);
         zeigeRichtungen(erg.richtungen);
@@ -616,7 +625,7 @@
       document.getElementById("andereRichtungZeile").hidden = false;
       document.getElementById("charGrid").hidden = true;
       status.style.color = ""; balken("zustaendeBalken", true);
-      status.textContent = "Die Ausdrücke deiner Figur werden erzeugt — noch etwa eine Minute…";
+      status.textContent = "Die Ausdrücke deiner Figur werden erzeugt, noch etwa eine Minute…";
       // Vorfreude: die gewählte Variante während des Wartens auf der Seite zeigen.
       document.getElementById("gewaehlteVorschauImg").src = richtung.bild;
       document.getElementById("gewaehlteVorschau").hidden = false;
@@ -631,7 +640,7 @@
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
         status.style.color = "#e11d48";
-        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message + " — wähle nochmal eine Richtung.";
+        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message + ", wähle nochmal eine Richtung.";
       } finally {
         balken("zustaendeBalken", false);
         zustaendeLaufen = false;
@@ -642,7 +651,7 @@
       }
     }
 
-    // Bild-Upload: dient als Vorlage für die Varianten — ODER (dezenter
+    // Bild-Upload: dient als Vorlage für die Varianten, ODER (dezenter
     // Zweitweg) direkt als Figur, ganz ohne KI.
     document.getElementById("charBild").addEventListener("change", (e) => {
       const f = e.target.files[0]; if (!f) return;
@@ -652,7 +661,7 @@
       r.onload = () => {
         charReferenzBild = r.result;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ „" + f.name + "“ übernommen — fliesst als Vorlage in die Varianten ein.";
+        status.textContent = "✓ „" + f.name + "“ übernommen, fliesst als Vorlage in die Varianten ein.";
         document.getElementById("charDirektZeile").hidden = false;
       };
       r.readAsDataURL(f);
@@ -662,7 +671,7 @@
       if (!charReferenzBild) return;
       daten.charakterBilder = { idle: charReferenzBild, denken: charReferenzBild, sprechen: charReferenzBild, verlegen: charReferenzBild };
       const status = document.getElementById("charZustandStatus");
-      status.style.color = ""; status.textContent = "Dein Bild wird für alle Ausdrücke verwendet — du kannst es unten per Anweisung variieren.";
+      status.style.color = ""; status.textContent = "Dein Bild wird für alle Ausdrücke verwendet, du kannst es unten per Anweisung variieren.";
       zeigeCharGrid(); aktualisiereAgentVorschau();
       zeige(AUSDRUECKE_STEP, 1);
     });
@@ -686,7 +695,7 @@
 
     // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
     // Vor dem Live-Gehen sieht die Firma gebündelt, was der Agent schon kann und was
-    // ihm fehlt. Kritische Lücken (Name, Angebot, Wissen) lösen eine Warnung aus — der
+    // ihm fehlt. Kritische Lücken (Name, Angebot, Wissen) lösen eine Warnung aus, der
     // Agent bleibt trotzdem testbar; das ist ein Hinweis, keine Sperre.
     function pruefeStartklar() {
       const box = document.getElementById("startklar");
@@ -727,7 +736,7 @@
           "am besten jetzt (zurück) oder später im Dashboard.";
         banner.style.color = "#b45309";
       } else {
-        banner.textContent = "✓ Startklar — dein Agent kennt alles Wichtige.";
+        banner.textContent = "✓ Startklar, dein Agent kennt alles Wichtige.";
         banner.style.color = "var(--gruen)";
       }
       box.hidden = false;
@@ -755,7 +764,7 @@
       daten.agentName = wert("agentName") || daten.name || "Assistent";
       daten.agentRolle = wert("agentRolle") || daten.agentRolle || "Assistent";
       // ID erst vergeben, wenn es eine echte Quelle (Name/Webseite) gibt.
-      // sammle() läuft bei JEDEM Weiter-Klick — auch ganz am Anfang, wenn noch
+      // sammle() läuft bei JEDEM Weiter-Klick, auch ganz am Anfang, wenn noch
       // alles leer ist. Ohne diese Bedingung bekäme jede Firma die ID "firma"
       // (klebt wegen daten.id || …) und alle Kunden überschrieben sich gegenseitig.
       if (!daten.id && (daten.name || daten.webseite)) {
@@ -796,7 +805,7 @@
       const heute = new Date().toISOString().slice(0, 10);
       const wissensquellen = [];
       // Scan-Quelle aus ALLEN erkannten Kategorien (Milestone 7) + den vom
-      // Nutzer geprüften Feldern — das ist das Wissen, aus dem der Agent lebt.
+      // Nutzer geprüften Feldern, das ist das Wissen, aus dem der Agent lebt.
       const leistungen = Array.isArray(daten.leistungen) ? daten.leistungen : [];
       const scanText = [
         daten.angebot && ("Angebot: " + daten.angebot),
@@ -847,7 +856,7 @@
       }
     });
 
-    // Bezahlung findet VOR dem Onboarding statt — kein Checkout mehr in
+    // Bezahlung findet VOR dem Onboarding statt, kein Checkout mehr in
     // Schritt 9. Fallback für Nicht-Zahler: Abo-Bereich im Dashboard.
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
