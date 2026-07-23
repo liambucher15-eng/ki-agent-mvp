@@ -107,19 +107,30 @@
     }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
-    // Anmelden: echten Bestätigungs-Link schicken, wenn Supabase konfiguriert ist
-    // (sonst Simulation, es geht einfach weiter). Verknüpft die anonyme Sitzung
-    // mit der E-Mail, ohne die Nutzer-ID zu wechseln -> Besitz der Firma bleibt.
-    // Fire-and-forget: der Ablauf wartet nicht auf die Mail.
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    // Konto anlegen (Pflicht): E-Mail + Passwort. Wertet die anonyme Sitzung zu
+    // einem dauerhaften Konto auf (gleiche uid -> Besitz der Firma bleibt). Weiter
+    // geht NUR bei Erfolg. Ohne Supabase (lokal): Simulation, einfach weiter.
+    // Dieser Button trägt bewusst KEIN data-next, damit er selbst weiterschaltet.
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = (document.getElementById("email").value || "").trim();
+      const passwort = document.getElementById("passwort").value || "";
       const status = document.getElementById("loginStatus");
-      if (!email || !(window.Auth && window.Auth.konfiguriert)) return; // Simulation
-      status.style.color = ""; status.textContent = "Bestätigungs-Link wird gesendet…";
-      window.Auth.verknuepfeEmail(email, location.origin + "/dashboard.html").then((r) => {
-        if (r.ok) { status.style.color = "var(--gruen)"; status.textContent = "✓ Link an " + email + " gesendet, du kannst hier weitermachen."; }
-        else { status.style.color = "var(--grau)"; status.textContent = "Konnte den Link nicht senden (" + (r.error || "unbekannt") + "), Onboarding läuft trotzdem weiter."; }
-      });
+      const btn = document.getElementById("loginBtn");
+      if (!(window.Auth && window.Auth.konfiguriert)) { sammle(); zeige(aktuell + 1, 1); return; } // Simulation
+      if (!email) { status.style.color = "#e11d48"; status.textContent = "Bitte gib deine E-Mail-Adresse an."; return; }
+      if (passwort.length < 8) { status.style.color = "#e11d48"; status.textContent = "Bitte wähle ein Passwort mit mindestens 8 Zeichen."; return; }
+      btn.disabled = true; status.style.color = ""; status.textContent = "Konto wird erstellt…";
+      const r = await window.Auth.registriere(email, passwort, location.origin + "/dashboard.html");
+      btn.disabled = false;
+      if (!r.ok) {
+        status.style.color = "#e11d48";
+        status.textContent = "Konto konnte nicht erstellt werden: " + (r.error || "unbekannt");
+        return;
+      }
+      status.style.color = "var(--gruen)";
+      status.textContent = "✓ Konto erstellt. Bitte bestätige die E-Mail an " + email + ", um dich später einloggen zu können.";
+      daten.email = email;
+      sammle(); zeige(aktuell + 1, 1);
     });
 
     // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,

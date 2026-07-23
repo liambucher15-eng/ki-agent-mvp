@@ -1346,7 +1346,29 @@
     });
 
     // ---------- Start ----------
+    // Login-Gate: Mit echtem Supabase kommt nur ins Dashboard, wer ein
+    // dauerhaftes Konto hat (E-Mail gesetzt, nicht anonym). Sonst Login-Formular.
+    function zeigeLogin() {
+      const gate = $("loginGate"), btn = $("loginGateBtn"), status = $("loginGateStatus");
+      gate.hidden = false;
+      async function versuch() {
+        const email = $("loginEmail").value.trim(), pass = $("loginPass").value;
+        if (!email || !pass) { status.style.color = "#e11d48"; status.textContent = "Bitte E-Mail und Passwort eingeben."; return; }
+        btn.disabled = true; status.style.color = ""; status.textContent = "Anmelden…";
+        const r = await window.Auth.anmelden(email, pass);
+        btn.disabled = false;
+        if (!r.ok) { status.style.color = "#e11d48"; status.textContent = "Anmeldung fehlgeschlagen: " + (r.error || "unbekannt"); return; }
+        location.reload();
+      }
+      btn.addEventListener("click", versuch);
+      $("loginPass").addEventListener("keydown", (e) => { if (e.key === "Enter") versuch(); });
+    }
+
     (async function start() {
+      if (sb) {
+        const eingeloggt = await window.Auth.hatKonto();
+        if (!eingeloggt) { zeigeLogin(); return; }
+      }
       firmen = await Store.meineFirmen();
       if (!firmen.length) {
         $("leer").hidden = false;
@@ -1371,5 +1393,18 @@
       oeffneFirma(f);
     })();
   </script>
+
+  <!-- Login-Gate (nur mit echtem Supabase sichtbar, wenn kein Konto eingeloggt ist) -->
+  <div id="loginGate" hidden style="position:fixed;inset:0;z-index:9999;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
+    <div style="width:100%;max-width:380px;background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:1.8rem;box-shadow:0 30px 80px -30px rgba(17,24,39,0.25);">
+      <h2 style="font-size:1.4rem;font-weight:800;margin:0 0 0.4rem;">Willkommen zurück</h2>
+      <p style="color:#6b7280;font-size:0.9rem;margin:0 0 1.1rem;">Melde dich mit E-Mail und Passwort an, um dein Dashboard zu öffnen.</p>
+      <input type="email" id="loginEmail" placeholder="name@firma.ch" autocomplete="email" style="width:100%;padding:0.7rem 0.85rem;border:1.5px solid #e5e7eb;border-radius:10px;margin-bottom:0.6rem;font:inherit;" />
+      <input type="password" id="loginPass" placeholder="Passwort" autocomplete="current-password" style="width:100%;padding:0.7rem 0.85rem;border:1.5px solid #e5e7eb;border-radius:10px;font:inherit;" />
+      <p id="loginGateStatus" style="min-height:1.1em;font-size:0.85rem;margin:0.6rem 0;"></p>
+      <button id="loginGateBtn" style="width:100%;padding:0.85rem;border:0;border-radius:12px;background:#4F46E5;color:#fff;font-weight:600;font:inherit;cursor:pointer;">Einloggen</button>
+      <p style="text-align:center;font-size:0.84rem;color:#6b7280;margin:0.9rem 0 0;">Noch keinen Agenten? <a href="onboarding-aura.html" style="color:#4F46E5;font-weight:600;text-decoration:none;">Jetzt einrichten</a></p>
+    </div>
+  </div>
 </body>
 </html>

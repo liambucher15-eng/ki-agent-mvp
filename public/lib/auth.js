@@ -59,6 +59,39 @@ const Auth = (function () {
       return { ok: true };
     },
 
+    // Konto mit E-Mail + PASSWORT anlegen. Wertet die vorhandene anonyme Sitzung
+    // per updateUser auf ein dauerhaftes Konto auf (gleiche uid -> Firma bleibt im
+    // Besitz). Das Passwort gilt sofort; die E-Mail muss der Nutzer per Link
+    // bestätigen (Supabase "Confirm email" = AN), bevor der Login auf neuen
+    // Geräten klappt. In dieser Session bleibt er eingeloggt und kann weitermachen.
+    async registriere(email, password, redirectTo) {
+      if (!client) return { ok: false, error: "Supabase nicht konfiguriert" };
+      if (!email || !password || password.length < 8) {
+        return { ok: false, error: "E-Mail und Passwort (min. 8 Zeichen) nötig" };
+      }
+      await this.sitzungSichern();
+      const { error } = await client.auth.updateUser(
+        { email, password },
+        redirectTo ? { emailRedirectTo: redirectTo } : undefined
+      );
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, bestaetigungNoetig: true };
+    },
+
+    // Rückkehrer: Login mit E-Mail + Passwort (z.B. vom Dashboard aus).
+    async anmelden(email, password) {
+      if (!client) return { ok: false, error: "Supabase nicht konfiguriert" };
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true };
+    },
+
+    // Hat der aktuelle Nutzer ein dauerhaftes Konto (E-Mail gesetzt, nicht anonym)?
+    async hatKonto() {
+      const u = await this.nutzer();
+      return !!(u && u.email && u.is_anonymous !== true);
+    },
+
     async abmelden() {
       if (client) await client.auth.signOut();
     },
