@@ -596,6 +596,15 @@
 
             <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
             <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
+            <!-- Prompt-Hilfe: Struktur-Tipp + anklickbare Beispiele, die das Feld füllen. -->
+            <p class="mini" style="text-align:left;margin-top:0.45rem;">Tipp: Nenne <b>Wesen</b>, <b>Stil</b> und ein <b>Detail</b>, z.B. „Tier + Beruf + Kleidung". Je konkreter, desto besser. Zum Starten anklicken:</p>
+            <div class="pers" id="charBeispiele" style="margin-top:0.3rem;">
+              <button type="button" class="pers-chip" data-bsp="Freundlicher Fuchs im Anzug, warmes Lächeln">Fuchs im Anzug</button>
+              <button type="button" class="pers-chip" data-bsp="Moderne, freundliche Roboter-Assistentin in Markenfarbe">Roboter</button>
+              <button type="button" class="pers-chip" data-bsp="Warmherzige Bäckerin mit Schürze und Mehl an den Händen">Bäckerin</button>
+              <button type="button" class="pers-chip" data-bsp="Verspieltes rundes Maskottchen, bunt und knuffig">Maskottchen</button>
+              <button type="button" class="pers-chip" data-bsp="Eleganter Concierge im Frack, gepflegt und seriös">Concierge</button>
+            </div>
 
             <label class="feld">Bild als Vorlage <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
             <label class="drop" for="charBild" id="charDrop" style="padding:1rem;">Logo oder Foto hier ablegen</label>

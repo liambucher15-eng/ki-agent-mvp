@@ -92,12 +92,16 @@ const Auth = (function () {
       return !!(u && u.email && u.is_anonymous !== true);
     },
 
-    // Ist die E-Mail des aktuellen Nutzers bestätigt? Fragt den Server frisch ab
-    // (getUser), damit ein Bestätigungsklick auf einem anderen Tab hier erkannt
-    // wird. Erst dann darf das Onboarding weiterlaufen.
+    // Ist die E-Mail des aktuellen Nutzers bestätigt? WICHTIG fürs Onboarding-Gate:
+    // erst danach darf es weitergehen. refreshSession() holt den frischen Stand vom
+    // Server (der Bestätigungsklick passiert oft auf einem anderen Tab und setzt
+    // email_confirmed_at serverseitig); getUser() ist der Fallback.
     async emailBestaetigt() {
-      const u = await this.nutzer();
-      return !!(u && u.email && u.email_confirmed_at);
+      if (!client) return false;
+      let u = null;
+      try { const { data } = await client.auth.refreshSession(); u = data && data.user; } catch (e) {}
+      if (!u) { try { const { data } = await client.auth.getUser(); u = data && data.user; } catch (e) {} }
+      return !!(u && u.email && u.email_confirmed_at && u.is_anonymous !== true);
     },
 
     async abmelden() {

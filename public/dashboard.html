@@ -1386,8 +1386,13 @@
           sel.appendChild(o);
         });
       }
-      // ?firma=… aus dem Onboarding direkt öffnen, sonst neueste Firma.
-      const wunsch = new URLSearchParams(location.search).get("firma");
+      // Welche Firma öffnen? 1) ?firma=… aus dem Onboarding-Link, 2) die zuletzt
+      // erstellte Firma (gemerkt im Onboarding) — so landet man nach dem
+      // Einrichten auch OHNE Parameter (z.B. via E-Mail-Bestätigungs-Link) auf
+      // dem gerade erstellten Agenten statt auf einer alten Firma. 3) neueste.
+      let letzte = null;
+      try { letzte = localStorage.getItem("kiagent-letzteFirma"); } catch (e) {}
+      const wunsch = new URLSearchParams(location.search).get("firma") || letzte;
       const f = firmen.find((x) => x.id === wunsch) || firmen[0];
       if (firmen.length > 1) $("agentWahl").value = f.id;
       oeffneFirma(f);

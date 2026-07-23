@@ -30,6 +30,17 @@
     const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
     let aktuell = 0;
 
+    // Schlägt einen freundlichen ASSISTENTEN-Namen vor (kein Firmenname!). Aus einer
+    // kuratierten Liste, deterministisch aus dem Firmennamen abgeleitet, damit der
+    // Vorschlag beim erneuten Öffnen stabil bleibt.
+    const AGENT_NAMEN = ["Lia","Nino","Mara","Elio","Nora","Luca","Sina","Finn","Mila","Jano","Lena","Rico","Vera","Emma","Leo","Nala"];
+    function schlageAgentNamen(basis) {
+      const s = String(basis || "agent").toLowerCase();
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return AGENT_NAMEN[h % AGENT_NAMEN.length];
+    }
+
     const progress = document.getElementById("progress");
     for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
     const dots = progress.querySelectorAll(".dot");
@@ -75,12 +86,14 @@
         if (l) l.hidden = !(daten.charakterBilder && daten.charakterBilder.idle);
       }
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
-      // Identitäts-Schritt: Agenten-Name aus dem Firmennamen vorschlagen, falls
-      // das FELD leer ist. (daten.agentName ist hier durch den sammle()-Fallback
-      // oft schon belegt, entscheidend ist, was der Nutzer im Feld sieht.)
-      if (n === IDENTITAET_STEP && daten.name) {
+      // Identitäts-Schritt: einen echten, freundlichen Assistenten-Namen vorschlagen
+      // (NICHT den Firmennamen), falls das Feld noch leer ist.
+      if (n === IDENTITAET_STEP) {
         const el = document.getElementById("agentName");
-        if (el && !el.value.trim()) { el.value = daten.name; daten.agentName = daten.name; }
+        if (el && !el.value.trim()) {
+          const vorschlag = schlageAgentNamen(daten.name || daten.webseite);
+          el.value = vorschlag; daten.agentName = vorschlag;
+        }
       }
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
@@ -521,6 +534,15 @@
     document.getElementById("charVariantenOeffnen").addEventListener("click", oeffneStilModal);
     // "4 neue Varianten": Änderungswunsch fliesst in die Beschreibung ein,
     // dann läuft die Generierung erneut (Pop-up öffnet sich automatisch wieder).
+    // Prompt-Hilfe: ein Beispiel-Chip anklicken füllt das Beschreibungs-Feld,
+    // damit der User schnell eine gute Grundlage hat und sie anpassen kann.
+    document.querySelectorAll("#charBeispiele .pers-chip").forEach((c) => {
+      c.addEventListener("click", () => {
+        const feld = document.getElementById("charBeschr");
+        feld.value = c.dataset.bsp || ""; feld.focus();
+      });
+    });
+
     document.getElementById("richtungenNeu").addEventListener("click", () => {
       const anpassung = document.getElementById("richtungenAnpassung").value.trim();
       const beschrFeld = document.getElementById("charBeschr");
@@ -903,6 +925,11 @@
       try {
         await Store.saveFirma(firma);
         Store.setNutzer(daten.email);
+        // Die gerade erstellte Firma merken: das Dashboard öffnet sie dann auch,
+        // wenn man OHNE ?firma-Parameter dorthin kommt (z.B. über den E-Mail-
+        // Bestätigungs-Link, der nur auf /dashboard.html zeigt). Sonst zeigte das
+        // Dashboard firmen[0] = irgendeine ältere Firma.
+        try { localStorage.setItem("kiagent-letzteFirma", daten.id); } catch (e) {}
         status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
         // Übergabe ans Dashboard: Link zeigt direkt auf den frisch erstellten Agenten.
         const dash = document.querySelector('a[href^="dashboard.html"]');
