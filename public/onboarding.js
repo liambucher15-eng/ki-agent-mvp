@@ -25,6 +25,9 @@
     const ANZAHL = linksSchritte.length;
     const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
     const AUSDRUECKE_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAusdruecke");
+    // Identitäts-Schritt (Name Pflicht + Namensvorschlag) — ID-basiert, damit
+    // spätere Seiten-Splits die Schrittnummern verschieben können, ohne zu brechen.
+    const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
     let aktuell = 0;
 
     const progress = document.getElementById("progress");
@@ -72,17 +75,17 @@
         if (l) l.hidden = !(daten.charakterBilder && daten.charakterBilder.idle);
       }
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
-      // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls
+      // Identitäts-Schritt: Agenten-Name aus dem Firmennamen vorschlagen, falls
       // das FELD leer ist. (daten.agentName ist hier durch den sammle()-Fallback
       // oft schon belegt — entscheidend ist, was der Nutzer im Feld sieht.)
-      if (n === 5 && daten.name) {
+      if (n === IDENTITAET_STEP && daten.name) {
         const el = document.getElementById("agentName");
         if (el && !el.value.trim()) { el.value = daten.name; daten.agentName = daten.name; }
       }
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
-      // §3: Agenten-Name ist Pflicht — beim Verlassen des Marke-Schritts (5) prüfen.
-      if (aktuell === 5) {
+      // §3: Agenten-Name ist Pflicht — beim Verlassen des Identitäts-Schritts prüfen.
+      if (aktuell === IDENTITAET_STEP) {
         const el = document.getElementById("agentName");
         if (el && !el.value.trim()) {
           const h = document.getElementById("agentNameHinweis");
@@ -427,7 +430,7 @@
 
     function setVorschauFarben() {
       [document.getElementById("schrittAgent"), document.getElementById("schrittAusdruecke"),
-       document.querySelector(".schritt-rechts[data-step='9']")].forEach((el) => {
+       document.getElementById("vorschauRechts")].forEach((el) => {
         if (!el) return;
         el.style.setProperty("--vor-f1", daten.farbe1);
         el.style.setProperty("--vor-f2", daten.farbe2);

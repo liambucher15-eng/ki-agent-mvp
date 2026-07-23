@@ -53,6 +53,13 @@
     .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
     .hero-punkte { list-style: none; margin: 1.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
     .hero-punkte li { font-size: 0.93rem; color: var(--text); font-weight: 500; }
+
+    /* Teil-Zähler: zeigt "Teil 1 von 2" bei aufgeteilten Themen. */
+    .teil-zaehler { display: inline-flex; align-items: center; gap: 0.4rem; align-self: flex-start;
+      font-size: 0.72rem; font-weight: 700; color: var(--grau); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.7rem; }
+    .teil-zaehler .teil-punkt { width: 16px; height: 4px; border-radius: 999px; background: var(--border); }
+    .teil-zaehler .teil-punkt.aktiv { background: var(--indigo); }
     .sub { color: var(--grau); font-size: 0.96rem; line-height: 1.55; margin-top: 0.6rem; }
     .grow { flex: 1; }
 
@@ -66,6 +73,9 @@
     select.select { cursor: pointer; }
     textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
     textarea.klein { min-height: 52px; }
+    /* "Was ihr anbietet": grosses Feld, das beim Reinklicken mehr Platz gibt. */
+    #p-angebot { min-height: 110px; transition: min-height 0.22s ease; }
+    #p-angebot:focus { min-height: 190px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
 
     .btn { font: inherit; font-weight: 600; font-size: 0.96rem; border: 0; border-radius: 13px; cursor: pointer;
@@ -295,7 +305,7 @@
       .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
       .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0;
                      height: clamp(150px, 30dvh, 300px); max-height: none; }
-      .card-rechts .platzhalter, .card-rechts .vorschau { display: none; }
+      .card-rechts .platzhalter, .card-rechts .vorschau, .card-rechts .demo-rechts { display: none; }
       /* Hochformat-Video im breiten Band: oben ausrichten, damit der Kopf/das
          Gesicht der Szene sichtbar bleibt statt mittig weggeschnitten zu werden. */
       .card-rechts .vid-karte video { object-position: center 28%; }
@@ -355,18 +365,26 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
           </div>
 
-          <!-- 4 Überprüfen -->
+          <!-- 4a Überprüfen: Basis (Teil 1 von 2) -->
           <div class="schritt-links" data-step="3" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
             <h1 class="klein">Stimmt das so?</h1>
-            <div class="hinweis-box"><span>Das haben wir von deiner Webseite gelesen. Prüf kurz und ergänze, was fehlt.</span></div>
+            <p class="sub">Das haben wir von eurer Website gelesen. Prüf kurz die Basics und ergänze frei, was fehlt — je mehr dein Agent weiss, desto besser hilft er.</p>
             <!-- Scan-Qualitätsbericht (Milestone 7): was gefunden wurde und was fehlt -->
-            <div id="scanBericht" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.65rem 0.8rem;margin-top:0.5rem;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.8rem;"></div>
+            <div id="scanBericht" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.65rem 0.8rem;margin-top:0.7rem;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.8rem;"></div>
             <label class="feld" for="p-name">Firmenname</label>
             <input type="text" id="p-name" placeholder="Name deiner Firma" />
             <label class="feld" for="p-angebot">Was ihr anbietet</label>
-            <textarea class="klein" id="p-angebot" placeholder="In einem Satz"></textarea>
+            <textarea id="p-angebot" placeholder="Beschreibe in ein paar Sätzen, was ihr anbietet und was euch besonders macht. Je mehr du schreibst, desto besser kennt dein Agent euch."></textarea>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
 
-            <label class="feld">Details (aufklappen zum Prüfen)</label>
+          <!-- 4b Überprüfen: Details (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="4" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Noch ein paar<br>Details</h1>
+            <p class="sub">Öffnungszeiten, Kontakt und häufige Fragen. Klapp auf, was du prüfen oder ergänzen möchtest — alles optional.</p>
             <div class="pruef">
               <div class="pk">
                 <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
@@ -400,7 +418,7 @@
           </div>
 
           <!-- 5 Dokumente -->
-          <div class="schritt-links" data-step="4" hidden>
+          <div class="schritt-links" data-step="5" hidden>
             <div class="grow"></div>
             <h1 class="klein">Dokumente hochladen</h1>
             <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus — ganz optional.</p>
@@ -412,11 +430,11 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 6 Anpassen -->
-          <div class="schritt-links" data-step="5" hidden>
-            <div class="grow"></div>
-            <h1>Wer ist<br>dein Agent?</h1>
-            <p class="sub">Name und Persönlichkeit. Alles ist sinnvoll vorbelegt — du kannst jederzeit ändern.</p>
+          <!-- 6a Identität: Name + Rolle (Teil 1 von 2) -->
+          <div class="schritt-links" data-step="6" id="schrittIdentitaet" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
+            <h1 class="klein">Wer ist<br>dein Agent?</h1>
+            <p class="sub">Gib deinem Agenten einen Namen und eine Rolle — das macht ihn nahbar. Alles ist vorbelegt, du kannst es jederzeit ändern.</p>
             <label class="feld" for="agentName">Wie soll dein Assistent heissen? *</label>
             <input type="text" id="agentName" placeholder="z.B. Pino, Lia, Concierge" maxlength="40" />
             <p class="mini" id="agentNameHinweis" style="text-align:left;min-height:1em;"></p>
@@ -430,6 +448,15 @@
               <option value="Concierge">Concierge</option>
               <option value="Assistent">Assistent</option>
             </select>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 6b Identität: Anrede + Persönlichkeit (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="7" id="schrittPersoenlichkeit" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Wie soll dein<br>Agent klingen?</h1>
+            <p class="sub">Anrede und Persönlichkeit prägen den Ton jeder Antwort. Auch hier ist alles sinnvoll vorbelegt.</p>
             <label class="feld">Ansprache</label>
             <div class="pers" id="anredeListe">
               <button type="button" class="pers-chip aktiv" data-anrede="du">Du (locker)</button>
@@ -450,7 +477,7 @@
           </div>
 
           <!-- 6 Antwortstil -->
-          <div class="schritt-links" data-step="6" hidden>
+          <div class="schritt-links" data-step="8" hidden>
             <div class="grow"></div>
             <h1>Wie soll er<br>antworten?</h1>
             <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten — justiere nur, was du möchtest.</p>
@@ -493,7 +520,7 @@
           </div>
 
           <!-- 7 Chat-Design -->
-          <div class="schritt-links" data-step="7" hidden>
+          <div class="schritt-links" data-step="9" hidden>
             <div class="grow"></div>
             <h1>Wie sieht<br>der Chat aus?</h1>
             <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website — du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
@@ -526,7 +553,7 @@
           <!-- 9 Charakter erstellen: EINE Fläche (Beschreibung + optionale Bild-
                Vorlage) -> 4 Stil-Varianten -> Auswahl im Pop-up (#stilModal) ->
                Ausdrücke auf der eigenen Folgeseite (#schrittAusdruecke). -->
-          <div class="schritt-links" data-step="8" id="schrittAgent" hidden>
+          <div class="schritt-links" data-step="10" id="schrittAgent" hidden>
             <h1 class="klein">Erstelle deinen<br>Charakter</h1>
             <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
 
@@ -550,7 +577,7 @@
           </div>
 
           <!-- 10 Ausdrücke: der Belohnungs-Moment — die gewählte Figur lebt. -->
-          <div class="schritt-links" data-step="9" id="schrittAusdruecke" hidden>
+          <div class="schritt-links" data-step="11" id="schrittAusdruecke" hidden>
             <div class="grow"></div>
             <h1 class="klein">Dein Charakter<br>lebt</h1>
             <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie — jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
@@ -567,7 +594,7 @@
           </div>
 
           <!-- 11 Fertig -->
-          <div class="schritt-links" data-step="10" hidden>
+          <div class="schritt-links" data-step="12" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
@@ -598,22 +625,24 @@
         <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene2.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene3.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="stil-demo demo-rechts">
+        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Dein Agent bekommt ein Gesicht</div><div class="ph-text">Name und Rolle machen ihn nahbar.</div></div></div></div>
+        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Der richtige Ton</div><div class="ph-text">Anrede und Persönlichkeit prägen jede Antwort.</div></div></div></div>
+        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="stil-demo demo-rechts">
           <div class="demo-label">So klingt dein Agent</div>
           <div class="demo-zeilen">
             <div class="demo-frage">Habt ihr sonntags offen?</div>
             <div class="demo-antwort"></div>
           </div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vorschau">
+        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="11" id="vorschauRechts" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
           <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="12" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
       </div>
 
     </div>
