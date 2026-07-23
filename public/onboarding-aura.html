@@ -487,9 +487,10 @@
           </div>
 
           <!-- 6 Antwortstil -->
+          <!-- 8a Antwortstil: Stil (Teil 1 von 2) -->
           <div class="schritt-links" data-step="8" hidden>
-            <div class="grow"></div>
-            <h1>Wie soll er<br>antworten?</h1>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
+            <h1 class="klein">Wie soll er antworten?</h1>
             <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten, justiere nur, was du möchtest.</p>
               <label class="feld">Antwortlänge</label>
               <div class="pers pers-3" id="laengenListe">
@@ -517,6 +518,15 @@
                   <div class="demo-antwort"></div>
                 </div>
               </div>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 8b Antwortstil: Grenzen & Übergabe (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="9" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Grenzen und Übergabe</h1>
+            <p class="sub">Was tut dein Agent, wenn er einmal nicht weiterweiß, und wo sind seine Grenzen?</p>
               <label class="feld">Wenn der Agent nicht weiterweiß</label>
               <select class="select" id="uebergabe">
                 <option value="kontakt">Kontaktdaten aufnehmen</option>
@@ -530,7 +540,7 @@
           </div>
 
           <!-- 7 Chat-Design -->
-          <div class="schritt-links" data-step="9" hidden>
+          <div class="schritt-links" data-step="10" hidden>
             <div class="grow"></div>
             <h1>Wie sieht<br>der Chat aus?</h1>
             <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website, du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
@@ -563,7 +573,7 @@
           <!-- 9 Charakter erstellen: EINE Fläche (Beschreibung + optionale Bild-
                Vorlage) -> 4 Stil-Varianten -> Auswahl im Pop-up (#stilModal) ->
                Ausdrücke auf der eigenen Folgeseite (#schrittAusdruecke). -->
-          <div class="schritt-links" data-step="10" id="schrittAgent" hidden>
+          <div class="schritt-links" data-step="11" id="schrittAgent" hidden>
             <h1 class="klein">Erstelle deinen<br>Charakter</h1>
             <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten, und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
 
@@ -587,7 +597,7 @@
           </div>
 
           <!-- 10 Ausdrücke: der Belohnungs-Moment, die gewählte Figur lebt. -->
-          <div class="schritt-links" data-step="11" id="schrittAusdruecke" hidden>
+          <div class="schritt-links" data-step="12" id="schrittAusdruecke" hidden>
             <div class="grow"></div>
             <h1 class="klein">Dein Charakter<br>lebt</h1>
             <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie, jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
@@ -604,7 +614,7 @@
           </div>
 
           <!-- 11 Fertig -->
-          <div class="schritt-links" data-step="12" hidden>
+          <div class="schritt-links" data-step="13" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
@@ -646,13 +656,14 @@
             <div class="demo-antwort"></div>
           </div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
-        <div class="schritt-rechts" data-step="11" id="vorschauRechts" hidden><div class="panel"><div class="vorschau">
+        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Klare Grenzen</div><div class="ph-text">Der Agent weiss, wann er weiterleitet, und was er nicht tut.</div></div></div></div>
+        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="11" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="12" id="vorschauRechts" hidden><div class="panel"><div class="vorschau">
           <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
           <div class="vorschau-label" id="vorLabel">Noch kein Charakter, erstelle ihn links</div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="12" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="13" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
       </div>
 
     </div>
