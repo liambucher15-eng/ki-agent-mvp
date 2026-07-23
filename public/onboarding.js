@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -109,14 +109,31 @@
 
     // Konto anlegen (Pflicht): E-Mail + Passwort. Wertet die anonyme Sitzung zu
     // einem dauerhaften Konto auf (gleiche uid -> Besitz der Firma bleibt). Weiter
-    // geht NUR bei Erfolg. Ohne Supabase (lokal): Simulation, einfach weiter.
+    // geht ERST, wenn die E-Mail BESTÄTIGT ist. Ohne Supabase (lokal): Simulation.
     // Dieser Button trägt bewusst KEIN data-next, damit er selbst weiterschaltet.
+    let kontoErstellt = false, bestaetigungsTimer = null;
+    async function pruefeBestaetigungUndWeiter(status) {
+      if (!(await window.Auth.emailBestaetigt())) return false;
+      if (bestaetigungsTimer) { clearInterval(bestaetigungsTimer); bestaetigungsTimer = null; }
+      status.style.color = "var(--gruen)"; status.textContent = "✓ E-Mail bestätigt.";
+      sammle(); zeige(aktuell + 1, 1);
+      return true;
+    }
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = (document.getElementById("email").value || "").trim();
       const passwort = document.getElementById("passwort").value || "";
       const status = document.getElementById("loginStatus");
       const btn = document.getElementById("loginBtn");
       if (!(window.Auth && window.Auth.konfiguriert)) { sammle(); zeige(aktuell + 1, 1); return; } // Simulation
+      // Konto schon erstellt: der Button prüft jetzt nur noch die Bestätigung.
+      if (kontoErstellt) {
+        status.style.color = ""; status.textContent = "Prüfe Bestätigung…";
+        if (!(await pruefeBestaetigungUndWeiter(status))) {
+          status.style.color = "#e11d48";
+          status.textContent = "Noch nicht bestätigt. Öffne den Link in der E-Mail an " + email + " und versuch es dann erneut.";
+        }
+        return;
+      }
       if (!email) { status.style.color = "#e11d48"; status.textContent = "Bitte gib deine E-Mail-Adresse an."; return; }
       if (passwort.length < 8) { status.style.color = "#e11d48"; status.textContent = "Bitte wähle ein Passwort mit mindestens 8 Zeichen."; return; }
       btn.disabled = true; status.style.color = ""; status.textContent = "Konto wird erstellt…";
@@ -127,10 +144,15 @@
         status.textContent = "Konto konnte nicht erstellt werden: " + (r.error || "unbekannt");
         return;
       }
-      status.style.color = "var(--gruen)";
-      status.textContent = "✓ Konto erstellt. Bitte bestätige die E-Mail an " + email + ", um dich später einloggen zu können.";
+      kontoErstellt = true;
       daten.email = email;
-      sammle(); zeige(aktuell + 1, 1);
+      document.getElementById("email").disabled = true;
+      document.getElementById("passwort").disabled = true;
+      btn.textContent = "Ich habe bestätigt, weiter";
+      status.style.color = "var(--gruen)";
+      status.textContent = "✓ Konto erstellt. Bitte bestätige jetzt die E-Mail an " + email + " (Link im Postfach). Danach geht es automatisch weiter.";
+      // Auto-Polling: erkennt die Bestätigung, ohne dass der Nutzer klicken muss.
+      bestaetigungsTimer = setInterval(() => { pruefeBestaetigungUndWeiter(status).catch(() => {}); }, 4000);
     });
 
     // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,
@@ -246,6 +268,9 @@
       document.getElementById("p-preise").value = daten.preise;
       document.getElementById("p-team").value = daten.team;
       document.getElementById("p-besonderheiten").value = daten.besonderheiten;
+      // Fallback-Kontakt sinnvoll vorbelegen: der gefundene Firmen-Kontakt.
+      const fk = document.getElementById("fallbackKontakt");
+      if (fk && !fk.value.trim() && daten.kontakt) { fk.value = daten.kontakt; daten.fallbackKontakt = daten.kontakt; }
       updatePruefVorschau();
       if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
       if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
@@ -433,7 +458,7 @@
     // ohne selbst runterscrollen zu müssen. Wartet die Wachstums-Transition (220ms) ab.
     document.querySelectorAll(".schritt-links textarea").forEach((t) => {
       t.addEventListener("focus", () => {
-        setTimeout(() => { try { t.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }, 240);
+        setTimeout(() => { try { t.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }, 240);
       });
     });
     // Chat-Design: "Automatisch" ist Standard (Farben von der Website). "Selbst
@@ -451,7 +476,7 @@
       chips.forEach((c) => c.addEventListener("click", () => waehleDesign(c.dataset.design)));
       waehleDesign(daten.chatDesign);
     })();
-    document.getElementById("uebergabe").addEventListener("change", (e) => { daten.uebergabe = e.target.value; });
+    document.getElementById("fallbackKontakt").addEventListener("input", (e) => { daten.fallbackKontakt = e.target.value.trim(); });
     document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
 
     // --- Schritt "Charakter erstellen" (eine Variante: KI-Charakter, Pflicht) ---
@@ -787,7 +812,7 @@
       daten.regeln = wert("p-regeln");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
-      daten.uebergabe = wert("uebergabe") || daten.uebergabe;
+      daten.fallbackKontakt = wert("fallbackKontakt");
       daten.grenzen = wert("agentGrenzen");
       // Agenten-Identität (§3): Name Pflicht (mit Firmenname als Fallback),
       // Rolle + Anrede aus den Feldern.
@@ -865,6 +890,7 @@
           emojiStil: daten.emojiStil,
           antwortFormat: daten.antwortFormat,
           uebergabe: daten.uebergabe,
+          fallbackKontakt: daten.fallbackKontakt,
           grenzen: daten.grenzen,
         },
         fakten, faq: daten.faq, wissensquellen,

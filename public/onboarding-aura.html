@@ -40,7 +40,10 @@
 
     .links-inhalt { position: relative; flex: 1; min-height: 0; }
     .schritt-links { position: absolute; inset: 0; display: flex; flex-direction: column; overflow-y: auto;
-                     scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding-right: 2px; }
+                     scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding-right: 2px;
+                     /* Platz für die sticky Nav, damit aufgeklappte Felder beim
+                        Reinscrollen NICHT hinter dem Weiter-Knopf verschwinden. */
+                     scroll-padding-bottom: 96px; }
     .schritt-links::-webkit-scrollbar { width: 5px; }
     .schritt-links::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     .schritt-links[hidden] { display: none; }
@@ -54,10 +57,6 @@
       background: rgba(79,70,229,0.09); padding: 0.32rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
     .willkommen .hero-titel { font-size: 2.55rem; }
     .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
-    .hero-punkte { list-style: none; margin: 1.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-    .hero-punkte li { position: relative; padding-left: 1.4rem; font-size: 0.93rem; color: var(--text); font-weight: 500; }
-    .hero-punkte li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 8px; height: 8px;
-      border-radius: 50%; background: linear-gradient(135deg, var(--indigo), var(--coral)); }
 
     /* Teil-Zähler: "Teil 1 von 2" bei aufgeteilten Themen. Sitzt per order UNTEN
        direkt über der Nav, damit er nicht mit den Fortschritts-Dots oben kollidiert. */
@@ -74,7 +73,7 @@
     .input-wrap { position: relative; }
     .input-wrap .icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); }
     .input-wrap input { padding-left: 2.4rem; }
-    input[type=text], input[type=email], input[type=url], select.select, textarea {
+    input[type=text], input[type=email], input[type=url], input[type=password], select.select, textarea {
       width: 100%; font: inherit; font-size: 0.94rem; padding: 0.7rem 0.85rem; border: 1.5px solid var(--border);
       border-radius: 10px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
     select.select { cursor: pointer; }
@@ -341,11 +340,6 @@
             <span class="eyebrow">Dein eigener KI-Agent</span>
             <h1 class="hero-titel">Willkommen bei<br>AuraChat</h1>
             <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent, er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
-            <ul class="hero-punkte">
-              <li>Ein eigener Charakter als Gesicht deiner Marke</li>
-              <li>Kennt deine Website, Preise und häufigen Fragen</li>
-              <li>Nimmt Kontakte auf, auch wenn du gerade schläfst</li>
-            </ul>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
           </div>
@@ -553,12 +547,9 @@
             <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
             <h1 class="klein">Grenzen und Übergabe</h1>
             <p class="sub">Was tut dein Agent, wenn er einmal nicht weiterweiß, und wo sind seine Grenzen?</p>
-              <label class="feld">Wenn der Agent nicht weiterweiß</label>
-              <select class="select" id="uebergabe">
-                <option value="kontakt">Kontaktdaten aufnehmen</option>
-                <option value="kontaktinfo">Kontaktinformationen zeigen</option>
-                <option value="ehrlich">Ehrlich sagen, dass die Information fehlt</option>
-              </select>
+              <label class="feld" for="fallbackKontakt">Wenn dein Agent etwas nicht weiß</label>
+              <p class="sub" style="margin:0 0 0.4rem;font-size:0.83rem;">Er sagt dann ehrlich, dass er es nicht sicher weiß, und verweist auf diese Kontaktmöglichkeit.</p>
+              <textarea class="klein" id="fallbackKontakt" placeholder="z.B. Ruf uns an unter 044 123 45 67 oder schreib an hallo@firma.ch"></textarea>
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
             <div class="grow"></div>

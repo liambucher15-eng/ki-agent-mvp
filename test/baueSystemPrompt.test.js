@@ -38,6 +38,17 @@ test("leere Firma: robust, mit Platzhalter statt Absturz", () => {
   assert.doesNotMatch(p, /HÄUFIGE FRAGEN/);
 });
 
+test("Fallback-Kontakt: Regel nennt die Kontaktangabe", () => {
+  const p = baueSystemPrompt({ name: "X", persona: { fallbackKontakt: "044 123 45 67" } });
+  assert.match(p, /nicht sicher weisst/i);
+  assert.match(p, /044 123 45 67/);
+});
+
+test("ohne Fallback-Kontakt: keine Fallback-Regel", () => {
+  const p = baueSystemPrompt({ name: "X" });
+  assert.doesNotMatch(p, /verweise freundlich auf diese Kontaktmöglichkeit/);
+});
+
 test("Standard-Sprache ist Deutsch", () => {
   const p = baueSystemPrompt({ name: "X", persona: { name: "A", rolle: "B", ton: "C" } });
   assert.match(p, /Sprich Deutsch/);

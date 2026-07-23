@@ -92,6 +92,14 @@ const Auth = (function () {
       return !!(u && u.email && u.is_anonymous !== true);
     },
 
+    // Ist die E-Mail des aktuellen Nutzers bestätigt? Fragt den Server frisch ab
+    // (getUser), damit ein Bestätigungsklick auf einem anderen Tab hier erkannt
+    // wird. Erst dann darf das Onboarding weiterlaufen.
+    async emailBestaetigt() {
+      const u = await this.nutzer();
+      return !!(u && u.email && u.email_confirmed_at);
+    },
+
     async abmelden() {
       if (client) await client.auth.signOut();
     },
