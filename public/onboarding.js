@@ -369,19 +369,53 @@
       chips.forEach((c) => c.addEventListener("click", () => waehle(c.dataset[datenAttribut])));
       waehle(daten[eigenschaft]);
     }
+    // Live-Beispiel: baut aus Länge + Format + Emoji eine echte Beispiel-Antwort
+    // auf die feste Frage "Habt ihr sonntags offen?". So sieht man bei jedem Klick
+    // sofort, was die Auswahl konkret bewirkt (statt einer abstrakten Beschreibung).
+    function baueBeispielAntwort() {
+      const nachLaenge = {
+        kurz: ["Ja, sonntags 10–16 Uhr."],
+        ausgewogen: ["Ja, sonntags haben wir von 10 bis 16 Uhr geöffnet.", "Komm gern vorbei!"],
+        ausfuehrlich: [
+          "Ja, sonntags sind wir von 10 bis 16 Uhr für dich da.",
+          "Unter der Woche öffnen wir schon um 9 Uhr.",
+          "Wenn du möchtest, reserviere ich dir gleich einen Tisch.",
+        ],
+      };
+      let teile = (nachLaenge[daten.antwortLaenge] || nachLaenge.ausgewogen).slice();
+      if (daten.emojiStil === "dezent") {
+        teile[teile.length - 1] += " 🙂";
+      } else if (daten.emojiStil === "lebendig") {
+        const deko = [" 👍", " 🕙", " 🎉", " 😊"];
+        teile = teile.map((t, i) => t + deko[i % deko.length]);
+      }
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (daten.antwortFormat === "listen") return "<ul>" + teile.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul>";
+      if (daten.antwortFormat === "fliessend") return "<p>" + esc(teile.join(" ")) + "</p>";
+      return teile.map((t) => "<p>" + esc(t) + "</p>").join(""); // absatz
+    }
     function aktualisiereAntwortVorschau() {
-      const el = document.getElementById("antwortVorschau");
-      if (!el) return;
-      const laenge = { kurz: "kurz und direkt", ausgewogen: "klar mit den wichtigsten Details", ausfuehrlich: "ausführlich und erklärend" }[daten.antwortLaenge];
-      const emoji = { keine: "ohne Emojis", dezent: "mit einzelnen passenden Emojis", lebendig: "mit einer lebendigen Emoji-Nutzung" }[daten.emojiStil];
-      const format = { absatz: "in kurzen Absätzen", listen: "mit Listen, wenn sie helfen", fliessend: "als zusammenhängender Text" }[daten.antwortFormat];
-      el.textContent = "Vorschau: Dein Agent antwortet " + laenge + ", " + format + " und " + emoji + ".";
+      const html = baueBeispielAntwort();
+      document.querySelectorAll(".stil-demo .demo-antwort").forEach((el) => { el.innerHTML = html; });
     }
     chipGruppe("#laengenListe .pers-chip", "antwortLaenge", "laenge");
     chipGruppe("#emojiListe .pers-chip", "emojiStil", "emoji");
     chipGruppe("#formatListe .pers-chip", "antwortFormat", "format");
-    chipGruppe("#designListe .pers-chip", "chatDesign", "design");
-    chipGruppe("#layoutListe .pers-chip", "chatLayout", "layout");
+    // Chat-Design: "Automatisch" ist Standard (Farben von der Website). "Selbst
+    // anpassen" blendet Farb-/Schrift-Steuerung ein. Keine Startansicht-Wahl mehr
+    // — das Widget schaltet auf dem Handy von selbst auf Vollbild (chatLayout bleibt
+    // "sidebar" als Default in daten).
+    (function () {
+      const chips = document.querySelectorAll("#designListe .pers-chip");
+      const eigen = document.getElementById("eigenControls");
+      function waehleDesign(wert) {
+        daten.chatDesign = wert;
+        chips.forEach((c) => c.classList.toggle("aktiv", c.dataset.design === wert));
+        if (eigen) eigen.hidden = wert !== "eigen";
+      }
+      chips.forEach((c) => c.addEventListener("click", () => waehleDesign(c.dataset.design)));
+      waehleDesign(daten.chatDesign);
+    })();
     document.getElementById("uebergabe").addEventListener("change", (e) => { daten.uebergabe = e.target.value; });
     document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
 

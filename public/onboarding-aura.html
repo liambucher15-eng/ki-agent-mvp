@@ -44,6 +44,15 @@
 
     h1 { font-family: var(--display); font-size: 2.1rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
     h1.klein { font-size: 1.7rem; }
+
+    /* Willkommen: mehr Hierarchie, damit der Text neben dem Video nicht untergeht. */
+    .willkommen .eyebrow { display: inline-block; align-self: flex-start; font-size: 0.76rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--indigo);
+      background: rgba(79,70,229,0.09); padding: 0.32rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
+    .willkommen .hero-titel { font-size: 2.55rem; }
+    .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
+    .hero-punkte { list-style: none; margin: 1.15rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .hero-punkte li { font-size: 0.93rem; color: var(--text); font-weight: 500; }
     .sub { color: var(--grau); font-size: 0.96rem; line-height: 1.55; margin-top: 0.6rem; }
     .grow { flex: 1; }
 
@@ -209,6 +218,28 @@
     .btn-neu:hover { background: rgba(79,70,229,0.06); }
     .btn-neu:disabled { opacity: 0.55; cursor: default; }
     .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
+
+    /* Antwortstil: Auswahl in sauberen 3er-Reihen (nie 2+1-Umbruch). */
+    .pers-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.3rem; }
+    .pers-3 .pers-chip { text-align: center; padding: 0.55rem 0.35rem; }
+    /* Live-Beispiel: echtes Mini-Chat, spiegelt Länge + Format + Emoji sofort. */
+    .stil-demo { margin-top: 0.75rem; border: 1px solid var(--border); border-radius: 14px;
+                 padding: 0.8rem 0.85rem; background: linear-gradient(180deg, #fafaff, #fff); }
+    .stil-demo .demo-label { font-size: 0.7rem; font-weight: 700; color: var(--grau-hell);
+                             text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.55rem; }
+    .stil-demo .demo-zeilen { display: flex; flex-direction: column; gap: 0.45rem; }
+    .stil-demo .demo-frage { align-self: flex-end; max-width: 82%; background: var(--indigo); color: #fff;
+                             border-radius: 14px 14px 4px 14px; padding: 0.42rem 0.7rem; font-size: 0.83rem; }
+    .stil-demo .demo-antwort { align-self: flex-start; max-width: 90%; background: #fff; border: 1px solid var(--border);
+                               border-radius: 14px 14px 14px 4px; padding: 0.55rem 0.75rem; font-size: 0.86rem;
+                               line-height: 1.5; color: var(--text); box-shadow: 0 6px 16px -10px rgba(17,24,39,0.3); }
+    .stil-demo .demo-antwort p { margin: 0 0 0.4rem; }
+    .stil-demo .demo-antwort p:last-child { margin-bottom: 0; }
+    .stil-demo .demo-antwort ul { margin: 0.1rem 0 0; padding-left: 1.15rem; }
+    .stil-demo .demo-antwort li { margin-bottom: 0.15rem; }
+    /* Grosse Showcase-Variante im rechten Panel (ersetzt das fehlende Video). */
+    .demo-rechts { position: relative; z-index: 1; width: 82%; max-width: 340px;
+                   background: rgba(255,255,255,0.97); box-shadow: 0 24px 60px -22px rgba(17,24,39,0.55); }
     .prompts { margin-top: 0.6rem; }
     .prompt-box { background: #0f1424; color: #e5e7eb; border-radius: 10px; padding: 0.6rem 0.7rem; font-size: 0.72rem;
                   line-height: 1.45; white-space: pre-wrap; position: relative; margin-bottom: 0.4rem; }
@@ -258,11 +289,16 @@
       body { padding: 0; }
       .stage { max-width: 100%; }
       .glow { display: none; }
-      /* Zeile 1 (Deko-Band) nur so hoch wie nötig, Zeile 2 (Formular) bekommt
-         den Rest — behebt die weisse Lücke durch die gestreckte Grid-Zeile. */
+      /* Zeile 1 = Video-Band oben, Zeile 2 (Formular) bekommt den Rest. Das
+         Video ist der Wow-Moment und bleibt auch auf dem Handy sichtbar —
+         nur die rein dekorativen Platzhalter/Vorschauen werden ausgeblendet. */
       .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
-      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0; height: 96px; max-height: none; }
-      .card-rechts .platzhalter, .card-rechts .vorschau, .card-rechts .vid-karte { display: none; }
+      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0;
+                     height: clamp(150px, 30dvh, 300px); max-height: none; }
+      .card-rechts .platzhalter, .card-rechts .vorschau { display: none; }
+      /* Hochformat-Video im breiten Band: oben ausrichten, damit der Kopf/das
+         Gesicht der Szene sichtbar bleibt statt mittig weggeschnitten zu werden. */
+      .card-rechts .vid-karte video { object-position: center 28%; }
       .card-links { padding: 1.5rem 1.4rem; }
       h1 { font-size: 1.8rem; }
     }
@@ -280,10 +316,16 @@
         <div class="links-inhalt" id="linksInhalt">
 
           <!-- 1 Willkommen -->
-          <div class="schritt-links" data-step="0">
+          <div class="schritt-links willkommen" data-step="0">
             <div class="grow"></div>
-            <h1>Willkommen<br>bei AuraChat</h1>
-            <p class="sub">Erstelle in wenigen Minuten deinen eigenen KI-Agenten. Er lernt alles direkt von deiner Webseite.</p>
+            <span class="eyebrow">Dein eigener KI-Agent</span>
+            <h1 class="hero-titel">Willkommen bei<br>AuraChat</h1>
+            <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent — er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
+            <ul class="hero-punkte">
+              <li>✨ Ein eigener Charakter als Gesicht deiner Marke</li>
+              <li>🧠 Kennt deine Website, Preise und häufigen Fragen</li>
+              <li>💬 Nimmt Kontakte auf, auch wenn du gerade schläfst</li>
+            </ul>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
           </div>
@@ -360,8 +402,8 @@
           <!-- 5 Dokumente -->
           <div class="schritt-links" data-step="4" hidden>
             <div class="grow"></div>
-            <h1>Dokumente<br>hochladen</h1>
-            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus. Das ist optional.</p>
+            <h1 class="klein">Dokumente hochladen</h1>
+            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus — ganz optional.</p>
             <label class="drop" for="docs">Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
             <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
             <div id="doc-liste"></div>
@@ -413,22 +455,30 @@
             <h1>Wie soll er<br>antworten?</h1>
             <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten — justiere nur, was du möchtest.</p>
               <label class="feld">Antwortlänge</label>
-              <div class="pers" id="laengenListe">
+              <div class="pers pers-3" id="laengenListe">
                 <button type="button" class="pers-chip" data-laenge="kurz">Kurz & direkt</button>
                 <button type="button" class="pers-chip aktiv" data-laenge="ausgewogen">Ausgewogen</button>
                 <button type="button" class="pers-chip" data-laenge="ausfuehrlich">Ausführlich</button>
               </div>
               <label class="feld">Emojis</label>
-              <div class="pers" id="emojiListe">
+              <div class="pers pers-3" id="emojiListe">
                 <button type="button" class="pers-chip" data-emoji="keine">Keine</button>
                 <button type="button" class="pers-chip aktiv" data-emoji="dezent">Dezent</button>
                 <button type="button" class="pers-chip" data-emoji="lebendig">Lebendig</button>
               </div>
               <label class="feld">Formatierung</label>
-              <div class="pers" id="formatListe">
+              <div class="pers pers-3" id="formatListe">
                 <button type="button" class="pers-chip aktiv" data-format="absatz">Kurze Absätze</button>
-                <button type="button" class="pers-chip" data-format="listen">Listen bei Bedarf</button>
+                <button type="button" class="pers-chip" data-format="listen">Listen</button>
                 <button type="button" class="pers-chip" data-format="fliessend">Fließtext</button>
+              </div>
+              <!-- Live-Beispiel: zeigt sofort, wie die gewählte Kombination klingt. -->
+              <div class="stil-demo">
+                <div class="demo-label">So klingt dein Agent</div>
+                <div class="demo-zeilen">
+                  <div class="demo-frage">Habt ihr sonntags offen?</div>
+                  <div class="demo-antwort"></div>
+                </div>
               </div>
               <label class="feld">Wenn der Agent nicht weiterweiß</label>
               <select class="select" id="uebergabe">
@@ -438,7 +488,6 @@
               </select>
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
-              <div class="antwort-vorschau" id="antwortVorschau"></div>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
@@ -447,23 +496,20 @@
           <div class="schritt-links" data-step="7" hidden>
             <div class="grow"></div>
             <h1>Wie sieht<br>der Chat aus?</h1>
-            <p class="sub">Wir übernehmen die Farben deiner Webseite. Wähle nur, wie viel du selbst gestalten möchtest.</p>
+            <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website — du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
               <div class="pers" id="designListe">
-                <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch aus Website</button>
+                <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch</button>
                 <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
               </div>
-              <label class="feld">Startansicht</label>
-              <div class="pers" id="layoutListe">
-                <button type="button" class="pers-chip aktiv" data-layout="sidebar">Seitenleiste</button>
-                <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
+            <!-- Farben + Schrift nur sichtbar, wenn "Selbst anpassen" gewählt ist. -->
+            <div id="eigenControls" hidden>
+              <label class="feld">Farben</label>
+              <div class="farben">
+                <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
+                <div class="farb-feld"><input type="color" id="farbe2" value="#FB7185" /><br>Akzent</div>
               </div>
-            <label class="feld">Farben</label>
-            <div class="farben">
-              <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
-              <div class="farb-feld"><input type="color" id="farbe2" value="#FB7185" /><br>Akzent</div>
-            </div>
-            <label class="feld" for="schrift">Schriftart</label>
-            <select class="select" id="schrift">
+              <label class="feld" for="schrift">Schriftart</label>
+              <select class="select" id="schrift">
               <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
               <option value="Inter">Inter</option>
               <option value="Poppins">Poppins</option>
@@ -471,7 +517,8 @@
               <option value="Space Grotesk">Space Grotesk</option>
               <option value="Lora">Lora (Serif)</option>
             </select>
-            <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
+              <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
+            </div>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
@@ -547,13 +594,19 @@
           <div class="feld-bg"></div>
           <div class="welle w1"></div><div class="welle w2"></div><div class="welle w3"></div>
         </div>
-        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="vid-karte"><video src="videos/szene1.mp4" muted loop playsinline preload="auto"></video></div></div></div>
+        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="vid-karte"><video src="videos/szene1.mp4" muted loop playsinline autoplay preload="auto"></video></div></div></div>
         <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene2.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene3.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="stil-demo demo-rechts">
+          <div class="demo-label">So klingt dein Agent</div>
+          <div class="demo-zeilen">
+            <div class="demo-frage">Habt ihr sonntags offen?</div>
+            <div class="demo-antwort"></div>
+          </div>
+        </div></div></div>
         <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
         <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="vorschau">
