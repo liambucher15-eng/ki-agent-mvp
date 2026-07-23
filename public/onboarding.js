@@ -316,7 +316,9 @@
         setTimeout(() => { aufraeumen(); zeige(3, 1); }, 600);
       } catch (e) {
         aufraeumen();
-        status.textContent = "Konnte die Seite nicht lesen. Du kannst die Infos auch selbst eintragen.";
+        // Echte Ursache mitzeigen (Timeout, API-Aussetzer, nicht erreichbar …),
+        // damit ein Fehler diagnostizierbar ist statt nur "ging nicht".
+        status.textContent = "Konnte die Seite nicht automatisch lesen (" + (e.message || "unbekannt") + "). Du kannst die Infos unten auch selbst eintragen.";
         loader.classList.add("an"); loader.querySelector(".spinner").style.display = "none";
         btn.textContent = "Weiter ohne Scan"; btn.onclick = () => zeige(3, 1);
       }
