@@ -238,6 +238,28 @@
     .btn-neu:disabled { opacity: 0.55; cursor: default; }
     .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
 
+    /* Charakter-Designer: Chat, in dem die Figur gemeinsam entwickelt wird. */
+    .designer { margin-top: 0.6rem; border: 1.5px solid var(--border); border-radius: 16px;
+                background: #fff; overflow: hidden; }
+    .designer-verlauf { display: flex; flex-direction: column; gap: 0.5rem;
+                        padding: 0.8rem; max-height: 260px; overflow-y: auto;
+                        scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .designer-verlauf::-webkit-scrollbar { width: 5px; }
+    .designer-verlauf::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    .d-msg { max-width: 88%; font-size: 0.88rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 14px; }
+    .d-msg.ki { align-self: flex-start; background: #f3f4f6; color: var(--text); border-bottom-left-radius: 5px; }
+    .d-msg.du { align-self: flex-end; background: var(--indigo); color: #fff; border-bottom-right-radius: 5px; }
+    .d-msg.tippt { color: var(--grau-hell); font-style: italic; }
+    .designer-eingabe { display: flex; gap: 0.5rem; align-items: flex-end;
+                        border-top: 1px solid var(--border); padding: 0.55rem; background: #fafafa; }
+    .designer-eingabe textarea { flex: 1; border: 1.5px solid var(--border); border-radius: 11px;
+                                 padding: 0.55rem 0.7rem; font: inherit; font-size: 0.9rem;
+                                 min-height: 42px; max-height: 120px; resize: none; background: #fff; }
+    .designer-eingabe button { flex-shrink: 0; font: inherit; font-size: 0.86rem; font-weight: 600;
+                               color: #fff; border: 0; border-radius: 11px; padding: 0.62rem 0.95rem; cursor: pointer;
+                               background: linear-gradient(135deg, var(--indigo), var(--indigo-hell)); }
+    .designer-eingabe button:disabled { opacity: 0.5; cursor: default; }
+
     /* Antwortstil: Auswahl in sauberen 3er-Reihen (nie 2+1-Umbruch). */
     .pers-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.3rem; }
     .pers-3 .pers-chip { text-align: center; padding: 0.55rem 0.35rem; }
@@ -348,14 +370,19 @@
           <div class="schritt-links" data-step="1" hidden>
             <div class="grow"></div>
             <h1>Erstelle dein Konto</h1>
-            <p class="sub">Mit E-Mail und Passwort kommst du jederzeit zurück und verwaltest deinen Agenten. So bleiben deine Daten geschützt und gehören nur dir.</p>
-            <label class="feld" for="email">E-Mail-Adresse</label>
-            <input type="email" id="email" placeholder="name@firma.ch" autocomplete="email" />
-            <label class="feld" for="passwort">Passwort <span style="font-weight:400;color:var(--grau)">(mindestens 8 Zeichen)</span></label>
-            <input type="password" id="passwort" placeholder="Sicheres Passwort" autocomplete="new-password" minlength="8" />
+            <p class="sub">Damit kommst du jederzeit zurück und verwaltest deinen Agenten. Sobald deine E-Mail bestätigt ist, geht es automatisch weiter.</p>
+            <!-- Login/Registrierung läuft über Clerk. Clerk bringt die E-Mail-
+                 Bestätigung mit: Erst wenn der Code aus der Mail stimmt, ist der
+                 Nutzer angemeldet, und erst dann schaltet das Onboarding weiter. -->
+            <div id="clerkKonto" style="margin-top:0.5rem;display:flex;justify-content:center;"></div>
+            <!-- Fallback (Simulation): ohne Clerk-Key nur eine E-Mail zur Vorbefüllung. -->
+            <div id="kontoSimulation" hidden>
+              <label class="feld" for="email">E-Mail-Adresse</label>
+              <input type="email" id="email" placeholder="name@firma.ch" autocomplete="email" />
+            </div>
             <p class="mini" id="loginStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn">Konto erstellen</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" hidden>Weiter</button></div>
           </div>
 
           <!-- 3 Webseite scannen -->
@@ -587,40 +614,44 @@
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 9 Charakter erstellen: EINE Fläche (Beschreibung + optionale Bild-
-               Vorlage) -> 4 Stil-Varianten -> Auswahl im Pop-up (#stilModal) ->
-               Ausdrücke auf der eigenen Folgeseite (#schrittAusdruecke). -->
+          <!-- 9 Charakter erstellen: CHAT mit dem Designer. Idee erzählen -> die KI
+               baut den Bild-Prompt -> EIN Entwurf -> im Chat anpassen, bis er sitzt
+               -> Ausdrücke auf der Folgeseite (#schrittAusdruecke). Keine
+               Varianten-Auswahl mehr. -->
           <div class="schritt-links" data-step="11" id="schrittAgent" hidden>
-            <h1 class="klein">Erstelle deinen<br>Charakter</h1>
-            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten, und dein Alleinstellungsmerkmal. Beschreibe ihn und/oder lade ein Bild als Vorlage hoch: daraus entstehen vier Stil-Varianten zur Auswahl.</p>
+            <h1 class="klein">Erstelle deinen Charakter</h1>
+            <p class="sub">Erzähl einfach, was dir vorschwebt. Der Designer schreibt daraus den Prompt, zeigt dir eine Figur, und ihr passt sie zusammen an, bis sie sitzt.</p>
 
-            <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
-            <!-- Prompt-Hilfe: der Nutzer schreibt seine Idee ruhig grob; die KI macht
-                 daraus einen guten, konkreten Prompt (charakter-prompt.js). -->
-            <textarea class="klein" id="charBeschr" placeholder="Schreib deine Idee, ruhig ganz grob, z.B. „ein netter Hund" oder „so ein moderner Roboter". Die KI macht daraus einen guten Prompt."></textarea>
-            <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-top:0.45rem;">
-              <button type="button" class="btn-neu" id="charPromptHilfe">Beschreibung mit KI verbessern</button>
-              <span class="mini" id="charPromptStatus" style="margin:0;text-align:left;min-height:1em;"></span>
+            <!-- Charakter-Designer: echter Chat. Der Nutzer beschreibt seine Idee in
+                 eigenen Worten, die KI (charakter-prompt.js) baut daraus den Bild-
+                 Prompt und erzeugt EINEN Entwurf. Änderungswünsche laufen ebenfalls
+                 über den Chat, bis die Figur passt. Erst dann die Ausdrücke. -->
+            <div class="designer" id="charChat">
+              <div class="designer-verlauf" id="charVerlauf"></div>
+              <div class="designer-eingabe">
+                <textarea id="charEingabe" rows="1" placeholder="z.B. ein netter Hund, der zu unserer Bäckerei passt"></textarea>
+                <button type="button" id="charSenden" title="Senden">Senden</button>
+              </div>
             </div>
-            <p class="mini" style="text-align:left;margin-top:0.5rem;">Keine Idee? Starte hier:
-              <a class="link char-bsp" data-bsp="Ein freundlicher Fuchs im Anzug mit warmem Lächeln">Fuchs im Anzug</a> ·
-              <a class="link char-bsp" data-bsp="Eine moderne, freundliche Roboter-Assistentin in Markenfarbe">Roboter</a> ·
-              <a class="link char-bsp" data-bsp="Ein verspieltes, rundes Maskottchen, bunt und knuffig">Maskottchen</a>
-            </p>
 
-            <label class="feld">Bild als Vorlage <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
-            <label class="drop" for="charBild" id="charDrop" style="padding:1rem;">Logo oder Foto hier ablegen</label>
-            <input type="file" id="charBild" accept="image/*" style="display:none" />
-            <p class="mini" id="charBildStatus" style="text-align:left;min-height:1.1em;margin-top:0.35rem;"></p>
-            <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
+            <!-- Aktueller Entwurf: eine Figur, die im Chat weiterentwickelt wird. -->
+            <div id="charEntwurf" hidden style="margin-top:0.85rem;text-align:center;">
+              <img id="charEntwurfBild" alt="Entwurf deiner Figur" style="display:block;width:180px;margin:0 auto;border-radius:16px;border:1.5px solid var(--border);background:#fafafa;box-shadow:0 14px 30px -14px rgba(17,24,39,0.35);" />
+              <p class="mini" style="margin-top:0.5rem;">Passt sie? Sag im Chat, was anders soll, oder übernimm sie.</p>
+              <button type="button" class="btn btn-primar" id="charUebernehmen" style="margin-top:0.2rem;">Passt, Ausdrücke erstellen</button>
+            </div>
 
-            <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.8rem;">4 Varianten erstellen</button>
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="charBalken"><span></span></div>
-            <p class="mini" id="charVariantenZeile" hidden style="text-align:left;"><a class="link" id="charVariantenOeffnen">Varianten ansehen →</a></p>
-            <!-- Kein Weiter-Button: das Stilwahl-Pop-up öffnet sich automatisch,
-                 die Bestätigung einer Variante führt weiter. Für Rückkehrer mit
-                 fertigem Charakter gibt es den dezenten Link rechts. -->
+
+            <details style="margin-top:0.9rem;">
+              <summary class="mini" style="text-align:left;cursor:pointer;">Lieber ein eigenes Bild als Vorlage nutzen?</summary>
+              <label class="drop" for="charBild" id="charDrop" style="padding:1rem;margin-top:0.5rem;">Logo oder Foto hier ablegen</label>
+              <input type="file" id="charBild" accept="image/*" style="display:none" />
+              <p class="mini" id="charBildStatus" style="text-align:left;min-height:1.1em;margin-top:0.35rem;"></p>
+              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
+            </details>
+
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
           </div>
 
@@ -636,7 +667,6 @@
               <img id="gewaehlteVorschauImg" alt="Gewählte Variante" style="display:block;width:100%;border-radius:14px;border:1.5px solid var(--border);box-shadow:0 12px 26px -12px rgba(17,24,39,0.3);" />
             </div>
             <div class="char-grid" id="charGrid" hidden></div>
-            <p class="mini" id="andereRichtungZeile" hidden style="text-align:left;"><a class="link" id="andereRichtung">← Andere Stilrichtung wählen</a></p>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
@@ -700,24 +730,10 @@
   <!-- Stilwahl-Pop-up: erscheint, sobald die 4 Charakter-Varianten fertig sind.
        Schliessen ist erlaubt (Varianten bleiben über den Link auf der Seite
        erreichbar), damit keine Bild-Credits verloren gehen. -->
-  <div class="modal-hintergrund" id="stilModal" hidden>
-    <div class="modal-karte" role="dialog" aria-modal="true" aria-labelledby="stilModalTitel">
-      <button type="button" class="modal-schliessen" id="stilModalZu" aria-label="Schliessen">×</button>
-      <h2 id="stilModalTitel">Wähle deine Stilrichtung</h2>
-      <p class="sub" style="font-size:0.88rem;margin-top:0.25rem;">Vier Varianten deiner Figur. Wähle die, die am besten zu deiner Marke passt, daraus entstehen die Ausdrücke.</p>
-      <div class="richtungs-grid" id="richtungsGrid"></div>
-      <label class="feld" for="richtungenAnpassung" style="margin-top:1rem;">Keine passt? Beschreibe, was anders sein soll</label>
-      <div style="display:flex;gap:0.5rem;">
-        <input type="text" id="richtungenAnpassung" placeholder="z.B. verspielter, ohne Anzug, in Blau" maxlength="300" style="flex:1;min-width:0;" />
-        <button type="button" class="btn-neu" id="richtungenNeu">↻ 4 neue Varianten</button>
-      </div>
-      <p class="mini" id="richtungenNeuStatus" style="text-align:left;min-height:1.1em;margin-top:0.4rem;"></p>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="lib/supabase-config.js"></script>
+  <script src="lib/clerk-config.js"></script>
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
   <script src="onboarding.js"></script>

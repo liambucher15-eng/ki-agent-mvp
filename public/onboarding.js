@@ -81,9 +81,11 @@
       aktuell = n; updateProgress();
       if (n === AGENT_STEP || n === AUSDRUECKE_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
       // Rückkehrer mit fertigem Charakter: Link zur Ausdrücke-Seite zeigen.
+      // Und: den Charakter-Designer begrüssen lassen, sobald der Schritt aufgeht.
       if (n === AGENT_STEP) {
         const l = document.getElementById("zuAusdruecken");
         if (l) l.hidden = !(daten.charakterBilder && daten.charakterBilder.idle);
+        charChatStarten();
       }
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
       // Identitäts-Schritt: einen echten, freundlichen Assistenten-Namen vorschlagen
@@ -120,64 +122,44 @@
     }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
-    // Konto anlegen (Pflicht): echtes signUp mit E-Mail + Passwort. Weiter geht
-    // ERST nach dem Klick auf den Bestätigungs-Link in der Mail: Der Check ist ein
-    // echter LOGIN-Versuch, der mit "Confirm email" = AN erst NACH der Bestätigung
-    // klappt. Ohne Supabase (lokal): Simulation. Der Button trägt KEIN data-next.
-    let kontoErstellt = false, bestaetigungsTimer = null;
-    async function pruefeBestaetigungUndWeiter(email, passwort, status) {
-      // Login versuchen: klappt er, ist die Mail bestätigt UND der Nutzer eingeloggt.
-      const r = await window.Auth.anmelden(email, passwort);
-      if (!r.ok) return false; // meist "Email not confirmed" -> noch nicht bestätigt
-      if (bestaetigungsTimer) { clearInterval(bestaetigungsTimer); bestaetigungsTimer = null; }
-      status.style.color = "var(--gruen)"; status.textContent = "✓ E-Mail bestätigt.";
-      sammle(); zeige(aktuell + 1, 1);
-      return true;
-    }
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = (document.getElementById("email").value || "").trim();
-      const passwort = document.getElementById("passwort").value || "";
+    // Konto (Pflicht): läuft über CLERK. Clerk zeigt sein eigenes Registrier-/
+    // Login-Fenster inklusive E-Mail-Bestätigung — erst wenn der Code aus der Mail
+    // stimmt, ist der Nutzer angemeldet. Genau dann (und nur dann) schaltet das
+    // Onboarding automatisch weiter. Ohne Clerk-Key: Simulation mit E-Mail-Feld.
+    (async function kontoSchrittAufbauen() {
       const status = document.getElementById("loginStatus");
       const btn = document.getElementById("loginBtn");
-      if (!(window.Auth && window.Auth.konfiguriert)) { sammle(); zeige(aktuell + 1, 1); return; } // Simulation
-      // Konto schon angelegt: der Button prüft jetzt nur noch die Bestätigung.
-      if (kontoErstellt) {
-        status.style.color = ""; status.textContent = "Prüfe Bestätigung…";
-        if (!(await pruefeBestaetigungUndWeiter(email, passwort, status))) {
-          status.style.color = "#e11d48";
-          status.textContent = "Noch nicht bestätigt. Öffne den Link in der E-Mail an " + email + " und versuch es dann erneut.";
-        }
+      if (!(window.Auth && window.Auth.konfiguriert)) {
+        // Simulation: nur E-Mail zur Vorbefüllung, Weiter-Knopf sichtbar.
+        document.getElementById("kontoSimulation").hidden = false;
+        btn.hidden = false;
+        btn.addEventListener("click", () => {
+          daten.email = (document.getElementById("email").value || "").trim();
+          sammle(); zeige(aktuell + 1, 1);
+        });
         return;
       }
-      if (!email) { status.style.color = "#e11d48"; status.textContent = "Bitte gib deine E-Mail-Adresse an."; return; }
-      if (passwort.length < 8) { status.style.color = "#e11d48"; status.textContent = "Bitte wähle ein Passwort mit mindestens 8 Zeichen."; return; }
-      btn.disabled = true; status.style.color = ""; status.textContent = "Konto wird erstellt…";
-      const r = await window.Auth.registriere(email, passwort, location.origin + "/dashboard.html");
-      btn.disabled = false;
-      if (!r.ok) {
-        status.style.color = "#e11d48";
-        status.textContent = r.bereitsRegistriert
-          ? "Diese E-Mail ist bereits registriert. Nimm eine andere, oder logge dich im Dashboard ein."
-          : "Konto konnte nicht erstellt werden: " + (r.error || "unbekannt");
+      // Schon eingeloggt (z.B. Rückkehrer)? Dann direkt weiter können.
+      const schon = await window.Auth.nutzer();
+      if (schon) {
+        daten.email = schon.email || daten.email;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ Angemeldet als " + (schon.email || "dein Konto") + ".";
+        btn.hidden = false;
+        btn.addEventListener("click", () => { sammle(); zeige(aktuell + 1, 1); });
         return;
       }
-      daten.email = email;
-      if (!r.bestaetigungNoetig) {
-        // "Confirm email" ist in Supabase AUS -> es gibt technisch nichts zu
-        // bestätigen. (Für den echten Schutz sollte die Bestätigung in Supabase AN sein.)
-        status.style.color = "var(--gruen)"; status.textContent = "✓ Konto erstellt.";
+      // Clerks Registrier-Fenster einhängen und auf die Anmeldung warten.
+      await window.Auth.zeigeRegistrierung(document.getElementById("clerkKonto"));
+      window.Auth.beiAnmeldung(async () => {
+        const u = await window.Auth.nutzer();
+        if (!u) return;
+        daten.email = u.email || daten.email;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ E-Mail bestätigt, Konto steht.";
         sammle(); zeige(aktuell + 1, 1);
-        return;
-      }
-      kontoErstellt = true;
-      document.getElementById("email").disabled = true;
-      document.getElementById("passwort").disabled = true;
-      btn.textContent = "Ich habe bestätigt, weiter";
-      status.style.color = "var(--gruen)";
-      status.textContent = "✓ Bestätigungs-Mail an " + email + " geschickt. Öffne die Mail, klick den Link — danach geht es hier automatisch weiter.";
-      // Auto-Polling: sobald bestätigt, klappt der Login und es geht weiter.
-      bestaetigungsTimer = setInterval(() => { pruefeBestaetigungUndWeiter(email, passwort, status).catch(() => {}); }, 4000);
-    });
+      });
+    })();
 
     // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,
     // damit die Seite nie um mehr als eine Kartenhöhe wächst.
@@ -532,67 +514,128 @@
     }
     aktualisiereAgentVorschau(); // Startzustand der Vorschau setzen
 
-    // Stilwahl-Pop-up: öffnet sich, wenn die Varianten fertig sind. Schliessen
-    // ist erlaubt, die Varianten bleiben über den Link auf der Seite erreichbar
-    // (keine Bild-Credits verlieren). Funktions-Deklaration: wird auch im
-    // data-next-Handler weiter oben gebraucht.
-    const stilModal = document.getElementById("stilModal");
-    function oeffneStilModal() { if (charRichtungen.length) stilModal.hidden = false; }
-    function schliesseStilModal() { stilModal.hidden = true; }
-    document.getElementById("stilModalZu").addEventListener("click", schliesseStilModal);
-    stilModal.addEventListener("click", (e) => { if (e.target === stilModal) schliesseStilModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !stilModal.hidden) schliesseStilModal(); });
-    document.getElementById("charVariantenOeffnen").addEventListener("click", oeffneStilModal);
-    // "4 neue Varianten": Änderungswunsch fliesst in die Beschreibung ein,
-    // dann läuft die Generierung erneut (Pop-up öffnet sich automatisch wieder).
-    // Prompt-Hilfe. Starter-Links füllen das Feld mit einer Grundlage; der KI-Button
-    // macht aus einer GROBEN Idee einen guten, konkreten Charakter-Prompt (mit Firma
-    // und Angebot als Kontext). So müssen die Kunden keine guten Prompts schreiben.
-    document.querySelectorAll(".char-bsp").forEach((a) => {
-      a.addEventListener("click", (e) => {
-        e.preventDefault();
-        const feld = document.getElementById("charBeschr");
-        feld.value = a.dataset.bsp || ""; feld.focus();
-      });
-    });
-    document.getElementById("charPromptHilfe").addEventListener("click", async () => {
-      const feld = document.getElementById("charBeschr");
-      const status = document.getElementById("charPromptStatus");
-      const btn = document.getElementById("charPromptHilfe");
-      const idee = feld.value.trim();
-      if (!idee) { status.style.color = "#e11d48"; status.textContent = "Schreib zuerst kurz deine Idee."; feld.focus(); return; }
-      btn.disabled = true; status.style.color = ""; status.textContent = "KI verbessert…";
+    // ---------- Charakter-Designer: der Chat ----------
+    // Der Nutzer erzählt seine Idee, die KI (charakter-prompt.js) baut daraus den
+    // Bild-Prompt und erzeugt EINEN Entwurf. Änderungswünsche laufen wieder über
+    // den Chat (Bild-Edit), bis die Figur passt. Erst dann die Ausdrücke.
+    const charVerlaufEl = document.getElementById("charVerlauf");
+    const charEingabe = document.getElementById("charEingabe");
+    const charSenden = document.getElementById("charSenden");
+    const charVerlauf = [];        // [{rolle:"du"|"ki", text}]
+    let charPrompt = "";           // aktueller Bild-Prompt aus dem Chat
+    let charEntwurfBildUrl = "";   // aktueller Entwurf (URL in unserem Bucket)
+    let charBusy = false;
+
+    function charMsg(rolle, text, klasse) {
+      const d = document.createElement("div");
+      d.className = "d-msg " + (klasse || (rolle === "du" ? "du" : "ki"));
+      d.textContent = text;
+      charVerlaufEl.appendChild(d);
+      charVerlaufEl.scrollTop = charVerlaufEl.scrollHeight;
+      return d;
+    }
+    function charBusySetzen(an) {
+      charBusy = an;
+      charSenden.disabled = an;
+      charEingabe.disabled = an;
+    }
+    // Begrüssung, sobald der Schritt zum ersten Mal geöffnet wird.
+    function charChatStarten() {
+      if (charVerlaufEl.children.length) return;
+      charMsg("ki", "Hallo! Erzähl mir, was für eine Figur dir vorschwebt. Ruhig ganz grob, zum Beispiel: ein netter Hund. Oder: etwas Modernes, das zu uns passt. Ich mache daraus den Rest.");
+    }
+
+    async function charChatSenden() {
+      const text = charEingabe.value.trim();
+      if (!text || charBusy) return;
+      charEingabe.value = "";
+      charVerlauf.push({ rolle: "du", text });
+      charMsg("du", text);
+      charBusySetzen(true);
+      const tippt = charMsg("ki", "denkt nach…", "ki tippt");
       try {
         const res = await fetch("/.netlify/functions/charakter-prompt", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ idee, firma: daten.name || "", angebot: daten.angebot || "" }),
+          body: JSON.stringify({ verlauf: charVerlauf, firma: daten.name || "", angebot: daten.angebot || "" }),
         });
         const d = await res.json().catch(() => ({}));
-        if (!res.ok || !d.prompt) {
-          status.style.color = "#e11d48";
-          status.textContent = (d && d.error) || "Hat nicht geklappt, versuch es nochmal.";
+        tippt.remove();
+        if (!res.ok) {
+          charMsg("ki", (d && d.error) || "Das hat gerade nicht geklappt, versuch es nochmal.");
           return;
         }
-        feld.value = d.prompt;
-        status.style.color = "var(--gruen)"; status.textContent = "✓ Verbessert, du kannst es noch anpassen.";
+        charVerlauf.push({ rolle: "ki", text: d.antwort || "" });
+        charMsg("ki", d.antwort || "");
+        if (d.prompt) charPrompt = d.prompt;
+        // Prompt steht: Figur zeichnen (beim ersten Mal) bzw. anpassen.
+        if (d.bereit && charPrompt) {
+          if (charEntwurfBildUrl) await charEntwurfAnpassen(text);
+          else await charEntwurfErstellen();
+        }
       } catch (e) {
-        status.style.color = "#e11d48"; status.textContent = "Netzwerkfehler, versuch es nochmal.";
-      } finally { btn.disabled = false; }
+        tippt.remove();
+        charMsg("ki", "Netzwerkfehler, versuch es nochmal.");
+      } finally {
+        charBusySetzen(false);
+        charEingabe.focus();
+      }
+    }
+    charSenden.addEventListener("click", charChatSenden);
+    charEingabe.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); charChatSenden(); }
     });
 
-    document.getElementById("richtungenNeu").addEventListener("click", () => {
-      const anpassung = document.getElementById("richtungenAnpassung").value.trim();
-      const beschrFeld = document.getElementById("charBeschr");
-      if (anpassung) {
-        beschrFeld.value = (beschrFeld.value.trim() ? beschrFeld.value.trim() + ", " + anpassung : anpassung).slice(0, 500);
-        document.getElementById("richtungenAnpassung").value = "";
-      }
-      schliesseStilModal();
-      starteRichtungen({
-        beschreibung: beschrFeld.value.trim(),
-        status: document.getElementById("charErstellenStatus"),
-        btn: document.getElementById("charErstellen"),
-      });
+    // EINE Figur aus dem Chat-Prompt zeichnen (nicht mehr vier Varianten).
+    async function charEntwurfErstellen() {
+      const status = document.getElementById("charErstellenStatus");
+      charBusySetzen(true); balken("charBalken", true);
+      status.style.color = ""; status.textContent = "Deine Figur wird gezeichnet, das dauert einen Moment…";
+      const warte = charMsg("ki", "zeichnet deine Figur…", "ki tippt");
+      try {
+        const erg = await charJob({ aktion: "entwurf", beschreibung: charPrompt, bild: charReferenzBild || undefined }, 90);
+        charEntwurfBildUrl = erg.bild;
+        zeigeEntwurf(erg.bild);
+        warte.remove();
+        charMsg("ki", "Hier ist deine Figur. Was soll ich ändern? Wenn sie passt, klick unten auf: Passt, Ausdrücke erstellen.");
+        status.textContent = "";
+      } catch (e) {
+        warte.remove();
+        charMsg("ki", "Das Zeichnen hat nicht geklappt: " + e.message);
+        status.style.color = "#e11d48"; status.textContent = "";
+      } finally { balken("charBalken", false); charBusySetzen(false); }
+    }
+
+    // Änderungswunsch aus dem Chat auf den bestehenden Entwurf anwenden.
+    async function charEntwurfAnpassen(anweisung) {
+      const status = document.getElementById("charErstellenStatus");
+      charBusySetzen(true); balken("charBalken", true);
+      status.style.color = ""; status.textContent = "Änderung wird umgesetzt…";
+      const warte = charMsg("ki", "passt die Figur an…", "ki tippt");
+      try {
+        const erg = await charJob({ aktion: "bearbeiten", bild: charEntwurfBildUrl, anweisung }, 60);
+        charEntwurfBildUrl = erg.bild;
+        zeigeEntwurf(erg.bild);
+        warte.remove();
+        charMsg("ki", "So besser? Sag gern weiter, was noch anders soll.");
+        status.textContent = "";
+      } catch (e) {
+        warte.remove();
+        charMsg("ki", "Die Änderung hat nicht geklappt: " + e.message);
+        status.style.color = "#e11d48"; status.textContent = "";
+      } finally { balken("charBalken", false); charBusySetzen(false); }
+    }
+
+    function zeigeEntwurf(url) {
+      document.getElementById("charEntwurfBild").src = url;
+      document.getElementById("charEntwurf").hidden = false;
+      vorFigurImg.src = url; vorFigurImg.style.visibility = "visible";
+      vorLabel.textContent = "Dein Entwurf";
+    }
+
+    // "Passt": aus diesem einen Bild die Ausdrücke erzeugen.
+    document.getElementById("charUebernehmen").addEventListener("click", () => {
+      if (!charEntwurfBildUrl) return;
+      generiereZustaendeAusBild(charEntwurfBildUrl, charPrompt);
     });
 
     function balken(id, an) { document.getElementById(id).classList.toggle("an", !!an); }
@@ -603,8 +646,6 @@
     const CHAR_ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
     const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
     let charReferenzBild = null; // Data-URL des Uploads, dient auch als KI-Vorlage
-    let charRichtungen = [];
-    let gewaehltRichtung = null;
 
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
@@ -674,74 +715,26 @@
       });
     }
 
-    // Varianten ins Pop-up rendern, jede Karte hat ihren eigenen
-    // Bestätigen-Knopf, der die Wahl direkt auslöst.
-    function zeigeRichtungen(richtungen) {
-      const grid = document.getElementById("richtungsGrid");
-      charRichtungen = Array.isArray(richtungen) ? richtungen : [];
-      gewaehltRichtung = null;
-      grid.textContent = "";
-      charRichtungen.forEach((richtung) => {
-        const karte = document.createElement("div");
-        karte.className = "richtungs-karte";
-        const bild = document.createElement("img");
-        bild.src = richtung.bild; bild.alt = richtung.label;
-        const fuss = document.createElement("div"); fuss.className = "richtungs-fuss";
-        const label = document.createElement("span"); label.textContent = richtung.label;
-        const btn = document.createElement("button");
-        btn.type = "button"; btn.className = "btn-waehlen"; btn.textContent = "✓ Diese wählen";
-        btn.addEventListener("click", () => generiereZustaendeAusRichtung(richtung));
-        fuss.append(label, btn);
-        karte.append(bild, fuss);
-        grid.appendChild(karte);
-      });
-      document.getElementById("charVariantenZeile").hidden = false;
-    }
 
-    // Schritt 1: Beschreibung und/oder Bild-Vorlage -> 4 Stil-Varianten,
-    // danach öffnet sich das Stilwahl-Pop-up.
-    async function starteRichtungen({ beschreibung, status, btn }) {
-      btn.disabled = true; status.style.color = ""; balken("charBalken", true);
-      status.textContent = "Wir entwickeln vier Stil-Varianten deiner Figur, das dauert ungefähr eine Minute…";
-      try {
-        const erg = await charJob({ aktion: "richtungen", beschreibung, bild: charReferenzBild || undefined }, 120);
-        zeigeRichtungen(erg.richtungen);
-        status.style.color = "var(--gruen)";
-        status.textContent = "✓ Deine Varianten sind bereit.";
-        oeffneStilModal();
-      } catch (e) {
-        status.style.color = "#e11d48";
-        status.textContent = "Konnte die Varianten nicht erstellen: " + e.message;
-      } finally {
-        balken("charBalken", false);
-        btn.disabled = false;
-        if (charRichtungen.length) btn.textContent = "↻ Neue Varianten erstellen";
-      }
-    }
-
-    // Schritt 2 (Bestätigung einer Variante im Pop-up): sofort auf die
-    // Ausdrücke-Seite wechseln; die Bilder erscheinen dort, sobald sie fertig sind.
+    // Schritt 2: aus dem im Chat erarbeiteten Entwurf die Ausdrücke erzeugen.
+    // Wechselt sofort auf die Ausdrücke-Seite; die Bilder erscheinen dort, sobald
+    // sie fertig sind.
     let zustaendeLaufen = false;
-    async function generiereZustaendeAusRichtung(richtung) {
-      if (!richtung || zustaendeLaufen) return;
+    async function generiereZustaendeAusBild(bildUrl, beschreibung) {
+      if (!bildUrl || zustaendeLaufen) return;
       zustaendeLaufen = true;
-      gewaehltRichtung = richtung;
-      const beschreibung = document.getElementById("charBeschr").value.trim();
       const status = document.getElementById("charZustandStatus");
-      document.querySelectorAll("#richtungsGrid .btn-waehlen").forEach((b) => { b.disabled = true; });
-      schliesseStilModal();
       zeige(AUSDRUECKE_STEP, 1);
-      document.getElementById("andereRichtungZeile").hidden = false;
       document.getElementById("charGrid").hidden = true;
       status.style.color = ""; balken("zustaendeBalken", true);
       status.textContent = "Die Ausdrücke deiner Figur werden erzeugt, noch etwa eine Minute…";
-      // Vorfreude: die gewählte Variante während des Wartens auf der Seite zeigen.
-      document.getElementById("gewaehlteVorschauImg").src = richtung.bild;
+      // Vorfreude: der gewählte Entwurf während des Wartens auf der Seite zeigen.
+      document.getElementById("gewaehlteVorschauImg").src = bildUrl;
       document.getElementById("gewaehlteVorschau").hidden = false;
-      vorFigurImg.src = richtung.bild; vorFigurImg.style.visibility = "visible";
+      vorFigurImg.src = bildUrl; vorFigurImg.style.visibility = "visible";
       vorLabel.textContent = "Dein Charakter entsteht…";
       try {
-        const erg = await charJob({ aktion: "zustaende", beschreibung, bild: richtung.bild }, 120);
+        const erg = await charJob({ aktion: "zustaende", beschreibung: beschreibung || "", bild: bildUrl }, 120);
         daten.charakterBilder = erg.bilder;
         status.style.color = "var(--gruen)";
         status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
@@ -749,11 +742,10 @@
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
         status.style.color = "#e11d48";
-        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message + ", wähle nochmal eine Richtung.";
+        status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message;
       } finally {
         balken("zustaendeBalken", false);
         zustaendeLaufen = false;
-        document.querySelectorAll("#richtungsGrid .btn-waehlen").forEach((b) => { b.disabled = false; });
         // Charakter ist da -> Rückkehrer-Link auf der Erstell-Seite freischalten.
         const l = document.getElementById("zuAusdruecken");
         if (l && daten.charakterBilder && daten.charakterBilder.idle) l.hidden = false;
@@ -770,7 +762,7 @@
       r.onload = () => {
         charReferenzBild = r.result;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ „" + f.name + "“ übernommen, fliesst als Vorlage in die Varianten ein.";
+        status.textContent = "✓ " + f.name + " übernommen, fliesst als Vorlage in deine Figur ein.";
         document.getElementById("charDirektZeile").hidden = false;
       };
       r.readAsDataURL(f);
@@ -785,21 +777,6 @@
       zeige(AUSDRUECKE_STEP, 1);
     });
 
-    // "4 Varianten erstellen": Beschreibung ODER Bild-Vorlage reicht.
-    document.getElementById("charErstellen").addEventListener("click", () => {
-      const beschr = document.getElementById("charBeschr").value.trim();
-      const status = document.getElementById("charErstellenStatus");
-      if (!beschr && !charReferenzBild) {
-        status.style.color = "#e11d48";
-        status.textContent = "Beschreibe deine Figur kurz oder lade ein Bild als Vorlage hoch.";
-        return;
-      }
-      starteRichtungen({ beschreibung: beschr, status, btn: document.getElementById("charErstellen") });
-    });
-    document.getElementById("andereRichtung").addEventListener("click", () => {
-      zeige(AGENT_STEP, -1);
-      oeffneStilModal();
-    });
     document.getElementById("zuAusdruecken").addEventListener("click", () => zeige(AUSDRUECKE_STEP, 1));
 
     // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
