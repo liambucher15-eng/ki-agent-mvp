@@ -120,13 +120,15 @@
     }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
-    // Konto anlegen (Pflicht): E-Mail + Passwort. Wertet die anonyme Sitzung zu
-    // einem dauerhaften Konto auf (gleiche uid -> Besitz der Firma bleibt). Weiter
-    // geht ERST, wenn die E-Mail BESTÄTIGT ist. Ohne Supabase (lokal): Simulation.
-    // Dieser Button trägt bewusst KEIN data-next, damit er selbst weiterschaltet.
+    // Konto anlegen (Pflicht): echtes signUp mit E-Mail + Passwort. Weiter geht
+    // ERST nach dem Klick auf den Bestätigungs-Link in der Mail: Der Check ist ein
+    // echter LOGIN-Versuch, der mit "Confirm email" = AN erst NACH der Bestätigung
+    // klappt. Ohne Supabase (lokal): Simulation. Der Button trägt KEIN data-next.
     let kontoErstellt = false, bestaetigungsTimer = null;
-    async function pruefeBestaetigungUndWeiter(status) {
-      if (!(await window.Auth.emailBestaetigt())) return false;
+    async function pruefeBestaetigungUndWeiter(email, passwort, status) {
+      // Login versuchen: klappt er, ist die Mail bestätigt UND der Nutzer eingeloggt.
+      const r = await window.Auth.anmelden(email, passwort);
+      if (!r.ok) return false; // meist "Email not confirmed" -> noch nicht bestätigt
       if (bestaetigungsTimer) { clearInterval(bestaetigungsTimer); bestaetigungsTimer = null; }
       status.style.color = "var(--gruen)"; status.textContent = "✓ E-Mail bestätigt.";
       sammle(); zeige(aktuell + 1, 1);
@@ -138,10 +140,10 @@
       const status = document.getElementById("loginStatus");
       const btn = document.getElementById("loginBtn");
       if (!(window.Auth && window.Auth.konfiguriert)) { sammle(); zeige(aktuell + 1, 1); return; } // Simulation
-      // Konto schon erstellt: der Button prüft jetzt nur noch die Bestätigung.
+      // Konto schon angelegt: der Button prüft jetzt nur noch die Bestätigung.
       if (kontoErstellt) {
         status.style.color = ""; status.textContent = "Prüfe Bestätigung…";
-        if (!(await pruefeBestaetigungUndWeiter(status))) {
+        if (!(await pruefeBestaetigungUndWeiter(email, passwort, status))) {
           status.style.color = "#e11d48";
           status.textContent = "Noch nicht bestätigt. Öffne den Link in der E-Mail an " + email + " und versuch es dann erneut.";
         }
@@ -154,18 +156,27 @@
       btn.disabled = false;
       if (!r.ok) {
         status.style.color = "#e11d48";
-        status.textContent = "Konto konnte nicht erstellt werden: " + (r.error || "unbekannt");
+        status.textContent = r.bereitsRegistriert
+          ? "Diese E-Mail ist bereits registriert. Nimm eine andere, oder logge dich im Dashboard ein."
+          : "Konto konnte nicht erstellt werden: " + (r.error || "unbekannt");
+        return;
+      }
+      daten.email = email;
+      if (!r.bestaetigungNoetig) {
+        // "Confirm email" ist in Supabase AUS -> es gibt technisch nichts zu
+        // bestätigen. (Für den echten Schutz sollte die Bestätigung in Supabase AN sein.)
+        status.style.color = "var(--gruen)"; status.textContent = "✓ Konto erstellt.";
+        sammle(); zeige(aktuell + 1, 1);
         return;
       }
       kontoErstellt = true;
-      daten.email = email;
       document.getElementById("email").disabled = true;
       document.getElementById("passwort").disabled = true;
       btn.textContent = "Ich habe bestätigt, weiter";
       status.style.color = "var(--gruen)";
-      status.textContent = "✓ Konto erstellt. Bitte bestätige jetzt die E-Mail an " + email + " (Link im Postfach). Danach geht es automatisch weiter.";
-      // Auto-Polling: erkennt die Bestätigung, ohne dass der Nutzer klicken muss.
-      bestaetigungsTimer = setInterval(() => { pruefeBestaetigungUndWeiter(status).catch(() => {}); }, 4000);
+      status.textContent = "✓ Bestätigungs-Mail an " + email + " geschickt. Öffne die Mail, klick den Link — danach geht es hier automatisch weiter.";
+      // Auto-Polling: sobald bestätigt, klappt der Login und es geht weiter.
+      bestaetigungsTimer = setInterval(() => { pruefeBestaetigungUndWeiter(email, passwort, status).catch(() => {}); }, 4000);
     });
 
     // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,
@@ -534,13 +545,39 @@
     document.getElementById("charVariantenOeffnen").addEventListener("click", oeffneStilModal);
     // "4 neue Varianten": Änderungswunsch fliesst in die Beschreibung ein,
     // dann läuft die Generierung erneut (Pop-up öffnet sich automatisch wieder).
-    // Prompt-Hilfe: ein Beispiel-Chip anklicken füllt das Beschreibungs-Feld,
-    // damit der User schnell eine gute Grundlage hat und sie anpassen kann.
-    document.querySelectorAll("#charBeispiele .pers-chip").forEach((c) => {
-      c.addEventListener("click", () => {
+    // Prompt-Hilfe. Starter-Links füllen das Feld mit einer Grundlage; der KI-Button
+    // macht aus einer GROBEN Idee einen guten, konkreten Charakter-Prompt (mit Firma
+    // und Angebot als Kontext). So müssen die Kunden keine guten Prompts schreiben.
+    document.querySelectorAll(".char-bsp").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
         const feld = document.getElementById("charBeschr");
-        feld.value = c.dataset.bsp || ""; feld.focus();
+        feld.value = a.dataset.bsp || ""; feld.focus();
       });
+    });
+    document.getElementById("charPromptHilfe").addEventListener("click", async () => {
+      const feld = document.getElementById("charBeschr");
+      const status = document.getElementById("charPromptStatus");
+      const btn = document.getElementById("charPromptHilfe");
+      const idee = feld.value.trim();
+      if (!idee) { status.style.color = "#e11d48"; status.textContent = "Schreib zuerst kurz deine Idee."; feld.focus(); return; }
+      btn.disabled = true; status.style.color = ""; status.textContent = "KI verbessert…";
+      try {
+        const res = await fetch("/.netlify/functions/charakter-prompt", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ idee, firma: daten.name || "", angebot: daten.angebot || "" }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok || !d.prompt) {
+          status.style.color = "#e11d48";
+          status.textContent = (d && d.error) || "Hat nicht geklappt, versuch es nochmal.";
+          return;
+        }
+        feld.value = d.prompt;
+        status.style.color = "var(--gruen)"; status.textContent = "✓ Verbessert, du kannst es noch anpassen.";
+      } catch (e) {
+        status.style.color = "#e11d48"; status.textContent = "Netzwerkfehler, versuch es nochmal.";
+      } finally { btn.disabled = false; }
     });
 
     document.getElementById("richtungenNeu").addEventListener("click", () => {

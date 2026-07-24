@@ -59,23 +59,32 @@ const Auth = (function () {
       return { ok: true };
     },
 
-    // Konto mit E-Mail + PASSWORT anlegen. Wertet die vorhandene anonyme Sitzung
-    // per updateUser auf ein dauerhaftes Konto auf (gleiche uid -> Firma bleibt im
-    // Besitz). Das Passwort gilt sofort; die E-Mail muss der Nutzer per Link
-    // bestätigen (Supabase "Confirm email" = AN), bevor der Login auf neuen
-    // Geräten klappt. In dieser Session bleibt er eingeloggt und kann weitermachen.
+    // Konto mit E-Mail + PASSWORT anlegen — als ECHTES signUp (NICHT die anonyme
+    // Sitzung aufwerten). Wichtig fürs Gate: Mit "Confirm email" = AN gibt signUp
+    // KEINE Sitzung zurück (data.session === null). Der Nutzer ist also NICHT
+    // eingeloggt, bis er den Link in der Mail klickt — und erst dann funktioniert
+    // der Login (anmelden). So gibt es kein Durchkommen ohne Bestätigung.
+    // Eine evtl. vorhandene anonyme Sitzung wird vorher beendet.
     async registriere(email, password, redirectTo) {
       if (!client) return { ok: false, error: "Supabase nicht konfiguriert" };
       if (!email || !password || password.length < 8) {
         return { ok: false, error: "E-Mail und Passwort (min. 8 Zeichen) nötig" };
       }
-      await this.sitzungSichern();
-      const { error } = await client.auth.updateUser(
-        { email, password },
-        redirectTo ? { emailRedirectTo: redirectTo } : undefined
-      );
+      try { await client.auth.signOut(); } catch (e) {}
+      const { data, error } = await client.auth.signUp({
+        email, password,
+        options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+      });
       if (error) return { ok: false, error: error.message };
-      return { ok: true, bestaetigungNoetig: true };
+      // Schon registriert? Supabase liefert dann einen Nutzer mit LEEREN
+      // identities und schickt keine neue Mail (Schutz vor E-Mail-Enumeration).
+      const ident = data && data.user && data.user.identities;
+      if (Array.isArray(ident) && ident.length === 0) {
+        return { ok: false, bereitsRegistriert: true,
+          error: "Diese E-Mail ist bereits registriert. Melde dich stattdessen an." };
+      }
+      // Session vorhanden = "Confirm email" ist AUS (dann gibt es nichts zu bestätigen).
+      return { ok: true, bestaetigungNoetig: !(data && data.session) };
     },
 
     // Rückkehrer: Login mit E-Mail + Passwort (z.B. vom Dashboard aus).
