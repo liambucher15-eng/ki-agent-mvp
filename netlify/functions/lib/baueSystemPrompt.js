@@ -50,6 +50,14 @@ function baueSystemPrompt(firma) {
       ? `\n- Wenn du nicht weiterhelfen kannst, weise freundlich auf die vorhandenen Kontaktinformationen hin.`
       : "";
 
+  // Fallback-Kontakt: Wenn der Agent etwas nicht sicher weiss, gibt er das ehrlich
+  // zu und nennt diese Kontaktmöglichkeit (statt zu raten oder wegzuschicken).
+  const fallbackKontakt = (p.fallbackKontakt || "").trim();
+  const fallbackRegel = fallbackKontakt
+    ? `\n- Wenn du eine Antwort NICHT sicher weisst, sag ehrlich, dass du es nicht weisst, ` +
+      `und verweise freundlich auf diese Kontaktmöglichkeit: ${fallbackKontakt}`
+    : "";
+
   const laengeRegel = {
     kurz: "Halte Antworten kurz: meistens ein bis zwei Sätze, nur auf Nachfrage mehr.",
     ausgewogen: "Antworte klar mit den wichtigsten Details; vermeide unnötige Wiederholungen.",
@@ -75,7 +83,7 @@ Ton: ${p.ton}. Sprich ${spr}, warm und knapp. ${anredeRegel}
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den Informationen unten.${kontaktRegel}
+- ANTWORTE nur aus den Informationen unten.${kontaktRegel}${fallbackRegel}
 - ${laengeRegel}
 - ${emojiRegel}
 - ${formatRegel}${grenzenRegel}

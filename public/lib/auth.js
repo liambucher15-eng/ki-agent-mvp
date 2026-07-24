@@ -1,66 +1,101 @@
-// Auth-Layer (Supabase Magic-Link). Kapselt das Login, damit der Rest der App
-// einfach Auth.* aufruft. Wenn Supabase (noch) nicht konfiguriert ist, läuft die
+// Auth-Layer über CLERK. Kapselt das Login, damit der Rest der App einfach
+// Auth.* aufruft. Clerk übernimmt Registrierung, Login UND die E-Mail-
+// Bestätigung (Code-Eingabe) — deshalb gibt es hier keine eigenen Passwort- oder
+// Bestätigungs-Formulare mehr.
+//
+// Ist kein echter Publishable Key hinterlegt (lib/clerk-config.js), läuft die
 // App im Simulations-Modus weiter (Auth.konfiguriert === false).
+//
+// Zusammenspiel mit Supabase (Daten): Der Supabase-Client bekommt in store.js
+// das Clerk-Session-Token (Auth.token()). In Supabase muss Clerk dafür als
+// Third-Party-Auth-Provider eingetragen sein; die RLS-Policies vergleichen dann
+// besitzer mit auth.jwt()->>'sub' (der Clerk-User-ID). Siehe README.
 
 const Auth = (function () {
-  const konfiguriert =
-    !!window.SUPABASE_URL &&
-    !String(window.SUPABASE_URL).includes("DEIN-PROJEKT") &&
-    !!window.SUPABASE_ANON_KEY &&
-    !String(window.SUPABASE_ANON_KEY).includes("DEIN-ANON");
+  const key = window.CLERK_PUBLISHABLE_KEY || "";
+  const konfiguriert = !!key && !key.includes("DEIN-KEY");
 
-  let client = null;
-  if (konfiguriert && window.supabase) {
-    client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  let clerk = null;
+  let bereitP = null;
+
+  // Clerk-Skript nachladen und initialisieren (einmalig, alle warten auf dasselbe
+  // Versprechen). Ohne Key passiert nichts.
+  function bereit() {
+    if (!konfiguriert) return Promise.resolve(null);
+    if (bereitP) return bereitP;
+    bereitP = new Promise((fertig) => {
+      function start() {
+        try {
+          clerk = new window.Clerk(key);
+          clerk.load({}).then(() => fertig(clerk)).catch(() => { clerk = null; fertig(null); });
+        } catch (e) { clerk = null; fertig(null); }
+      }
+      if (window.Clerk) return start();
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
+      s.crossOrigin = "anonymous";
+      s.onload = start;
+      s.onerror = () => fertig(null);
+      document.head.appendChild(s);
+    });
+    return bereitP;
   }
 
   return {
     konfiguriert,
-    client,
+    bereit,
+    get client() { return clerk; },
 
-    // Schickt den Login-Link an die E-Mail. redirectTo = wohin der Link zurückführt.
-    async sendMagicLink(email, redirectTo) {
-      if (!client) throw new Error("Supabase nicht konfiguriert");
-      return client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
-    },
-
-    // Aktuell eingeloggter Nutzer (oder null).
+    // Aktuell eingeloggter Nutzer (oder null). Vereinheitlicht auf die Felder,
+    // die der Rest der App nutzt: id, email.
     async nutzer() {
-      if (!client) return null;
-      const { data } = await client.auth.getUser();
-      return data.user || null;
+      const c = await bereit();
+      if (!c || !c.user) return null;
+      const email = (c.user.primaryEmailAddress && c.user.primaryEmailAddress.emailAddress) || "";
+      return { id: c.user.id, email, clerk: c.user };
     },
 
-    // Stellt sicher, dass eine Sitzung existiert. Gibt es noch keine, wird der
-    // Nutzer ANONYM angemeldet (echte Nutzer-ID ohne E-Mail). Damit gehört ein
-    // erstellter Agent diesem Browser — Fremde können ihn nicht überschreiben
-    // (siehe RLS besitzer = auth.uid()). Später auf Magic-Link aufrüstbar.
-    async sitzungSichern() {
-      if (!client) return null;
-      const { data } = await client.auth.getUser();
-      if (data.user) return data.user;
-      const { data: neu, error } = await client.auth.signInAnonymously();
-      if (error) throw new Error("Anmeldung fehlgeschlagen: " + error.message);
-      return neu.user;
+    // Session-Token für Supabase (Third-Party Auth). null, wenn nicht eingeloggt.
+    async token() {
+      const c = await bereit();
+      if (!c || !c.session) return null;
+      try { return await c.session.getToken(); } catch (e) { return null; }
     },
 
-    // Verknüpft die (anonyme) Sitzung mit einer E-Mail — der Nutzer wird so vom
-    // anonymen zu einem dauerhaften Konto, OHNE die Nutzer-ID zu wechseln. Damit
-    // bleibt die Firma in seinem Besitz (besitzer = auth.uid()), und er kann per
-    // Bestätigungs-Link auf jedem Gerät zurückkommen. Supabase schickt die Mail.
-    async verknuepfeEmail(email, redirectTo) {
-      if (!client || !email) return { ok: false };
-      await this.sitzungSichern(); // sicherstellen, dass eine (anonyme) Sitzung existiert
-      const { error } = await client.auth.updateUser(
-        { email },
-        redirectTo ? { emailRedirectTo: redirectTo } : undefined
-      );
-      if (error) return { ok: false, error: error.message };
-      return { ok: true };
+    // Ist jemand eingeloggt? (Clerk lässt nur bestätigte Konten hinein, deshalb
+    // ist das gleichbedeutend mit "Konto vorhanden und E-Mail bestätigt".)
+    async hatKonto() {
+      return !!(await this.nutzer());
+    },
+    async emailBestaetigt() {
+      return !!(await this.nutzer());
+    },
+
+    // Clerks fertige Anmelde-/Registrier-Oberfläche in ein Element hängen.
+    // Clerk erzwingt dabei die E-Mail-Bestätigung von sich aus.
+    async zeigeRegistrierung(el) {
+      const c = await bereit();
+      if (!c || !el) return false;
+      c.mountSignUp(el, { signInUrl: "#", forceRedirectUrl: window.location.href });
+      return true;
+    },
+    async zeigeAnmeldung(el) {
+      const c = await bereit();
+      if (!c || !el) return false;
+      c.mountSignIn(el, { forceRedirectUrl: window.location.href });
+      return true;
+    },
+
+    // Auf Login warten: ruft zurück, sobald ein Nutzer eingeloggt ist.
+    async beiAnmeldung(rueckruf) {
+      const c = await bereit();
+      if (!c) return () => {};
+      return c.addListener((ev) => { if (ev.user) rueckruf(ev.user); });
     },
 
     async abmelden() {
-      if (client) await client.auth.signOut();
+      const c = await bereit();
+      if (c) await c.signOut();
     },
   };
 })();

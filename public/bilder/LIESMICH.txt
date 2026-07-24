@@ -1,0 +1,23 @@
+Bilder für die Oberfläche
+=========================
+
+maskottchen.png
+---------------
+Das Bild in der Wortmarke über dem Charakter-Designer (AU [Bild] RA).
+
+  Format:      PNG mit TRANSPARENTEM Hintergrund (kein weisser Kasten)
+  Grösse:      quadratisch, mindestens 512 x 512 px (besser 1024, wegen Retina)
+  Rand:        rundherum etwa 5 Prozent Luft lassen
+  Farben:      muss auf WEISS gut aussehen, also nichts Weisses am Rand
+  Dateigrösse: unter 300 KB, sonst lädt der Schritt spürbar langsamer
+
+Solange die Datei fehlt, zeigt die Marke einen gestrichelten Platzhalter.
+Es geht nichts kaputt, du kannst die Datei jederzeit nachlegen.
+
+Wenn dein Bild die GANZE Wortmarke enthält (also "AURA" schon eingebaut):
+in onboarding-aura.html beim <div class="marke" id="charMarke"> die Klasse
+"nur-bild" ergänzen:
+
+  <div class="marke nur-bild" id="charMarke">
+
+Dann werden die Buchstaben AU und RA ausgeblendet und nur dein Bild steht da.

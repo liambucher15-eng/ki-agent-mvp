@@ -1,39 +1,60 @@
-// Onboarding-Wizard — Logik zu onboarding-aura.html.
+// Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
-
-    // Preis (EINE Variante: der KI-Charakter — unser USP). PLATZHALTER, bis die
-    // finale Preisentscheidung steht. Nur diese eine Stelle ändern.
-    const PREIS = 49;
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
       professionell: "professionell, kompetent und präzise; sachlich und verbindlich",
       freundlich:    "warm, freundlich und hilfsbereit; geduldig und zugänglich",
-      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern — aber immer hilfreich",
+      humorvoll:     "locker und humorvoll, mit einem Augenzwinkern, aber immer hilfreich",
       sachlich:      "sachlich, knapp und faktenorientiert, ohne Ausschmückungen",
       motivierend:   "motivierend und begeisternd; ermutigt die Besucher",
       luxurioes:     "gehoben, elegant und exklusiv; gewählte, diskrete Sprache",
     };
     const TON_HINWEIS = {
-      professionell: "Kompetent und verbindlich — für seriöse Marken.",
-      freundlich:    "Warm und nahbar — der Allrounder.",
-      humorvoll:     "Locker mit Augenzwinkern — für nahbare Marken.",
-      sachlich:      "Knapp und faktenorientiert — für technische Angebote.",
-      motivierend:   "Energiegeladen — für Coaching, Fitness, Bildung.",
-      luxurioes:     "Gehoben und exklusiv — für Premium-Marken.",
+      professionell: "Kompetent und verbindlich, für seriöse Marken.",
+      freundlich:    "Warm und nahbar, der Allrounder.",
+      humorvoll:     "Locker mit Augenzwinkern, für nahbare Marken.",
+      sachlich:      "Knapp und faktenorientiert, für technische Angebote.",
+      motivierend:   "Energiegeladen, für Coaching, Fitness, Bildung.",
+      luxurioes:     "Gehoben und exklusiv, für Premium-Marken.",
     };
     const linksSchritte = document.querySelectorAll(".schritt-links");
     const rechtsSchritte = document.querySelectorAll(".schritt-rechts");
     const ANZAHL = linksSchritte.length;
     const AGENT_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAgent");
+    const AUSDRUECKE_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittAusdruecke");
+    // Identitäts-Schritt (Name Pflicht + Namensvorschlag), ID-basiert, damit
+    // spätere Seiten-Splits die Schrittnummern verschieben können, ohne zu brechen.
+    const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
     let aktuell = 0;
+
+    // Schlägt einen freundlichen ASSISTENTEN-Namen vor (kein Firmenname!). Aus einer
+    // kuratierten Liste, deterministisch aus dem Firmennamen abgeleitet, damit der
+    // Vorschlag beim erneuten Öffnen stabil bleibt.
+    const AGENT_NAMEN = ["Lia","Nino","Mara","Elio","Nora","Luca","Sina","Finn","Mila","Jano","Lena","Rico","Vera","Emma","Leo","Nala"];
+    function schlageAgentNamen(basis) {
+      const s = String(basis || "agent").toLowerCase();
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return AGENT_NAMEN[h % AGENT_NAMEN.length];
+    }
 
     const progress = document.getElementById("progress");
     for (let i = 0; i < ANZAHL; i++) { const d = document.createElement("div"); d.className = "dot"; progress.appendChild(d); }
     const dots = progress.querySelectorAll(".dot");
     function updateProgress() { dots.forEach((d,i)=>{ d.classList.toggle("done", i<aktuell); d.classList.toggle("aktiv", i===aktuell); }); }
+
+    // Szenen-Videos: nur das Video des sichtbaren Schritts läuft, immer von vorn.
+    function syncSzenenVideos(n) {
+      rechtsSchritte.forEach((el, i) => {
+        const v = el.querySelector("video");
+        if (!v) return;
+        if (i === n) { try { v.currentTime = 0; } catch (e) {} v.play().catch(() => {}); }
+        else { v.pause(); }
+      });
+    }
 
     gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
     gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
@@ -49,22 +70,37 @@
       gsap.to([lAlt, rAlt], { autoAlpha: 0, x: -24 * richtung, duration: 0.22, ease: "power2.in",
         onComplete: () => {
           lAlt.hidden = true; rAlt.hidden = true; gsap.set([lAlt, rAlt], { x: 0 });
+          // Ausdrücke-Seite läuft über die volle Kartenbreite (Layout-Wechsel
+          // passiert hier, während beide Seiten unsichtbar sind -> kein Sprung).
+          document.querySelector(".card").classList.toggle("voll", n === AUSDRUECKE_STEP);
           lNeu.hidden = false; rNeu.hidden = false; lNeu.scrollTop = 0;
+          syncSzenenVideos(n);
           gsap.fromTo([lNeu, rNeu], { autoAlpha: 0, x: 24 * richtung }, { autoAlpha: 1, x: 0, duration: 0.32, ease: "power2.out",
             onComplete: () => { istUebergang = false; } });
         }});
       aktuell = n; updateProgress();
-      if (n === AGENT_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      if (n === AGENT_STEP || n === AUSDRUECKE_STEP) aktualisiereAgentVorschau(); // Vorschau mit aktuellen Farben
+      // Rückkehrer mit fertigem Charakter: Link zur Ausdrücke-Seite zeigen.
+      // Und: den Charakter-Designer begrüssen lassen, sobald der Schritt aufgeht.
+      if (n === AGENT_STEP) {
+        const l = document.getElementById("zuAusdruecken");
+        if (l) l.hidden = !(daten.charakterBilder && daten.charakterBilder.idle);
+        charChatStarten();
+      }
       if (n === ANZAHL - 1) pruefeStartklar(); // Fertig-Schritt: §8 Veröffentlichungs-Checkliste
-      // Marke-Schritt (5): Agenten-Name aus dem Firmennamen vorschlagen, falls leer.
-      if (n === 5 && !daten.agentName && daten.name) {
+      // Identitäts-Schritt: einen echten, freundlichen Assistenten-Namen vorschlagen
+      // (NICHT den Firmennamen), falls das Feld noch leer ist.
+      if (n === IDENTITAET_STEP) {
         const el = document.getElementById("agentName");
-        if (el && !el.value) { el.value = daten.name; daten.agentName = daten.name; }
+        if (el && !el.value.trim()) {
+          const vorschlag = schlageAgentNamen(daten.name || daten.webseite);
+          el.value = vorschlag; daten.agentName = vorschlag;
+        }
       }
     }
     document.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => {
-      // §3: Agenten-Name ist Pflicht — beim Verlassen des Marke-Schritts (5) prüfen.
-      if (aktuell === 5) {
+      // §3: Agenten-Name ist Pflicht, beim Verlassen des Identitäts-Schritts prüfen.
+      if (aktuell === IDENTITAET_STEP) {
         const el = document.getElementById("agentName");
         if (el && !el.value.trim()) {
           const h = document.getElementById("agentNameHinweis");
@@ -72,13 +108,13 @@
           el.focus(); return;
         }
       }
-      // Charakter-Schritt (8): der Charakter ist Pflicht — ohne fertige Bilder
-      // geht es nicht weiter (eine Variante, Charakter = Produkt).
-      if (aktuell === AGENT_STEP) {
-        const fertig = daten.charakterBilder && daten.charakterBilder.idle;
-        if (!fertig) {
-          const h = document.getElementById("charPflichtHinweis");
-          if (h) h.textContent = "Bitte erstelle zuerst deinen Charakter — lade ein Bild hoch oder beschreibe ihn und generiere die Ausdrücke.";
+      // Ausdrücke-Schritt: erst weiter, wenn die Generierung fertig ist.
+      // (Der Charakter-Schritt selbst hat keinen Weiter-Knopf, die Stilwahl
+      // im Pop-up führt automatisch hierher, Charakter bleibt Pflicht.)
+      if (aktuell === AUSDRUECKE_STEP) {
+        if (!(daten.charakterBilder && daten.charakterBilder.idle)) {
+          const s = document.getElementById("charZustandStatus");
+          if (s) { s.style.color = "#e11d48"; s.textContent = "Die Ausdrücke werden noch erstellt, einen Moment bitte."; }
           return;
         }
       }
@@ -86,36 +122,72 @@
     }));
     document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
 
-    // Anmelden: echten Bestätigungs-Link schicken, wenn Supabase konfiguriert ist
-    // (sonst Simulation — es geht einfach weiter). Verknüpft die anonyme Sitzung
-    // mit der E-Mail, ohne die Nutzer-ID zu wechseln -> Besitz der Firma bleibt.
-    // Fire-and-forget: der Ablauf wartet nicht auf die Mail.
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const email = (document.getElementById("email").value || "").trim();
+    // Konto (Pflicht): läuft über CLERK. Clerk zeigt sein eigenes Registrier-/
+    // Login-Fenster inklusive E-Mail-Bestätigung — erst wenn der Code aus der Mail
+    // stimmt, ist der Nutzer angemeldet. Genau dann (und nur dann) schaltet das
+    // Onboarding automatisch weiter. Ohne Clerk-Key: Simulation mit E-Mail-Feld.
+    (async function kontoSchrittAufbauen() {
       const status = document.getElementById("loginStatus");
-      if (!email || !(window.Auth && window.Auth.konfiguriert)) return; // Simulation
-      status.style.color = ""; status.textContent = "Bestätigungs-Link wird gesendet…";
-      window.Auth.verknuepfeEmail(email, location.origin + "/dashboard.html").then((r) => {
-        if (r.ok) { status.style.color = "var(--gruen)"; status.textContent = "✓ Link an " + email + " gesendet — du kannst hier weitermachen."; }
-        else { status.style.color = "var(--grau)"; status.textContent = "Konnte den Link nicht senden (" + (r.error || "unbekannt") + ") — Onboarding läuft trotzdem weiter."; }
+      const btn = document.getElementById("loginBtn");
+      if (!(window.Auth && window.Auth.konfiguriert)) {
+        // Simulation: nur E-Mail zur Vorbefüllung, Weiter-Knopf sichtbar.
+        document.getElementById("kontoSimulation").hidden = false;
+        btn.hidden = false;
+        btn.addEventListener("click", () => {
+          daten.email = (document.getElementById("email").value || "").trim();
+          sammle(); zeige(aktuell + 1, 1);
+        });
+        return;
+      }
+      // Schon eingeloggt (z.B. Rückkehrer)? Dann direkt weiter können.
+      const schon = await window.Auth.nutzer();
+      if (schon) {
+        daten.email = schon.email || daten.email;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ Angemeldet als " + (schon.email || "dein Konto") + ".";
+        btn.hidden = false;
+        btn.addEventListener("click", () => { sammle(); zeige(aktuell + 1, 1); });
+        return;
+      }
+      // Clerks Registrier-Fenster einhängen und auf die Anmeldung warten.
+      await window.Auth.zeigeRegistrierung(document.getElementById("clerkKonto"));
+      window.Auth.beiAnmeldung(async () => {
+        const u = await window.Auth.nutzer();
+        if (!u) return;
+        daten.email = u.email || daten.email;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ E-Mail bestätigt, Konto steht.";
+        sammle(); zeige(aktuell + 1, 1);
       });
-    });
+    })();
 
-    // Überprüfen: Karten auf/zu + "Passt"-Haken
-    document.querySelectorAll(".pk-kopf").forEach(k => k.addEventListener("click", () => k.parentElement.classList.toggle("auf")));
+    // Überprüfen: Karten auf/zu + "Passt"-Haken. Exklusiv: nur eine Karte offen,
+    // damit die Seite nie um mehr als eine Kartenhöhe wächst.
+    document.querySelectorAll(".pk-kopf").forEach(k => k.addEventListener("click", () => {
+      const pk = k.parentElement;
+      const warOffen = pk.classList.contains("auf");
+      document.querySelectorAll(".pk.auf").forEach(p => p.classList.remove("auf"));
+      if (!warOffen) pk.classList.add("auf");
+    }));
     document.querySelectorAll(".pk-passt").forEach(b => b.addEventListener("click", () => {
       const pk = b.closest(".pk"); pk.classList.add("geprueft"); pk.classList.remove("auf");
     }));
     function kurz(t) { return t ? t.replace(/\s+/g," ").trim().slice(0,42) : "nichts erkannt"; }
     function updatePruefVorschau() {
-      document.getElementById("v-oeffnung").textContent = kurz(document.getElementById("p-oeffnung").value);
+      const vs = (vid, wert) => { const e = document.getElementById(vid); if (e) e.textContent = kurz(wert); };
+      vs("v-oeffnung", document.getElementById("p-oeffnung").value);
       const k = [document.getElementById("p-adresse").value, document.getElementById("p-kontakt").value].filter(Boolean).join(" · ");
-      document.getElementById("v-kontakt").textContent = kurz(k);
+      vs("v-kontakt", k);
       const faqAnzahl = faqListe.value().length;
       document.getElementById("v-faq").textContent = faqAnzahl ? faqAnzahl + (faqAnzahl === 1 ? " Frage definiert" : " Fragen definiert") : "noch keine Frage";
-      document.getElementById("v-weiteres").textContent = kurz(document.getElementById("p-weiteres").value);
+      vs("v-weiteres", document.getElementById("p-weiteres").value);
+      vs("v-leistungen", document.getElementById("p-leistungen").value);
+      vs("v-preise", document.getElementById("p-preise").value);
+      vs("v-team", document.getElementById("p-team").value);
+      vs("v-besonderheiten", document.getElementById("p-besonderheiten").value);
+      vs("v-regeln", document.getElementById("p-regeln").value);
     }
-    ["p-oeffnung","p-adresse","p-kontakt","p-weiteres"].forEach(id =>
+    ["p-oeffnung","p-adresse","p-kontakt","p-weiteres","p-leistungen","p-preise","p-team","p-besonderheiten","p-regeln"].forEach(id =>
       document.getElementById(id).addEventListener("input", updatePruefVorschau));
 
     // Überprüfen: Häufige Fragen als Liste von Frage/Antwort-Paaren
@@ -154,7 +226,7 @@
     // Frontend stößt ihn an und fragt danach den Status ab, bis "done"/"error".
     const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     // Scan-Qualitätsbericht (Milestone 7): zeigt pro Kategorie, ob der Scan etwas
-    // gefunden hat — so sieht die Firma sofort, was ihr Agent noch NICHT weiß.
+    // gefunden hat, so sieht die Firma sofort, was ihr Agent noch NICHT weiß.
     function zeigeScanBericht(d) {
       const box = document.getElementById("scanBericht");
       if (!box) return;
@@ -169,7 +241,7 @@
       for (const [titel, wert] of zeilen) {
         const z = document.createElement("div");
         const ok = !!wert;
-        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : " — bitte ergänzen");
+        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : ", bitte ergänzen");
         z.style.color = ok ? "var(--gruen)" : "#b45309";
         box.appendChild(z);
       }
@@ -185,7 +257,7 @@
       daten.name = d.name||""; daten.angebot = d.angebot||"";
       daten.oeffnungszeiten = d.oeffnungszeiten||""; daten.adresse = d.adresse||"";
       daten.kontakt = d.kontakt||""; daten.faq = d.faq||[]; daten.weiteres = d.weiteres||""; daten.wissen = d.wissen||"";
-      // Milestone 7: zusätzliche Scan-Felder — fließen beim Speichern in die Scan-Quelle.
+      // Milestone 7: zusätzliche Scan-Felder, fließen beim Speichern in die Scan-Quelle.
       daten.leistungen = Array.isArray(d.leistungen) ? d.leistungen : [];
       daten.preise = d.preise||""; daten.team = d.team||""; daten.besonderheiten = d.besonderheiten||"";
       zeigeScanBericht(d);
@@ -196,6 +268,15 @@
       document.getElementById("p-kontakt").value = daten.kontakt;
       faqListe.rendern(daten.faq);
       document.getElementById("p-weiteres").value = daten.weiteres;
+      // Detail-Felder mit dem Gefundenen vorbelegen, damit die Firma sieht und
+      // ergänzt, was der Agent schon weiss (statt dass es unsichtbar bleibt).
+      document.getElementById("p-leistungen").value = daten.leistungen.join("\n");
+      document.getElementById("p-preise").value = daten.preise;
+      document.getElementById("p-team").value = daten.team;
+      document.getElementById("p-besonderheiten").value = daten.besonderheiten;
+      // Fallback-Kontakt sinnvoll vorbelegen: der gefundene Firmen-Kontakt.
+      const fk = document.getElementById("fallbackKontakt");
+      if (fk && !fk.value.trim() && daten.kontakt) { fk.value = daten.kontakt; daten.fallbackKontakt = daten.kontakt; }
       updatePruefVorschau();
       if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
       if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
@@ -241,14 +322,16 @@
         setTimeout(() => { aufraeumen(); zeige(3, 1); }, 600);
       } catch (e) {
         aufraeumen();
-        status.textContent = "Konnte die Seite nicht lesen. Du kannst die Infos auch selbst eintragen.";
+        // Echte Ursache mitzeigen (Timeout, API-Aussetzer, nicht erreichbar …),
+        // damit ein Fehler diagnostizierbar ist statt nur "ging nicht".
+        status.textContent = "Konnte die Seite nicht automatisch lesen (" + (e.message || "unbekannt") + "). Du kannst die Infos unten auch selbst eintragen.";
         loader.classList.add("an"); loader.querySelector(".spinner").style.display = "none";
         btn.textContent = "Weiter ohne Scan"; btn.onclick = () => zeige(3, 1);
       }
     });
 
     // --- Dokumente hochladen ---
-    // Jedes Dokument wird eine EIGENE Wissensquelle (daten.dokumente) — mit
+    // Jedes Dokument wird eine EIGENE Wissensquelle (daten.dokumente), mit
     // Herkunft und Stand, einzeln entfernbar. Nichts wird mehr in das Textfeld
     // "Weitere Infos" gemischt (Milestone 3: Jede Info kennt ihre Herkunft).
     const MAX_DATEI = 4.5 * 1024 * 1024;
@@ -273,7 +356,7 @@
     document.getElementById("docs").addEventListener("change", async (e) => {
       const liste = document.getElementById("doc-liste");
       for (const f of e.target.files) {
-        // Fortschritts-Zeile (Dateiname per textContent — nie innerHTML mit Nutzer-Daten)
+        // Fortschritts-Zeile (Dateiname per textContent, nie innerHTML mit Nutzer-Daten)
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
         const nameEl = document.createElement("span"); nameEl.textContent = f.name;
         const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "…";
@@ -324,7 +407,7 @@
     anredeChips.forEach((c) => c.addEventListener("click", () => waehleAnrede(c.dataset.anrede)));
     waehleAnrede(daten.agentAnrede);
 
-    // --- Persönlichkeit (Ton) wählen — NUR die Chips in #persListe ---
+    // --- Persönlichkeit (Ton) wählen, NUR die Chips in #persListe ---
     const persChips = document.querySelectorAll("#persListe .pers-chip");
     function waehlePers(ton) {
       daten.persoenlichkeit = ton;
@@ -345,20 +428,63 @@
       chips.forEach((c) => c.addEventListener("click", () => waehle(c.dataset[datenAttribut])));
       waehle(daten[eigenschaft]);
     }
+    // Live-Beispiel: baut aus Länge + Format + Emoji eine echte Beispiel-Antwort
+    // auf die feste Frage "Habt ihr sonntags offen?". So sieht man bei jedem Klick
+    // sofort, was die Auswahl konkret bewirkt (statt einer abstrakten Beschreibung).
+    function baueBeispielAntwort() {
+      const nachLaenge = {
+        kurz: ["Ja, sonntags 10 bis 16 Uhr."],
+        ausgewogen: ["Ja, sonntags haben wir von 10 bis 16 Uhr geöffnet.", "Komm gern vorbei!"],
+        ausfuehrlich: [
+          "Ja, sonntags sind wir von 10 bis 16 Uhr für dich da.",
+          "Unter der Woche öffnen wir schon um 9 Uhr.",
+          "Wenn du möchtest, reserviere ich dir gleich einen Tisch.",
+        ],
+      };
+      let teile = (nachLaenge[daten.antwortLaenge] || nachLaenge.ausgewogen).slice();
+      if (daten.emojiStil === "dezent") {
+        teile[teile.length - 1] += " 🙂";
+      } else if (daten.emojiStil === "lebendig") {
+        const deko = [" 👍", " 🕙", " 🎉", " 😊"];
+        teile = teile.map((t, i) => t + deko[i % deko.length]);
+      }
+      const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      if (daten.antwortFormat === "listen") return "<ul>" + teile.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul>";
+      if (daten.antwortFormat === "fliessend") return "<p>" + esc(teile.join(" ")) + "</p>";
+      return teile.map((t) => "<p>" + esc(t) + "</p>").join(""); // absatz
+    }
     function aktualisiereAntwortVorschau() {
-      const el = document.getElementById("antwortVorschau");
-      if (!el) return;
-      const laenge = { kurz: "kurz und direkt", ausgewogen: "klar mit den wichtigsten Details", ausfuehrlich: "ausführlich und erklärend" }[daten.antwortLaenge];
-      const emoji = { keine: "ohne Emojis", dezent: "mit einzelnen passenden Emojis", lebendig: "mit einer lebendigen Emoji-Nutzung" }[daten.emojiStil];
-      const format = { absatz: "in kurzen Absätzen", listen: "mit Listen, wenn sie helfen", fliessend: "als zusammenhängender Text" }[daten.antwortFormat];
-      el.textContent = "Vorschau: Dein Agent antwortet " + laenge + ", " + format + " und " + emoji + ".";
+      const html = baueBeispielAntwort();
+      document.querySelectorAll(".stil-demo .demo-antwort").forEach((el) => { el.innerHTML = html; });
     }
     chipGruppe("#laengenListe .pers-chip", "antwortLaenge", "laenge");
     chipGruppe("#emojiListe .pers-chip", "emojiStil", "emoji");
     chipGruppe("#formatListe .pers-chip", "antwortFormat", "format");
-    chipGruppe("#designListe .pers-chip", "chatDesign", "design");
-    chipGruppe("#layoutListe .pers-chip", "chatLayout", "layout");
-    document.getElementById("uebergabe").addEventListener("change", (e) => { daten.uebergabe = e.target.value; });
+
+    // Aufklapp-Felder: beim Reinklicken wächst das Textfeld (CSS). Danach scrollen
+    // wir es in die Mitte des Schritts, damit man das vergrösserte Feld ganz sieht,
+    // ohne selbst runterscrollen zu müssen. Wartet die Wachstums-Transition (220ms) ab.
+    document.querySelectorAll(".schritt-links textarea").forEach((t) => {
+      t.addEventListener("focus", () => {
+        setTimeout(() => { try { t.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }, 240);
+      });
+    });
+    // Chat-Design: "Automatisch" ist Standard (Farben von der Website). "Selbst
+    // anpassen" blendet Farb-/Schrift-Steuerung ein. Keine Startansicht-Wahl mehr
+    //, das Widget schaltet auf dem Handy von selbst auf Vollbild (chatLayout bleibt
+    // "sidebar" als Default in daten).
+    (function () {
+      const chips = document.querySelectorAll("#designListe .pers-chip");
+      const eigen = document.getElementById("eigenControls");
+      function waehleDesign(wert) {
+        daten.chatDesign = wert;
+        chips.forEach((c) => c.classList.toggle("aktiv", c.dataset.design === wert));
+        if (eigen) eigen.hidden = wert !== "eigen";
+      }
+      chips.forEach((c) => c.addEventListener("click", () => waehleDesign(c.dataset.design)));
+      waehleDesign(daten.chatDesign);
+    })();
+    document.getElementById("fallbackKontakt").addEventListener("input", (e) => { daten.fallbackKontakt = e.target.value.trim(); });
     document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
 
     // --- Schritt "Charakter erstellen" (eine Variante: KI-Charakter, Pflicht) ---
@@ -368,7 +494,8 @@
     const vorLabel = document.getElementById("vorLabel");
 
     function setVorschauFarben() {
-      [document.getElementById("schrittAgent"), document.querySelector(".schritt-rechts[data-step='8']")].forEach((el) => {
+      [document.getElementById("schrittAgent"), document.getElementById("schrittAusdruecke"),
+       document.getElementById("vorschauRechts")].forEach((el) => {
         if (!el) return;
         el.style.setProperty("--vor-f1", daten.farbe1);
         el.style.setProperty("--vor-f2", daten.farbe2);
@@ -382,16 +509,155 @@
         vorLabel.textContent = "Dein Charakter";
       } else {
         vorFigurImg.removeAttribute("src"); vorFigurImg.style.visibility = "hidden";
-        vorLabel.textContent = "Noch kein Charakter — erstelle ihn links";
+        vorLabel.textContent = "Noch kein Charakter, erstelle ihn links";
       }
     }
     aktualisiereAgentVorschau(); // Startzustand der Vorschau setzen
 
-    // Tabs im Figur-Editor
-    document.querySelectorAll("#figurEditor .tab").forEach((t) => t.addEventListener("click", () => {
-      document.querySelectorAll("#figurEditor .tab").forEach((x) => x.classList.toggle("aktiv", x === t));
-      document.querySelectorAll("#figurEditor .tab-inhalt").forEach((x) => { x.hidden = (x.dataset.tab !== t.dataset.tab); });
-    }));
+    // ---------- Charakter-Designer: der Chat ----------
+    // Der Nutzer erzählt seine Idee, die KI (charakter-prompt.js) baut daraus den
+    // Bild-Prompt und erzeugt EINEN Entwurf. Änderungswünsche laufen wieder über
+    // den Chat (Bild-Edit), bis die Figur passt. Erst dann die Ausdrücke.
+    const charVerlaufEl = document.getElementById("charVerlauf");
+    const charEingabe = document.getElementById("charEingabe");
+    const charSenden = document.getElementById("charSenden");
+    const charVerlauf = [];        // [{rolle:"du"|"ki", text}]
+    let charPrompt = "";           // aktueller Bild-Prompt aus dem Chat
+    let charEntwurfBildUrl = "";   // aktueller Entwurf (URL in unserem Bucket)
+    let charBusy = false;
+
+    function charMsg(rolle, text, klasse) {
+      const d = document.createElement("div");
+      d.className = "d-msg " + (klasse || (rolle === "du" ? "du" : "ki"));
+      d.textContent = text;
+      charVerlaufEl.appendChild(d);
+      charVerlaufEl.scrollTop = charVerlaufEl.scrollHeight;
+      return d;
+    }
+    function charBusySetzen(an) {
+      charBusy = an;
+      charSenden.disabled = an;
+      charEingabe.disabled = an;
+    }
+    // Startbild (Wortmarke + Begrüssung) steht im HTML und bleibt sichtbar,
+    // bis die erste Nachricht rausgeht. Danach übernehmen die Nachrichten.
+    const charStartEl = document.getElementById("charStart");
+    function charChatStarten() {
+      if (charVerlaufEl.children.length) return;
+      if (charStartEl) charStartEl.hidden = false;
+    }
+    // Fehlt das eigene Maskottchen-Bild noch, zeigt die Marke einen Platzhalter.
+    const charMarkeBild = document.getElementById("charMarkeBild");
+    if (charMarkeBild) {
+      const markePlatzhalter = () => document.getElementById("charMarke").classList.add("ohne-bild");
+      charMarkeBild.addEventListener("error", markePlatzhalter);
+      // Kann schon gescheitert sein, bevor dieses Skript lief.
+      if (charMarkeBild.complete && !charMarkeBild.naturalWidth) markePlatzhalter();
+    }
+
+    // Eingabefeld wächst mit dem Text mit (bis zur CSS-Grenze).
+    function charEingabeAnpassen() {
+      charEingabe.style.height = "auto";
+      charEingabe.style.height = Math.min(charEingabe.scrollHeight, 150) + "px";
+    }
+    charEingabe.addEventListener("input", charEingabeAnpassen);
+
+    async function charChatSenden() {
+      const text = charEingabe.value.trim();
+      if (!text || charBusy) return;
+      charEingabe.value = "";
+      charEingabeAnpassen();
+      if (charStartEl) charStartEl.hidden = true; // Startbild weg, Gespräch übernimmt
+      charVerlauf.push({ rolle: "du", text });
+      charMsg("du", text);
+      charBusySetzen(true);
+      const tippt = charMsg("ki", "denkt nach…", "ki tippt");
+      try {
+        const res = await fetch("/.netlify/functions/charakter-prompt", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ verlauf: charVerlauf, firma: daten.name || "", angebot: daten.angebot || "" }),
+        });
+        const d = await res.json().catch(() => ({}));
+        tippt.remove();
+        if (!res.ok) {
+          charMsg("ki", (d && d.error) || "Das hat gerade nicht geklappt, versuch es nochmal.");
+          return;
+        }
+        charVerlauf.push({ rolle: "ki", text: d.antwort || "" });
+        charMsg("ki", d.antwort || "");
+        if (d.prompt) charPrompt = d.prompt;
+        // Prompt steht: Figur zeichnen (beim ersten Mal) bzw. anpassen.
+        if (d.bereit && charPrompt) {
+          if (charEntwurfBildUrl) await charEntwurfAnpassen(text);
+          else await charEntwurfErstellen();
+        }
+      } catch (e) {
+        tippt.remove();
+        charMsg("ki", "Netzwerkfehler, versuch es nochmal.");
+      } finally {
+        charBusySetzen(false);
+        charEingabe.focus();
+      }
+    }
+    charSenden.addEventListener("click", charChatSenden);
+    charEingabe.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); charChatSenden(); }
+    });
+
+    // EINE Figur aus dem Chat-Prompt zeichnen (nicht mehr vier Varianten).
+    async function charEntwurfErstellen() {
+      const status = document.getElementById("charErstellenStatus");
+      charBusySetzen(true); balken("charBalken", true);
+      status.style.color = ""; status.textContent = "Deine Figur wird gezeichnet, das dauert einen Moment…";
+      const warte = charMsg("ki", "zeichnet deine Figur…", "ki tippt");
+      try {
+        const erg = await charJob({ aktion: "entwurf", beschreibung: charPrompt, bild: charReferenzBild || undefined }, 90);
+        charEntwurfBildUrl = erg.bild;
+        zeigeEntwurf(erg.bild);
+        warte.remove();
+        charMsg("ki", "Hier ist deine Figur. Was soll ich ändern? Wenn sie passt, klick unten auf: Passt, Ausdrücke erstellen.");
+        status.textContent = "";
+      } catch (e) {
+        warte.remove();
+        charMsg("ki", "Das Zeichnen hat nicht geklappt: " + e.message);
+        status.style.color = "#e11d48"; status.textContent = "";
+      } finally { balken("charBalken", false); charBusySetzen(false); }
+    }
+
+    // Änderungswunsch aus dem Chat auf den bestehenden Entwurf anwenden.
+    async function charEntwurfAnpassen(anweisung) {
+      const status = document.getElementById("charErstellenStatus");
+      charBusySetzen(true); balken("charBalken", true);
+      status.style.color = ""; status.textContent = "Änderung wird umgesetzt…";
+      const warte = charMsg("ki", "passt die Figur an…", "ki tippt");
+      try {
+        const erg = await charJob({ aktion: "bearbeiten", bild: charEntwurfBildUrl, anweisung }, 60);
+        charEntwurfBildUrl = erg.bild;
+        zeigeEntwurf(erg.bild);
+        warte.remove();
+        charMsg("ki", "So besser? Sag gern weiter, was noch anders soll.");
+        status.textContent = "";
+      } catch (e) {
+        warte.remove();
+        charMsg("ki", "Die Änderung hat nicht geklappt: " + e.message);
+        status.style.color = "#e11d48"; status.textContent = "";
+      } finally { balken("charBalken", false); charBusySetzen(false); }
+    }
+
+    function zeigeEntwurf(url) {
+      document.getElementById("charEntwurfBild").src = url;
+      document.getElementById("charEntwurf").hidden = false;
+      vorFigurImg.src = url; vorFigurImg.style.visibility = "visible";
+      vorLabel.textContent = "Dein Entwurf";
+    }
+
+    // "Passt": aus diesem einen Bild die Ausdrücke erzeugen.
+    document.getElementById("charUebernehmen").addEventListener("click", () => {
+      if (!charEntwurfBildUrl) return;
+      generiereZustaendeAusBild(charEntwurfBildUrl, charPrompt);
+    });
+
+    function balken(id, an) { document.getElementById(id).classList.toggle("an", !!an); }
 
     // --- Charakter-Generierung (Milestone 6: echte Bilder via Background-Job) ---
     // Gleiches Muster wie der Scan: Job anstoßen (202) -> scan-status pollen.
@@ -399,8 +665,6 @@
     const CHAR_ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
     const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
     let charReferenzBild = null; // Data-URL des Uploads, dient auch als KI-Vorlage
-    let charRichtungen = [];
-    let gewaehltRichtung = null;
 
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
@@ -409,7 +673,7 @@
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jobId, firmaId: daten.id || undefined, farbe: daten.farbe1, ...payload }),
       });
-      if (start.status === 429) throw new Error("Limit erreicht — bitte später erneut versuchen.");
+      if (start.status === 429) throw new Error("Limit erreicht, bitte später erneut versuchen.");
       if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");
       for (let versuch = 0; versuch < (maxVersuche || 90); versuch++) {
         await schlaf(2000);
@@ -433,21 +697,24 @@
       grid.hidden = false;
       CHAR_ZUSTAENDE.forEach((z) => {
         const zelle = document.createElement("div");
-        zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:10px;padding:0.5rem;text-align:center;";
+        zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:12px;padding:0.65rem;text-align:center;";
         const im = document.createElement("img");
         im.src = bilder[z] || bilder.idle; im.alt = z;
-        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:8px;background:#fafafa;";
+        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:#fafafa;";
         const lbl = document.createElement("div");
-        lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.78rem;margin:0.3rem 0;color:#555;";
+        lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.82rem;font-weight:600;margin:0.45rem 0 0.5rem;color:#374151;";
+        // Änderungs-Eingabe als mehrzeiliger Textbereich (Platz für 2 bis 3 Sätze),
+        // Knopf in voller Breite darunter.
         const reihe = document.createElement("div");
-        reihe.style.cssText = "display:flex;gap:0.3rem;";
-        const inp = document.createElement("input");
-        inp.type = "text"; inp.placeholder = "z.B. Mütze blau machen";
+        reihe.style.cssText = "display:flex;flex-direction:column;gap:0.4rem;";
+        const inp = document.createElement("textarea");
+        inp.placeholder = "z.B. Mütze blau machen. Hintergrund heller. Freundlicher lächeln.";
         inp.maxLength = 300;
-        inp.style.cssText = "flex:1;min-width:0;font-size:0.75rem;padding:0.3rem 0.4rem;border:1px solid #e5e7eb;border-radius:7px;";
+        inp.style.cssText = "width:100%;font:inherit;font-size:0.85rem;line-height:1.45;padding:0.55rem 0.65rem;" +
+          "border:1.5px solid #e5e7eb;border-radius:9px;min-height:84px;resize:vertical;";
         const btn = document.createElement("button");
         btn.type = "button"; btn.textContent = "Ändern";
-        btn.style.cssText = "font-size:0.75rem;padding:0.3rem 0.55rem;border:1px solid var(--vor-f1,#333);border-radius:7px;background:#fff;cursor:pointer;";
+        btn.style.cssText = "width:100%;font:inherit;font-size:0.83rem;font-weight:600;padding:0.5rem 0.6rem;border:1.5px solid var(--vor-f1,#4F46E5);color:var(--vor-f1,#4F46E5);border-radius:9px;background:#fff;cursor:pointer;";
         btn.addEventListener("click", async () => {
           const anweisung = inp.value.trim();
           if (!anweisung) { inp.focus(); return; }
@@ -467,129 +734,90 @@
       });
     }
 
-    // Ein Bild-Upload ist bereits eine klare Stilentscheidung. Für eine
-    // Beschreibung zeigen wir dagegen erst vier Richtungen und erzeugen die
-    // teuren Zustandsbilder erst nach der Auswahl.
-    // Upload-Weg: aus einem Referenzbild direkt die 5 Zustände (eine Richtung).
-    async function starteGenerierung({ beschreibung, referenzBild, status, btn }) {
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Dein Charakter wird erstellt — das dauert etwa eine Minute…";
+
+    // Schritt 2: aus dem im Chat erarbeiteten Entwurf die Ausdrücke erzeugen.
+    // Wechselt sofort auf die Ausdrücke-Seite; die Bilder erscheinen dort, sobald
+    // sie fertig sind.
+    let zustaendeLaufen = false;
+    async function generiereZustaendeAusBild(bildUrl, beschreibung) {
+      if (!bildUrl || zustaendeLaufen) return;
+      zustaendeLaufen = true;
+      const status = document.getElementById("charZustandStatus");
+      zeige(AUSDRUECKE_STEP, 1);
+      document.getElementById("charGrid").hidden = true;
+      status.style.color = ""; balken("zustaendeBalken", true);
+      status.textContent = "Die Ausdrücke deiner Figur werden erzeugt, noch etwa eine Minute…";
+      // Vorfreude: der gewählte Entwurf während des Wartens auf der Seite zeigen.
+      document.getElementById("gewaehlteVorschauImg").src = bildUrl;
+      document.getElementById("gewaehlteVorschau").hidden = false;
+      vorFigurImg.src = bildUrl; vorFigurImg.style.visibility = "visible";
+      vorLabel.textContent = "Dein Charakter entsteht…";
       try {
-        const erg = await charJob({ aktion: "generieren", beschreibung, bild: referenzBild || undefined }, 90);
+        const erg = await charJob({ aktion: "zustaende", beschreibung: beschreibung || "", bild: bildUrl }, 120);
         daten.charakterBilder = erg.bilder;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ Fertig! Prüfe die 4 Ausdrücke — jedes Bild lässt sich einzeln anpassen.";
-        zeigeCharGrid(); aktualisiereAgentVorschau();
-      } catch (e) {
-        status.style.color = "#e11d48";
-        status.textContent = "Konnte den Charakter nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
-    }
-
-    function zeigeRichtungen(richtungen) {
-      const box = document.getElementById("richtungenBox");
-      const grid = document.getElementById("richtungsGrid");
-      const weiter = document.getElementById("charZustaende");
-      charRichtungen = Array.isArray(richtungen) ? richtungen : [];
-      gewaehltRichtung = null;
-      grid.textContent = "";
-      charRichtungen.forEach((richtung) => {
-        const karte = document.createElement("button");
-        karte.type = "button"; karte.className = "richtungs-karte";
-        const bild = document.createElement("img");
-        bild.src = richtung.bild; bild.alt = richtung.label;
-        const label = document.createElement("span"); label.textContent = richtung.label;
-        karte.append(bild, label);
-        karte.addEventListener("click", () => {
-          gewaehltRichtung = richtung;
-          grid.querySelectorAll(".richtungs-karte").forEach((el) => el.classList.toggle("aktiv", el === karte));
-          weiter.disabled = false;
-        });
-        grid.appendChild(karte);
-      });
-      box.hidden = false;
-      weiter.disabled = true;
-    }
-
-    async function starteRichtungen({ beschreibung, status, btn }) {
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Wir entwickeln vier unterschiedliche Richtungen — das dauert ungefähr eine Minute…";
-      try {
-        const erg = await charJob({ aktion: "richtungen", beschreibung }, 120);
-        zeigeRichtungen(erg.richtungen);
-        status.style.color = "var(--gruen)";
-        status.textContent = "✓ Wähle die Richtung, die am besten zu deiner Marke passt.";
-      } catch (e) {
-        status.style.color = "#e11d48";
-        status.textContent = "Konnte die Vorschläge nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
-    }
-
-    async function generiereZustaendeAusRichtung() {
-      if (!gewaehltRichtung) return;
-      const beschreibung = document.getElementById("charBeschr").value.trim();
-      const status = document.getElementById("charRichtungenStatus");
-      const btn = document.getElementById("charZustaende");
-      btn.disabled = true; status.style.color = "";
-      status.textContent = "Wir erzeugen die Ausdrücke für deine gewählte Figur…";
-      try {
-        const erg = await charJob({ aktion: "zustaende", beschreibung, bild: gewaehltRichtung.bild }, 120);
-        daten.charakterBilder = erg.bilder;
-        status.style.color = "var(--gruen)";
-        status.textContent = "✓ Fertig! Du kannst jeden Ausdruck unten gezielt anpassen.";
+        status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
+        document.getElementById("gewaehlteVorschau").hidden = true;
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
         status.style.color = "#e11d48";
         status.textContent = "Konnte die Ausdrücke nicht erstellen: " + e.message;
-      } finally { btn.disabled = false; }
+      } finally {
+        balken("zustaendeBalken", false);
+        zustaendeLaufen = false;
+        // Charakter ist da -> Rückkehrer-Link auf der Erstell-Seite freischalten.
+        const l = document.getElementById("zuAusdruecken");
+        if (l && daten.charakterBilder && daten.charakterBilder.idle) l.hidden = false;
+      }
     }
 
-    // Weg 1: Bild hochladen -> direkt nutzen (ein Bild für alle Ausdrücke)
-    // ODER als Vorlage für die KI-Generierung (Knopf erscheint nach dem Upload).
-    document.getElementById("charBild").addEventListener("change", (e) => {
-      const f = e.target.files[0]; if (!f) return;
+    // Bild-Upload: dient als Vorlage für die Figur, ODER (dezenter Zweitweg)
+    // direkt als Figur, ganz ohne KI. Zwei Wege dorthin: der Plus-Knopf im
+    // Eingabefeld und ein Bild, das auf das Feld gezogen wird.
+    function charBildUebernehmen(f) {
+      if (!f) return;
       const status = document.getElementById("charBildStatus");
-      if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; e.target.value = ""; return; }
+      if (!/^image\//.test(f.type)) { status.style.color = "#e11d48"; status.textContent = "Das ist kein Bild."; return; }
+      if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; return; }
       const r = new FileReader();
       r.onload = () => {
-        const url = r.result;
-        charReferenzBild = url;
-        daten.charakterBilder = { idle: url, denken: url, sprechen: url, verlegen: url };
-        status.style.color = "var(--gruen)"; status.textContent = "✓ Bild übernommen.";
-        document.getElementById("charAusBild").hidden = false;
-        zeigeCharGrid(); aktualisiereAgentVorschau();
+        charReferenzBild = r.result;
+        status.style.color = "var(--gruen)";
+        status.textContent = "✓ " + f.name + " übernommen, fliesst als Vorlage in deine Figur ein.";
+        document.getElementById("charDirektZeile").hidden = false;
+        document.getElementById("charPlus").classList.add("hat-bild");
       };
       r.readAsDataURL(f);
+    }
+    document.getElementById("charBild").addEventListener("change", (e) => {
+      charBildUebernehmen(e.target.files[0]);
       e.target.value = "";
     });
-    document.getElementById("charAusBild").addEventListener("click", () => {
+    document.getElementById("charPlus").addEventListener("click", () => {
+      document.getElementById("charBild").click();
+    });
+    // Bild direkt auf das Eingabefeld ziehen.
+    const charKomposer = document.getElementById("charKomposer");
+    charKomposer.addEventListener("dragover", (e) => { e.preventDefault(); charKomposer.classList.add("zieht"); });
+    charKomposer.addEventListener("dragleave", () => charKomposer.classList.remove("zieht"));
+    charKomposer.addEventListener("drop", (e) => {
+      e.preventDefault(); charKomposer.classList.remove("zieht");
+      charBildUebernehmen(e.dataTransfer.files && e.dataTransfer.files[0]);
+    });
+    document.getElementById("charDirekt").addEventListener("click", () => {
       if (!charReferenzBild) return;
-      starteGenerierung({
-        beschreibung: document.getElementById("charBeschr").value.trim(),
-        referenzBild: charReferenzBild,
-        status: document.getElementById("charBildStatus"),
-        btn: document.getElementById("charAusBild"),
-      });
+      daten.charakterBilder = { idle: charReferenzBild, denken: charReferenzBild, sprechen: charReferenzBild, verlegen: charReferenzBild };
+      const status = document.getElementById("charZustandStatus");
+      status.style.color = ""; status.textContent = "Dein Bild wird für alle Ausdrücke verwendet, du kannst es unten per Anweisung variieren.";
+      zeigeCharGrid(); aktualisiereAgentVorschau();
+      zeige(AUSDRUECKE_STEP, 1);
     });
 
-    // Weg 2: Charakter aus Beschreibung erstellen (echte KI-Generierung).
-    document.getElementById("charErstellen").addEventListener("click", () => {
-      const beschr = document.getElementById("charBeschr").value.trim();
-      const status = document.getElementById("charErstellenStatus");
-      if (!beschr) { status.style.color = "#e11d48"; status.textContent = "Bitte kurz beschreiben."; return; }
-      starteRichtungen({
-        beschreibung: beschr,
-        status,
-        btn: document.getElementById("charErstellen"),
-      });
-    });
-    document.getElementById("charZustaende").addEventListener("click", generiereZustaendeAusRichtung);
-
-    aktualisiereAgentVorschau(); // Anfangszustand (Orb)
+    document.getElementById("zuAusdruecken").addEventListener("click", () => zeige(AUSDRUECKE_STEP, 1));
 
     // §8 Veröffentlichungs-Checkliste (+ §2 Warnung bei fehlenden kritischen Daten).
     // Vor dem Live-Gehen sieht die Firma gebündelt, was der Agent schon kann und was
-    // ihm fehlt. Kritische Lücken (Name, Angebot, Wissen) lösen eine Warnung aus — der
+    // ihm fehlt. Kritische Lücken (Name, Angebot, Wissen) lösen eine Warnung aus, der
     // Agent bleibt trotzdem testbar; das ist ein Hinweis, keine Sperre.
     function pruefeStartklar() {
       const box = document.getElementById("startklar");
@@ -630,7 +858,7 @@
           "am besten jetzt (zurück) oder später im Dashboard.";
         banner.style.color = "#b45309";
       } else {
-        banner.textContent = "✓ Startklar — dein Agent kennt alles Wichtige.";
+        banner.textContent = "✓ Startklar, dein Agent kennt alles Wichtige.";
         banner.style.color = "var(--gruen)";
       }
       box.hidden = false;
@@ -649,15 +877,28 @@
       daten.kontakt = wert("p-kontakt");
       daten.faq = faqListe.value();
       daten.weiteres = wert("p-weiteres");
+      // Detail-Wissen (Milestone 7 sichtbar gemacht): Leistungen zeilenweise,
+      // der Rest als Freitext. Alles fliesst unten in scanText -> Agenten-Wissen.
+      daten.leistungen = wert("p-leistungen").split("\n").map((s) => s.trim()).filter(Boolean);
+      daten.preise = wert("p-preise");
+      daten.team = wert("p-team");
+      daten.besonderheiten = wert("p-besonderheiten");
+      daten.regeln = wert("p-regeln");
       daten.farbe1 = wert("farbe1") || daten.farbe1;
       daten.farbe2 = wert("farbe2") || daten.farbe2;
-      daten.uebergabe = wert("uebergabe") || daten.uebergabe;
+      daten.fallbackKontakt = wert("fallbackKontakt");
       daten.grenzen = wert("agentGrenzen");
       // Agenten-Identität (§3): Name Pflicht (mit Firmenname als Fallback),
       // Rolle + Anrede aus den Feldern.
       daten.agentName = wert("agentName") || daten.name || "Assistent";
       daten.agentRolle = wert("agentRolle") || daten.agentRolle || "Assistent";
-      daten.id = daten.id || (daten.name || daten.webseite || "firma").toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "firma";
+      // ID erst vergeben, wenn es eine echte Quelle (Name/Webseite) gibt.
+      // sammle() läuft bei JEDEM Weiter-Klick, auch ganz am Anfang, wenn noch
+      // alles leer ist. Ohne diese Bedingung bekäme jede Firma die ID "firma"
+      // (klebt wegen daten.id || …) und alle Kunden überschrieben sich gegenseitig.
+      if (!daten.id && (daten.name || daten.webseite)) {
+        daten.id = (daten.name || daten.webseite).toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24);
+      }
       document.getElementById("embed-text").textContent =
         '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
     }
@@ -666,6 +907,7 @@
     });
     document.getElementById("fertig").addEventListener("click", async () => {
       sammle();
+      daten.id = daten.id || "firma"; // letzter Fallback, falls gar nichts eingegeben wurde
       const status = document.getElementById("speicherStatus");
       const btn = document.getElementById("fertig");
       btn.disabled = true; status.textContent = "Speichern…"; status.style.color = "";
@@ -692,7 +934,7 @@
       const heute = new Date().toISOString().slice(0, 10);
       const wissensquellen = [];
       // Scan-Quelle aus ALLEN erkannten Kategorien (Milestone 7) + den vom
-      // Nutzer geprüften Feldern — das ist das Wissen, aus dem der Agent lebt.
+      // Nutzer geprüften Feldern, das ist das Wissen, aus dem der Agent lebt.
       const leistungen = Array.isArray(daten.leistungen) ? daten.leistungen : [];
       const scanText = [
         daten.angebot && ("Angebot: " + daten.angebot),
@@ -700,6 +942,7 @@
         daten.preise && ("Preise: " + daten.preise),
         daten.team && ("Team: " + daten.team),
         daten.besonderheiten && ("Besonderheiten: " + daten.besonderheiten),
+        daten.regeln && ("Regeln: " + daten.regeln),
         daten.weiteres,
       ].filter(Boolean).join("\n\n");
       if (scanText) {
@@ -721,6 +964,7 @@
           emojiStil: daten.emojiStil,
           antwortFormat: daten.antwortFormat,
           uebergabe: daten.uebergabe,
+          fallbackKontakt: daten.fallbackKontakt,
           grenzen: daten.grenzen,
         },
         fakten, faq: daten.faq, wissensquellen,
@@ -731,9 +975,16 @@
       try {
         await Store.saveFirma(firma);
         Store.setNutzer(daten.email);
+        // Die gerade erstellte Firma merken: das Dashboard öffnet sie dann auch,
+        // wenn man OHNE ?firma-Parameter dorthin kommt (z.B. über den E-Mail-
+        // Bestätigungs-Link, der nur auf /dashboard.html zeigt). Sonst zeigte das
+        // Dashboard firmen[0] = irgendeine ältere Firma.
+        try { localStorage.setItem("kiagent-letzteFirma", daten.id); } catch (e) {}
         status.style.color = "var(--gruen)"; status.textContent = "Gespeichert! Öffne den Test-Chat…";
+        // Übergabe ans Dashboard: Link zeigt direkt auf den frisch erstellten Agenten.
+        const dash = document.querySelector('a[href^="dashboard.html"]');
+        if (dash) dash.href = "dashboard.html?firma=" + encodeURIComponent(daten.id);
         window.open("index.html?firma=" + encodeURIComponent(daten.id), "_blank");
-        zeigeCheckoutBox(); // Bezahlung ist der letzte Schritt — Agent ist schon nutzbar
       } catch (e) {
         status.style.color = "#e11d48"; status.textContent = "Konnte nicht gespeichert werden: " + e.message;
       } finally {
@@ -741,40 +992,10 @@
       }
     });
 
-    // --- Bezahlung (Milestone 10): nach dem Speichern, für den gewählten Plan ---
-    // Der Agent funktioniert bereits (Test-Chat); Bezahlen aktiviert ihn dauerhaft/live.
-    function zeigeCheckoutBox() {
-      const box = document.getElementById("checkoutBox");
-      const text = document.getElementById("checkoutText");
-      const btn = document.getElementById("checkoutBtn");
-      text.textContent = "Dein Agent ist bereit. Damit dein Charakter dauerhaft live bleibt, schliesse das Abo ab.";
-      btn.textContent = "Jetzt abonnieren — CHF " + PREIS + ".–/Monat";
-      btn.onclick = () => starteCheckout(btn);
-      box.hidden = false;
-    }
-    async function starteCheckout(btn) {
-      const status = document.getElementById("checkoutStatus");
-      btn.disabled = true; status.textContent = "Weiterleiten…"; status.style.color = "";
-      try {
-        const res = await fetch("/.netlify/functions/abo-checkout", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: daten.id, plan: daten.plan, basis: location.origin }),
-        });
-        const d = await res.json();
-        if (res.status === 501) {
-          status.style.color = "#e11d48";
-          status.textContent = "Bezahlung ist noch nicht eingerichtet — du kannst den Agenten trotzdem weiter testen.";
-          btn.disabled = false;
-          return;
-        }
-        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
-        location.href = d.url; // ab zu Stripe
-      } catch (e) {
-        status.style.color = "#e11d48"; status.textContent = "Bezahlung fehlgeschlagen: " + e.message;
-        btn.disabled = false;
-      }
-    }
+    // Bezahlung findet VOR dem Onboarding statt, kein Checkout mehr in
+    // Schritt 9. Fallback für Nicht-Zahler: Abo-Bereich im Dashboard.
 
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();
+    syncSzenenVideos(0);
   

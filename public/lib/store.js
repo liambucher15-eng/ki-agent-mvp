@@ -1,14 +1,27 @@
 // Speicher-Layer für Firmen.
-// Ist Supabase konfiguriert (siehe auth.js), läuft alles über die Datenbank
-// (Tabelle "firmen") — dauerhaft und geräteübergreifend. Sonst Fallback auf
-// localStorage (Simulation). Die Daten-Funktionen sind async -> Aufrufer nutzen await.
+// Ist Supabase konfiguriert, läuft alles über die Datenbank (Tabelle "firmen") —
+// dauerhaft und geräteübergreifend. Sonst Fallback auf localStorage (Simulation).
+// Die Daten-Funktionen sind async -> Aufrufer nutzen await.
+//
+// LOGIN läuft über Clerk (lib/auth.js). Der Supabase-Client bekommt hier das
+// Clerk-Session-Token mit: In Supabase ist Clerk als Third-Party-Auth-Provider
+// eingetragen, die RLS-Policies vergleichen besitzer mit auth.jwt()->>'sub'
+// (der Clerk-User-ID). Siehe README.
 
 const Store = (function () {
   const FIRMEN_KEY = "firmen";
   const NUTZER_KEY = "nutzer";
 
-  // Den schon in auth.js erstellten Supabase-Client mitbenutzen (kein zweiter Client).
-  const sb = (window.Auth && window.Auth.konfiguriert) ? window.Auth.client : null;
+  // Eigener Supabase-Client (Daten), authentifiziert per Clerk-Token.
+  const sbKonfiguriert =
+    !!window.SUPABASE_URL && !String(window.SUPABASE_URL).includes("DEIN-PROJEKT") &&
+    !!window.SUPABASE_ANON_KEY && !String(window.SUPABASE_ANON_KEY).includes("DEIN-ANON");
+  const sb = (sbKonfiguriert && window.supabase)
+    ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+        // Supabase reicht dieses Token als Authorization-Header weiter.
+        accessToken: async () => (window.Auth ? await window.Auth.token() : null),
+      })
+    : null;
 
   function _alleLokal() { try { return JSON.parse(localStorage.getItem(FIRMEN_KEY)) || {}; } catch { return {}; } }
   function _speichernLokal(obj) { localStorage.setItem(FIRMEN_KEY, JSON.stringify(obj)); }
@@ -52,7 +65,7 @@ const Store = (function () {
     async ladeBilderHoch(firmaId, bilder) {
       if (!bilder) return bilder;
       if (!sb) return bilder;
-      const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
+      const nutzer = window.Auth ? await window.Auth.nutzer() : null;
       if (!nutzer) return bilder;
 
       const ergebnis = {};
@@ -79,7 +92,8 @@ const Store = (function () {
     // "basis"; ein Re-Save lässt einen bezahlten Plan unangetastet.
     async saveFirma(firma) {
       if (sb) {
-        const nutzer = window.Auth ? await window.Auth.sitzungSichern() : null;
+        // Besitzer = Clerk-User-ID (passt zur RLS-Policy auth.jwt()->>'sub').
+        const nutzer = window.Auth ? await window.Auth.nutzer() : null;
         const eintrag = { id: firma.id, name: firma.name, daten: firma };
         if (nutzer) eintrag.besitzer = nutzer.id;
         const { error } = await sb.from("firmen").upsert(eintrag, { onConflict: "id" });
@@ -89,13 +103,13 @@ const Store = (function () {
       const a = _alleLokal(); a[firma.id] = firma; _speichernLokal(a); return firma;
     },
 
-    // Alle Firmen des eingeloggten Nutzers (für ein späteres Dashboard).
+    // Alle Firmen des eingeloggten Nutzers (fürs Dashboard).
     async meineFirmen() {
       if (sb) {
-        const { data: u } = await sb.auth.getUser();
-        if (!u || !u.user) return [];
+        const nutzer = window.Auth ? await window.Auth.nutzer() : null;
+        if (!nutzer) return [];
         const { data, error } = await sb.from("firmen")
-          .select("daten").eq("besitzer", u.user.id).order("erstellt", { ascending: false });
+          .select("daten").eq("besitzer", nutzer.id).order("erstellt", { ascending: false });
         if (error) { console.warn(error.message); return []; }
         return (data || []).map((r) => r.daten);
       }

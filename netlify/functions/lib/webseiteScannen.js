@@ -290,13 +290,21 @@ async function claudeExtrakt(url, text) {
     `"weiteres":"alle weiteren wichtigen Infos ausführlich, die oben nicht abgedeckt sind"}\n\n` +
     `WEBSEITEN-TEXT:\n${text}`;
 
-  const { ok, data } = await rufeClaude({
-    system,
-    messages: [{ role: "user", content: prompt }],
-    maxTokens: 4000,
-    temperature: 0.2,
-    timeout: 60000, // Background-Function: viel Luft, aber nicht endlos
-  });
+  // Bis zu 2 Versuche: ein transienter API-Aussetzer (429/500/Netz) soll den
+  // ganzen Scan NICHT scheitern lassen — genau das führte sonst zu "konnte die
+  // Seite nicht lesen", obwohl die Seite gut lesbar ist.
+  let ok, data;
+  for (let versuch = 0; versuch < 2; versuch++) {
+    ({ ok, data } = await rufeClaude({
+      system,
+      messages: [{ role: "user", content: prompt }],
+      maxTokens: 4000,
+      temperature: 0.2,
+      timeout: 60000, // Background-Function: viel Luft, aber nicht endlos
+    }));
+    if (ok) break;
+    if (versuch === 0) await new Promise((r) => setTimeout(r, 1500));
+  }
   if (!ok) throw new Error(data.error?.message || "API-Fehler");
 
   let txt = (data.content?.[0]?.text || "{}").replace(/```json/gi, "").replace(/```/g, "").trim();
@@ -311,9 +319,14 @@ async function scanneWebseite(rohUrl) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt (.env)");
   const url = normalisiere(rohUrl);
 
+  // Grosse Seiten (z.B. Wix ~1 MB) brauchen länger — grosszügiges Timeout und ein
+  // zweiter Versuch, damit ein einmaliger Netz-/Timeout-Aussetzer den Scan nicht kippt.
   let hauptHtml;
-  try { hauptHtml = await hole(url); }
-  catch (e) { throw new Error("Webseite nicht erreichbar: " + e.message); }
+  try { hauptHtml = await hole(url, 15000); }
+  catch (e1) {
+    try { hauptHtml = await hole(url, 15000); }
+    catch (e2) { throw new Error("Webseite nicht erreichbar: " + e2.message); }
+  }
 
   // Unterseiten aus ZWEI Quellen: Links der Hauptseite + Sitemap (findet auch
   // Seiten, die nicht im Menü verlinkt sind). Wichtige zuerst, dann auffüllen.

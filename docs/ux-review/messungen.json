@@ -1,0 +1,228 @@
+{
+  "desktop": {
+    "step0": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 454,
+      "scrollHeight": 454
+    },
+    "step1": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 454,
+      "scrollHeight": 454
+    },
+    "step2": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 454,
+      "scrollHeight": 454
+    },
+    "step3": {
+      "overflow": 208,
+      "navVisible": false,
+      "hidden": [
+        "Karte „Häufige Fragen\"",
+        "Karte „Weitere Infos\"",
+        "Button „Passt, weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 662
+    },
+    "step3-offen": {
+      "overflow": 643,
+      "navVisible": false,
+      "hidden": [
+        "Karte „Standort & Kontakt\"",
+        "Karte „Häufige Fragen\"",
+        "Karte „Weitere Infos\"",
+        "Button „Passt, weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 1097
+    },
+    "step4": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 454,
+      "scrollHeight": 454
+    },
+    "step5": {
+      "overflow": 140,
+      "navVisible": false,
+      "hidden": [
+        "Button „Weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 594
+    },
+    "step6": {
+      "overflow": 222,
+      "navVisible": false,
+      "hidden": [
+        "agentGrenzen",
+        "Button „Weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 676
+    },
+    "step7": {
+      "overflow": 110,
+      "navVisible": false,
+      "hidden": [
+        "Button „Weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 564
+    },
+    "step8": {
+      "overflow": 524,
+      "navVisible": false,
+      "hidden": [
+        "Button „Weiter\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 978
+    },
+    "step9": {
+      "overflow": 138,
+      "navVisible": true,
+      "hidden": [
+        "Button „Jetzt freischalten — CHF 49/Mo\""
+      ],
+      "clientHeight": 454,
+      "scrollHeight": 592
+    }
+  },
+  "mobile": {
+    "step0": {
+      "overflow": 0,
+      "navVisible": true,
+      "hidden": [],
+      "clientHeight": 258,
+      "scrollHeight": 258
+    },
+    "step1": {
+      "overflow": 51,
+      "navVisible": false,
+      "hidden": [
+        "Button „Login-Link senden\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 309
+    },
+    "step2": {
+      "overflow": 30,
+      "navVisible": false,
+      "hidden": [],
+      "clientHeight": 258,
+      "scrollHeight": 288
+    },
+    "step3": {
+      "overflow": 404,
+      "navVisible": false,
+      "hidden": [
+        "Was ihr anbietet",
+        "p-angebot",
+        "Details (aufklappen zum Prüfen)",
+        "Karte „Öffnungszeiten\"",
+        "Karte „Standort & Kontakt\"",
+        "Karte „Häufige Fragen\"",
+        "Karte „Weitere Infos\"",
+        "Button „Passt, weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 662
+    },
+    "step3-offen": {
+      "overflow": 859,
+      "navVisible": false,
+      "hidden": [
+        "Was ihr anbietet",
+        "p-angebot",
+        "Details (aufklappen zum Prüfen)",
+        "Karte „Öffnungszeiten\"",
+        "p-oeffnung",
+        "Karte „Standort & Kontakt\"",
+        "Karte „Häufige Fragen\"",
+        "Karte „Weitere Infos\"",
+        "Button „Passt, weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 1117
+    },
+    "step4": {
+      "overflow": 88,
+      "navVisible": false,
+      "hidden": [
+        "Button „Weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 346
+    },
+    "step5": {
+      "overflow": 367,
+      "navVisible": false,
+      "hidden": [
+        "agentRolle",
+        "Ansprache",
+        "Persönlichkeit — wie soll dein Agent kli",
+        "Button „Weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 625
+    },
+    "step6": {
+      "overflow": 515,
+      "navVisible": false,
+      "hidden": [
+        "Emojis",
+        "Formatierung",
+        "Wenn der Agent nicht weiterweiß",
+        "uebergabe",
+        "Was soll dein Agent nicht tun? (optional",
+        "agentGrenzen",
+        "Button „Weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 773
+    },
+    "step7": {
+      "overflow": 381,
+      "navVisible": false,
+      "hidden": [
+        "Farben",
+        "Schriftart",
+        "schrift",
+        "Button „Weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 639
+    },
+    "step8": {
+      "overflow": 663,
+      "navVisible": false,
+      "hidden": [
+        "Button „Weiter\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 921
+    },
+    "step9": {
+      "overflow": 376,
+      "navVisible": false,
+      "hidden": [
+        "embed",
+        "Button „Agent testen\"",
+        "checkoutBox",
+        "Button „Jetzt freischalten — CHF 49/Mo\""
+      ],
+      "clientHeight": 258,
+      "scrollHeight": 634
+    }
+  }
+}

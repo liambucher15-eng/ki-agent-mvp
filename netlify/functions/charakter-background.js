@@ -132,10 +132,14 @@ async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
 }
 
 // §4 Schritt 1: vier UNTERSCHIEDLICHE Richtungs-Vorschauen (je 1 Bild).
-async function generiereRichtungen({ jobId, beschreibung, farbe }) {
+// Mit Referenzbild (Upload): jede Richtung orientiert sich an der Vorlage.
+async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild }) {
   const richtungen = baueRichtungen({ beschreibung, farbe });
   const ergebnisse = await Promise.all(richtungen.map(async (r) => {
-    const g = await mitWiederholung(() => generiereBild({ prompt: r.prompt }), 2);
+    const prompt = referenzBild
+      ? r.prompt + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
+      : r.prompt;
+    const g = await mitWiederholung(() => generiereBild({ prompt, referenzBild }), 2);
     if (!g.ok) return null;
     const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
     const url = await speichereBild("richtungen/" + jobId + "/" + r.key + "." + endung, g.bildBase64, g.mimeType);
@@ -144,6 +148,21 @@ async function generiereRichtungen({ jobId, beschreibung, farbe }) {
   const ok = ergebnisse.filter(Boolean);
   if (ok.length < 2) throw new Error("Konnte keine Vorschläge erzeugen. Bitte nochmal versuchen.");
   return { richtungen: ok };
+}
+
+// Chat-Flow: EIN Entwurf aus dem im Chat erarbeiteten Prompt. Statt vier
+// Varianten auf Verdacht entsteht genau eine Figur, die im Chat so lange
+// angepasst wird, bis sie passt — erst danach werden die Ausdrücke erzeugt.
+async function generiereEntwurf({ jobId, beschreibung, farbe, referenzBild }) {
+  const { stil } = baueCharakterPrompt({ beschreibung, farbe });
+  const prompt = referenzBild
+    ? stil + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
+    : stil;
+  const g = await mitWiederholung(() => generiereBild({ prompt, referenzBild }), 2);
+  if (!g.ok) throw new Error(g.fehler || "Konnte den Entwurf nicht erzeugen. Bitte nochmal versuchen.");
+  const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
+  const url = await speichereBild("entwurf/" + jobId + "/idle." + endung, g.bildBase64, g.mimeType);
+  return { bild: url };
 }
 
 // §4 Schritt 2: aus der GEWÄHLTEN Richtung (idle-Bild aus unserem Bucket) die
@@ -182,7 +201,7 @@ exports.handler = async (event) => {
   const { jobId, aktion, firmaId, beschreibung, bild, anweisung, zustand, farbe } = body;
 
   if (typeof jobId !== "string" || !jobId || jobId.length > 100) return { statusCode: 400 };
-  const AKTIONEN = ["generieren", "bearbeiten", "richtungen", "zustaende"];
+  const AKTIONEN = ["generieren", "bearbeiten", "richtungen", "zustaende", "entwurf"];
   if (!AKTIONEN.includes(aktion)) return { statusCode: 400 };
 
   // Input-Limits VOR jedem teuren Schritt.
@@ -219,7 +238,8 @@ exports.handler = async (event) => {
     if (!storageOk()) throw new Error("Bild-Speicher ist nicht eingerichtet (SUPABASE_SERVICE_KEY fehlt).");
 
     let ergebnis;
-    if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe });
+    if (aktion === "entwurf") ergebnis = await generiereEntwurf({ jobId, beschreibung, farbe, referenzBild: bild });
+    else if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe, referenzBild: bild });
     else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe });
     else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe });
     else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand });

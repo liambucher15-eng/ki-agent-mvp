@@ -15,6 +15,9 @@
       --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* hidden muss IMMER gewinnen: Elemente mit inline display (z.B. #scanBericht
+       display:grid) würden sonst trotz [hidden] als leere Box sichtbar bleiben. */
+    [hidden] { display: none !important; }
     html, body { height: 100%; overflow: hidden; }
     body { font-family: var(--sans); color: var(--text); background: #fff;
            display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 2rem; }
@@ -25,15 +28,11 @@
       filter: blur(65px); opacity: 0.45; will-change: transform; }
     .card { position: relative; z-index: 1; background: #fff; border-radius: 26px;
       box-shadow: 0 30px 80px -30px rgba(17,24,39,0.25);
-      display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; height: min(600px, calc(100dvh - 4rem)); }
+      display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; height: min(720px, calc(100dvh - 4rem)); }
 
     .card-links { display: flex; flex-direction: column; padding: 2rem 2.4rem 2.2rem; min-width: 0; }
-    .kopf { display: flex; align-items: center; margin-bottom: 1rem; }
-    .logo { display: flex; align-items: center; gap: 0.5rem; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
-    .logo .mark { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 0.85rem;
-      background: linear-gradient(135deg, var(--indigo), var(--coral) 60%, var(--orange)); }
 
-    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.2rem 0 1.5rem; }
+    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.4rem 0 1.5rem; }
     .progress .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border);
                      transition: width 0.45s cubic-bezier(0.4,0,0.2,1), background 0.35s; }
     .progress .dot.done { background: var(--indigo); }
@@ -41,13 +40,32 @@
 
     .links-inhalt { position: relative; flex: 1; min-height: 0; }
     .schritt-links { position: absolute; inset: 0; display: flex; flex-direction: column; overflow-y: auto;
-                     scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding-right: 2px; }
+                     scrollbar-width: thin; scrollbar-color: var(--border) transparent; padding-right: 2px;
+                     /* Platz für die sticky Nav, damit aufgeklappte Felder beim
+                        Reinscrollen NICHT hinter dem Weiter-Knopf verschwinden. */
+                     scroll-padding-bottom: 96px; }
     .schritt-links::-webkit-scrollbar { width: 5px; }
     .schritt-links::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     .schritt-links[hidden] { display: none; }
 
     h1 { font-family: var(--display); font-size: 2.1rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
     h1.klein { font-size: 1.7rem; }
+
+    /* Willkommen: mehr Hierarchie, damit der Text neben dem Video nicht untergeht. */
+    .willkommen .eyebrow { display: inline-block; align-self: flex-start; font-size: 0.76rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--indigo);
+      background: rgba(79,70,229,0.09); padding: 0.32rem 0.75rem; border-radius: 999px; margin-bottom: 0.9rem; }
+    .willkommen .hero-titel { font-size: 2.55rem; }
+    .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
+
+    /* Teil-Zähler: "Teil 1 von 2" bei aufgeteilten Themen. Sitzt per order UNTEN
+       direkt über der Nav, damit er nicht mit den Fortschritts-Dots oben kollidiert. */
+    .teil-zaehler { order: 100; display: inline-flex; align-items: center; gap: 0.4rem; align-self: center;
+      font-size: 0.72rem; font-weight: 700; color: var(--grau-hell); text-transform: uppercase;
+      letter-spacing: 0.05em; margin: 0.4rem auto 0.1rem; }
+    .teil-zaehler .teil-punkt { width: 16px; height: 4px; border-radius: 999px; background: var(--border); }
+    .teil-zaehler .teil-punkt.aktiv { background: var(--indigo); }
+    .nav { order: 101; }
     .sub { color: var(--grau); font-size: 0.96rem; line-height: 1.55; margin-top: 0.6rem; }
     .grow { flex: 1; }
 
@@ -55,12 +73,18 @@
     .input-wrap { position: relative; }
     .input-wrap .icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); }
     .input-wrap input { padding-left: 2.4rem; }
-    input[type=text], input[type=email], input[type=url], select.select, textarea {
+    input[type=text], input[type=email], input[type=url], input[type=password], select.select, textarea {
       width: 100%; font: inherit; font-size: 0.94rem; padding: 0.7rem 0.85rem; border: 1.5px solid var(--border);
       border-radius: 10px; background: #fff; color: var(--text); transition: border-color 0.15s, box-shadow 0.15s; }
     select.select { cursor: pointer; }
     textarea { resize: vertical; min-height: 84px; line-height: 1.45; }
     textarea.klein { min-height: 52px; }
+    /* Textfelder werden beim Reinklicken grösser: mehr Platz zum Schreiben.
+       (JS scrollt das Feld danach ins Sichtfeld, siehe onboarding.js.) */
+    .schritt-links textarea { transition: min-height 0.22s ease, border-color 0.15s, box-shadow 0.15s; }
+    .schritt-links textarea:focus { min-height: 150px; }
+    #p-angebot { min-height: 110px; }
+    #p-angebot:focus { min-height: 200px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(79,70,229,0.12); }
 
     .btn { font: inherit; font-weight: 600; font-size: 0.96rem; border: 0; border-radius: 13px; cursor: pointer;
@@ -68,7 +92,11 @@
     .btn-primar { color: #fff; width: 100%; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
                   box-shadow: 0 12px 24px -8px rgba(79,70,229,0.55); }
     .btn-primar:hover { transform: translateY(-1px); box-shadow: 0 16px 30px -8px rgba(79,70,229,0.65); }
-    .nav { display: flex; align-items: center; gap: 0.7rem; margin-top: 1.2rem; }
+    /* Sticky am unteren Rand des Scroll-Bereichs: der Weiter-Button ist auf
+       jedem Schritt sofort sichtbar; der Verlauf signalisiert Inhalt darunter. */
+    .nav { display: flex; align-items: center; gap: 0.7rem; margin-top: auto; padding-top: 1.2rem;
+           position: sticky; bottom: 0; z-index: 2;
+           background: linear-gradient(to top, #fff 70%, rgba(255,255,255,0)); }
     .btn-zurueck { background: transparent; color: var(--grau); width: auto; padding: 0.9rem 0.5rem; box-shadow: none; flex-shrink: 0; }
     .btn-zurueck:hover { color: var(--text); transform: none; }
     .mini { font-size: 0.84rem; color: var(--grau); margin-top: 0.9rem; text-align: center; }
@@ -159,21 +187,142 @@
                         display: flex; align-items: center; justify-content: center; color: var(--grau-hell); font-size: 1.4rem; overflow: hidden; }
     .agent-figur-mini img { width: 100%; height: 100%; object-fit: cover; }
 
-    .tabs { display: flex; gap: 0.3rem; margin: 0.9rem 0 0.6rem; border-bottom: 1.5px solid var(--border); }
-    .tab { font: inherit; font-size: 0.85rem; font-weight: 600; background: none; border: 0; cursor: pointer;
-           padding: 0.4rem 0.6rem; color: var(--grau); border-bottom: 2px solid transparent; margin-bottom: -1.5px; }
-    .tab.aktiv { color: var(--indigo); border-bottom-color: var(--indigo); }
+    /* Ausdrücke-Seite: volle Kartenbreite, damit alle 4 Emotionen auf einen
+       Blick sichtbar sind (rechtes Verlaufs-Panel entfällt auf diesem Schritt).
+       grid-template-rows: 1fr ist fürs Mobile-Layout nötig, dort hat .card
+       sonst auto/1fr-Zeilen und die Formular-Spalte würde ohne rechtes Panel
+       auf Inhaltshöhe kollabieren (die Schritte sind absolut positioniert). */
+    .card.voll { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+    .card.voll .card-rechts { display: none; }
+
+    /* Ausdrücke-Raster (Seite "Dein Charakter lebt") */
+    .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.4rem; }
+    .char-grid[hidden] { display: none; }
+    @media (min-width: 861px) { .char-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    /* Stilwahl-Pop-up */
+    .modal-hintergrund { position: fixed; inset: 0; z-index: 60; background: rgba(17,24,39,0.55);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 1.2rem; }
+    .modal-hintergrund[hidden] { display: none; }
+    .modal-karte { position: relative; background: #fff; border-radius: 20px; padding: 1.5rem 1.6rem 1.4rem;
+      width: 100%; max-width: 540px; max-height: calc(100dvh - 2rem); overflow-y: auto;
+      box-shadow: 0 30px 80px -20px rgba(17,24,39,0.45); }
+    .modal-karte h2 { font-family: var(--display); font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em; }
+    .modal-schliessen { position: absolute; top: 0.65rem; right: 0.8rem; background: none; border: 0;
+      font-size: 1.5rem; line-height: 1; color: var(--grau-hell); cursor: pointer; padding: 0.2rem; }
+    .modal-schliessen:hover { color: var(--text); }
+    @media (prefers-reduced-motion: no-preference) {
+      .modal-karte { animation: modal-auf 0.28s cubic-bezier(0.34, 1.4, 0.64, 1); }
+      @keyframes modal-auf { from { transform: scale(0.94) translateY(12px); opacity: 0; } }
+    }
+
     .einstellungs-gruppe { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
     .einstellungs-titel { font-family: var(--display); font-size: 1.05rem; font-weight: 700; }
     .einstellungs-hilfe { color: var(--grau); font-size: 0.82rem; line-height: 1.4; margin: 0.25rem 0 0.5rem; }
+    /* Varianten-Karten im Pop-up: jede Karte hat ihren eigenen Bestätigen-Knopf. */
     .richtungs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.75rem; }
-    .richtungs-karte { position: relative; overflow: hidden; padding: 0; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; cursor: pointer; text-align: left; font: inherit; }
-    .richtungs-karte:hover { border-color: var(--indigo); }
-    .richtungs-karte.aktiv { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+    .richtungs-karte { overflow: hidden; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; }
     .richtungs-karte img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #f8fafc; }
-    .richtungs-karte span { display: block; padding: 0.5rem 0.6rem; font-size: 0.8rem; font-weight: 600; }
-    .richtungs-karte.aktiv::after { content: "✓"; position: absolute; top: 0.4rem; right: 0.4rem; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--indigo); color: #fff; font-weight: 800; }
+    .richtungs-fuss { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; padding: 0.45rem 0.55rem; }
+    .richtungs-fuss span { font-size: 0.8rem; font-weight: 600; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .btn-waehlen { font: inherit; font-size: 0.75rem; font-weight: 700; color: #fff; border: 0; border-radius: 8px;
+                   padding: 0.38rem 0.65rem; cursor: pointer; flex-shrink: 0; white-space: nowrap;
+                   background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
+                   box-shadow: 0 6px 14px -6px rgba(79,70,229,0.55); transition: transform 0.13s, box-shadow 0.2s, opacity 0.2s; }
+    .btn-waehlen:hover { transform: translateY(-1px); }
+    .btn-waehlen:disabled { opacity: 0.55; cursor: default; transform: none; }
+    .btn-neu { font: inherit; font-size: 0.82rem; font-weight: 700; color: var(--indigo); cursor: pointer; flex-shrink: 0;
+               border: 1.5px solid var(--indigo); border-radius: 10px; background: #fff; padding: 0.45rem 0.75rem; }
+    .btn-neu:hover { background: rgba(79,70,229,0.06); }
+    .btn-neu:disabled { opacity: 0.55; cursor: default; }
     .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
+
+    /* Charakter-Designer: Chat, in dem die Figur gemeinsam entwickelt wird.
+       Aufbau wie bei modernen Agenten-Feldern: erst die Wortmarke mit dem
+       Maskottchen und ein Satz dazu, darunter EIN grosses Eingabefeld mit
+       Anhang-Knopf links und rundem Senden-Knopf rechts. Sobald das Gespräch
+       läuft, verschwindet das Startbild und die Nachrichten übernehmen. */
+    /* Der Block klebt nicht am Titel, sondern verteilt sich über die freie
+       Höhe des Schritts (auto-Ränder in der Flex-Spalte). Wächst das Gespräch,
+       fallen die Ränder von selbst weg. */
+    .designer { margin: auto 0; }
+
+    /* Startbild: AU [Maskottchen] RA. Enthält dein Bild schon die ganze
+       Wortmarke, gib .marke zusätzlich die Klasse "nur-bild" (blendet AU/RA aus). */
+    .designer-start { text-align: center; padding: 1.4rem 0 1.7rem; }
+    .marke { display: flex; align-items: center; justify-content: center;
+             font-size: clamp(2rem, 8vw, 2.7rem); font-weight: 800; letter-spacing: -0.02em;
+             line-height: 1; color: var(--text); }
+    .marke-bild { width: 1.5em; height: 1.5em; margin: 0 0.04em; flex-shrink: 0;
+                  display: grid; place-items: center; }
+    .marke-bild img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .marke.nur-bild .marke-schrift { display: none; }
+    .marke.nur-bild .marke-bild { width: auto; height: 2.6em; max-width: 100%; }
+    /* Solange dein eigenes Bild fehlt: ruhiger Platzhalter statt kaputtem Symbol. */
+    .marke.ohne-bild .marke-bild { border: 2px dashed var(--border); border-radius: 18px; }
+    .marke.ohne-bild .marke-bild img { display: none; }
+    .marke-satz { margin: 0.85rem auto 0; max-width: 30rem; font-size: 0.92rem;
+                  line-height: 1.55; color: var(--grau); }
+
+    .designer-verlauf { display: flex; flex-direction: column; gap: 0.5rem;
+                        max-height: 260px; overflow-y: auto; margin-bottom: 0.7rem;
+                        scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .designer-verlauf:empty { display: none; }
+    .designer-verlauf::-webkit-scrollbar { width: 5px; }
+    .designer-verlauf::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    .d-msg { max-width: 88%; font-size: 0.88rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 14px; }
+    .d-msg.ki { align-self: flex-start; background: #f3f4f6; color: var(--text); border-bottom-left-radius: 5px; }
+    .d-msg.du { align-self: flex-end; background: var(--indigo); color: #fff; border-bottom-right-radius: 5px; }
+    .d-msg.tippt { color: var(--grau-hell); font-style: italic; }
+
+    /* Das Eingabefeld selbst: eine grosse weiche Karte, kein Kasten um alles. */
+    .komposer { border: 1.5px solid var(--border); border-radius: 22px; background: #fff;
+                padding: 0.5rem 0.6rem 0.55rem; box-shadow: 0 14px 34px -24px rgba(17,24,39,0.5);
+                transition: border-color 0.15s, box-shadow 0.2s, background 0.2s; }
+    .komposer:focus-within { border-color: var(--indigo);
+                             box-shadow: 0 0 0 4px rgba(79,70,229,0.1), 0 14px 34px -24px rgba(17,24,39,0.5); }
+    .komposer.zieht { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
+    .komposer textarea { width: 100%; display: block; border: 0; background: transparent; resize: none;
+                         font: inherit; font-size: 0.95rem; line-height: 1.55; color: var(--text);
+                         padding: 0.5rem 0.5rem 0.35rem; min-height: 60px; max-height: 150px; }
+    /* Der globale Fokus-Rahmen gilt hier nicht, den zeigt die Karte selbst. */
+    .komposer textarea:focus { outline: none; box-shadow: none; border: 0; }
+    .komposer textarea::placeholder { color: var(--grau-hell); }
+    .komposer-fuss { display: flex; align-items: center; gap: 0.55rem; padding: 0.1rem 0.15rem 0; }
+    .k-hinweis { margin-left: auto; font-size: 0.75rem; color: var(--grau-hell); }
+    .k-rund { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+              display: grid; place-items: center; cursor: pointer; font: inherit;
+              transition: transform 0.13s, background 0.2s, color 0.2s, opacity 0.2s; }
+    .k-plus { background: #f3f4f6; color: var(--grau); }
+    .k-plus:hover { background: #e9eaee; color: var(--indigo); }
+    .k-plus.hat-bild { background: rgba(79,70,229,0.12); color: var(--indigo); }
+    .k-senden { color: #fff; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
+                box-shadow: 0 8px 18px -8px rgba(79,70,229,0.75); }
+    .k-senden:hover:not(:disabled) { transform: translateY(-1px); }
+    .k-rund:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
+
+    /* Antwortstil: Auswahl in sauberen 3er-Reihen (nie 2+1-Umbruch). */
+    .pers-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.3rem; }
+    .pers-3 .pers-chip { text-align: center; padding: 0.55rem 0.35rem; }
+    /* Live-Beispiel: echtes Mini-Chat, spiegelt Länge + Format + Emoji sofort. */
+    .stil-demo { margin-top: 0.75rem; border: 1px solid var(--border); border-radius: 14px;
+                 padding: 0.8rem 0.85rem; background: linear-gradient(180deg, #fafaff, #fff); }
+    .stil-demo .demo-label { font-size: 0.7rem; font-weight: 700; color: var(--grau-hell);
+                             text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.55rem; }
+    .stil-demo .demo-zeilen { display: flex; flex-direction: column; gap: 0.45rem; }
+    .stil-demo .demo-frage { align-self: flex-end; max-width: 82%; background: var(--indigo); color: #fff;
+                             border-radius: 14px 14px 4px 14px; padding: 0.42rem 0.7rem; font-size: 0.83rem; }
+    .stil-demo .demo-antwort { align-self: flex-start; max-width: 90%; background: #fff; border: 1px solid var(--border);
+                               border-radius: 14px 14px 14px 4px; padding: 0.55rem 0.75rem; font-size: 0.86rem;
+                               line-height: 1.5; color: var(--text); box-shadow: 0 6px 16px -10px rgba(17,24,39,0.3); }
+    .stil-demo .demo-antwort p { margin: 0 0 0.4rem; }
+    .stil-demo .demo-antwort p:last-child { margin-bottom: 0; }
+    .stil-demo .demo-antwort ul { margin: 0.1rem 0 0; padding-left: 1.15rem; }
+    .stil-demo .demo-antwort li { margin-bottom: 0.15rem; }
+    /* Grosse Showcase-Variante im rechten Panel (ersetzt das fehlende Video). */
+    .demo-rechts { position: relative; z-index: 1; width: 82%; max-width: 340px;
+                   background: rgba(255,255,255,0.97); box-shadow: 0 24px 60px -22px rgba(17,24,39,0.55); }
     .prompts { margin-top: 0.6rem; }
     .prompt-box { background: #0f1424; color: #e5e7eb; border-radius: 10px; padding: 0.6rem 0.7rem; font-size: 0.72rem;
                   line-height: 1.45; white-space: pre-wrap; position: relative; margin-bottom: 0.4rem; }
@@ -215,13 +364,24 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; text-align: center; padding: 1rem; }
     .platzhalter .ph-titel { color: #fff; font-weight: 700; font-size: 0.9rem; }
     .platzhalter .ph-text { color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.35; }
+    /* Szenen-Video: füllt das ganze rechte Panel (ersetzt den Verlauf) */
+    .vid-karte { position: absolute; inset: 0; z-index: 1; background: #DDE0F7; }
+    .vid-karte video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     @media (max-width: 860px) {
       body { padding: 0; }
       .stage { max-width: 100%; }
       .glow { display: none; }
-      .card { grid-template-columns: 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
-      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 200px; max-height: 32vh; }
+      /* Zeile 1 = Video-Band oben, Zeile 2 (Formular) bekommt den Rest. Das
+         Video ist der Wow-Moment und bleibt auch auf dem Handy sichtbar -
+         nur die rein dekorativen Platzhalter/Vorschauen werden ausgeblendet. */
+      .card { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100dvh; border-radius: 0; box-shadow: none; }
+      .card-rechts { order: -1; margin: 0; border-radius: 0; min-height: 0;
+                     height: clamp(150px, 30dvh, 300px); max-height: none; }
+      .card-rechts .platzhalter, .card-rechts .vorschau, .card-rechts .demo-rechts { display: none; }
+      /* Hochformat-Video im breiten Band: oben ausrichten, damit der Kopf/das
+         Gesicht der Szene sichtbar bleibt statt mittig weggeschnitten zu werden. */
+      .card-rechts .vid-karte video { object-position: center 28%; }
       .card-links { padding: 1.5rem 1.4rem; }
       h1 { font-size: 1.8rem; }
     }
@@ -234,30 +394,37 @@
 
       <!-- LINKS -->
       <div class="card-links">
-        <div class="kopf"><div class="logo"><span class="mark">A</span><span>AuraChat</span></div></div>
         <div class="progress" id="progress"></div>
 
         <div class="links-inhalt" id="linksInhalt">
 
           <!-- 1 Willkommen -->
-          <div class="schritt-links" data-step="0">
+          <div class="schritt-links willkommen" data-step="0">
             <div class="grow"></div>
-            <h1>Willkommen<br>bei AuraChat</h1>
-            <p class="sub">Erstelle in wenigen Minuten deinen eigenen KI-Agenten. Er lernt alles direkt von deiner Webseite.</p>
+            <span class="eyebrow">Dein eigener KI-Agent</span>
+            <h1 class="hero-titel">Willkommen bei<br>AuraChat</h1>
+            <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent, er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
           </div>
 
-          <!-- 2 Anmelden -->
+          <!-- 2 Konto anlegen (E-Mail + Passwort, Pflicht) -->
           <div class="schritt-links" data-step="1" hidden>
             <div class="grow"></div>
-            <h1>Melde dich an</h1>
-            <p class="sub">Mit deiner E-Mail kommst du jederzeit zurück und verwaltest deinen Agenten. Du bekommst einen sicheren Login-Link, ganz ohne Passwort.</p>
-            <label class="feld" for="email">E-Mail-Adresse</label>
-            <input type="email" id="email" placeholder="name@firma.ch" />
+            <h1>Erstelle dein Konto</h1>
+            <p class="sub">Damit kommst du jederzeit zurück und verwaltest deinen Agenten. Sobald deine E-Mail bestätigt ist, geht es automatisch weiter.</p>
+            <!-- Login/Registrierung läuft über Clerk. Clerk bringt die E-Mail-
+                 Bestätigung mit: Erst wenn der Code aus der Mail stimmt, ist der
+                 Nutzer angemeldet, und erst dann schaltet das Onboarding weiter. -->
+            <div id="clerkKonto" style="margin-top:0.5rem;display:flex;justify-content:center;"></div>
+            <!-- Fallback (Simulation): ohne Clerk-Key nur eine E-Mail zur Vorbefüllung. -->
+            <div id="kontoSimulation" hidden>
+              <label class="feld" for="email">E-Mail-Adresse</label>
+              <input type="email" id="email" placeholder="name@firma.ch" autocomplete="email" />
+            </div>
             <p class="mini" id="loginStatus" style="text-align:left;min-height:1.1em;"></p>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" data-next>Login-Link senden</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" hidden>Weiter</button></div>
           </div>
 
           <!-- 3 Webseite scannen -->
@@ -269,23 +436,55 @@
             <input type="url" id="webseite" placeholder="https://deine-firma.ch" />
             <div class="scan-loader" id="scanLoader"><span class="spinner"></span><span id="scanStatus">Wird gelesen</span></div>
             <div class="balken" id="scanBalken"><span></span></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
           </div>
 
-          <!-- 4 Überprüfen -->
+          <!-- 4a Überprüfen: Basis (Teil 1 von 2) -->
           <div class="schritt-links" data-step="3" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
             <h1 class="klein">Stimmt das so?</h1>
-            <div class="hinweis-box"><span>Das haben wir von deiner Webseite gelesen. Prüf kurz und ergänze, was fehlt.</span></div>
+            <p class="sub">Das haben wir von eurer Website gelesen. Prüf kurz die Basics und ergänze frei, was fehlt, je mehr dein Agent weiss, desto besser hilft er.</p>
             <!-- Scan-Qualitätsbericht (Milestone 7): was gefunden wurde und was fehlt -->
-            <div id="scanBericht" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.65rem 0.8rem;margin-top:0.5rem;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.8rem;"></div>
+            <div id="scanBericht" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.65rem 0.8rem;margin-top:0.7rem;font-size:0.82rem;display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 0.8rem;"></div>
             <label class="feld" for="p-name">Firmenname</label>
             <input type="text" id="p-name" placeholder="Name deiner Firma" />
             <label class="feld" for="p-angebot">Was ihr anbietet</label>
-            <textarea class="klein" id="p-angebot" placeholder="In einem Satz"></textarea>
+            <textarea id="p-angebot" placeholder="Beschreibe in ein paar Sätzen, was ihr anbietet und was euch besonders macht. Je mehr du schreibst, desto besser kennt dein Agent euch."></textarea>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
 
-            <label class="feld">Details (aufklappen zum Prüfen)</label>
+          <!-- 4b Überprüfen: Details (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="4" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Noch ein paar<br>Details</h1>
+            <p class="sub">Öffnungszeiten, Kontakt und häufige Fragen. Klapp auf, was du prüfen oder ergänzen möchtest, alles optional.</p>
             <div class="pruef">
+              <div class="pk">
+                <button type="button" class="pk-kopf"><span class="pk-titel">Leistungen und Angebote</span><span class="pk-vorschau" id="v-leistungen">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body">
+                  <p class="sub" style="margin:0 0 0.5rem;font-size:0.83rem;">Liste jede Leistung mit kurzer Beschreibung, eine pro Zeile. Je genauer, desto besser berät dein Agent.</p>
+                  <textarea class="klein" id="p-leistungen" placeholder="z.B. Haarschnitt Herren, ca. 30 Min, inkl. Waschen&#10;Färben, ab 60 Min, je nach Haarlänge"></textarea>
+                  <button type="button" class="pk-passt">✓ Passt</button>
+                </div>
+              </div>
+              <div class="pk">
+                <button type="button" class="pk-kopf"><span class="pk-titel">Preise</span><span class="pk-vorschau" id="v-preise">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body"><textarea class="klein" id="p-preise" placeholder="Konkrete Preise oder Preisspannen, damit der Agent verlässlich Auskunft gibt."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+              </div>
+              <div class="pk">
+                <button type="button" class="pk-kopf"><span class="pk-titel">Team und Personen</span><span class="pk-vorschau" id="v-team">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body"><textarea class="klein" id="p-team" placeholder="Wer arbeitet bei euch? Namen, Rollen, Spezialgebiete."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+              </div>
+              <div class="pk">
+                <button type="button" class="pk-kopf"><span class="pk-titel">Was euch besonders macht</span><span class="pk-vorschau" id="v-besonderheiten">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body"><textarea class="klein" id="p-besonderheiten" placeholder="Eure Stärken, Auszeichnungen, Philosophie, Alleinstellungsmerkmale."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+              </div>
+              <div class="pk">
+                <button type="button" class="pk-kopf"><span class="pk-titel">Wichtige Regeln</span><span class="pk-vorschau" id="v-regeln">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <div class="pk-body"><textarea class="klein" id="p-regeln" placeholder="Storno, Zahlung, Reservierung, Lieferung, Rückgabe und Ähnliches."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+              </div>
               <div class="pk">
                 <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
                 <div class="pk-body"><textarea class="klein" id="p-oeffnung" placeholder="z.B. Di bis Sa, 11:30 bis 14:00"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
@@ -318,23 +517,23 @@
           </div>
 
           <!-- 5 Dokumente -->
-          <div class="schritt-links" data-step="4" hidden>
+          <div class="schritt-links" data-step="5" hidden>
             <div class="grow"></div>
-            <h1>Dokumente<br>hochladen</h1>
-            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus. Das ist optional.</p>
+            <h1 class="klein">Dokumente hochladen</h1>
+            <p class="sub">Hast du eine Menükarte, Preisliste oder Broschüre? Lade sie hoch und die KI liest sie aus, ganz optional.</p>
             <label class="drop" for="docs">Dateien hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">PDF, Bilder oder Text</div></label>
             <input type="file" id="docs" multiple accept=".pdf,.txt,.md,.markdown,image/*" style="display:none" />
             <div id="doc-liste"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <p class="mini"><a class="link" data-next>Diesen Schritt überspringen</a></p>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 6 Anpassen -->
-          <div class="schritt-links" data-step="5" hidden>
-            <div class="grow"></div>
-            <h1>Wer ist<br>dein Agent?</h1>
-            <p class="sub">Name und Persönlichkeit. Alles ist sinnvoll vorbelegt — du kannst jederzeit ändern.</p>
+          <!-- 6a Identität: Name + Rolle (Teil 1 von 2) -->
+          <div class="schritt-links" data-step="6" id="schrittIdentitaet" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
+            <h1 class="klein">Wer ist dein Agent?</h1>
+            <p class="sub">Gib deinem Agenten einen Namen und eine Rolle, das macht ihn nahbar. Alles ist vorbelegt, du kannst es jederzeit ändern.</p>
             <label class="feld" for="agentName">Wie soll dein Assistent heissen? *</label>
             <input type="text" id="agentName" placeholder="z.B. Pino, Lia, Concierge" maxlength="40" />
             <p class="mini" id="agentNameHinweis" style="text-align:left;min-height:1em;"></p>
@@ -348,12 +547,21 @@
               <option value="Concierge">Concierge</option>
               <option value="Assistent">Assistent</option>
             </select>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 6b Identität: Anrede + Persönlichkeit (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="7" id="schrittPersoenlichkeit" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Wie klingt dein Agent?</h1>
+            <p class="sub">Anrede und Persönlichkeit prägen den Ton jeder Antwort. Auch hier ist alles sinnvoll vorbelegt.</p>
             <label class="feld">Ansprache</label>
             <div class="pers" id="anredeListe">
               <button type="button" class="pers-chip aktiv" data-anrede="du">Du (locker)</button>
               <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
             </div>
-            <label class="feld">Persönlichkeit — wie soll dein Agent klingen?</label>
+            <label class="feld">Persönlichkeit, wie soll dein Agent klingen?</label>
             <div class="pers" id="persListe">
               <button type="button" class="pers-chip" data-ton="professionell">Professionell</button>
               <button type="button" class="pers-chip" data-ton="freundlich">Freundlich</button>
@@ -363,67 +571,78 @@
               <button type="button" class="pers-chip" data-ton="luxurioes">Luxuriös</button>
             </div>
             <p class="pers-hinweis" id="persHinweis"></p>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6 Antwortstil -->
-          <div class="schritt-links" data-step="6" hidden>
-            <div class="grow"></div>
-            <h1>Wie soll er<br>antworten?</h1>
-            <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten — justiere nur, was du möchtest.</p>
+          <!-- 8a Antwortstil: Stil (Teil 1 von 2) -->
+          <div class="schritt-links" data-step="8" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt aktiv"></span><span class="teil-punkt"></span>Teil 1 von 2</div>
+            <h1 class="klein">Wie soll er antworten?</h1>
+            <p class="sub">Der Schreibstil deines Agenten. Der Standard passt für die meisten, justiere nur, was du möchtest.</p>
               <label class="feld">Antwortlänge</label>
-              <div class="pers" id="laengenListe">
+              <div class="pers pers-3" id="laengenListe">
                 <button type="button" class="pers-chip" data-laenge="kurz">Kurz & direkt</button>
                 <button type="button" class="pers-chip aktiv" data-laenge="ausgewogen">Ausgewogen</button>
                 <button type="button" class="pers-chip" data-laenge="ausfuehrlich">Ausführlich</button>
               </div>
               <label class="feld">Emojis</label>
-              <div class="pers" id="emojiListe">
+              <div class="pers pers-3" id="emojiListe">
                 <button type="button" class="pers-chip" data-emoji="keine">Keine</button>
                 <button type="button" class="pers-chip aktiv" data-emoji="dezent">Dezent</button>
                 <button type="button" class="pers-chip" data-emoji="lebendig">Lebendig</button>
               </div>
               <label class="feld">Formatierung</label>
-              <div class="pers" id="formatListe">
+              <div class="pers pers-3" id="formatListe">
                 <button type="button" class="pers-chip aktiv" data-format="absatz">Kurze Absätze</button>
-                <button type="button" class="pers-chip" data-format="listen">Listen bei Bedarf</button>
+                <button type="button" class="pers-chip" data-format="listen">Listen</button>
                 <button type="button" class="pers-chip" data-format="fliessend">Fließtext</button>
               </div>
-              <label class="feld">Wenn der Agent nicht weiterweiß</label>
-              <select class="select" id="uebergabe">
-                <option value="kontakt">Kontaktdaten aufnehmen</option>
-                <option value="kontaktinfo">Kontaktinformationen zeigen</option>
-                <option value="ehrlich">Ehrlich sagen, dass die Information fehlt</option>
-              </select>
+              <!-- Live-Beispiel: zeigt sofort, wie die gewählte Kombination klingt. -->
+              <div class="stil-demo">
+                <div class="demo-label">So klingt dein Agent</div>
+                <div class="demo-zeilen">
+                  <div class="demo-frage">Habt ihr sonntags offen?</div>
+                  <div class="demo-antwort"></div>
+                </div>
+              </div>
+            <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+          </div>
+
+          <!-- 8b Antwortstil: Grenzen & Übergabe (Teil 2 von 2) -->
+          <div class="schritt-links" data-step="9" hidden>
+            <div class="teil-zaehler"><span class="teil-punkt"></span><span class="teil-punkt aktiv"></span>Teil 2 von 2</div>
+            <h1 class="klein">Grenzen und Übergabe</h1>
+            <p class="sub">Was tut dein Agent, wenn er einmal nicht weiterweiß, und wo sind seine Grenzen?</p>
+              <label class="feld" for="fallbackKontakt">Wenn dein Agent etwas nicht weiß</label>
+              <p class="sub" style="margin:0 0 0.4rem;font-size:0.83rem;">Er sagt dann ehrlich, dass er es nicht sicher weiß, und verweist auf diese Kontaktmöglichkeit.</p>
+              <textarea class="klein" id="fallbackKontakt" placeholder="z.B. Ruf uns an unter 044 123 45 67 oder schreib an hallo@firma.ch"></textarea>
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
-              <div class="antwort-vorschau" id="antwortVorschau"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 7 Chat-Design -->
-          <div class="schritt-links" data-step="7" hidden>
+          <div class="schritt-links" data-step="10" hidden>
             <div class="grow"></div>
             <h1>Wie sieht<br>der Chat aus?</h1>
-            <p class="sub">Wir übernehmen die Farben deiner Webseite. Wähle nur, wie viel du selbst gestalten möchtest.</p>
+            <p class="sub">Der Agent übernimmt automatisch die Farben deiner Website, du musst nichts tun. Willst du selbst gestalten, schalte auf „Selbst anpassen".</p>
               <div class="pers" id="designListe">
-                <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch aus Website</button>
+                <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch</button>
                 <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
               </div>
-              <label class="feld">Startansicht</label>
-              <div class="pers" id="layoutListe">
-                <button type="button" class="pers-chip aktiv" data-layout="sidebar">Seitenleiste</button>
-                <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
+            <!-- Farben + Schrift nur sichtbar, wenn "Selbst anpassen" gewählt ist. -->
+            <div id="eigenControls" hidden>
+              <label class="feld">Farben</label>
+              <div class="farben">
+                <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
+                <div class="farb-feld"><input type="color" id="farbe2" value="#FB7185" /><br>Akzent</div>
               </div>
-            <label class="feld">Farben</label>
-            <div class="farben">
-              <div class="farb-feld"><input type="color" id="farbe1" value="#4F46E5" /><br>Primär</div>
-              <div class="farb-feld"><input type="color" id="farbe2" value="#FB7185" /><br>Akzent</div>
-            </div>
-            <label class="feld" for="schrift">Schriftart</label>
-            <select class="select" id="schrift">
+              <label class="feld" for="schrift">Schriftart</label>
+              <select class="select" id="schrift">
               <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
               <option value="Inter">Inter</option>
               <option value="Poppins">Poppins</option>
@@ -431,70 +650,102 @@
               <option value="Space Grotesk">Space Grotesk</option>
               <option value="Lora">Lora (Serif)</option>
             </select>
-            <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+              <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
+            </div>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 7 Dein Agent -->
-          <div class="schritt-links" data-step="8" id="schrittAgent" hidden>
-            <h1 class="klein">Erstelle deinen<br>Charakter</h1>
-            <p class="sub">Dein eigener KI-Charakter ist das Herz deines Agenten — und dein Alleinstellungsmerkmal. Beschreibe ihn kurz oder lade ein Bild hoch; die KI macht daraus vier lebendige Ausdrücke.</p>
+          <!-- 9 Charakter erstellen: CHAT mit dem Designer. Idee erzählen -> die KI
+               baut den Bild-Prompt -> EIN Entwurf -> im Chat anpassen, bis er sitzt
+               -> Ausdrücke auf der Folgeseite (#schrittAusdruecke). Keine
+               Varianten-Auswahl mehr. -->
+          <div class="schritt-links" data-step="11" id="schrittAgent" hidden>
+            <h1 class="klein">Erstelle deinen Charakter</h1>
+            <!-- Kein Untertitel: der Satz unter der Wortmarke sagt dasselbe. -->
 
-            <div id="figurEditor">
-              <div class="tabs">
-                <button type="button" class="tab aktiv" data-tab="upload">Bild hochladen</button>
-                <button type="button" class="tab" data-tab="erstellen">Charakter erstellen</button>
+            <!-- Charakter-Designer: echter Chat. Der Nutzer beschreibt seine Idee in
+                 eigenen Worten, die KI (charakter-prompt.js) baut daraus den Bild-
+                 Prompt und erzeugt EINEN Entwurf. Änderungswünsche laufen ebenfalls
+                 über den Chat, bis die Figur passt. Erst dann die Ausdrücke. -->
+            <div class="designer" id="charChat">
+              <!-- Startbild. Tausche bilder/maskottchen.png gegen dein eigenes Bild
+                   (siehe public/bilder/LIESMICH.txt). Fehlt die Datei, zeigt die
+                   Marke einen ruhigen Platzhalter statt eines kaputten Symbols. -->
+              <div class="designer-start" id="charStart">
+                <div class="marke" id="charMarke">
+                  <span class="marke-schrift">AU</span>
+                  <span class="marke-bild"><img id="charMarkeBild" src="bilder/maskottchen.png" alt="" /></span>
+                  <span class="marke-schrift">RA</span>
+                </div>
+                <p class="marke-satz">Erzähl mir, was für eine Figur dir vorschwebt. Ruhig ganz grob, zum Beispiel: ein netter Hund. Oder: etwas Modernes, das zu uns passt. Ich mache daraus den Rest.</p>
               </div>
-              <div class="tab-inhalt" data-tab="upload">
-                <label class="drop" for="charBild">Bild hier ablegen<div style="font-size:0.78rem;margin-top:0.2rem;">Logo oder Foto — als Figur direkt nutzen oder als Vorlage für die KI</div></label>
-                <input type="file" id="charBild" accept="image/*" style="display:none" />
-                <p class="mini" id="charBildStatus" style="text-align:left;"></p>
-                <button type="button" class="btn btn-primar" id="charAusBild" hidden style="margin-top:0.4rem;">✨ Daraus Charakter mit 4 Ausdrücken erstellen</button>
-              </div>
-              <div class="tab-inhalt" data-tab="erstellen" hidden>
-                <label class="feld" for="charBeschr">Beschreibe deine Figur</label>
-                <input type="text" id="charBeschr" placeholder="z.B. freundlicher Fuchs im Anzug" />
-                <button type="button" class="btn btn-primar" id="charErstellen" style="margin-top:0.6rem;">4 Stilrichtungen vorschlagen</button>
-                <p class="mini" id="charErstellenStatus" style="text-align:left;"></p>
-                <div id="richtungenBox" hidden>
-                  <p class="sub" style="font-size:0.84rem;">Wähle eine Richtung. Erst danach erzeugen wir die passenden Ausdrücke – das spart Zeit und Bild-Credits.</p>
-                  <div class="richtungs-grid" id="richtungsGrid"></div>
-                  <button type="button" class="btn btn-primar" id="charZustaende" disabled style="margin-top:0.75rem;">Diese Richtung auswählen</button>
-                  <p class="mini" id="charRichtungenStatus" style="text-align:left;"></p>
+
+              <div class="designer-verlauf" id="charVerlauf"></div>
+
+              <div class="komposer" id="charKomposer">
+                <textarea id="charEingabe" rows="1" placeholder="z.B. ein netter Hund, der zu unserer Bäckerei passt"></textarea>
+                <div class="komposer-fuss">
+                  <button type="button" class="k-rund k-plus" id="charPlus" title="Eigenes Bild als Vorlage anhängen" aria-label="Eigenes Bild als Vorlage anhängen">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                  <span class="k-hinweis" id="charHinweis">Enter sendet</span>
+                  <button type="button" class="k-rund k-senden" id="charSenden" title="Senden" aria-label="Senden">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                  </button>
                 </div>
               </div>
-              <!-- 4 generierte Ausdruck-Bilder: prüfen + einzeln per Anweisung nachbessern -->
-              <div id="charGrid" hidden style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem;"></div>
+              <input type="file" id="charBild" accept="image/*" style="display:none" />
+              <p class="mini" id="charBildStatus" style="text-align:left;min-height:0;margin-top:0.4rem;"></p>
+              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
             </div>
-            <p class="mini" id="charPflichtHinweis" style="text-align:left;min-height:1em;color:#e11d48;"></p>
+
+            <!-- Aktueller Entwurf: eine Figur, die im Chat weiterentwickelt wird. -->
+            <div id="charEntwurf" hidden style="margin-top:0.85rem;text-align:center;">
+              <img id="charEntwurfBild" alt="Entwurf deiner Figur" style="display:block;width:180px;margin:0 auto;border-radius:16px;border:1.5px solid var(--border);background:#fafafa;box-shadow:0 14px 30px -14px rgba(17,24,39,0.35);" />
+              <p class="mini" style="margin-top:0.5rem;">Passt sie? Sag im Chat, was anders soll, oder übernimm sie.</p>
+              <button type="button" class="btn btn-primar" id="charUebernehmen" style="margin-top:0.2rem;">Passt, Ausdrücke erstellen</button>
+            </div>
+
+            <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
+            <div class="balken" id="charBalken"><span></span></div>
+
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
+          </div>
+
+          <!-- 10 Ausdrücke: der Belohnungs-Moment, die gewählte Figur lebt. -->
+          <div class="schritt-links" data-step="12" id="schrittAusdruecke" hidden>
+            <div class="grow"></div>
+            <h1 class="klein">Dein Charakter<br>lebt</h1>
+            <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie, jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
+            <p class="mini" id="charZustandStatus" style="text-align:left;min-height:1.1em;"></p>
+            <div class="balken" id="zustaendeBalken"><span></span></div>
+            <!-- Während der Generierung: die gewählte Variante als Vorfreude-Bild. -->
+            <div id="gewaehlteVorschau" hidden style="margin:0.6rem auto 0;width:140px;">
+              <img id="gewaehlteVorschauImg" alt="Gewählte Variante" style="display:block;width:100%;border-radius:14px;border:1.5px solid var(--border);box-shadow:0 12px 26px -12px rgba(17,24,39,0.3);" />
+            </div>
+            <div class="char-grid" id="charGrid" hidden></div>
+            <div class="grow"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
-          <!-- 10 Fertig -->
-          <div class="schritt-links" data-step="9" hidden>
+          <!-- 11 Fertig -->
+          <div class="schritt-links" data-step="13" hidden>
             <div class="grow"></div>
             <h1>Dein Agent<br>ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
             <!-- §8 Veröffentlichungs-Checkliste: zeigt vor dem Live-Gehen, was der
                  Agent schon kann und warnt bei fehlenden kritischen Infos. Blockiert
-                 nicht — der Agent bleibt testbar, die Warnung ist ein Hinweis. -->
+                 nicht, der Agent bleibt testbar, die Warnung ist ein Hinweis. -->
             <div id="startklar" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.75rem 0.9rem;margin-bottom:0.6rem;">
               <div id="startklarBanner" style="font-size:0.86rem;font-weight:600;margin-bottom:0.55rem;"></div>
               <div id="startklarListe" style="display:grid;grid-template-columns:1fr 1fr;gap:0.22rem 0.9rem;font-size:0.82rem;"></div>
             </div>
             <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
-            <!-- Bezahlung (Milestone 10): erscheint erst NACH erfolgreichem Speichern.
-                 Der Agent bleibt bis dahin nutzbar zum Testen — Zahlung ist der letzte Schritt. -->
-            <div id="checkoutBox" hidden style="border:1.5px solid var(--border);border-radius:12px;padding:0.7rem 0.85rem;margin-top:0.5rem;">
-              <p class="mini" id="checkoutText" style="text-align:left;margin:0 0 0.5rem;"></p>
-              <button type="button" class="btn btn-primar" id="checkoutBtn" style="width:100%;"></button>
-              <p class="mini" id="checkoutStatus" style="text-align:left;min-height:1.1em;"></p>
-            </div>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard →</a></p>
             <div class="grow"></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
           </div>
 
         </div>
@@ -506,27 +757,41 @@
           <div class="feld-bg"></div>
           <div class="welle w1"></div><div class="welle w2"></div><div class="welle w3"></div>
         </div>
-        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Vorschau</div><div class="ph-text">Agent in Aktion mit Tagline</div></div></div></div>
-        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Glas-Umschlag</div><div class="ph-text">Sicher und passwortlos in Sekunden</div></div></div></div>
-        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Browser-Fenster</div><div class="ph-text">mit leuchtender Scan-Linie</div></div></div></div>
-        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Info-Übersicht</div><div class="ph-text">erkannte Infos im Überblick</div></div></div></div>
-        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Datei-Icons</div><div class="ph-text">schwebende PDF und Bilder</div></div></div></div>
-        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Agenten-Steckbrief</div><div class="ph-text">Name, Rolle &amp; Charakter</div></div></div></div>
-        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Chat-Beispiel</div><div class="ph-text">So klingen die Antworten</div></div></div></div>
-        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Widget-Vorschau</div><div class="ph-text">Live-Chat in deinen Farben</div></div></div></div>
-        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="vorschau">
-          <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
-          <div class="vorschau-label" id="vorLabel">Noch kein Charakter — erstelle ihn links</div>
+        <div class="schritt-rechts" data-step="0"><div class="panel"><div class="vid-karte"><video src="videos/szene1.mp4" muted loop playsinline autoplay preload="auto"></video></div></div></div>
+        <div class="schritt-rechts" data-step="1" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene2.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="2" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene3.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="3" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="4" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene4.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="5" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="6" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Dein Agent bekommt ein Gesicht</div><div class="ph-text">Name und Rolle machen ihn nahbar.</div></div></div></div>
+        <div class="schritt-rechts" data-step="7" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Der richtige Ton</div><div class="ph-text">Anrede und Persönlichkeit prägen jede Antwort.</div></div></div></div>
+        <div class="schritt-rechts" data-step="8" hidden><div class="panel"><div class="stil-demo demo-rechts">
+          <div class="demo-label">So klingt dein Agent</div>
+          <div class="demo-zeilen">
+            <div class="demo-frage">Habt ihr sonntags offen?</div>
+            <div class="demo-antwort"></div>
+          </div>
         </div></div></div>
-        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Bild: Webseite mit Widget</div><div class="ph-text">fertiger Agent auf einer Seite</div></div></div></div>
+        <div class="schritt-rechts" data-step="9" hidden><div class="panel"><div class="platzhalter"><div class="ph-titel">Klare Grenzen</div><div class="ph-text">Der Agent weiss, wann er weiterleitet, und was er nicht tut.</div></div></div></div>
+        <div class="schritt-rechts" data-step="10" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene7.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="11" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene8.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
+        <div class="schritt-rechts" data-step="12" id="vorschauRechts" hidden><div class="panel"><div class="vorschau">
+          <div class="vorschau-figur" id="vorFigur"><img id="vorFigurImg" alt="Charakter-Vorschau" /></div>
+          <div class="vorschau-label" id="vorLabel">Noch kein Charakter, erstelle ihn links</div>
+        </div></div></div>
+        <div class="schritt-rechts" data-step="13" hidden><div class="panel"><div class="vid-karte"><video src="videos/szene9.mp4" muted loop playsinline preload="metadata"></video></div></div></div>
       </div>
 
     </div>
   </div>
 
+  <!-- Stilwahl-Pop-up: erscheint, sobald die 4 Charakter-Varianten fertig sind.
+       Schliessen ist erlaubt (Varianten bleiben über den Link auf der Seite
+       erreichbar), damit keine Bild-Credits verloren gehen. -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="lib/supabase-config.js"></script>
+  <script src="lib/clerk-config.js"></script>
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
   <script src="onboarding.js"></script>
