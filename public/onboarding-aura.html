@@ -32,8 +32,7 @@
 
     .card-links { display: flex; flex-direction: column; padding: 2rem 2.4rem 2.2rem; min-width: 0; }
 
-    /* Luft nach unten: der Titel soll nicht an den Punkten kleben. */
-    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.7rem 0 2.4rem; }
+    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.4rem 0 1.5rem; }
     .progress .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border);
                      transition: width 0.45s cubic-bezier(0.4,0,0.2,1), background 0.35s; }
     .progress .dot.done { background: var(--indigo); }
@@ -244,11 +243,14 @@
        Maskottchen und ein Satz dazu, darunter EIN grosses Eingabefeld mit
        Anhang-Knopf links und rundem Senden-Knopf rechts. Sobald das Gespräch
        läuft, verschwindet das Startbild und die Nachrichten übernehmen. */
-    .designer { margin-top: 0.6rem; }
+    /* Der Block klebt nicht am Titel, sondern verteilt sich über die freie
+       Höhe des Schritts (auto-Ränder in der Flex-Spalte). Wächst das Gespräch,
+       fallen die Ränder von selbst weg. */
+    .designer { margin: auto 0; }
 
     /* Startbild: AU [Maskottchen] RA. Enthält dein Bild schon die ganze
        Wortmarke, gib .marke zusätzlich die Klasse "nur-bild" (blendet AU/RA aus). */
-    .designer-start { text-align: center; padding: 0.5rem 0 1.1rem; }
+    .designer-start { text-align: center; padding: 1.4rem 0 1.7rem; }
     .marke { display: flex; align-items: center; justify-content: center;
              font-size: clamp(2rem, 8vw, 2.7rem); font-weight: 800; letter-spacing: -0.02em;
              line-height: 1; color: var(--text); }
