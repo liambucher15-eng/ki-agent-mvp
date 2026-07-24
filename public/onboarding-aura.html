@@ -238,27 +238,66 @@
     .btn-neu:disabled { opacity: 0.55; cursor: default; }
     .antwort-vorschau { margin-top: 0.65rem; padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 12px; background: #fafafa; font-size: 0.83rem; line-height: 1.45; color: var(--grau); }
 
-    /* Charakter-Designer: Chat, in dem die Figur gemeinsam entwickelt wird. */
-    .designer { margin-top: 0.6rem; border: 1.5px solid var(--border); border-radius: 16px;
-                background: #fff; overflow: hidden; }
+    /* Charakter-Designer: Chat, in dem die Figur gemeinsam entwickelt wird.
+       Aufbau wie bei modernen Agenten-Feldern: erst die Wortmarke mit dem
+       Maskottchen und ein Satz dazu, darunter EIN grosses Eingabefeld mit
+       Anhang-Knopf links und rundem Senden-Knopf rechts. Sobald das Gespräch
+       läuft, verschwindet das Startbild und die Nachrichten übernehmen. */
+    .designer { margin-top: 0.6rem; }
+
+    /* Startbild: AU [Maskottchen] RA. Enthält dein Bild schon die ganze
+       Wortmarke, gib .marke zusätzlich die Klasse "nur-bild" (blendet AU/RA aus). */
+    .designer-start { text-align: center; padding: 0.5rem 0 1.1rem; }
+    .marke { display: flex; align-items: center; justify-content: center;
+             font-size: clamp(2rem, 8vw, 2.7rem); font-weight: 800; letter-spacing: -0.02em;
+             line-height: 1; color: var(--text); }
+    .marke-bild { width: 1.5em; height: 1.5em; margin: 0 0.04em; flex-shrink: 0;
+                  display: grid; place-items: center; }
+    .marke-bild img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .marke.nur-bild .marke-schrift { display: none; }
+    .marke.nur-bild .marke-bild { width: auto; height: 2.6em; max-width: 100%; }
+    /* Solange dein eigenes Bild fehlt: ruhiger Platzhalter statt kaputtem Symbol. */
+    .marke.ohne-bild .marke-bild { border: 2px dashed var(--border); border-radius: 18px; }
+    .marke.ohne-bild .marke-bild img { display: none; }
+    .marke-satz { margin: 0.85rem auto 0; max-width: 30rem; font-size: 0.92rem;
+                  line-height: 1.55; color: var(--grau); }
+
     .designer-verlauf { display: flex; flex-direction: column; gap: 0.5rem;
-                        padding: 0.8rem; max-height: 260px; overflow-y: auto;
+                        max-height: 260px; overflow-y: auto; margin-bottom: 0.7rem;
                         scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .designer-verlauf:empty { display: none; }
     .designer-verlauf::-webkit-scrollbar { width: 5px; }
     .designer-verlauf::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     .d-msg { max-width: 88%; font-size: 0.88rem; line-height: 1.5; padding: 0.5rem 0.75rem; border-radius: 14px; }
     .d-msg.ki { align-self: flex-start; background: #f3f4f6; color: var(--text); border-bottom-left-radius: 5px; }
     .d-msg.du { align-self: flex-end; background: var(--indigo); color: #fff; border-bottom-right-radius: 5px; }
     .d-msg.tippt { color: var(--grau-hell); font-style: italic; }
-    .designer-eingabe { display: flex; gap: 0.5rem; align-items: flex-end;
-                        border-top: 1px solid var(--border); padding: 0.55rem; background: #fafafa; }
-    .designer-eingabe textarea { flex: 1; border: 1.5px solid var(--border); border-radius: 11px;
-                                 padding: 0.55rem 0.7rem; font: inherit; font-size: 0.9rem;
-                                 min-height: 42px; max-height: 120px; resize: none; background: #fff; }
-    .designer-eingabe button { flex-shrink: 0; font: inherit; font-size: 0.86rem; font-weight: 600;
-                               color: #fff; border: 0; border-radius: 11px; padding: 0.62rem 0.95rem; cursor: pointer;
-                               background: linear-gradient(135deg, var(--indigo), var(--indigo-hell)); }
-    .designer-eingabe button:disabled { opacity: 0.5; cursor: default; }
+
+    /* Das Eingabefeld selbst: eine grosse weiche Karte, kein Kasten um alles. */
+    .komposer { border: 1.5px solid var(--border); border-radius: 22px; background: #fff;
+                padding: 0.5rem 0.6rem 0.55rem; box-shadow: 0 14px 34px -24px rgba(17,24,39,0.5);
+                transition: border-color 0.15s, box-shadow 0.2s, background 0.2s; }
+    .komposer:focus-within { border-color: var(--indigo);
+                             box-shadow: 0 0 0 4px rgba(79,70,229,0.1), 0 14px 34px -24px rgba(17,24,39,0.5); }
+    .komposer.zieht { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
+    .komposer textarea { width: 100%; display: block; border: 0; background: transparent; resize: none;
+                         font: inherit; font-size: 0.95rem; line-height: 1.55; color: var(--text);
+                         padding: 0.5rem 0.5rem 0.35rem; min-height: 60px; max-height: 150px; }
+    /* Der globale Fokus-Rahmen gilt hier nicht, den zeigt die Karte selbst. */
+    .komposer textarea:focus { outline: none; box-shadow: none; border: 0; }
+    .komposer textarea::placeholder { color: var(--grau-hell); }
+    .komposer-fuss { display: flex; align-items: center; gap: 0.55rem; padding: 0.1rem 0.15rem 0; }
+    .k-hinweis { margin-left: auto; font-size: 0.75rem; color: var(--grau-hell); }
+    .k-rund { flex-shrink: 0; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+              display: grid; place-items: center; cursor: pointer; font: inherit;
+              transition: transform 0.13s, background 0.2s, color 0.2s, opacity 0.2s; }
+    .k-plus { background: #f3f4f6; color: var(--grau); }
+    .k-plus:hover { background: #e9eaee; color: var(--indigo); }
+    .k-plus.hat-bild { background: rgba(79,70,229,0.12); color: var(--indigo); }
+    .k-senden { color: #fff; background: linear-gradient(135deg, var(--indigo), var(--indigo-hell));
+                box-shadow: 0 8px 18px -8px rgba(79,70,229,0.75); }
+    .k-senden:hover:not(:disabled) { transform: translateY(-1px); }
+    .k-rund:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: none; }
 
     /* Antwortstil: Auswahl in sauberen 3er-Reihen (nie 2+1-Umbruch). */
     .pers-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.3rem; }
@@ -620,18 +659,42 @@
                Varianten-Auswahl mehr. -->
           <div class="schritt-links" data-step="11" id="schrittAgent" hidden>
             <h1 class="klein">Erstelle deinen Charakter</h1>
-            <p class="sub">Erzähl einfach, was dir vorschwebt. Der Designer schreibt daraus den Prompt, zeigt dir eine Figur, und ihr passt sie zusammen an, bis sie sitzt.</p>
+            <!-- Kein Untertitel: der Satz unter der Wortmarke sagt dasselbe. -->
 
             <!-- Charakter-Designer: echter Chat. Der Nutzer beschreibt seine Idee in
                  eigenen Worten, die KI (charakter-prompt.js) baut daraus den Bild-
                  Prompt und erzeugt EINEN Entwurf. Änderungswünsche laufen ebenfalls
                  über den Chat, bis die Figur passt. Erst dann die Ausdrücke. -->
             <div class="designer" id="charChat">
-              <div class="designer-verlauf" id="charVerlauf"></div>
-              <div class="designer-eingabe">
-                <textarea id="charEingabe" rows="1" placeholder="z.B. ein netter Hund, der zu unserer Bäckerei passt"></textarea>
-                <button type="button" id="charSenden" title="Senden">Senden</button>
+              <!-- Startbild. Tausche bilder/maskottchen.png gegen dein eigenes Bild
+                   (siehe public/bilder/LIESMICH.txt). Fehlt die Datei, zeigt die
+                   Marke einen ruhigen Platzhalter statt eines kaputten Symbols. -->
+              <div class="designer-start" id="charStart">
+                <div class="marke" id="charMarke">
+                  <span class="marke-schrift">AU</span>
+                  <span class="marke-bild"><img id="charMarkeBild" src="bilder/maskottchen.png" alt="" /></span>
+                  <span class="marke-schrift">RA</span>
+                </div>
+                <p class="marke-satz">Erzähl mir, was für eine Figur dir vorschwebt. Ruhig ganz grob, zum Beispiel: ein netter Hund. Oder: etwas Modernes, das zu uns passt. Ich mache daraus den Rest.</p>
               </div>
+
+              <div class="designer-verlauf" id="charVerlauf"></div>
+
+              <div class="komposer" id="charKomposer">
+                <textarea id="charEingabe" rows="1" placeholder="z.B. ein netter Hund, der zu unserer Bäckerei passt"></textarea>
+                <div class="komposer-fuss">
+                  <button type="button" class="k-rund k-plus" id="charPlus" title="Eigenes Bild als Vorlage anhängen" aria-label="Eigenes Bild als Vorlage anhängen">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                  <span class="k-hinweis" id="charHinweis">Enter sendet</span>
+                  <button type="button" class="k-rund k-senden" id="charSenden" title="Senden" aria-label="Senden">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              <input type="file" id="charBild" accept="image/*" style="display:none" />
+              <p class="mini" id="charBildStatus" style="text-align:left;min-height:0;margin-top:0.4rem;"></p>
+              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
             </div>
 
             <!-- Aktueller Entwurf: eine Figur, die im Chat weiterentwickelt wird. -->
@@ -643,14 +706,6 @@
 
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="charBalken"><span></span></div>
-
-            <details style="margin-top:0.9rem;">
-              <summary class="mini" style="text-align:left;cursor:pointer;">Lieber ein eigenes Bild als Vorlage nutzen?</summary>
-              <label class="drop" for="charBild" id="charDrop" style="padding:1rem;margin-top:0.5rem;">Logo oder Foto hier ablegen</label>
-              <input type="file" id="charBild" accept="image/*" style="display:none" />
-              <p class="mini" id="charBildStatus" style="text-align:left;min-height:1.1em;margin-top:0.35rem;"></p>
-              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
-            </details>
 
             <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
           </div>

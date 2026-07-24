@@ -539,16 +539,35 @@
       charSenden.disabled = an;
       charEingabe.disabled = an;
     }
-    // Begrüssung, sobald der Schritt zum ersten Mal geöffnet wird.
+    // Startbild (Wortmarke + Begrüssung) steht im HTML und bleibt sichtbar,
+    // bis die erste Nachricht rausgeht. Danach übernehmen die Nachrichten.
+    const charStartEl = document.getElementById("charStart");
     function charChatStarten() {
       if (charVerlaufEl.children.length) return;
-      charMsg("ki", "Hallo! Erzähl mir, was für eine Figur dir vorschwebt. Ruhig ganz grob, zum Beispiel: ein netter Hund. Oder: etwas Modernes, das zu uns passt. Ich mache daraus den Rest.");
+      if (charStartEl) charStartEl.hidden = false;
     }
+    // Fehlt das eigene Maskottchen-Bild noch, zeigt die Marke einen Platzhalter.
+    const charMarkeBild = document.getElementById("charMarkeBild");
+    if (charMarkeBild) {
+      const markePlatzhalter = () => document.getElementById("charMarke").classList.add("ohne-bild");
+      charMarkeBild.addEventListener("error", markePlatzhalter);
+      // Kann schon gescheitert sein, bevor dieses Skript lief.
+      if (charMarkeBild.complete && !charMarkeBild.naturalWidth) markePlatzhalter();
+    }
+
+    // Eingabefeld wächst mit dem Text mit (bis zur CSS-Grenze).
+    function charEingabeAnpassen() {
+      charEingabe.style.height = "auto";
+      charEingabe.style.height = Math.min(charEingabe.scrollHeight, 150) + "px";
+    }
+    charEingabe.addEventListener("input", charEingabeAnpassen);
 
     async function charChatSenden() {
       const text = charEingabe.value.trim();
       if (!text || charBusy) return;
       charEingabe.value = "";
+      charEingabeAnpassen();
+      if (charStartEl) charStartEl.hidden = true; // Startbild weg, Gespräch übernimmt
       charVerlauf.push({ rolle: "du", text });
       charMsg("du", text);
       charBusySetzen(true);
@@ -752,21 +771,38 @@
       }
     }
 
-    // Bild-Upload: dient als Vorlage für die Varianten, ODER (dezenter
-    // Zweitweg) direkt als Figur, ganz ohne KI.
-    document.getElementById("charBild").addEventListener("change", (e) => {
-      const f = e.target.files[0]; if (!f) return;
+    // Bild-Upload: dient als Vorlage für die Figur, ODER (dezenter Zweitweg)
+    // direkt als Figur, ganz ohne KI. Zwei Wege dorthin: der Plus-Knopf im
+    // Eingabefeld und ein Bild, das auf das Feld gezogen wird.
+    function charBildUebernehmen(f) {
+      if (!f) return;
       const status = document.getElementById("charBildStatus");
-      if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; e.target.value = ""; return; }
+      if (!/^image\//.test(f.type)) { status.style.color = "#e11d48"; status.textContent = "Das ist kein Bild."; return; }
+      if (f.size > 4.5 * 1024 * 1024) { status.style.color = "#e11d48"; status.textContent = "Bild ist zu groß (max. 4,5 MB)."; return; }
       const r = new FileReader();
       r.onload = () => {
         charReferenzBild = r.result;
         status.style.color = "var(--gruen)";
         status.textContent = "✓ " + f.name + " übernommen, fliesst als Vorlage in deine Figur ein.";
         document.getElementById("charDirektZeile").hidden = false;
+        document.getElementById("charPlus").classList.add("hat-bild");
       };
       r.readAsDataURL(f);
+    }
+    document.getElementById("charBild").addEventListener("change", (e) => {
+      charBildUebernehmen(e.target.files[0]);
       e.target.value = "";
+    });
+    document.getElementById("charPlus").addEventListener("click", () => {
+      document.getElementById("charBild").click();
+    });
+    // Bild direkt auf das Eingabefeld ziehen.
+    const charKomposer = document.getElementById("charKomposer");
+    charKomposer.addEventListener("dragover", (e) => { e.preventDefault(); charKomposer.classList.add("zieht"); });
+    charKomposer.addEventListener("dragleave", () => charKomposer.classList.remove("zieht"));
+    charKomposer.addEventListener("drop", (e) => {
+      e.preventDefault(); charKomposer.classList.remove("zieht");
+      charBildUebernehmen(e.dataTransfer.files && e.dataTransfer.files[0]);
     });
     document.getElementById("charDirekt").addEventListener("click", () => {
       if (!charReferenzBild) return;
