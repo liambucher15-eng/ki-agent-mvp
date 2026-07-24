@@ -32,7 +32,8 @@
 
     .card-links { display: flex; flex-direction: column; padding: 2rem 2.4rem 2.2rem; min-width: 0; }
 
-    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.4rem 0 1.5rem; }
+    /* Luft nach unten: der Titel soll nicht an den Punkten kleben. */
+    .progress { display: flex; gap: 9px; align-items: center; justify-content: center; margin: 0.7rem 0 2.4rem; }
     .progress .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--border);
                      transition: width 0.45s cubic-bezier(0.4,0,0.2,1), background 0.35s; }
     .progress .dot.done { background: var(--indigo); }
