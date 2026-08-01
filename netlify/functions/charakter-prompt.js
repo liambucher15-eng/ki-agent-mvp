@@ -48,20 +48,28 @@ exports.handler = async (event) => {
     .filter(Boolean).join("; ");
   const system =
     "Du bist ein freundlicher Charakter-Designer. Du hilfst einer kleinen Firma, die Wunsch-Figur " +
-    "(Maskottchen) für ihren Chat-Agenten zu entwickeln. Der Kunde kann KEINE guten Bild-Prompts " +
-    "schreiben — das ist DEIN Job.\n\n" +
+    "(Maskottchen) für ihren Chat-Agenten zu entwickeln. Der Kunde beschreibt seine Idee in " +
+    "eigenen Worten, du machst daraus die Figur.\n\n" +
     "So arbeitest du:\n" +
-    "- Der Kunde beschreibt seine Idee in eigenen Worten, auch sehr grob.\n" +
-    "- Fehlt etwas Wichtiges (Wesen/Typ, Stil, ein Merkmal), stell HÖCHSTENS EINE kurze Rückfrage " +
-    "und mach gleichzeitig einen konkreten Vorschlag. Frage nie mehrfach dasselbe.\n" +
-    "- Sobald du genug hast (im Zweifel lieber früher), schreibe den fertigen Bild-Prompt: eine " +
-    "konkrete, bildhafte Beschreibung der Figur (Wesen, Stil, Kleidung/Detail, freundlicher " +
-    "Ausdruck), 1 bis 2 Sätze, auf Deutsch. Passe sie dezent zur Firma an, wenn Kontext da ist.\n" +
-    "- Bei Änderungswünschen: gib den KOMPLETTEN, aktualisierten Prompt zurück, nicht nur die Änderung.\n\n" +
+    "- ZEICHNE SOFORT. Auch wenn die Idee sehr grob ist, ergänze die fehlenden Details selbst " +
+    "(Stil, Farbe, ein passendes Merkmal) und lege los. Der Kunde sieht dann ein Bild und kann " +
+    "danach sagen, was anders soll. Das ist immer besser als eine Rückfrage.\n" +
+    "- Nur wenn die Nachricht überhaupt keine Idee enthält (z.B. nur 'hallo'), stell EINE kurze " +
+    "Frage und mach dabei gleich einen konkreten Vorschlag.\n" +
+    "- Bei Änderungswünschen: gib die KOMPLETTE, aktualisierte Beschreibung zurück, nicht nur die " +
+    "Änderung.\n\n" +
+    "SO SPRICHST DU IM FELD \"antwort\":\n" +
+    "- Wie ein Zeichner, nicht wie ein Werkzeug. Sag in EINEM Satz, WAS du gleich zeichnest, " +
+    "z.B. \"Alles klar, ich zeichne dir einen freundlichen Hund mit Bäckermütze.\"\n" +
+    "- Verwende NIEMALS die Wörter Prompt, Bild-Prompt, Beschreibung, KI oder Eingabe. Zeige dem " +
+    "Kunden nie den Text aus dem Feld \"prompt\" und kündige ihn auch nicht an.\n" +
+    "- Keine Doppelpunkte am Satzende, keine Aufzählungen, keine Emojis, keine Gedankenstriche.\n\n" +
     "Antworte AUSSCHLIESSLICH mit gültigem JSON, ohne Markdown:\n" +
-    '{"antwort":"kurze, freundliche Chat-Antwort (max. 2 Sätze, Deutsch)",' +
-    '"prompt":"der fertige Bild-Prompt oder leerer String, wenn du noch nachfragst",' +
+    '{"antwort":"ein kurzer Satz, was du jetzt zeichnest (Deutsch)",' +
+    '"prompt":"die bildhafte Beschreibung der Figur für den Zeichner, 1 bis 2 Sätze",' +
     '"bereit":true oder false}\n' +
+    "Wenn du ausnahmsweise nachfragst: \"prompt\" MUSS ein leerer String sein und " +
+    "\"bereit\" MUSS false sein. Schreib in \"prompt\" niemals einen Platzhalter.\n" +
     (kontext ? "\nKONTEXT zur Firma: " + kontext : "");
 
   try {
@@ -81,9 +89,24 @@ exports.handler = async (event) => {
     try { erg = JSON.parse(txt); } catch { erg = {}; }
 
     const str = (v, max) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
-    const antwort = str(erg.antwort, 400) || "Erzähl mir etwas mehr über deine Idee.";
+    let antwort = str(erg.antwort, 400) || "Alles klar, ich zeichne sie dir jetzt.";
     const prompt = str(erg.prompt, 500);
-    return json(200, { antwort, prompt, bereit: !!erg.bereit && !!prompt });
+
+    // Der Kunde soll NIE die Werkstatt sehen. Rutscht dem Modell trotz Anweisung
+    // ein "hier kommt dein Bild-Prompt:" durch, ersetzen wir den Satz hart.
+    if (/\b(prompt|bild-?prompt|eingabe(text)?)\b/i.test(antwort)) {
+      antwort = "Alles klar, ich zeichne sie dir jetzt.";
+    }
+    // Ankündigungen, die auf einen nachfolgenden Text zeigen ("... folgendermassen:"),
+    // enden ins Leere, weil der Prompt gar nicht angezeigt wird.
+    antwort = antwort.replace(/\s*:\s*$/, ".");
+    antwort = antwort.replace(/\s+[–—]\s+/g, ", "); // Gedankenstriche gibt es hier nicht
+
+    // Sobald eine Beschreibung da ist, wird gezeichnet. Nachfragen kosten den
+    // Kunden nur Zeit; korrigieren kann er am fertigen Bild sowieso besser.
+    // Ausnahme: sagt das Modell ausdrücklich "noch nicht bereit" (nichts als
+    // Gruss in der Nachricht), fragt es einmal nach statt ins Blaue zu zeichnen.
+    return json(200, { antwort, prompt, bereit: !!prompt && erg.bereit !== false });
   } catch {
     return json(502, { error: "KI gerade nicht erreichbar." });
   }

@@ -304,14 +304,20 @@
         });
         if (start.status !== 202 && !start.ok) throw new Error("Scan konnte nicht gestartet werden");
         // 2) Status pollen, bis fertig oder Fehler (max ~90s)
-        let d = null;
+        let d = null, pannen = 0;
         for (let versuch = 0; versuch < 60; versuch++) {
           await schlaf(1500);
           let s;
           try {
             const r = await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId));
-            s = await r.json();
-          } catch { continue; } // kurzer Netz-Hänger -> einfach weiter pollen
+            s = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(s.error || "Status nicht abrufbar (" + r.status + ")");
+          } catch (e) {
+            // Kurzer Netz-Hänger: weiter pollen. Drei echte Fehler am Stück: aufhören.
+            if (++pannen >= 3) throw new Error(e.message || "Server nicht erreichbar");
+            continue;
+          }
+          pannen = 0;
           if (s.status === "done") { d = s.ergebnis; break; }
           if (s.status === "error") throw new Error(s.fehler || "Scan fehlgeschlagen");
           // "pending"/"running" -> weiter warten
@@ -675,13 +681,23 @@
       });
       if (start.status === 429) throw new Error("Limit erreicht, bitte später erneut versuchen.");
       if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");
+      // Antwortet die Status-Function mehrfach hintereinander mit einem echten
+      // Fehler (z.B. Job-Speicher nicht erreichbar), hat weiteres Warten keinen
+      // Sinn: dann lieber sofort die Ursache zeigen statt Minuten lang zu pollen.
+      let pannen = 0, letzteMeldung = "";
       for (let versuch = 0; versuch < (maxVersuche || 90); versuch++) {
         await schlaf(2000);
         let s;
         try {
           const r = await fetch("/.netlify/functions/scan-status?jobId=" + encodeURIComponent(jobId));
-          s = await r.json();
-        } catch { continue; } // kurzer Netz-Hänger -> weiter pollen
+          s = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(s.error || "Status nicht abrufbar (" + r.status + ")");
+        } catch (e) {
+          letzteMeldung = e.message || "";
+          if (++pannen >= 3) throw new Error(letzteMeldung || "Server nicht erreichbar.");
+          continue; // kurzer Netz-Hänger -> weiter pollen
+        }
+        pannen = 0;
         if (s.status === "done") return s.ergebnis;
         if (s.status === "error") throw new Error(s.fehler || "Fehlgeschlagen");
       }
