@@ -47,29 +47,38 @@ exports.handler = async (event) => {
   const kontext = [firma && ("Firma: " + firma), angebot && ("Angebot: " + angebot)]
     .filter(Boolean).join("; ");
   const system =
-    "Du bist ein freundlicher Charakter-Designer. Du hilfst einer kleinen Firma, die Wunsch-Figur " +
-    "(Maskottchen) für ihren Chat-Agenten zu entwickeln. Der Kunde beschreibt seine Idee in " +
-    "eigenen Worten, du machst daraus die Figur.\n\n" +
+    "Du bist ein freundlicher Charakter-Designer. Du entwickelst mit einer kleinen Firma zusammen " +
+    "die Wunsch-Figur (Maskottchen) für ihren Chat-Agenten. Ihr spinnt die Idee erst GEMEINSAM " +
+    "weiter, gezeichnet wird erst, wenn der Kunde sich für eine Richtung entschieden hat.\n\n" +
     "So arbeitest du:\n" +
-    "- ZEICHNE SOFORT. Auch wenn die Idee sehr grob ist, ergänze die fehlenden Details selbst " +
-    "(Stil, Farbe, ein passendes Merkmal) und lege los. Der Kunde sieht dann ein Bild und kann " +
-    "danach sagen, was anders soll. Das ist immer besser als eine Rückfrage.\n" +
-    "- Nur wenn die Nachricht überhaupt keine Idee enthält (z.B. nur 'hallo'), stell EINE kurze " +
-    "Frage und mach dabei gleich einen konkreten Vorschlag.\n" +
-    "- Bei Änderungswünschen: gib die KOMPLETTE, aktualisierte Beschreibung zurück, nicht nur die " +
-    "Änderung.\n\n" +
+    "- ZUERST BRAINSTORMEN. Auf die erste Idee des Kunden antwortest du NIE mit einer Zeichnung.\n" +
+    "- Schon in deiner ERSTEN Antwort stehen zwei oder drei KONKRETE, deutlich verschiedene " +
+    "Vorschläge, wie die Figur aussehen könnte, jeder in wenigen Worten. Frag NICHT einfach nur " +
+    "nach dem Stil, ohne selbst etwas vorzuschlagen.\n" +
+    "- Danach stellst du EINE einzige Frage, die den Kunden weiterbringt, meistens welche " +
+    "Richtung ihm gefällt. Nie mehrere Fragen auf einmal, nie zweimal dasselbe fragen.\n" +
+    "- Ist dem Kunden egal, welche Richtung, oder stimmt er unklar zu, wähle du selbst EINE " +
+    "Richtung aus (keine Mischung aus allen) und sag ihm, welche du nimmst.\n" +
+    "- Denk mit: du kennst die Branche des Kunden und schlägst Dinge vor, auf die er selbst nicht " +
+    "kommt (ein passendes Requisit, ein Kleidungsstück, ein Charakterzug).\n" +
+    "- ERST ZEICHNEN, wenn der Kunde einer Richtung zustimmt ('ja', 'das erste', 'mach das', " +
+    "'gefällt mir') oder von sich aus sagt, dass es losgehen soll. Dann setzt du bereit auf true " +
+    "und schreibst die vollständige Figur-Beschreibung ins Feld prompt.\n" +
+    "- Zieht sich das Gespräch, biete nach zwei bis drei Runden von dir aus an, es einfach mal zu " +
+    "zeichnen. Der Kunde soll nie das Gefühl haben, im Gespräch festzustecken.\n" +
+    "- Bei Änderungswünschen an einer schon gezeichneten Figur: nicht neu brainstormen, sondern " +
+    "sofort bereit true und die KOMPLETTE, aktualisierte Beschreibung zurückgeben.\n\n" +
     "SO SPRICHST DU IM FELD \"antwort\":\n" +
-    "- Wie ein Zeichner, nicht wie ein Werkzeug. Sag in EINEM Satz, WAS du gleich zeichnest, " +
-    "z.B. \"Alles klar, ich zeichne dir einen freundlichen Hund mit Bäckermütze.\"\n" +
+    "- Wie ein Mensch, der gern zeichnet. Locker, kurz, höchstens drei Sätze.\n" +
     "- Verwende NIEMALS die Wörter Prompt, Bild-Prompt, Beschreibung, KI oder Eingabe. Zeige dem " +
     "Kunden nie den Text aus dem Feld \"prompt\" und kündige ihn auch nicht an.\n" +
     "- Keine Doppelpunkte am Satzende, keine Aufzählungen, keine Emojis, keine Gedankenstriche.\n\n" +
     "Antworte AUSSCHLIESSLICH mit gültigem JSON, ohne Markdown:\n" +
-    '{"antwort":"ein kurzer Satz, was du jetzt zeichnest (Deutsch)",' +
-    '"prompt":"die bildhafte Beschreibung der Figur für den Zeichner, 1 bis 2 Sätze",' +
+    '{"antwort":"deine Chat-Antwort auf Deutsch, max. 3 Sätze",' +
+    '"prompt":"die vollständige Figur-Beschreibung für den Zeichner, sonst leerer String",' +
     '"bereit":true oder false}\n' +
-    "Wenn du ausnahmsweise nachfragst: \"prompt\" MUSS ein leerer String sein und " +
-    "\"bereit\" MUSS false sein. Schreib in \"prompt\" niemals einen Platzhalter.\n" +
+    "Solange ihr noch brainstormt: \"prompt\" MUSS ein leerer String sein und \"bereit\" MUSS " +
+    "false sein. Schreib in \"prompt\" niemals einen Platzhalter.\n" +
     (kontext ? "\nKONTEXT zur Firma: " + kontext : "");
 
   try {
@@ -86,27 +95,46 @@ exports.handler = async (event) => {
     const a = txt.indexOf("{"), b = txt.lastIndexOf("}");
     if (a >= 0 && b > a) txt = txt.slice(a, b + 1);
     let erg;
-    try { erg = JSON.parse(txt); } catch { erg = {}; }
+    try {
+      erg = JSON.parse(txt);
+    } catch {
+      // Ein einziges unmaskiertes Anführungszeichen im Fliesstext hat sonst zur
+      // Folge, dass der Kunde eine belanglose Ersatzantwort bekommt. Die Felder
+      // stehen immer in derselben Reihenfolge, darum fischen wir sie notfalls
+      // über ihre Nachbarn aus dem Rohtext.
+      const sauber = (m) => (m ? m[1].replace(/\\"/g, '"').replace(/\\n/g, " ").trim() : "");
+      erg = {
+        antwort: sauber(/"antwort"\s*:\s*"([\s\S]*?)"\s*,\s*"prompt"/.exec(txt)),
+        prompt: sauber(/"prompt"\s*:\s*"([\s\S]*?)"\s*,\s*"bereit"/.exec(txt)),
+        bereit: /"bereit"\s*:\s*true/.test(txt),
+      };
+    }
 
     const str = (v, max) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
-    let antwort = str(erg.antwort, 400) || "Alles klar, ich zeichne sie dir jetzt.";
     const prompt = str(erg.prompt, 500);
 
+    // Gezeichnet wird erst, wenn der Kunde einer Richtung zugestimmt hat. Auf die
+    // allererste Nachricht wird NIE gezeichnet, egal was das Modell meldet: da
+    // gehört das gemeinsame Überlegen hin, sonst kostet jede halbe Idee ein Bild.
+    const ersteRunde = nachrichten.filter((n) => n.role === "user").length < 2;
+    const bereit = !!prompt && erg.bereit === true && !ersteRunde;
+
     // Der Kunde soll NIE die Werkstatt sehen. Rutscht dem Modell trotz Anweisung
-    // ein "hier kommt dein Bild-Prompt:" durch, ersetzen wir den Satz hart.
-    if (/\b(prompt|bild-?prompt|eingabe(text)?)\b/i.test(antwort)) {
-      antwort = "Alles klar, ich zeichne sie dir jetzt.";
+    // ein "hier kommt dein Bild-Prompt:" durch, ersetzen wir den Satz hart. Der
+    // Ersatztext muss zum Zustand passen: "ich zeichne jetzt" darf nur stehen,
+    // wenn auch wirklich gezeichnet wird.
+    let antwort = str(erg.antwort, 400);
+    if (!antwort || /\b(prompt|bild-?prompt|eingabe(text)?)\b/i.test(antwort)) {
+      antwort = bereit
+        ? "Alles klar, ich zeichne sie dir jetzt."
+        : "Erzähl mir noch kurz, in welche Richtung es gehen soll.";
     }
     // Ankündigungen, die auf einen nachfolgenden Text zeigen ("... folgendermassen:"),
     // enden ins Leere, weil der Prompt gar nicht angezeigt wird.
     antwort = antwort.replace(/\s*:\s*$/, ".");
     antwort = antwort.replace(/\s+[–—]\s+/g, ", "); // Gedankenstriche gibt es hier nicht
 
-    // Sobald eine Beschreibung da ist, wird gezeichnet. Nachfragen kosten den
-    // Kunden nur Zeit; korrigieren kann er am fertigen Bild sowieso besser.
-    // Ausnahme: sagt das Modell ausdrücklich "noch nicht bereit" (nichts als
-    // Gruss in der Nachricht), fragt es einmal nach statt ins Blaue zu zeichnen.
-    return json(200, { antwort, prompt, bereit: !!prompt && erg.bereit !== false });
+    return json(200, { antwort, prompt: bereit ? prompt : "", bereit });
   } catch {
     return json(502, { error: "KI gerade nicht erreichbar." });
   }

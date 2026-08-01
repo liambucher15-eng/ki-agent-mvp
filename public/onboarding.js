@@ -561,6 +561,36 @@
       if (charMarkeBild.complete && !charMarkeBild.naturalWidth) markePlatzhalter();
     }
 
+    // Der graue Beispieltext wechselt, damit das Feld nicht wie eine Vorlage
+    // wirkt, die man abschreiben soll. Vor dem ersten Bild Ideen, danach
+    // Änderungswünsche, denn dann ist das die eigentliche Aufgabe.
+    const CHAR_BEISPIELE_IDEE = [
+      "z.B. ein netter Hund, der zu unserer Bäckerei passt",
+      "z.B. eine freundliche Figur, die zu uns passt",
+      "z.B. etwas Verspieltes, unsere Kunden sind Familien",
+      "z.B. eher edel und ruhig, wir beraten Firmen",
+      "z.B. ein Tier aus unserer Region",
+      "z.B. keine Ahnung, überrasch mich",
+      "z.B. etwas, das zu Handwerk passt",
+      "z.B. eine Figur mit unserer Hausfarbe",
+    ];
+    const CHAR_BEISPIELE_AENDERN = [
+      "z.B. mach die Mütze rot",
+      "z.B. etwas freundlicher schauen",
+      "z.B. runder und weicher, bitte",
+      "z.B. die Brille kann weg",
+      "z.B. schlichter, weniger Details",
+      "z.B. gib ihm etwas in die Hand",
+    ];
+    let charLetztesBeispiel = "";
+    function charBeispielWechseln() {
+      const liste = charEntwurfBildUrl ? CHAR_BEISPIELE_AENDERN : CHAR_BEISPIELE_IDEE;
+      const frei = liste.filter((t) => t !== charLetztesBeispiel);
+      charLetztesBeispiel = frei[Math.floor(Math.random() * frei.length)];
+      charEingabe.placeholder = charLetztesBeispiel;
+    }
+    charBeispielWechseln();
+
     // Eingabefeld wächst mit dem Text mit (bis zur CSS-Grenze).
     function charEingabeAnpassen() {
       charEingabe.style.height = "auto";
@@ -573,6 +603,7 @@
       if (!text || charBusy) return;
       charEingabe.value = "";
       charEingabeAnpassen();
+      charBeispielWechseln();
       if (charStartEl) charStartEl.hidden = true; // Startbild weg, Gespräch übernimmt
       charVerlauf.push({ rolle: "du", text });
       charMsg("du", text);
@@ -610,6 +641,21 @@
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); charChatSenden(); }
     });
 
+    // Technische Meldungen ("fetch failed") sagen dem Kunden nichts. Hier wird
+    // daraus ein Satz, aus dem hervorgeht, ob er warten oder etwas tun muss.
+    function charFehlerText(m) {
+      const t = String(m || "");
+      if (/fetch failed|Failed to fetch|NetworkError|Job (lesen|speichern) fehlgeschlagen|nicht erreichbar/i.test(t))
+        return "Unser Bilder-Dienst ist gerade nicht erreichbar. Versuch es in ein paar Minuten nochmal.";
+      if (/Zeitüberschreitung/i.test(t))
+        return "Das hat zu lange gedauert. Schick deine Nachricht bitte nochmal.";
+      if (/Limit erreicht/i.test(t))
+        return "Du hast für heute genug Figuren erstellt. Morgen geht es weiter.";
+      if (/GEMINI_API_KEY|nicht eingerichtet/i.test(t))
+        return "Die Bild-Erstellung ist auf diesem Server noch nicht eingerichtet.";
+      return t;
+    }
+
     // EINE Figur aus dem Chat-Prompt zeichnen (nicht mehr vier Varianten).
     async function charEntwurfErstellen() {
       const status = document.getElementById("charErstellenStatus");
@@ -625,7 +671,7 @@
         status.textContent = "";
       } catch (e) {
         warte.remove();
-        charMsg("ki", "Das Zeichnen hat nicht geklappt: " + e.message);
+        charMsg("ki", "Das Zeichnen hat nicht geklappt. " + charFehlerText(e.message));
         status.style.color = "#e11d48"; status.textContent = "";
       } finally { balken("charBalken", false); charBusySetzen(false); }
     }
@@ -645,7 +691,7 @@
         status.textContent = "";
       } catch (e) {
         warte.remove();
-        charMsg("ki", "Die Änderung hat nicht geklappt: " + e.message);
+        charMsg("ki", "Die Änderung hat nicht geklappt. " + charFehlerText(e.message));
         status.style.color = "#e11d48"; status.textContent = "";
       } finally { balken("charBalken", false); charBusySetzen(false); }
     }
@@ -655,6 +701,7 @@
       document.getElementById("charEntwurf").hidden = false;
       vorFigurImg.src = url; vorFigurImg.style.visibility = "visible";
       vorLabel.textContent = "Dein Entwurf";
+      charBeispielWechseln(); // ab jetzt Beispiele für Änderungswünsche
     }
 
     // "Passt": aus diesem einen Bild die Ausdrücke erzeugen.
