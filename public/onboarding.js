@@ -609,7 +609,7 @@
     // Eingabefeld wächst mit dem Text mit (bis zur CSS-Grenze).
     function charEingabeAnpassen() {
       charEingabe.style.height = "auto";
-      charEingabe.style.height = Math.min(charEingabe.scrollHeight, 150) + "px";
+      charEingabe.style.height = Math.min(charEingabe.scrollHeight, 110) + "px";
     }
     charEingabe.addEventListener("input", charEingabeAnpassen);
 
@@ -680,9 +680,9 @@
       try {
         const erg = await charJob({ aktion: "entwurf", beschreibung: charPrompt, bild: charReferenzBild || undefined }, 90);
         charEntwurfBildUrl = erg.bild;
-        zeigeEntwurf(erg.bild);
         warte.remove();
-        charMsg("ki", "Hier ist deine Figur. Was soll ich ändern? Wenn sie passt, klick unten auf: Passt, Ausdrücke erstellen.");
+        zeigeEntwurf(erg.bild);
+        charMsg("ki", "Hier ist deine Figur. Was soll ich ändern? Wenn sie passt, klick auf: Passt, Ausdrücke erstellen.");
         status.textContent = "";
       } catch (e) {
         warte.remove();
@@ -700,8 +700,8 @@
       try {
         const erg = await charJob({ aktion: "bearbeiten", bild: charEntwurfBildUrl, anweisung }, 60);
         charEntwurfBildUrl = erg.bild;
-        zeigeEntwurf(erg.bild);
         warte.remove();
+        zeigeEntwurf(erg.bild);
         charMsg("ki", "So besser? Sag gern weiter, was noch anders soll.");
         status.textContent = "";
       } catch (e) {
@@ -711,24 +711,35 @@
       } finally { balken("charBalken", false); charBusySetzen(false); }
     }
 
+    // Die letzte Bild-Nachricht im Verlauf (für den "Passt"-Knopf): bei einer
+    // neuen Figur/Änderung verliert die vorherige ihren Knopf, sonst könnte man
+    // aus Versehen eine veraltete Version übernehmen.
+    let charLetzteBildBubble = null;
     function zeigeEntwurf(url) {
-      const entwurf = document.getElementById("charEntwurf");
-      document.getElementById("charEntwurfBild").src = url;
-      entwurf.hidden = false;
+      if (charLetzteBildBubble) {
+        const alterBtn = charLetzteBildBubble.querySelector("button");
+        if (alterBtn) alterBtn.remove();
+      }
+      const bubble = document.createElement("div");
+      bubble.className = "d-msg ki d-bild";
+      const img = document.createElement("img");
+      img.src = url; img.alt = "Deine Figur";
+      const btn = document.createElement("button");
+      btn.type = "button"; btn.className = "btn btn-primar";
+      btn.textContent = "Passt, Ausdrücke erstellen";
+      btn.addEventListener("click", () => {
+        if (!charEntwurfBildUrl) return;
+        generiereZustaendeAusBild(charEntwurfBildUrl, charPrompt);
+      });
+      bubble.appendChild(img); bubble.appendChild(btn);
+      charVerlaufEl.appendChild(bubble);
+      charVerlaufEl.scrollTop = charVerlaufEl.scrollHeight;
+      charLetzteBildBubble = bubble;
+
       vorFigurImg.src = url; vorFigurImg.style.visibility = "visible";
       vorLabel.textContent = "Dein Entwurf";
       charBeispielWechseln(); // ab jetzt Beispiele für Änderungswünsche
-      // Der Entwurf steht unter dem Chatverlauf, bei einem langen Gespräch sonst
-      // ausserhalb des sichtbaren Bereichs, dann wirkt es als hätte sich nichts
-      // getan. Nach dem Zeichnen/Ändern direkt in Sicht scrollen.
-      setTimeout(() => { try { entwurf.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }, 60);
     }
-
-    // "Passt": aus diesem einen Bild die Ausdrücke erzeugen.
-    document.getElementById("charUebernehmen").addEventListener("click", () => {
-      if (!charEntwurfBildUrl) return;
-      generiereZustaendeAusBild(charEntwurfBildUrl, charPrompt);
-    });
 
     function balken(id, an) { document.getElementById(id).classList.toggle("an", !!an); }
 

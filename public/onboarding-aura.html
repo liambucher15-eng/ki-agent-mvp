@@ -266,7 +266,7 @@
                   line-height: 1.55; color: var(--grau); }
 
     .designer-verlauf { display: flex; flex-direction: column; gap: 0.5rem;
-                        max-height: 260px; overflow-y: auto; margin-bottom: 0.7rem;
+                        max-height: 320px; overflow-y: auto; margin-bottom: 0.7rem;
                         scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
     .designer-verlauf:empty { display: none; }
     .designer-verlauf::-webkit-scrollbar { width: 5px; }
@@ -275,6 +275,15 @@
     .d-msg.ki { align-self: flex-start; background: #f3f4f6; color: var(--text); border-bottom-left-radius: 5px; }
     .d-msg.du { align-self: flex-end; background: var(--indigo); color: #fff; border-bottom-right-radius: 5px; }
     .d-msg.tippt { color: var(--grau-hell); font-style: italic; }
+    /* Die gezeichnete Figur als eigene Nachricht im Verlauf, statt in einem
+       separaten Kasten unter der Eingabe: sofort sichtbar, kein Scrollen nötig. */
+    .d-msg.d-bild { background: transparent; padding: 0; max-width: 200px;
+                    display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .d-msg.d-bild img { width: 160px; height: 160px; object-fit: contain; border-radius: 16px;
+                         border: 1.5px solid var(--border); background: #fafafa;
+                         box-shadow: 0 14px 30px -14px rgba(17,24,39,0.35); display: block; }
+    .d-msg.d-bild .btn-primar { width: auto; padding: 0.5rem 0.95rem; font-size: 0.82rem;
+                                 box-shadow: 0 8px 18px -8px rgba(79,70,229,0.55); }
 
     /* Das Eingabefeld selbst: eine grosse weiche Karte, kein Kasten um alles. */
     .komposer { border: 1.5px solid var(--border); border-radius: 22px; background: #fff;
@@ -285,7 +294,7 @@
     .komposer.zieht { border-color: var(--indigo); background: rgba(79,70,229,0.04); }
     .komposer textarea { width: 100%; display: block; border: 0; background: transparent; resize: none;
                          font: inherit; font-size: 0.95rem; line-height: 1.55; color: var(--text);
-                         padding: 0.5rem 0.5rem 0.35rem; min-height: 60px; max-height: 150px; }
+                         padding: 0.4rem 0.5rem 0.3rem; min-height: 26px; max-height: 110px; }
     /* Der globale Fokus-Rahmen gilt hier nicht, den zeigt die Karte selbst. */
     .komposer textarea:focus { outline: none; box-shadow: none; border: 0; }
     .komposer textarea::placeholder { color: var(--grau-hell); }
@@ -699,13 +708,6 @@
               <input type="file" id="charBild" accept="image/*" style="display:none" />
               <p class="mini" id="charBildStatus" style="text-align:left;min-height:0;margin-top:0.4rem;"></p>
               <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
-            </div>
-
-            <!-- Aktueller Entwurf: eine Figur, die im Chat weiterentwickelt wird. -->
-            <div id="charEntwurf" hidden style="margin-top:0.85rem;text-align:center;">
-              <img id="charEntwurfBild" alt="Entwurf deiner Figur" style="display:block;width:180px;margin:0 auto;border-radius:16px;border:1.5px solid var(--border);background:#fafafa;box-shadow:0 14px 30px -14px rgba(17,24,39,0.35);" />
-              <p class="mini" style="margin-top:0.5rem;">Passt sie? Sag im Chat, was anders soll, oder übernimm sie.</p>
-              <button type="button" class="btn btn-primar" id="charUebernehmen" style="margin-top:0.2rem;">Passt, Ausdrücke erstellen</button>
             </div>
 
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
