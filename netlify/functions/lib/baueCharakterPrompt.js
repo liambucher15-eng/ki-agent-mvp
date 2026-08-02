@@ -12,11 +12,24 @@ const AUSDRUECKE = {
   verlegen: "verlegen, leicht errötet, schaut zur Seite, entschuldigendes Lächeln",
 };
 
+// Chroma-Key-Hintergrund (muss zu lib/freistellen.js passen): Gemini liefert
+// keinen echten Alphakanal, egal was man im Prompt verlangt (getestet — bei
+// "transparent" malt es ein Schachbrettmuster als Pixel). Stattdessen zeichnet
+// das Modell auf einer möglichst reinen, gleichmässigen Magenta-Fläche, die wir
+// nach der Generierung freistellen. Der genaue Farbton driftet vom Prompt ab
+// (gemessen z.B. (219,41,133) statt (255,0,255)), darum liest freistellen()
+// die tatsächliche Farbe aus dem Bild selbst statt sie fest anzunehmen —
+// wichtig ist hier nur, dass die Fläche EINHEITLICH ist, nicht der exakte Ton.
+const HINTERGRUND_ANWEISUNG =
+  "Hintergrund: eine EINZIGE, VOLLSTÄNDIG FLACHE Fläche in kräftigem Magenta/Pink, " +
+  "absolut gleichmässig, keine Farbverläufe, kein Schatten, keine Textur, kein Muster. " +
+  "Die Figur selbst darf kein Magenta/Pink enthalten.";
+
 function baueCharakterPrompt({ beschreibung, farbe } = {}) {
   const stil =
     `Ein einfaches, freundliches Maskottchen. ${beschreibung || "rundes, sympathisches Wesen"}. ` +
-    `Flacher, stilisierter Cartoon-Stil, klare Konturen, einfarbiger heller Hintergrund, ` +
-    `Hauptfarbe ${farbe || "#3f7d5a"}. Immer dieselbe Figur, gleiche Proportionen, zentriert.`;
+    `Flacher, stilisierter Cartoon-Stil, klare Konturen, ${HINTERGRUND_ANWEISUNG} ` +
+    `Hauptfarbe der Figur ${farbe || "#3f7d5a"}. Immer dieselbe Figur, gleiche Proportionen, zentriert.`;
 
   const prompts = {};
   const edits = {};
@@ -25,7 +38,7 @@ function baueCharakterPrompt({ beschreibung, farbe } = {}) {
     edits[zustand] =
       `Exakt dieselbe Figur, derselbe Stil, dieselben Farben und Proportionen — ` +
       `ändere NUR den Gesichtsausdruck/die Pose zu: ${ausdruck}. ` +
-      `Hintergrund unverändert einfarbig hell.`;
+      `${HINTERGRUND_ANWEISUNG}`;
   }
   // Klappmaul-Frame (Milestone 12): Mund-offen-Variante des Sprechen-Bilds.
   // Wird beim Sprechen mit dem (geschlossenen) Sprechen-Bild abgewechselt, damit
@@ -33,7 +46,7 @@ function baueCharakterPrompt({ beschreibung, farbe } = {}) {
   const mundOffenEdit =
     `Exakt dieselbe Figur, derselbe Stil, dieselben Farben, dieselbe Pose — ` +
     `öffne NUR den Mund weit, als würde die Figur gerade einen Vokal sprechen. ` +
-    `Sonst absolut identisch, Hintergrund unverändert einfarbig hell.`;
+    `Sonst absolut identisch. ${HINTERGRUND_ANWEISUNG}`;
   return { stil, prompts, edits, mundOffenEdit };
 }
 
@@ -56,4 +69,4 @@ function baueRichtungen({ beschreibung, farbe } = {}) {
   }));
 }
 
-module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN };
+module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN, HINTERGRUND_ANWEISUNG };

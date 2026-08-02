@@ -22,9 +22,22 @@
 
 const { generiereBild, bearbeiteBild, konfiguriert: geminiOk, zerlegeBase64 } = require("./lib/gemini");
 const { speichereBild, istEigeneBildUrl, konfiguriert: storageOk } = require("./lib/bilderSpeicher");
-const { baueCharakterPrompt, baueRichtungen } = require("./lib/baueCharakterPrompt");
+const { baueCharakterPrompt, baueRichtungen, HINTERGRUND_ANWEISUNG } = require("./lib/baueCharakterPrompt");
+const { freistellen } = require("./lib/freistellen");
 const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
 const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+
+// Freistellen ist ein Best-Effort-Schritt: schlägt es fehl (z.B. weil Gemini
+// den Hintergrund doch nicht einheitlich gezeichnet hat), liefern wir lieber
+// das Bild MIT Hintergrund aus, statt den ganzen Job scheitern zu lassen.
+function versucheFreistellen(base64, mimeType) {
+  try {
+    return { base64: freistellen(base64), mimeType: "image/png" };
+  } catch (e) {
+    console.warn("charakter-background: Freistellen übersprungen:", e.message);
+    return { base64, mimeType };
+  }
+}
 
 const ZUSTAENDE = ["idle", "denken", "sprechen", "verlegen"];
 const MAX_BESCHREIBUNG = 500;
@@ -98,14 +111,15 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
   }));
   if (so.ok) roh.sprechen_offen = { base64: so.bildBase64, mimeType: so.mimeType };
 
-  // 3) Alle erzeugten Bilder hochladen -> öffentliche URLs.
+  // 3) Freistellen (Chroma-Key-Magenta -> echte Transparenz) + hochladen.
   const bilder = {};
   for (const zustand of Object.keys(roh)) {
-    const endung = (roh[zustand].mimeType.split("/")[1] || "png").split(";")[0];
+    const frei = versucheFreistellen(roh[zustand].base64, roh[zustand].mimeType);
+    const endung = (frei.mimeType.split("/")[1] || "png").split(";")[0];
     bilder[zustand] = await speichereBild(
       "generiert/" + jobId + "/" + zustand + "." + endung,
-      roh[zustand].base64,
-      roh[zustand].mimeType
+      frei.base64,
+      frei.mimeType
     );
   }
   return { bilder, stil };
@@ -118,15 +132,16 @@ async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
     mimeType: quelle.mimeType,
     anweisung:
       anweisung +
-      " Behalte Stil, Farben und Proportionen der Figur bei; einfarbiger heller Hintergrund.",
+      " Behalte Stil, Farben und Proportionen der Figur bei. " + HINTERGRUND_ANWEISUNG,
   }));
   if (!r.ok) throw new Error(r.fehler);
-  const endung = (r.mimeType.split("/")[1] || "png").split(";")[0];
+  const frei = versucheFreistellen(r.bildBase64, r.mimeType);
+  const endung = (frei.mimeType.split("/")[1] || "png").split(";")[0];
   // Zeitstempel im Pfad: alte URL bleibt gültig (Verlauf/Zurück), kein Cache-Problem.
   const url = await speichereBild(
     "generiert/" + jobId + "/" + (zustand || "bild") + "-" + Date.now() + "." + endung,
-    r.bildBase64,
-    r.mimeType
+    frei.base64,
+    frei.mimeType
   );
   return { bild: url, zustand: zustand || null };
 }
@@ -141,8 +156,9 @@ async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild })
       : r.prompt;
     const g = await mitWiederholung(() => generiereBild({ prompt, referenzBild }), 2);
     if (!g.ok) return null;
-    const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
-    const url = await speichereBild("richtungen/" + jobId + "/" + r.key + "." + endung, g.bildBase64, g.mimeType);
+    const frei = versucheFreistellen(g.bildBase64, g.mimeType);
+    const endung = (frei.mimeType.split("/")[1] || "png").split(";")[0];
+    const url = await speichereBild("richtungen/" + jobId + "/" + r.key + "." + endung, frei.base64, frei.mimeType);
     return { key: r.key, label: r.label, bild: url };
   }));
   const ok = ergebnisse.filter(Boolean);
@@ -160,8 +176,9 @@ async function generiereEntwurf({ jobId, beschreibung, farbe, referenzBild }) {
     : stil;
   const g = await mitWiederholung(() => generiereBild({ prompt, referenzBild }), 2);
   if (!g.ok) throw new Error(g.fehler || "Konnte den Entwurf nicht erzeugen. Bitte nochmal versuchen.");
-  const endung = (g.mimeType.split("/")[1] || "png").split(";")[0];
-  const url = await speichereBild("entwurf/" + jobId + "/idle." + endung, g.bildBase64, g.mimeType);
+  const frei = versucheFreistellen(g.bildBase64, g.mimeType);
+  const endung = (frei.mimeType.split("/")[1] || "png").split(";")[0];
+  const url = await speichereBild("entwurf/" + jobId + "/idle." + endung, frei.base64, frei.mimeType);
   return { bild: url };
 }
 
@@ -183,11 +200,12 @@ async function generiereZustaende({ jobId, bild, beschreibung, farbe }) {
   }));
   if (so.ok) roh.sprechen_offen = { base64: so.bildBase64, mimeType: so.mimeType };
 
-  const bilder = { idle: bild }; // gewählte Richtung ist schon in unserem Bucket
+  const bilder = { idle: bild }; // gewählte Richtung ist schon freigestellt in unserem Bucket
   for (const zustand of Object.keys(roh)) {
-    const endung = (roh[zustand].mimeType.split("/")[1] || "png").split(";")[0];
+    const frei = versucheFreistellen(roh[zustand].base64, roh[zustand].mimeType);
+    const endung = (frei.mimeType.split("/")[1] || "png").split(";")[0];
     bilder[zustand] = await speichereBild(
-      "generiert/" + jobId + "/" + zustand + "." + endung, roh[zustand].base64, roh[zustand].mimeType);
+      "generiert/" + jobId + "/" + zustand + "." + endung, frei.base64, frei.mimeType);
   }
   return { bilder };
 }
