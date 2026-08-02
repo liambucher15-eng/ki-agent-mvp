@@ -265,7 +265,10 @@
     .char-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; margin-top: 0.8rem; }
     .char-zelle { border: 1.5px solid var(--border); border-radius: 13px; padding: 0.65rem; text-align: center; }
     .char-zelle .lbl { font-size: 0.84rem; font-weight: 700; margin: 0 0 0.5rem; color: #374151; }
-    .char-zelle img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 9px; background: #fafafa; }
+    /* KEIN background: die Bilder sind seit dem Freistellen (Chroma-Key) echt
+       transparent, eine Füllfarbe würde nur wieder einen Kasten hinter die
+       Figur malen. Die Karte selbst (.char-zelle) hat schon einen Rahmen. */
+    .char-zelle img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 9px; }
     .char-zelle textarea { font-size: 0.83rem; min-height: 60px; margin-top: 0.5rem; }
     .char-zelle button { width: 100%; font: inherit; font-size: 0.82rem; font-weight: 600; margin-top: 0.4rem;
       padding: 0.45rem 0.6rem; border: 1.5px solid var(--indigo); color: var(--indigo); border-radius: 999px; background: #fff; cursor: pointer; }

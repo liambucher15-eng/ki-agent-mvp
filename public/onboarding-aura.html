@@ -279,8 +279,10 @@
        separaten Kasten unter der Eingabe: sofort sichtbar, kein Scrollen nötig. */
     .d-msg.d-bild { background: transparent; padding: 0; max-width: 200px;
                     display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    /* KEIN background hier: die Bilder sind seit dem Freistellen (Chroma-Key)
+       echt transparent, eine Füllfarbe würde nur wieder einen Kasten um die
+       Figur malen. */
     .d-msg.d-bild img { width: 160px; height: 160px; object-fit: contain; border-radius: 16px;
-                         border: 1.5px solid var(--border); background: #fafafa;
                          box-shadow: 0 14px 30px -14px rgba(17,24,39,0.35); display: block; }
     .d-msg.d-bild .btn-primar { width: auto; padding: 0.5rem 0.95rem; font-size: 0.82rem;
                                  box-shadow: 0 8px 18px -8px rgba(79,70,229,0.55); }

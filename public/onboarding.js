@@ -794,7 +794,10 @@
         zelle.style.cssText = "border:1px solid #e5e7eb;border-radius:12px;padding:0.65rem;text-align:center;";
         const im = document.createElement("img");
         im.src = bilder[z] || bilder.idle; im.alt = z;
-        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;background:#fafafa;";
+        // Kein background: die Bilder sind seit dem Freistellen (Chroma-Key) echt
+        // transparent, eine Fuellfarbe wuerde nur wieder einen Kasten hinter die
+        // Figur malen. Die Zelle selbst (zelle) hat schon einen Rahmen.
+        im.style.cssText = "width:100%;aspect-ratio:1;object-fit:contain;border-radius:9px;";
         const lbl = document.createElement("div");
         lbl.textContent = CHAR_LABELS[z]; lbl.style.cssText = "font-size:0.82rem;font-weight:600;margin:0.45rem 0 0.5rem;color:#374151;";
         // Änderungs-Eingabe als mehrzeiliger Textbereich (Platz für 2 bis 3 Sätze),
