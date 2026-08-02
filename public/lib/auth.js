@@ -20,20 +20,26 @@ const Auth = (function () {
 
   // Clerk-Skript nachladen und initialisieren (einmalig, alle warten auf dasselbe
   // Versprechen). Ohne Key passiert nichts.
+  //
+  // WICHTIG: Der Publishable Key MUSS als data-clerk-publishable-key-Attribut am
+  // Script-Tag stehen (Clerks eigene Vorgabe für die Drop-in-CDN-Einbindung).
+  // Ohne dieses Attribut initialisiert sich das Skript nicht richtig: window.Clerk
+  // ist dann kein Konstruktor mehr, "new window.Clerk(key)" scheitert mit
+  // "Missing publishableKey". Nach dem Laden ist window.Clerk direkt die fertige
+  // Instanz, man ruft nur noch Clerk.load() auf (kein "new" mehr).
   function bereit() {
     if (!konfiguriert) return Promise.resolve(null);
     if (bereitP) return bereitP;
     bereitP = new Promise((fertig) => {
       function start() {
-        try {
-          clerk = new window.Clerk(key);
-          clerk.load({}).then(() => fertig(clerk)).catch(() => { clerk = null; fertig(null); });
-        } catch (e) { clerk = null; fertig(null); }
+        window.Clerk.load({}).then(() => { clerk = window.Clerk; fertig(clerk); })
+          .catch(() => { clerk = null; fertig(null); });
       }
-      if (window.Clerk) return start();
+      if (window.Clerk && typeof window.Clerk.load === "function") return start();
       const s = document.createElement("script");
       s.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js";
       s.crossOrigin = "anonymous";
+      s.setAttribute("data-clerk-publishable-key", key);
       s.onload = start;
       s.onerror = () => fertig(null);
       document.head.appendChild(s);
