@@ -5,4 +5,4 @@
 // Solange "pk_test_DEIN-KEY" drinsteht, läuft das Onboarding im Simulations-Modus
 // (kein echtes Login). Sobald ein echter Key drinsteht, übernimmt Clerk das Login
 // inklusive E-Mail-Bestätigung.
-window.CLERK_PUBLISHABLE_KEY = "pk_test_DEIN-KEY";
+window.CLERK_PUBLISHABLE_KEY = "pk_test_bG95YWwtbWFybW90LTYxLmNsZXJrLmFjY291bnRzLmRldiQ";
