@@ -61,6 +61,16 @@
     gsap.to(".w2", { x: -34, y: 26, scale: 1.2, duration: 11, ease: "sine.inOut", repeat: -1, yoyo: true });
     gsap.to(".w3", { x: 18, y: -26, scale: 1.1, duration: 8, ease: "sine.inOut", repeat: -1, yoyo: true });
 
+    // Ohne Animation direkt zu Schritt n springen (kein Fade/Slide). Für den
+    // Rückkehrer-Fall nach Clerks OAuth-Redirect: die ganze Seite ist gerade neu
+    // geladen worden, "aktuell" steht wieder auf 0 (Willkommen) — ein normaler,
+    // animierter zeige() würde den Nutzer erst sichtbar am Anfang vorbeiziehen.
+    function springeOhneAnimation(n) {
+      linksSchritte.forEach((el, i) => { el.hidden = i !== n; });
+      rechtsSchritte.forEach((el, i) => { el.hidden = i !== n; });
+      aktuell = n; updateProgress(); syncSzenenVideos(n);
+    }
+
     let istUebergang = false;
     function zeige(n, richtung = 1) {
       if (n < 0 || n >= ANZAHL || n === aktuell || istUebergang) return;
@@ -139,14 +149,19 @@
         });
         return;
       }
-      // Schon eingeloggt (z.B. Rückkehrer)? Dann direkt weiter können.
+      // Schon eingeloggt? Dann automatisch weiter, kein Klick nötig. Das greift
+      // auch direkt nach Clerks Google-Login: Google/OAuth läuft über einen
+      // vollen Seiten-Redirect (nicht per Popup), die Seite lädt danach komplett
+      // neu und "aktuell" steht wieder auf 0 (Willkommen) — darum hier nötigenfalls
+      // erst unanimiert zum Konto-Schritt springen, bevor es normal weitergeht.
       const schon = await window.Auth.nutzer();
       if (schon) {
         daten.email = schon.email || daten.email;
+        if (aktuell === 0) springeOhneAnimation(1);
+        sammle();
+        setTimeout(() => zeige(aktuell + 1, 1), 500);
         status.style.color = "var(--gruen)";
         status.textContent = "✓ Angemeldet als " + (schon.email || "dein Konto") + ".";
-        btn.hidden = false;
-        btn.addEventListener("click", () => { sammle(); zeige(aktuell + 1, 1); });
         return;
       }
       // Clerks Registrier-Fenster einhängen und auf die Anmeldung warten.
@@ -697,11 +712,16 @@
     }
 
     function zeigeEntwurf(url) {
+      const entwurf = document.getElementById("charEntwurf");
       document.getElementById("charEntwurfBild").src = url;
-      document.getElementById("charEntwurf").hidden = false;
+      entwurf.hidden = false;
       vorFigurImg.src = url; vorFigurImg.style.visibility = "visible";
       vorLabel.textContent = "Dein Entwurf";
       charBeispielWechseln(); // ab jetzt Beispiele für Änderungswünsche
+      // Der Entwurf steht unter dem Chatverlauf, bei einem langen Gespräch sonst
+      // ausserhalb des sichtbaren Bereichs, dann wirkt es als hätte sich nichts
+      // getan. Nach dem Zeichnen/Ändern direkt in Sicht scrollen.
+      setTimeout(() => { try { entwurf.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }, 60);
     }
 
     // "Passt": aus diesem einen Bild die Ausdrücke erzeugen.
