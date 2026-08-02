@@ -411,12 +411,13 @@
           <!-- 2 Konto anlegen (E-Mail + Passwort, Pflicht) -->
           <div class="schritt-links" data-step="1" hidden>
             <div class="grow"></div>
-            <h1>Erstelle dein Konto</h1>
-            <p class="sub">Damit kommst du jederzeit zurück und verwaltest deinen Agenten. Sobald deine E-Mail bestätigt ist, geht es automatisch weiter.</p>
-            <!-- Login/Registrierung läuft über Clerk. Clerk bringt die E-Mail-
-                 Bestätigung mit: Erst wenn der Code aus der Mail stimmt, ist der
-                 Nutzer angemeldet, und erst dann schaltet das Onboarding weiter. -->
-            <div id="clerkKonto" style="margin-top:0.5rem;display:flex;justify-content:center;"></div>
+            <!-- Kein eigener Titel: Clerks Formular bringt schon "Create your
+                 account" mit, ein zweiter Titel darüber wäre doppelt und
+                 nimmt dem Formular nur Platz weg. Login/Registrierung läuft
+                 über Clerk, das bringt auch die E-Mail-Bestätigung mit: Erst
+                 wenn der Code aus der Mail stimmt, ist der Nutzer angemeldet,
+                 und erst dann schaltet das Onboarding weiter. -->
+            <div id="clerkKonto" style="display:flex;justify-content:center;"></div>
             <!-- Fallback (Simulation): ohne Clerk-Key nur eine E-Mail zur Vorbefüllung. -->
             <div id="kontoSimulation" hidden>
               <label class="feld" for="email">E-Mail-Adresse</label>
