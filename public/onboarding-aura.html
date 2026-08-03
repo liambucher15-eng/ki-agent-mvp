@@ -297,8 +297,13 @@
     .komposer textarea { width: 100%; display: block; border: 0; background: transparent; resize: none;
                          font: inherit; font-size: 0.95rem; line-height: 1.55; color: var(--text);
                          padding: 0.4rem 0.5rem 0.3rem; min-height: 26px; max-height: 110px; }
-    /* Der globale Fokus-Rahmen gilt hier nicht, den zeigt die Karte selbst. */
-    .komposer textarea:focus { outline: none; box-shadow: none; border: 0; }
+    /* Der globale Fokus-Rahmen gilt hier nicht, den zeigt die Karte selbst.
+       Und: die globale Regel ".schritt-links textarea:focus" (Aufklapp-Felder
+       weiter vorne) würde das Feld beim blossen Reinklicken auf 150px
+       aufspringen lassen — hier soll es wie bei ChatGPT NUR mit dem
+       tatsächlichen Text wachsen (siehe charEingabeAnpassen in onboarding.js),
+       darum min-height hier wieder auf den Ausgangswert zurücksetzen. */
+    .komposer textarea:focus { outline: none; box-shadow: none; border: 0; min-height: 26px; }
     .komposer textarea::placeholder { color: var(--grau-hell); }
     .komposer-fuss { display: flex; align-items: center; gap: 0.55rem; padding: 0.1rem 0.15rem 0; }
     .k-hinweis { margin-left: auto; font-size: 0.75rem; color: var(--grau-hell); }
@@ -353,9 +358,14 @@
     .vorschau-label { color: #fff; font-weight: 600; font-size: 0.85rem; text-shadow: 0 1px 4px rgba(0,0,0,0.25); }
     @keyframes vor-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
+    /* Der Kopieren-Knopf stand vorher absolut ÜBER dem Code (überlappte den Text
+       bei langen/umgebrochenen Zeilen, siehe echter Einbett-Code mit Firma+
+       Farben). Jetzt eine eigene Kopfzeile darüber, nie eine Überlappung. */
     .code-box { background: #0f1424; color: #e5e7eb; border-radius: 12px; padding: 0.85rem 0.9rem; font-size: 0.78rem;
-                font-family: "Geist Mono","SF Mono",monospace; line-height: 1.5; word-break: break-all; position: relative; margin-top: 0.8rem; }
-    .code-box .copy { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.12); color: #fff;
+                font-family: "Geist Mono","SF Mono",monospace; line-height: 1.5; margin-top: 0.8rem; }
+    .code-box-kopf { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+    .code-box #embed-text { display: block; word-break: break-all; }
+    .code-box .copy { background: rgba(255,255,255,0.12); color: #fff; flex-shrink: 0;
                       border: 0; border-radius: 7px; padding: 0.25rem 0.6rem; font-size: 0.72rem; cursor: pointer; }
 
     /* RECHTS */
@@ -721,7 +731,7 @@
           <!-- 10 Ausdrücke: der Belohnungs-Moment, die gewählte Figur lebt. -->
           <div class="schritt-links" data-step="12" id="schrittAusdruecke" hidden>
             <div class="grow"></div>
-            <h1 class="klein">Dein Charakter<br>lebt</h1>
+            <h1 class="klein">Dein Charakter lebt</h1>
             <p class="sub">Vier Ausdrücke für den Chat: Ruhe, Denken, Sprechen und Verlegen. Prüfe sie, jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
             <p class="mini" id="charZustandStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="zustaendeBalken"><span></span></div>
@@ -737,7 +747,7 @@
           <!-- 11 Fertig -->
           <div class="schritt-links" data-step="13" hidden>
             <div class="grow"></div>
-            <h1>Dein Agent<br>ist bereit</h1>
+            <h1>Dein Agent ist bereit</h1>
             <p class="sub">Füge diese eine Zeile in deine Webseite ein und der Agent ist sofort live.</p>
             <!-- §8 Veröffentlichungs-Checkliste: zeigt vor dem Live-Gehen, was der
                  Agent schon kann und warnt bei fehlenden kritischen Infos. Blockiert
@@ -746,7 +756,10 @@
               <div id="startklarBanner" style="font-size:0.86rem;font-weight:600;margin-bottom:0.55rem;"></div>
               <div id="startklarListe" style="display:grid;grid-template-columns:1fr 1fr;gap:0.22rem 0.9rem;font-size:0.82rem;"></div>
             </div>
-            <div class="code-box" id="embed"><button class="copy" id="copy">Kopieren</button><span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span></div>
+            <div class="code-box" id="embed">
+              <div class="code-box-kopf"><button class="copy" id="copy">Kopieren</button></div>
+              <span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span>
+            </div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard →</a></p>
             <div class="grow"></div>
