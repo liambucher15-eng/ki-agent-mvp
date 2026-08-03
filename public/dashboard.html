@@ -580,6 +580,13 @@
             <div id="charLeer" class="leer" style="margin-top:0.7rem;" hidden>
               Noch kein Charakter — <a href="onboarding-aura.html">im Onboarding erstellen →</a>
             </div>
+            <div style="margin-top:0.7rem;">
+              <label class="feld" for="d-charBeschreibung">Beschreibung deiner Figur</label>
+              <!-- maxlength = MAX_BESCHREIBUNG in charakter-background.js (sonst 413) -->
+              <textarea class="klein" id="d-charBeschreibung" maxlength="500"
+                placeholder="z.B. Ein freundlicher grüner Fuchs mit rotem Schal und Kochmütze"></textarea>
+              <p class="mini" style="text-align:left;margin-top:0.3rem;">Dein Agent kennt diese Beschreibung und kann Besuchern sagen, wer er ist. Sie fliesst ausserdem in neue Bilder ein.</p>
+            </div>
             <div class="char-grid" id="charGrid"></div>
             <p class="mini-hinweis" id="charTipp" hidden>💡 Tipp: Je genauer deine Beschreibung, desto besser das Ergebnis.</p>
             <div class="status" id="charStatus" style="margin-top:0.3rem;"></div>
@@ -767,6 +774,10 @@
         binde("d-farbe1", () => firma.charakter.farbe, (v) => { firma.charakter.farbe = v; zeigeFarbVorschau(); }),
         binde("d-farbe2", () => firma.charakter.akzent, (v) => { firma.charakter.akzent = v; zeigeFarbVorschau(); }),
         binde("d-schrift", () => firma.charakter.schrift, (v) => { firma.charakter.schrift = v; zeigeSchriftVorschau(); }),
+        // Beschreibung der Figur: entsteht im Onboarding-Charakter-Chat, liegt in
+        // derselben firmen-Zeile und geht von hier aus in den System-Prompt des
+        // Agenten sowie als Kontext in jede Bild-Nachbesserung.
+        binde("d-charBeschreibung", () => firma.charakter.beschreibung, (v) => { firma.charakter.beschreibung = v.trim(); }),
         binde("e-email", () => firma.email, (v) => { firma.email = v.trim(); }),
       );
     }
@@ -972,7 +983,12 @@
           if (!anweisung) { inp.focus(); return; }
           btn.disabled = true; btn.textContent = "…"; im.style.opacity = 0.4;
           try {
-            const erg = await charJob({ aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z }, 45);
+            const erg = await charJob({
+              aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z,
+              // Die gepflegte Beschreibung als Kontext: so bleibt die Figur bei
+              // jeder Nachbesserung dieselbe, statt Schritt für Schritt abzudriften.
+              beschreibung: firma.charakter.beschreibung || "",
+            }, 45);
             firma.charakter.bilder[z] = erg.bild;
             markiere(); zeigeCharGrid(); zeigeHero();
           } catch (e) {

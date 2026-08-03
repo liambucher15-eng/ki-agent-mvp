@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null, charakterBeschreibung:"" };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -637,7 +637,10 @@
         }
         charVerlauf.push({ rolle: "ki", text: d.antwort || "" });
         charMsg("ki", d.antwort || "");
-        if (d.prompt) charPrompt = d.prompt;
+        // Der Prompt IST die Beschreibung der Figur. Er wandert mit in die
+        // gespeicherten Daten (charakter.beschreibung), damit das Dashboard ihn
+        // zeigen/bearbeiten kann und der Agent sein eigenes Aussehen kennt.
+        if (d.prompt) { charPrompt = d.prompt; daten.charakterBeschreibung = d.prompt; }
         // Prompt steht: Figur zeichnen (beim ersten Mal) bzw. anpassen.
         if (d.bereit && charPrompt) {
           if (charEntwurfBildUrl) await charEntwurfAnpassen(text);
@@ -698,7 +701,7 @@
       status.style.color = ""; status.textContent = "Änderung wird umgesetzt…";
       const warte = charMsg("ki", "passt die Figur an…", "ki tippt");
       try {
-        const erg = await charJob({ aktion: "bearbeiten", bild: charEntwurfBildUrl, anweisung }, 60);
+        const erg = await charJob({ aktion: "bearbeiten", bild: charEntwurfBildUrl, anweisung, beschreibung: charPrompt }, 60);
         charEntwurfBildUrl = erg.bild;
         warte.remove();
         zeigeEntwurf(erg.bild);
@@ -817,7 +820,8 @@
           if (!anweisung) { inp.focus(); return; }
           btn.disabled = true; btn.textContent = "…"; im.style.opacity = 0.4;
           try {
-            const erg = await charJob({ aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z }, 45);
+            const erg = await charJob({ aktion: "bearbeiten", bild: bilder[z], anweisung, zustand: z,
+              beschreibung: daten.charakterBeschreibung || "" }, 45);
             daten.charakterBilder[z] = erg.bild;
             zeigeCharGrid(); aktualisiereAgentVorschau();
           } catch (e) {
@@ -852,6 +856,7 @@
       try {
         const erg = await charJob({ aktion: "zustaende", beschreibung: beschreibung || "", bild: bildUrl }, 120);
         daten.charakterBilder = erg.bilder;
+        if (beschreibung) daten.charakterBeschreibung = beschreibung;
         status.style.color = "var(--gruen)";
         status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
         document.getElementById("gewaehlteVorschau").hidden = true;
@@ -1012,7 +1017,14 @@
       if (daten.oeffnungszeiten) fakten["Öffnungszeiten"] = daten.oeffnungszeiten;
       if (daten.adresse) fakten["Adresse"] = daten.adresse;
       if (daten.kontakt) fakten["Kontakt"] = daten.kontakt;
-      const charakter = { farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift };
+      // Der Charakter ist EIN Objekt: Aussehen (Farben/Schrift), Beschreibung
+      // und Bilder gehören zusammen und werden in derselben Zeile gespeichert.
+      // Die Beschreibung braucht sowohl das Dashboard (bearbeiten) als auch der
+      // Agent (er soll wissen, wie er aussieht) — deshalb wandert sie mit.
+      const charakter = {
+        farbe: daten.farbe1, akzent: daten.farbe2, schrift: daten.schrift,
+        beschreibung: daten.charakterBeschreibung || "",
+      };
       if (daten.charakterBilder && daten.charakterBilder.idle) {
         // Data-URLs zuerst in den Storage hochladen -> kleine öffentliche URLs.
         // Die firmen-Zeile hat ein Größenlimit; Base64 gehört nicht in die DB.

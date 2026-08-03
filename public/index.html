@@ -170,7 +170,7 @@
     <button id="mic" type="button" class="ki-mic" aria-label="Spracheingabe" title="Sprechen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>
     <button id="send" type="submit">Senden</button>
   </form>
-  <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="charakter.html">Eigenen Charakter erstellen →</a></p>
+  <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="dashboard.html">Charakter im Dashboard bearbeiten →</a></p>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="lib/supabase-config.js"></script>
@@ -305,43 +305,50 @@
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
 
-    // Beim Laden: Firma bestimmen (Onboarding-Entwurf hat Vorrang), Aussehen setzen, begrüssen.
+    function setzeAussehen(c) {
+      if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
+      if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
+      if (c.bilder) bilder = c.bilder;
+    }
+
+    // Beim Laden: Firma holen, Aussehen setzen, begrüssen.
+    //
+    // EINE Quelle: /firma liefert genau das, was auch jeder Besucher im Widget
+    // sieht — aus derselben Datenbankzeile, die Onboarding und Dashboard
+    // schreiben. Frueher las diese Seite zusaetzlich per Store.ladeFirma direkt
+    // aus der DB und zog sich obendrein Charakterbilder aus dem localStorage;
+    // dadurch sah der Besitzer hier etwas anderes als seine Besucher.
+    // Store.ladeFirma bleibt nur noch als Notnagel fuer den Simulationsmodus
+    // (kein Supabase konfiguriert -> die Function kennt die Firma nicht).
+    //
+    // Cache-Bust: Dieser Test-Chat soll Aenderungen aus dem Dashboard sofort
+    // zeigen, nicht erst nach Ablauf des HTTP-Caches.
     async function start() {
       let quelle = null;
-      const entwurf = window.Store ? await Store.ladeFirma(FIRMA_ID) : null;
+      try {
+        const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID) + "&t=" + Date.now());
+        if (res.ok) {
+          quelle = await res.json();
+          setzeAussehen(quelle.charakter || {});
+          if (quelle.persona) avatarName.textContent = quelle.persona;
+          else if (quelle.name) avatarName.textContent = quelle.name;
+        }
+      } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
 
-      if (entwurf) {
-        // Onboarding-Entwurf (im Browser gespeichert): komplette Config an den Chat mitsenden.
-        firmaConfig = entwurf;
-        quelle = entwurf;
-        const c = entwurf.charakter || {};
-        if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
-        if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
-        if (c.bilder) bilder = c.bilder;
-        avatarName.textContent = (entwurf.persona && entwurf.persona.name) || entwurf.name || "";
-      } else {
-        // Seed-Firma vom Backend (salbei/nordlicht).
-        try {
-          const res = await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(FIRMA_ID));
-          if (res.ok) {
-            const f = await res.json();
-            quelle = f;
-            const c = f.charakter || {};
-            if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }
-            if (c.akzent) { avatar.style.setProperty("--akzent", c.akzent); document.documentElement.style.setProperty("--akzent", c.akzent); }
-            if (c.bilder) bilder = c.bilder;
-            if (f.persona) avatarName.textContent = f.persona;
-          }
-        } catch (e) { /* Aussehen ist nicht kritisch — Chat funktioniert trotzdem */ }
-        // Override durch den eigenständigen Charakter-Ersteller (nur Seed-Firmen).
-        try {
-          const gespeichert = localStorage.getItem("charakter:" + FIRMA_ID);
-          if (gespeichert) bilder = JSON.parse(gespeichert);
-        } catch (e) {}
+      if (!quelle && window.Store) {
+        // Simulationsmodus: Die Firma liegt nur lokal im Browser. Dann muss die
+        // Config mitgesendet werden, sonst kennt der Server sie nicht.
+        const lokal = await Store.ladeFirma(FIRMA_ID);
+        if (lokal) {
+          quelle = lokal;
+          firmaConfig = lokal;
+          setzeAussehen(lokal.charakter || {});
+          avatarName.textContent = (lokal.persona && lokal.persona.name) || lokal.name || "";
+        }
       }
 
       const link = document.getElementById("erstellen-link");
-      if (link) link.href = "charakter.html?firma=" + encodeURIComponent(FIRMA_ID);
+      if (link) link.href = "dashboard.html?firma=" + encodeURIComponent(FIRMA_ID);
 
       setCharakter("freuen", 700);
       const gruss = "Hallo! Schön, dass du da bist. Wie kann ich dir helfen?";

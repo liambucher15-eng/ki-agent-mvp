@@ -125,14 +125,20 @@ async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
   return { bilder, stil };
 }
 
-async function bearbeiteEines({ jobId, bild, anweisung, zustand }) {
+// Einzelbild-Edit. Die Figur-Beschreibung (charakter.beschreibung aus der
+// firmen-Zeile) geht als Kontext mit, damit eine Nachbesserung im Dashboard die
+// Figur trifft und nicht bei jedem Edit ein Stueck weiter abdriftet.
+async function bearbeiteEines({ jobId, bild, anweisung, zustand, beschreibung }) {
   const quelle = await holeBildFuerEdit(bild);
+  const figur = String(beschreibung || "").replace(/\s+/g, " ").trim();
   const r = await mitWiederholung(() => bearbeiteBild({
     bild: quelle.base64,
     mimeType: quelle.mimeType,
     anweisung:
       anweisung +
-      " Behalte Stil, Farben und Proportionen der Figur bei. " + HINTERGRUND_ANWEISUNG,
+      " Behalte Stil, Farben und Proportionen der Figur bei." +
+      (figur ? " Die Figur ist: " + figur + "." : "") +
+      " " + HINTERGRUND_ANWEISUNG,
   }));
   if (!r.ok) throw new Error(r.fehler);
   const frei = versucheFreistellen(r.bildBase64, r.mimeType);
@@ -260,7 +266,7 @@ exports.handler = async (event) => {
     else if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe, referenzBild: bild });
     else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe });
     else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe });
-    else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand });
+    else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand, beschreibung });
 
     await setzeJob(jobId, { status: "done", ergebnis, fehler: null });
   } catch (e) {
