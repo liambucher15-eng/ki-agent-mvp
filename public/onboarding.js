@@ -1095,4 +1095,62 @@
     gsap.set([linksSchritte[0], rechtsSchritte[0]], { autoAlpha: 1, x: 0 });
     updateProgress();
     syncSzenenVideos(0);
-  
+
+    // ════════════════════════════════════════════════════════════════════
+    // DEV-SKIP (nur zum Testen während der Onboarding-Arbeit)
+    // Ein Knopf, unten rechts auf JEDEM Schritt sichtbar, der direkt zum
+    // nächsten Schritt springt — auch über die teuren/langsamen Schritte
+    // hinweg (Webseite scannen, Charakter zeichnen), die dafür mit
+    // Platzhalter-Daten befüllt werden. Nutzt nur bestehende Funktionen
+    // (uebernehmeScan, sammle, zeige), verändert sonst nichts.
+    //
+    // ENTFERNEN: diesen kompletten Block bis "ENDE DEV-SKIP" löschen.
+    // Keine andere Datei ist betroffen, nichts weiter anzupassen.
+    (function devSkipEinrichten() {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "⏭ Skip (Test)";
+      btn.title = "Nur zum Testen: überspringt den aktuellen Schritt mit Platzhalter-Daten";
+      btn.style.cssText =
+        "position:fixed;bottom:14px;right:14px;z-index:9999;padding:0.5rem 0.9rem;" +
+        "background:#111827;color:#fbbf24;border:1.5px dashed #fbbf24;border-radius:10px;" +
+        "font:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;opacity:0.82;" +
+        "box-shadow:0 6px 18px -6px rgba(0,0,0,0.4);";
+      btn.addEventListener("mouseenter", () => { btn.style.opacity = "1"; });
+      btn.addEventListener("mouseleave", () => { btn.style.opacity = "0.82"; });
+      document.body.appendChild(btn);
+
+      btn.addEventListener("click", () => {
+        if (aktuell >= ANZAHL - 1 || istUebergang) return;
+
+        // Webseite-Scan-Schritt: Platzhalter-"Ergebnis" statt echtem Scan.
+        const webseiteSchritt = [...linksSchritte].findIndex((el) => el.querySelector("#webseite"));
+        if (aktuell === webseiteSchritt) {
+          const webseiteFeld = document.getElementById("webseite");
+          if (webseiteFeld && !webseiteFeld.value.trim()) webseiteFeld.value = "https://beispiel-firma.ch";
+          uebernehmeScan({
+            name: daten.name || "Test-Firma", angebot: daten.angebot || "Ein Test-Angebot",
+            oeffnungszeiten: "Mo–Fr 9–18 Uhr", adresse: "Teststrasse 1, 8000 Zürich",
+            kontakt: "test@beispiel.ch", faq: [], leistungen: ["Testleistung"],
+            preise: "", team: "", besonderheiten: "",
+          });
+        }
+
+        // Charakter-Schritt: Platzhalter-Bilder statt echter Generierung.
+        if (aktuell === AGENT_STEP && !(daten.charakterBilder && daten.charakterBilder.idle)) {
+          const p = "https://placehold.co/512x512/4F46E5/fff?text=Test";
+          daten.charakterBilder = { idle: p, denken: p, sprechen: p, verlegen: p };
+          zeigeCharGrid(); // Raster sonst leer, weil das normalerweise erst die echte Generierung anstösst
+        }
+
+        // Identitäts-Schritt: Name ist sonst Pflicht (siehe data-next-Listener).
+        if (aktuell === IDENTITAET_STEP) {
+          const el = document.getElementById("agentName");
+          if (el && !el.value.trim()) { el.value = "Test"; daten.agentName = "Test"; }
+        }
+
+        sammle();
+        zeige(aktuell + 1, 1);
+      });
+    })();
+    // ENDE DEV-SKIP
