@@ -45,11 +45,17 @@
 
     /* Charakter-Bühne: die Figur steht FREI (kein harter Kreis) auf einem weichen,
        aus --farbe abgeleiteten Schein. Der Orb bringt seinen eigenen Kreis mit. */
-    #held { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    /* --figur steuert die Groesse der Figur an EINER Stelle: Bild, Notfall-
+       Initial und der Schein darunter haengen daran. Die Figur soll dominieren,
+       man soll das Gefuehl haben, jemandem gegenueberzustehen. Die vw/vh-Anteile
+       sind Deckel fuer schmale bzw. flache Fenster (Handy, kurze Viewports),
+       damit die Figur nie den Chat erdrueckt. */
+    #held { --figur: min(360px, 72vw, 44vh);
+            flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
             padding: 0.35rem 1rem 0.9rem; text-align: center; transition: padding 0.35s ease;
             background: radial-gradient(78% 58% at 50% 24%, color-mix(in srgb, var(--farbe) 17%, transparent), transparent 72%); }
     /* Sizing-Box ohne Kreis-Clip -> freigestellte Figur. */
-    #kopf-avatar { width: 152px; height: 152px; flex-shrink: 0; position: relative;
+    #kopf-avatar { width: var(--figur); height: var(--figur); flex-shrink: 0; position: relative;
                    transition: width 0.35s ease, height 0.35s ease; }
     #kopf-avatar svg, #kopf-avatar img, #initial { width: 100%; height: 100%; display: block; }
     #kopf-avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite;
@@ -60,7 +66,7 @@
     /* Notfall-Anzeige, falls (noch) kein Charakterbild lädt: Initial in Markenfarbe.
        Kein Orb — nur damit die Bühne nie leer/durchsichtig ist. */
     #initial { border-radius: 50%; display: none; align-items: center; justify-content: center;
-               font-weight: 700; font-size: 58px; color: #fff; background: var(--farbe);
+               font-weight: 700; font-size: calc(var(--figur) * 0.38); color: #fff; background: var(--farbe);
                box-shadow: 0 0 0 4px color-mix(in srgb, var(--farbe) 13%, #fff),
                            0 10px 22px -10px rgba(15,23,42,0.4); }
     #kopf-avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
@@ -75,8 +81,10 @@
     /* Vorschlags-Chips: nur im Begrüssungszustand (auf der Bühne). */
     #chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 0.5rem; }
     #chips:empty { display: none; }
-    /* Sobald ein Gespräch läuft: Bühne + Figur kompakter, Rolle/Chips weg. */
-    body.hat-verlauf #kopf-avatar { width: 96px; height: 96px; }
+    /* Sobald ein Gespräch läuft: Bühne etwas kompakter, Rolle/Chips weg. Die
+       Figur bleibt aber gross und praesent — sie schrumpfte hier frueher auf
+       Daumennagelgroesse, womit das Gegenueber im Gespraech verschwand. */
+    body.hat-verlauf #held { --figur: min(250px, 52vw, 30vh); }
     body.hat-verlauf #kopf-name { font-size: 0.92rem; }
     body.hat-verlauf #kopf-rolle, body.hat-verlauf #chips { display: none; }
     body.hat-verlauf #held { padding-bottom: 0.55rem; }

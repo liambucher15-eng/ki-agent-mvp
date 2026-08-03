@@ -30,10 +30,16 @@
     #stimme.an { background: var(--farbe); color: #fff; }
     #stimme svg { width: 18px; height: 18px; display: block; }
 
-    #buehne { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; text-align: center;
+    /* --figur steuert die Groesse der Figur an EINER Stelle (Bild + Notfall-
+       Initial). Die Figur soll dominieren: man soll das Gefuehl haben, jemandem
+       gegenueberzustehen, nicht ein Icon neben einem Textfeld zu sehen. Die
+       vw/vh-Deckel verhindern, dass sie auf schmalen oder flachen Fenstern den
+       Gespraechsverlauf verdraengt. */
+    #buehne { --figur: min(380px, 76vw, 46vh);
+              display: flex; flex-direction: column; align-items: center; gap: 0.7rem; text-align: center;
               padding: 1.5rem 1rem; border-radius: 18px; margin-bottom: 0.9rem;
               background: radial-gradient(125% 92% at 50% 0%, var(--tint), transparent 72%); }
-    #avatar { width: 140px; height: 140px;
+    #avatar { width: var(--figur); height: var(--figur);
               filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--farbe) 25%, transparent)); }
     #avatar svg, #avatar img { width: 100%; height: 100%; display: block; }
     #avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
@@ -41,7 +47,7 @@
     /* Notfall-Anzeige, falls (noch) kein Charakterbild lädt: Initial in Markenfarbe. */
     #initial { width: 100%; height: 100%; border-radius: 50%; display: none;
                align-items: center; justify-content: center;
-               font-weight: 700; font-size: 54px; color: #fff; background: var(--farbe); }
+               font-weight: 700; font-size: calc(var(--figur) * 0.38); color: #fff; background: var(--farbe); }
     #avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     #welle { display: none; gap: 3px; align-items: center; height: 15px; }
