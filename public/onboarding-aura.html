@@ -15,6 +15,11 @@
       --sans: "Inter", system-ui, sans-serif; --display: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Icons (Lucide, lib/icons.js): passen sich per Default der Schriftgroesse
+       ihres Umfelds an (wie ein Textzeichen), einzelne Stellen setzen davon
+       abweichend eine feste Groesse. currentColor -> erbt die Textfarbe. */
+    .ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex-shrink: 0; }
+    .status-ic { display: inline-flex; }
     /* hidden muss IMMER gewinnen: Elemente mit inline display (z.B. #scanBericht
        display:grid) würden sonst trotz [hidden] als leere Box sichtbar bleiben. */
     [hidden] { display: none !important; }
@@ -446,7 +451,7 @@
             </div>
             <p class="mini" id="loginStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="loginBtn" hidden>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" id="loginBtn" hidden>Weiter</button></div>
           </div>
 
           <!-- 3 Webseite scannen -->
@@ -459,7 +464,7 @@
             <div class="scan-loader" id="scanLoader"><span class="spinner"></span><span id="scanStatus">Wird gelesen</span></div>
             <div class="balken" id="scanBalken"><span></span></div>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" id="scanBtn">Webseite scannen</button></div>
           </div>
 
           <!-- 4a Überprüfen: Basis (Teil 1 von 2) -->
@@ -474,7 +479,7 @@
             <label class="feld" for="p-angebot">Was ihr anbietet</label>
             <textarea id="p-angebot" placeholder="Beschreibe in ein paar Sätzen, was ihr anbietet und was euch besonders macht. Je mehr du schreibst, desto besser kennt dein Agent euch."></textarea>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 4b Überprüfen: Details (Teil 2 von 2) -->
@@ -484,58 +489,58 @@
             <p class="sub">Öffnungszeiten, Kontakt und häufige Fragen. Klapp auf, was du prüfen oder ergänzen möchtest, alles optional.</p>
             <div class="pruef">
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Leistungen und Angebote</span><span class="pk-vorschau" id="v-leistungen">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Leistungen und Angebote</span><span class="pk-vorschau" id="v-leistungen">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
                 <div class="pk-body">
                   <p class="sub" style="margin:0 0 0.5rem;font-size:0.83rem;">Liste jede Leistung mit kurzer Beschreibung, eine pro Zeile. Je genauer, desto besser berät dein Agent.</p>
                   <textarea class="klein" id="p-leistungen" placeholder="z.B. Haarschnitt Herren, ca. 30 Min, inkl. Waschen&#10;Färben, ab 60 Min, je nach Haarlänge"></textarea>
-                  <button type="button" class="pk-passt">✓ Passt</button>
+                  <button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button>
                 </div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Preise</span><span class="pk-vorschau" id="v-preise">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea class="klein" id="p-preise" placeholder="Konkrete Preise oder Preisspannen, damit der Agent verlässlich Auskunft gibt."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Preise</span><span class="pk-vorschau" id="v-preise">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea class="klein" id="p-preise" placeholder="Konkrete Preise oder Preisspannen, damit der Agent verlässlich Auskunft gibt."></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Team und Personen</span><span class="pk-vorschau" id="v-team">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea class="klein" id="p-team" placeholder="Wer arbeitet bei euch? Namen, Rollen, Spezialgebiete."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Team und Personen</span><span class="pk-vorschau" id="v-team">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea class="klein" id="p-team" placeholder="Wer arbeitet bei euch? Namen, Rollen, Spezialgebiete."></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Was euch besonders macht</span><span class="pk-vorschau" id="v-besonderheiten">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea class="klein" id="p-besonderheiten" placeholder="Eure Stärken, Auszeichnungen, Philosophie, Alleinstellungsmerkmale."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Was euch besonders macht</span><span class="pk-vorschau" id="v-besonderheiten">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea class="klein" id="p-besonderheiten" placeholder="Eure Stärken, Auszeichnungen, Philosophie, Alleinstellungsmerkmale."></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Wichtige Regeln</span><span class="pk-vorschau" id="v-regeln">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea class="klein" id="p-regeln" placeholder="Storno, Zahlung, Reservierung, Lieferung, Rückgabe und Ähnliches."></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Wichtige Regeln</span><span class="pk-vorschau" id="v-regeln">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea class="klein" id="p-regeln" placeholder="Storno, Zahlung, Reservierung, Lieferung, Rückgabe und Ähnliches."></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea class="klein" id="p-oeffnung" placeholder="z.B. Di bis Sa, 11:30 bis 14:00"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Öffnungszeiten</span><span class="pk-vorschau" id="v-oeffnung">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea class="klein" id="p-oeffnung" placeholder="z.B. Di bis Sa, 11:30 bis 14:00"></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Standort &amp; Kontakt</span><span class="pk-vorschau" id="v-kontakt">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Standort &amp; Kontakt</span><span class="pk-vorschau" id="v-kontakt">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
                 <div class="pk-body">
                   <label class="feld" for="p-adresse" style="margin-top:0.2rem;">Adresse</label>
                   <textarea class="klein" id="p-adresse" placeholder="Strasse, Ort"></textarea>
                   <label class="feld" for="p-kontakt">Telefon / E-Mail</label>
                   <textarea class="klein" id="p-kontakt" placeholder="Kontaktdaten"></textarea>
-                  <button type="button" class="pk-passt">✓ Passt</button>
+                  <button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button>
                 </div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Häufige Fragen</span><span class="pk-vorschau" id="v-faq">noch keine Frage</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Häufige Fragen</span><span class="pk-vorschau" id="v-faq">noch keine Frage</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
                 <div class="pk-body">
                   <p class="sub" style="margin:0 0 0.5rem;font-size:0.83rem;">Definiere Fragen, die dein Agent sicher beantworten soll.</p>
                   <div class="faq-liste" id="faqListe"></div>
                   <button type="button" class="faq-hinzufuegen" id="faqHinzufuegen">+ Frage hinzufügen</button>
-                  <button type="button" class="pk-passt">✓ Passt</button>
+                  <button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button>
                 </div>
               </div>
               <div class="pk">
-                <button type="button" class="pk-kopf"><span class="pk-titel">Weitere Infos</span><span class="pk-vorschau" id="v-weiteres">nichts erkannt</span><span class="pk-check">✓</span><span class="pk-chevron">›</span></button>
-                <div class="pk-body"><textarea id="p-weiteres" placeholder="Angebote, Preise, Team, Besonderheiten" style="min-height:120px;"></textarea><button type="button" class="pk-passt">✓ Passt</button></div>
+                <button type="button" class="pk-kopf"><span class="pk-titel">Weitere Infos</span><span class="pk-vorschau" id="v-weiteres">nichts erkannt</span><span class="pk-check" data-icon="check"></span><span class="pk-chevron" data-icon="chevron-right"></span></button>
+                <div class="pk-body"><textarea id="p-weiteres" placeholder="Angebote, Preise, Team, Besonderheiten" style="min-height:120px;"></textarea><button type="button" class="pk-passt"><span data-icon="check"></span> Passt</button></div>
               </div>
             </div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Passt, weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Passt, weiter</button></div>
           </div>
 
           <!-- 5 Dokumente -->
@@ -548,7 +553,7 @@
             <div id="doc-liste"></div>
             <p class="mini"><a class="link" data-next>Diesen Schritt überspringen</a></p>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6a Identität: Name + Rolle (Teil 1 von 2) -->
@@ -570,7 +575,7 @@
               <option value="Assistent">Assistent</option>
             </select>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6b Identität: Anrede + Persönlichkeit (Teil 2 von 2) -->
@@ -594,7 +599,7 @@
             </div>
             <p class="pers-hinweis" id="persHinweis"></p>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 6 Antwortstil -->
@@ -630,7 +635,7 @@
                 </div>
               </div>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 8b Antwortstil: Grenzen & Übergabe (Teil 2 von 2) -->
@@ -644,7 +649,7 @@
               <label class="feld" for="agentGrenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
               <textarea class="klein" id="agentGrenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 7 Chat-Design -->
@@ -675,7 +680,7 @@
               <div class="font-vorschau" id="fontVorschau">Aa Dein Agent begrüsst die Besucher.</div>
             </div>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 9 Charakter erstellen: CHAT mit dem Designer. Idee erzählen -> die KI
@@ -719,13 +724,13 @@
               </div>
               <input type="file" id="charBild" accept="image/*" style="display:none" />
               <p class="mini" id="charBildStatus" style="text-align:left;min-height:0;margin-top:0.4rem;"></p>
-              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) →</a></p>
+              <p class="mini" id="charDirektZeile" hidden style="text-align:left;margin-top:0.1rem;"><a class="link" id="charDirekt">Bild direkt als Figur verwenden (ohne KI) <span data-icon="arrow-right"></span></a></p>
             </div>
 
             <p class="mini" id="charErstellenStatus" style="text-align:left;min-height:1.1em;"></p>
             <div class="balken" id="charBalken"><span></span></div>
 
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen →</a></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><a class="link" id="zuAusdruecken" hidden style="margin-left:auto;font-size:0.92rem;">Deine Ausdrücke ansehen <span data-icon="arrow-right"></span></a></div>
           </div>
 
           <!-- 10 Ausdrücke: der Belohnungs-Moment, die gewählte Figur lebt. -->
@@ -741,7 +746,7 @@
             </div>
             <div class="char-grid" id="charGrid" hidden></div>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" data-next>Weiter</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" data-next>Weiter</button></div>
           </div>
 
           <!-- 11 Fertig -->
@@ -761,9 +766,9 @@
               <span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span>
             </div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
-            <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard →</a></p>
+            <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard <span data-icon="arrow-right"></span></a></p>
             <div class="grow"></div>
-            <div class="nav"><button class="btn btn-zurueck" data-prev>←</button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
+            <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" id="fertig">Agent testen</button></div>
           </div>
 
         </div>
@@ -812,6 +817,7 @@
   <script src="lib/clerk-config.js"></script>
   <script src="lib/auth.js"></script>
   <script src="lib/store.js"></script>
+  <script src="lib/icons.js"></script>
   <script src="onboarding.js"></script>
 </body>
 </html>

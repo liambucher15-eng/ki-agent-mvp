@@ -161,7 +161,7 @@
         sammle();
         setTimeout(() => zeige(aktuell + 1, 1), 500);
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ Angemeldet als " + (schon.email || "dein Konto") + ".";
+        Icons.praefix(status, "check", "Angemeldet als " + (schon.email || "dein Konto") + ".");
         return;
       }
       // Clerks Registrier-Fenster einhängen und auf die Anmeldung warten.
@@ -171,7 +171,7 @@
         if (!u) return;
         daten.email = u.email || daten.email;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ E-Mail bestätigt, Konto steht.";
+        Icons.praefix(status, "check", "E-Mail bestätigt, Konto steht.");
         sammle(); zeige(aktuell + 1, 1);
       });
     })();
@@ -256,13 +256,13 @@
       for (const [titel, wert] of zeilen) {
         const z = document.createElement("div");
         const ok = !!wert;
-        z.textContent = (ok ? "✓ " : "✗ ") + titel + (ok ? "" : ", bitte ergänzen");
+        Icons.praefix(z, ok ? "check" : "x", titel + (ok ? "" : ", bitte ergänzen"));
         z.style.color = ok ? "var(--gruen)" : "#b45309";
         box.appendChild(z);
       }
       if (d.hinweis) {
         const h = document.createElement("div");
-        h.textContent = "⚠ " + d.hinweis;
+        Icons.praefix(h, "triangle-alert", d.hinweis);
         h.style.cssText = "grid-column:1/-1;color:#b45309;margin-top:0.3rem;";
         box.appendChild(h);
       }
@@ -362,10 +362,10 @@
       daten.dokumente.forEach((doc) => {
         const eintrag = document.createElement("div"); eintrag.className = "doc-eintrag";
         const nameEl = document.createElement("span"); nameEl.textContent = doc.titel;
-        const stat = document.createElement("span"); stat.className = "stat"; stat.textContent = "✓ gelesen";
+        const stat = document.createElement("span"); stat.className = "stat"; Icons.praefix(stat, "check", "gelesen");
         stat.style.color = "var(--gruen)";
         const weg = document.createElement("button"); weg.type = "button"; weg.className = "faq-entfernen";
-        weg.style.position = "static"; weg.title = "Entfernen"; weg.textContent = "×";
+        weg.style.position = "static"; weg.title = "Entfernen"; Icons.setzeIcon(weg, "trash-2");
         weg.addEventListener("click", () => {
           daten.dokumente = daten.dokumente.filter((d) => d.id !== doc.id);
           zeigeDokumente();
@@ -400,7 +400,7 @@
             typ: "dokument", titel: f.name, text, stand: new Date().toISOString().slice(0, 10) });
           zeigeDokumente(); // ersetzt auch die Fortschritts-Zeile
         } catch (err) {
-          stat.textContent = "✕ " + (err.message || "Fehler"); stat.style.color = "#dc2626";
+          Icons.praefix(stat, "x", err.message || "Fehler"); stat.style.color = "#dc2626";
         }
       }
       e.target.value = "";
@@ -858,7 +858,7 @@
         daten.charakterBilder = erg.bilder;
         if (beschreibung) daten.charakterBeschreibung = beschreibung;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.";
+        Icons.praefix(status, "check", "Fertig! Jeder Ausdruck lässt sich unten gezielt anpassen.");
         document.getElementById("gewaehlteVorschau").hidden = true;
         zeigeCharGrid(); aktualisiereAgentVorschau();
       } catch (e) {
@@ -885,7 +885,7 @@
       r.onload = () => {
         charReferenzBild = r.result;
         status.style.color = "var(--gruen)";
-        status.textContent = "✓ " + f.name + " übernommen, fliesst als Vorlage in deine Figur ein.";
+        Icons.praefix(status, "check", f.name + " übernommen, fliesst als Vorlage in deine Figur ein.");
         document.getElementById("charDirektZeile").hidden = false;
         document.getElementById("charPlus").classList.add("hat-bild");
       };
@@ -947,7 +947,7 @@
       liste.textContent = "";
       const zeile = (titel, ok, kritischFehlt) => {
         const z = document.createElement("div");
-        z.textContent = (ok ? "✓ " : (kritischFehlt ? "✗ " : "○ ")) + titel;
+        Icons.praefix(z, ok ? "check" : (kritischFehlt ? "x" : "circle"), titel);
         z.style.color = ok ? "var(--gruen)" : (kritischFehlt ? "#b45309" : "var(--grau)");
         liste.appendChild(z);
       };
@@ -955,12 +955,12 @@
       for (const [t, ok] of empfohlen) zeile(t, ok, false);
       const fehlendKritisch = kritisch.filter(([, ok]) => !ok).map(([t]) => t);
       if (fehlendKritisch.length) {
-        banner.textContent = "⚠ Bevor du live gehst, fehlen wichtige Infos: " +
+        Icons.praefix(banner, "triangle-alert", "Bevor du live gehst, fehlen wichtige Infos: " +
           fehlendKritisch.join(", ") + ". Der Agent funktioniert trotzdem, aber ergänze das " +
-          "am besten jetzt (zurück) oder später im Dashboard.";
+          "am besten jetzt (zurück) oder später im Dashboard.");
         banner.style.color = "#b45309";
       } else {
-        banner.textContent = "✓ Startklar, dein Agent kennt alles Wichtige.";
+        Icons.praefix(banner, "check", "Startklar, dein Agent kennt alles Wichtige.");
         banner.style.color = "var(--gruen)";
       }
       box.hidden = false;
@@ -1005,7 +1005,9 @@
         '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
     }
     document.getElementById("copy").addEventListener("click", (e) => {
-      navigator.clipboard.writeText(document.getElementById("embed-text").textContent); e.target.textContent = "Kopiert ✓";
+      navigator.clipboard.writeText(document.getElementById("embed-text").textContent);
+      e.target.textContent = ""; const kic = document.createElement("span"); Icons.setzeIcon(kic, "check");
+      e.target.append("Kopiert ", kic);
     });
     document.getElementById("fertig").addEventListener("click", async () => {
       sammle();
