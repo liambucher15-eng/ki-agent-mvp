@@ -42,6 +42,27 @@ window.ChatUI = (function () {
     document.head.appendChild(s);
   }
 
+  // Styles für die Markdown-Darstellung in Bot-Bubbles. Bewusst sparsam:
+  // enge Abstände, damit eine Antwort mit Liste nicht auseinanderfällt.
+  let mdStilDa = false;
+  function sorgeFuerMdStil() {
+    if (mdStilDa) return;
+    mdStilDa = true;
+    const s = document.createElement("style");
+    s.textContent =
+      ".msg.md{white-space:normal}" +
+      ".msg.md .md-absatz{margin:0 0 0.5em;white-space:pre-wrap}" +
+      ".msg.md .md-absatz:last-child{margin-bottom:0}" +
+      ".msg.md .md-kopf{display:block;margin:0 0 0.35em}" +
+      ".msg.md .md-liste{margin:0.15em 0 0.5em;padding-left:1.25em}" +
+      ".msg.md .md-liste:last-child{margin-bottom:0}" +
+      ".msg.md .md-liste li{margin:0.15em 0}" +
+      ".msg.md code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.92em;" +
+      "background:rgba(0,0,0,0.06);border-radius:4px;padding:0.05em 0.3em}" +
+      ".msg.md a{color:inherit;text-decoration:underline}";
+    document.head.appendChild(s);
+  }
+
   // Spracheingabe (Web Speech API). Aktiviert den Mikrofon-Knopf, wenn der Browser
   // es kann; sonst wird der Knopf ausgeblendet. Gesprochenes landet live im
   // Eingabefeld — abgeschickt wird bewusst NICHT automatisch (Nutzer prüft/ergänzt).
@@ -99,10 +120,20 @@ window.ChatUI = (function () {
     const messages = [];
     let vorschlaegeEl = null;
 
+    // Antworten des Agenten dürfen Markdown enthalten (fett, Listen, Links) und
+    // werden als DOM-Knoten gerendert. Besucher-Text und Meta-Hinweise bleiben
+    // bewusst reiner Text.
     function addBubble(text, who) {
       const div = document.createElement("div");
       div.className = "msg " + who;
-      div.textContent = text;
+      const md = window.Markdown;
+      if (md && /(^|\s)bot(\s|$)/.test(who) && !/meta/.test(who)) {
+        sorgeFuerMdStil();
+        div.className += " md";
+        div.appendChild(md.nachDom(text == null ? "" : String(text)));
+      } else {
+        div.textContent = text;
+      }
       cfg.chat.appendChild(div);
       cfg.chat.scrollTop = cfg.chat.scrollHeight;
       return div;

@@ -65,6 +65,12 @@ function baueSystemPrompt(firma) {
     listen: "Nutze kurze Listen, wenn sie Informationen verständlicher machen.",
     fliessend: "Schreibe bevorzugt als zusammenhängenden, natürlichen Text.",
   }[p.antwortFormat] || "Schreibe in kurzen, gut lesbaren Absätzen.";
+  // Das Chat-Fenster rendert nur eine kleine Markdown-Auswahl (lib/markdown.js).
+  // Diese Regel hält die Antworten in genau diesem Rahmen, damit nichts als
+  // Rohtext beim Besucher landet.
+  const markdownRegel =
+    "Formatiere nur mit **fett**, *kursiv*, Aufzählungen mit „- \" und Absätzen. " +
+    "Keine Tabellen, keine Codeblöcke, keine Überschriften.";
   const grenzenRegel = typeof p.grenzen === "string" && p.grenzen.trim()
     ? `\n- Beachte diese zusätzlichen Grenzen: ${p.grenzen.trim()}`
     : "";
@@ -78,7 +84,8 @@ So verhältst du dich:
 - ANTWORTE nur aus den Informationen unten.${kontaktRegel}
 - ${laengeRegel}
 - ${emojiRegel}
-- ${formatRegel}${grenzenRegel}
+- ${formatRegel}
+- ${markdownRegel}${grenzenRegel}
 
 WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
 dass du es nicht weisst, und biete an, das Team zu fragen.

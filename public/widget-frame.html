@@ -200,6 +200,7 @@
   <!-- Bewusst OHNE Supabase-Skripte (Milestone 0): Das Widget läuft im BESUCHER-
        Kontext und liest Firmendaten ausschliesslich über die gefilterte
        /firma-Function — keine privaten Felder, kein Direktzugriff auf die DB. -->
+  <script src="lib/markdown.js"></script>
   <script src="lib/chat-ui.js"></script>
   <script>
     const chat = document.getElementById("chat");
@@ -377,7 +378,8 @@
       seiteInfo: seiteInfo,
       chipsZiel: chips,
       onFrage: () => { document.body.classList.add("hat-verlauf"); },
-      onAntwort: (text) => { liesVor(text); },
+      // Vorgelesen wird die Klartext-Fassung, damit keine Sternchen mitgesprochen werden.
+      onAntwort: (text) => { liesVor(window.Markdown ? window.Markdown.alsText(text) : text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
 
