@@ -83,6 +83,68 @@ window.ChatUI = (function () {
     });
   }
 
+  // ── Platz-Regler für die Charakter-Figur ─────────────────────────────────
+  // Zielkonflikt: Der Gesprächsverlauf soll ohne Scrollen lesbar sein, die Figur
+  // soll aber gross und präsent bleiben, damit man das Gefühl hat, mit jemandem
+  // zu sprechen. Beides gleichzeitig geht nicht, sobald der Text länger wird.
+  //
+  // Lösung: Die Figur gibt Platz ab, aber nur genau dann, wenn der Verlauf ihn
+  // wirklich braucht (der Chat überläuft), in ruhigen Stufen und niemals unter
+  // die letzte Stufe. So bleibt sie immer eine Figur und wird nie zum Symbol
+  // neben einem Textfeld. Innerhalb eines Gesprächs wächst sie nie zurück —
+  // das verhindert ein Zappeln zwischen zwei Grössen.
+  //
+  // cfg: buehne (Element, das --figur trägt), chat (scrollender Verlauf),
+  //      stufen (CSS-Längen, grösste zuerst; die letzte ist die Untergrenze)
+  function figurRegler(cfg) {
+    const buehne = cfg.buehne, chat = cfg.chat;
+    const stufen = cfg.stufen || [];
+    // Etwas länger als die CSS-Übergangszeit (0.35s): erst wenn die Figur ihre
+    // neue Grösse wirklich erreicht hat, ist die Messung des Verlaufs gültig.
+    const UEBERGANG = 420;
+    let stufe = -1;
+
+    function setze(i) {
+      if (i <= stufe || i >= stufen.length || !buehne) return false;
+      stufe = i;
+      buehne.style.setProperty("--figur", stufen[i]);
+      return true;
+    }
+    // Massstab ist die NEUESTE Nachricht, nicht der ganze Verlauf. Ein Verlauf
+    // laeuft zwangslaeufig irgendwann ueber, sobald er Geschichte hat — daran
+    // die Figur zu messen hiesse, sie nach der ersten laengeren Antwort fuer
+    // immer auf die Untergrenze zu druecken. Gefragt ist nur: kann man das
+    // gerade Gesagte in einem Blick lesen? Zurueckscrollen in aeltere
+    // Nachrichten ist normal und kostet die Figur keinen Platz.
+    function neuesteNachrichtPasstNicht() {
+      const letzte = chat.lastElementChild;
+      if (!letzte) return false;
+      // Gegen den INHALTSBEREICH messen, nicht gegen clientHeight: dort zaehlt
+      // die Innenpolsterung mit, und der Regler haette zu frueh aufgehoert.
+      const stil = getComputedStyle(chat);
+      const platz = chat.clientHeight
+        - parseFloat(stil.paddingTop || 0) - parseFloat(stil.paddingBottom || 0);
+      return letzte.getBoundingClientRect().height > platz;
+    }
+    function pruefe() {
+      if (!buehne || !chat) return;
+      if (!neuesteNachrichtPasstNicht()) return;
+      if (setze(stufe + 1)) {
+        setTimeout(() => {
+          // Nach dem Verkleinern ans Ende scrollen: der Platz ist neu verteilt,
+          // die vorherige Scroll-Position zeigt sonst mitten in die Antwort.
+          chat.scrollTop = chat.scrollHeight;
+          pruefe();
+        }, UEBERGANG);
+      }
+    }
+    return {
+      pruefe,
+      // Für einen Neustart des Gesprächs: zurück auf die CSS-Grösse.
+      zuruecksetzen() { stufe = -1; if (buehne) buehne.style.removeProperty("--figur"); },
+    };
+  }
+
   // Startet die Chat-Steuerung und hängt den Absende-Handler ans Formular.
   // cfg:
   //   chat, form, input, send   – DOM-Elemente
@@ -94,6 +156,7 @@ window.ChatUI = (function () {
   //   chipsZiel?  Element         – wohin die Vorschlags-Chips (Standard: chat)
   //   onFrage?(text)              – Besucher hat gefragt (für die Charakter-Bühne)
   //   onAntwort?(text, unsicher)  – Agent hat geantwortet (Bühne/Stimme steuern)
+  //   nachNachricht?()            – nach JEDER Bubble (Platz-Regler, s. figurRegler)
   // Rückgabe: { addBubble, messages, zeigeVorschlaege }
   function starten(cfg) {
     const messages = [];
@@ -105,6 +168,7 @@ window.ChatUI = (function () {
       div.textContent = text;
       cfg.chat.appendChild(div);
       cfg.chat.scrollTop = cfg.chat.scrollHeight;
+      if (cfg.nachNachricht) cfg.nachNachricht();
       return div;
     }
     function tipptAnzeigen() {
@@ -188,5 +252,5 @@ window.ChatUI = (function () {
     return { addBubble, messages, zeigeVorschlaege };
   }
 
-  return { istUnsicher, starten, vorschlaegeAus, spracheAn };
+  return { istUnsicher, starten, vorschlaegeAus, spracheAn, figurRegler };
 })();

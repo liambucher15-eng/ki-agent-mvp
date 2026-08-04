@@ -13,15 +13,23 @@
       --farbe-dunkel: color-mix(in srgb, var(--farbe) 82%, #000);
       --tint: color-mix(in srgb, var(--farbe) 7%, #ffffff);
     }
+    /* Feste Bildschirmhöhe statt wachsender Seite: Kopf, Figur, Verlauf und
+       Eingabe sind IMMER gleichzeitig sichtbar, gescrollt wird nur innerhalb des
+       Verlaufs. Vorher wuchs die Seite mit und das Eingabefeld lag unter der
+       Falz — man landete im Chat und sah nicht, wo man tippt. */
+    html { height: 100%; overflow: hidden; }
+    /* border-box ist hier Pflicht: mit content-box kaeme die Polsterung ZUSAETZLICH
+       zu den 100dvh und die Seite scrollte doch wieder. */
     body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased;
-           max-width: 620px; margin: 0 auto; padding: 1.5rem 1rem 2rem; color: #0f172a; min-height: 100vh;
+           max-width: 620px; margin: 0 auto; padding: 1rem 1rem 0.6rem; color: #0f172a;
+           box-sizing: border-box; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
            background:
              radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--farbe) 8%, transparent), transparent 55%),
              linear-gradient(180deg, color-mix(in srgb, var(--farbe) 4%, #fff), #f7f8fa); }
     h1 { font-size: 1.15rem; color: #475569; text-align: center; font-weight: 650; letter-spacing: 0.01em; }
 
     /* --- Charakter-Bühne (gleiche Erfahrung wie im eingebetteten Widget) --- */
-    #kopfleiste { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; }
+    #kopfleiste { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-shrink: 0; }
     #kopfleiste .name { font-weight: 650; font-size: 1rem; }
     #kopfleiste .status { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 0.32rem; }
     #kopfleiste .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
@@ -35,9 +43,13 @@
        gegenueberzustehen, nicht ein Icon neben einem Textfeld zu sehen. Die
        vw/vh-Deckel verhindern, dass sie auf schmalen oder flachen Fenstern den
        Gespraechsverlauf verdraengt. */
-    #buehne { --figur: min(380px, 76vw, 46vh);
-              display: flex; flex-direction: column; align-items: center; gap: 0.7rem; text-align: center;
-              padding: 1.5rem 1rem; border-radius: 18px; margin-bottom: 0.9rem;
+    /* 38vh statt mehr: Die Figur soll dominieren, aber der Verlauf muss von
+       Anfang an lesbar sein und nicht auf einen Streifen zusammengedrueckt
+       werden. Ab hier uebernimmt der Platz-Regler (lib/chat-ui.js). */
+    #buehne { --figur: min(380px, 68vw, 38vh);
+              flex-shrink: 0;
+              display: flex; flex-direction: column; align-items: center; gap: 0.55rem; text-align: center;
+              padding: 0.8rem 1rem 1rem; border-radius: 18px; margin-bottom: 0.6rem;
               background: radial-gradient(125% 92% at 50% 0%, var(--tint), transparent 72%); }
     #avatar { width: var(--figur); height: var(--figur);
               filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--farbe) 25%, transparent)); }
@@ -63,8 +75,27 @@
     #blase .tippt span { background: color-mix(in srgb, var(--farbe) 55%, #94a3b8); }
     #chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
     #chips:empty { display: none; }
+    /* Sobald das Gespräch läuft, verschwinden Bühnen-Sprechblase und Chips.
+       Grund: Die Antwort stand danach DOPPELT auf dem Schirm, einmal gross in
+       der Blase und einmal im Verlauf darunter. Bei einer langen Antwort war die
+       Blase groesser als die Figur und drueckte den Verlauf auf einen Streifen
+       zusammen. Ab jetzt ist der Verlauf der eine Ort zum Lesen, die Figur
+       behaelt ihren Platz. Das eingebettete Widget macht es genauso. */
+    body.hat-verlauf #blase, body.hat-verlauf #chips { display: none; }
+    /* Auf schmalen Schirmen brachen die Vorschlags-Chips auf drei bis vier
+       Zeilen um und frassen 162px, mehr als die halbe Figur. Eine einzige,
+       seitlich schiebbare Zeile kostet nur noch eine Zeilenhoehe, alle
+       Vorschlaege bleiben erreichbar. */
+    @media (max-width: 560px) {
+      #chips .ki-vorschlaege { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+                               scrollbar-width: none; -ms-overflow-style: none;
+                               padding-bottom: 2px; max-width: 100%; }
+      #chips .ki-vorschlaege::-webkit-scrollbar { display: none; }
+      #chips .ki-vorschlag { flex-shrink: 0; }
+    }
     #verlaufKopf { text-align: center; font-size: 0.72rem; color: #9aa3af; letter-spacing: 0.04em;
-                   text-transform: uppercase; margin: 0 0 0.4rem; }
+                   text-transform: uppercase; margin: 0 0 0.35rem; flex-shrink: 0; }
+    #fusszeile { text-align: center; margin: 0.45rem 0 0; font-size: 0.78rem; flex-shrink: 0; }
 
     /* ruhiges Atmen (Grundzustand "idle") */
     @keyframes atmen { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
@@ -98,7 +129,11 @@
     @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-12px); } }
 
     /* --- Chat --- */
-    #chat { border: 1px solid var(--linie); border-radius: 18px; padding: 1.1rem; height: 360px; overflow-y: auto;
+    /* Der Verlauf ist das EINZIGE, was scrollt, und nimmt den Platz, der nach
+       Kopf, Figur und Eingabe übrig bleibt. min-height:0 ist Pflicht, sonst
+       weigert sich ein Flex-Kind zu schrumpfen und drückt die Eingabe raus. */
+    #chat { border: 1px solid var(--linie); border-radius: 18px; padding: 1.1rem;
+            flex: 1 1 auto; min-height: 0; overflow-y: auto;
             display: flex; flex-direction: column; gap: 0.55rem; background: rgba(255,255,255,0.7);
             -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
             box-shadow: 0 10px 34px -18px rgba(15,23,42,0.35); }
@@ -113,7 +148,7 @@
     .bot  { align-self: flex-start; background: #fff; border: 1px solid var(--linie); border-bottom-left-radius: 5px;
             box-shadow: 0 4px 14px -10px rgba(15,23,42,0.4); }
     .meta { color: #94a3b8; font-style: italic; box-shadow: none; background: transparent; }
-    form { display: flex; gap: 0.5rem; margin-top: 0.85rem; align-items: center; }
+    form { display: flex; gap: 0.5rem; margin-top: 0.7rem; align-items: center; flex-shrink: 0; }
     input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
             background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
     input:focus { outline: none; border-color: var(--farbe);
@@ -176,7 +211,7 @@
     <button id="mic" type="button" class="ki-mic" aria-label="Spracheingabe" title="Sprechen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>
     <button id="send" type="submit">Senden</button>
   </form>
-  <p style="text-align:center; margin-top:0.6rem;"><a id="erstellen-link" href="dashboard.html">Charakter im Dashboard bearbeiten →</a></p>
+  <p id="fusszeile"><a id="erstellen-link" href="dashboard.html">Charakter im Dashboard bearbeiten →</a></p>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="lib/supabase-config.js"></script>
@@ -298,15 +333,30 @@
       } catch (e) { beendeSprechen(); }
     }
 
+    // Platz-Regler: Die Figur gibt in Stufen Platz ab, sobald der Verlauf ihn
+    // braucht, und bleibt dabei bis zuletzt eine erkennbare Figur (Untergrenze
+    // ist die letzte Stufe), damit das Gespraechsgefuehl nicht kippt.
+    const figur = ChatUI.figurRegler({
+      buehne: document.getElementById("buehne"),
+      chat,
+      stufen: [
+        "min(300px, 62vw, 36vh)",
+        "min(240px, 52vw, 30vh)",
+        "min(190px, 44vw, 24vh)",
+        "min(150px, 36vw, 19vh)",
+      ],
+    });
+
     // Gemeinsame Chat-Logik aus lib/chat-ui.js. Die Bühne (Sprechblase + Stimme)
     // wird über onFrage/onAntwort gesteuert; der Verlauf (#chat) füllt sich weiter.
     const ui = ChatUI.starten({
       chat, form, input, send,
       firmaId: FIRMA_ID,
+      nachNachricht: () => figur.pruefe(),
       avatar: setCharakter,
       holeFirmaConfig: () => firmaConfig,
       chipsZiel: chips,
-      onFrage: () => { zeigeDenken(); },
+      onFrage: () => { document.body.classList.add("hat-verlauf"); zeigeDenken(); },
       onAntwort: (text) => { setzeBlase(text); liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);

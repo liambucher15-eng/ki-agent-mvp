@@ -377,6 +377,20 @@
     // den avatar-Callback (denken/sprechen); onAntwort liest optional laut vor.
     // Chips erscheinen auf der Bühne; sobald der Besucher fragt, wird die Bühne
     // kompakt (hat-verlauf) und die Nachrichten erscheinen im Chatverlauf.
+    // Platz-Regler: Die Figur gibt in Stufen Platz ab, sobald der Verlauf ihn
+    // braucht, und bleibt dabei bis zuletzt eine erkennbare Figur (Untergrenze
+    // ist die letzte Stufe), damit das Gespraechsgefuehl nicht kippt.
+    const figur = ChatUI.figurRegler({
+      buehne: document.getElementById("held"),
+      chat,
+      stufen: [
+        "min(250px, 52vw, 30vh)",
+        "min(200px, 44vw, 25vh)",
+        "min(165px, 38vw, 21vh)",
+        "min(135px, 32vw, 17vh)",
+      ],
+    });
+
     const ui = ChatUI.starten({
       chat, form, input, send,
       firmaId: FIRMA_ID,
@@ -384,6 +398,7 @@
       tipptAn: addTipptAnzeige,
       seiteInfo: seiteInfo,
       chipsZiel: chips,
+      nachNachricht: () => figur.pruefe(),
       onFrage: () => { document.body.classList.add("hat-verlauf"); },
       onAntwort: (text) => { liesVor(text); },
     });
