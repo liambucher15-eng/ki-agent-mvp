@@ -29,7 +29,14 @@
     .status-ic { display: inline-flex; }
     /* Marken-Verlauf als Seitenhintergrund: die App liegt als abgerundete
        Karte darauf. Gleiche Farbreise wie der Onboarding-Glow. */
-    body { font-family: var(--sans); color: var(--text); min-height: 100dvh; padding: 1.6rem;
+    /* height statt min-height, overflow:hidden: die Seite selbst scrollt NIE.
+       Vorher konnte .app (min-height) hoeher werden als der Bildschirm — dann
+       scrollte die ganze Seite und die weisse Karte "verliess" den sichtbaren
+       Rahmen (der Verlaufs-Rand oben/unten war nur noch an den Scroll-Enden zu
+       sehen). Jetzt bleibt der Rahmen IMMER exakt bildschirmfuellend, nur der
+       Inhalt in .main scrollt bei Bedarf innerhalb der Karte (siehe .main unten). */
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--sans); color: var(--text); padding: 1.6rem;
            background: linear-gradient(140deg, #3730A3, var(--indigo) 26%, var(--violett) 52%, var(--coral) 80%, var(--orange));
            background-attachment: fixed; }
     body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -37,13 +44,15 @@
                   radial-gradient(40% 30% at 85% 85%, rgba(255,255,255,0.12), transparent 65%); }
 
     .app { position: relative; z-index: 1; display: grid; grid-template-columns: 236px 1fr;
-           max-width: 1280px; margin: 0 auto; min-height: calc(100dvh - 3.2rem);
+           max-width: 1280px; margin: 0 auto; height: calc(100dvh - 3.2rem);
            background: var(--flaeche); border-radius: 30px; overflow: clip;
            box-shadow: 0 45px 100px -35px rgba(17,24,39,0.55); }
 
     /* ---------- Sidebar ---------- */
+    /* eigener Scroll fuer den Notfall (sehr viele Agenten im Umschalter o.ae.) —
+       normalerweise passt der Inhalt und man sieht nichts davon. */
     .side { padding: 1.5rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem;
-            background: #fff; border-right: 1px solid var(--linie); }
+            background: #fff; border-right: 1px solid var(--linie); overflow-y: auto; }
     .logo { display: flex; align-items: center; gap: 0.6rem; font-family: var(--display);
             font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; padding: 0 0.5rem 0.3rem; }
     .logo-sub { color: var(--grau); font-size: 0.72rem; padding: 0 0.5rem 1.1rem; }
@@ -68,8 +77,6 @@
     .plan-box { border: 1.5px solid var(--linie); border-radius: 14px; padding: 0.7rem 0.85rem; }
     .pb-kopf { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.76rem; color: var(--grau); }
     .pb-kopf b { font-family: var(--display); font-size: 1rem; color: var(--text); }
-    .pb-btn { width: 100%; margin-top: 0.55rem; font: inherit; font-size: 0.8rem; font-weight: 700; color: #fff;
-              background: var(--indigo); border: 0; border-radius: 999px; padding: 0.45rem; cursor: pointer; }
     .pb-link { display: block; margin-top: 0.45rem; background: none; border: 0; color: var(--indigo);
                font-weight: 600; font-size: 0.78rem; cursor: pointer; padding: 0; }
     /* Nutzer-Chip ganz unten in der Sidebar (wie die Mockups) */
@@ -83,7 +90,10 @@
     .nutzer-side .nd span { font-size: 0.71rem; color: var(--grau); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* ---------- Hauptbereich ---------- */
-    .main { padding: 1.6rem 1.8rem 3rem; min-width: 0; }
+    /* Scrollt innerhalb der Karte, statt die Karte selbst wachsen zu lassen
+       (siehe .app oben — das ist die eigentliche Loesung des "Box verlaesst
+       den Rahmen"-Problems). */
+    .main { padding: 1.6rem 1.8rem 3rem; min-width: 0; overflow-y: auto; height: 100%; }
     .topbar { display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 1.3rem; flex-wrap: wrap; }
     .topbar h1 { font-family: var(--display); font-size: 1.45rem; font-weight: 800; letter-spacing: -0.02em; }
     .untertitel { color: var(--grau); font-size: 0.88rem; margin-top: 0.15rem; }
@@ -287,9 +297,15 @@
     /* Einstellungen */
     .konto-zeile { display: grid; grid-template-columns: 130px 1fr; gap: 0.8rem; align-items: center; padding: 0.5rem 0; }
     .konto-zeile .klabel { font-size: 0.84rem; font-weight: 600; }
+    /* Knopf frueher position:absolute oben rechts UEBER dem Code-Text — bei
+       einer langen Domain lief der Text unter den Knopf und beides ueberlappte
+       sich lesbar. Jetzt eigene Kopfzeile ueber dem Text (gleiches Muster wie
+       .code-box im Onboarding), keine Ueberlappung mehr moeglich. */
     .embed { background: #111827; color: #e5e7eb; font-family: ui-monospace, monospace; font-size: 0.8rem;
-             border-radius: 13px; padding: 0.9rem 1rem; word-break: break-all; line-height: 1.5; position: relative; }
-    .embed .kopieren { position: absolute; top: 0.55rem; right: 0.6rem; font: inherit; font-size: 0.74rem; font-weight: 600;
+             border-radius: 13px; padding: 0.9rem 1rem; line-height: 1.5; }
+    .embed-kopf { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+    .embed #embedText { display: block; word-break: break-all; }
+    .embed .kopieren { font: inherit; font-size: 0.74rem; font-weight: 600; flex-shrink: 0;
       background: rgba(255,255,255,0.12); color: #fff; border: 0; border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; }
 
     .ansicht { display: grid; gap: 1rem; }
@@ -298,7 +314,7 @@
 
     @media (max-width: 960px) {
       body { padding: 0.55rem; }
-      .app { grid-template-columns: 1fr; border-radius: 22px; min-height: calc(100dvh - 1.1rem); }
+      .app { grid-template-columns: 1fr; border-radius: 22px; height: calc(100dvh - 1.1rem); }
       /* min-width:0: sonst drückt die nowrap-Navigation die Grid-Spalte breit
          und die ganze Seite scrollt horizontal. */
       .side { flex-direction: column; padding-bottom: 0.7rem; min-width: 0; border-right: 0; border-bottom: 1px solid var(--linie); }
@@ -344,7 +360,6 @@
       </div>
       <div class="plan-box" id="planBox" hidden style="margin-top:0.7rem;">
         <div class="pb-kopf"><span>Dein Plan</span><b id="planName">—</b></div>
-        <button class="pb-btn" id="promoCheckout" hidden>Upgrade starten</button>
         <button class="pb-link" id="planAnzeigen" hidden>Plan anzeigen <span data-icon="arrow-right"></span></button>
       </div>
     </aside>
@@ -642,7 +657,10 @@
         <div class="karte">
           <div class="kopfzeile"><h2>Einbetten</h2></div>
           <p class="sub">Füge den folgenden Code in deine Webseite ein, um deinen Chat-Agenten zu aktivieren.</p>
-          <div class="embed" style="margin-top:0.7rem;"><button class="kopieren" id="embedKopieren">Kopieren</button><span id="embedText"></span></div>
+          <div class="embed" style="margin-top:0.7rem;">
+            <div class="embed-kopf"><button class="kopieren" id="embedKopieren">Kopieren</button></div>
+            <span id="embedText"></span>
+          </div>
           <p class="mini-hinweis">Platziere das Snippet direkt vor dem <code>&lt;/body&gt;</code>-Tag für beste Ergebnisse.</p>
         </div>
       </section>
@@ -1249,11 +1267,12 @@
       const abo = $("aboBadge");
       abo.className = badge.className; abo.textContent = badge.textContent;
       $("aboCheckout").hidden = aktiv;
-      // Plan-Box in der Sidebar (wie das Mockup: "Dein Plan … Plan anzeigen")
+      // Plan-Box in der Sidebar: es gibt nur EIN Angebot (verschiedene Laufzeiten,
+      // keine Stufen) — darum kein separater "Upgrade"-Knopf hier. "Plan anzeigen"
+      // fuehrt immer zu Einstellungen, dort steht der eigentliche Abo-Abschluss.
       $("planBox").hidden = false;
       $("planName").textContent = aktiv ? "Plus" : "Basis";
-      $("promoCheckout").hidden = aktiv;
-      $("planAnzeigen").hidden = !aktiv;
+      $("planAnzeigen").hidden = false;
     }
     $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
     $("agentBearbeiten").addEventListener("click", () => zeigeAnsicht("persona"));
@@ -1275,7 +1294,6 @@
       }
     }
     $("aboCheckout").addEventListener("click", (e) => starteCheckout(e.target));
-    $("promoCheckout").addEventListener("click", (e) => starteCheckout(e.target));
 
     function zeigeEmbed() {
       $("embedText").textContent = '<script src="' + location.origin + '/widget.js" data-firma="' + firma.id +
