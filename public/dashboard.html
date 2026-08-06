@@ -114,13 +114,82 @@
            background: rgba(79,70,229,0.1); color: var(--indigo); font-size: 0.72rem; font-weight: 800;
            margin-right: 0.45rem; vertical-align: -4px; }
 
-    /* Übersicht: Zeilen-Raster — Karten einer Zeile starten und enden auf derselben Linie */
-    .raster-ue { display: grid; grid-template-columns: 380px 1fr; gap: 1rem; align-items: stretch; }
-    .raster-ue > .karte { min-width: 0; }
+    /* Übersicht: 12-Spalten-Raster. Kacheln haben BEWUSST unterschiedliche
+       Groessen (Hero hoch, KPIs klein, Chart/Tabelle breit) — das gibt der
+       Seite eine Ordnung statt einer Reihe gleich grosser Kaesten. */
+    .raster-ue { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem;
+                 grid-auto-rows: minmax(0, auto); align-items: stretch; }
+    .raster-ue > * { min-width: 0; }
+    .sp4 { grid-column: span 4; } .sp5 { grid-column: span 5; }
+    .sp7 { grid-column: span 7; } .sp8 { grid-column: span 8; }
     .raster-ue > .voll { grid-column: 1 / -1; }
+    /* Sanftes, gestaffeltes Erscheinen beim Ansichtswechsel. */
+    @media (prefers-reduced-motion: no-preference) {
+      .raster-ue > * { animation: kachelRein 0.42s cubic-bezier(0.22,1,0.36,1) backwards; }
+      .raster-ue > *:nth-child(1) { animation-delay: 0.02s } .raster-ue > *:nth-child(2) { animation-delay: 0.05s }
+      .raster-ue > *:nth-child(3) { animation-delay: 0.08s } .raster-ue > *:nth-child(4) { animation-delay: 0.11s }
+      .raster-ue > *:nth-child(5) { animation-delay: 0.14s } .raster-ue > *:nth-child(6) { animation-delay: 0.17s }
+      .raster-ue > *:nth-child(7) { animation-delay: 0.20s } .raster-ue > *:nth-child(8) { animation-delay: 0.23s }
+      @keyframes kachelRein { from { opacity: 0; transform: translateY(10px); } }
+    }
 
-    /* Hero-Karte (dunkles Indigo) */
-    .hero { position: relative; overflow: hidden; color: #fff; border: 0;
+    /* --- KPI-Kachel: Icon-Chip, Label, grosse Zahl, Kontextzeile --- */
+    .kpi { display: flex; flex-direction: column; gap: 0.1rem; position: relative; }
+    .kpi-top { display: flex; align-items: center; margin-bottom: 0.55rem; }
+    .kpi-ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; }
+    .kpi-ic .ico { width: 17px; height: 17px; }
+    .ic-indigo { background: rgba(79,70,229,0.1); color: var(--indigo); }
+    .ic-violett { background: rgba(139,92,246,0.12); color: var(--violett); }
+    .ic-coral { background: rgba(251,113,133,0.13); color: var(--coral); }
+    .ic-orange { background: rgba(249,115,22,0.12); color: var(--orange); }
+    .kpi-go { margin-left: auto; width: 27px; height: 27px; border-radius: 50%; border: 1px solid var(--border);
+              background: #fff; color: var(--grau); display: grid; place-items: center; cursor: pointer;
+              transition: color 0.16s, border-color 0.16s, transform 0.16s; }
+    .kpi-go .ico { width: 13px; height: 13px; }
+    .kpi-go:hover { color: var(--indigo); border-color: var(--indigo); transform: translateX(1px); }
+    .kpi-label { color: var(--grau); font-size: 0.81rem; }
+    .kpi-wert { font-family: var(--display); font-size: 1.75rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+    .kpi-delta { font-size: 0.76rem; font-weight: 600; display: flex; align-items: center; gap: 0.28rem; margin-top: 0.15rem; }
+    .kpi-delta .ico { width: 12px; height: 12px; }
+    .kpi-delta.hoch { color: #15803d; } .kpi-delta.neutral { color: var(--grau-hell); } .kpi-delta.warn { color: var(--amber); }
+
+    /* --- Aktivitaets-Diagramm: 7 Balken aus ECHTEN Gespraechs-Zeitstempeln --- */
+    /* flex:1 statt fester Hoehe: die Karte ist so hoch wie ihre Nachbarin in
+       derselben Zeile — das Diagramm fuellt den Platz, statt eine Luecke zu lassen. */
+    .akt { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; align-items: end;
+           flex: 1; min-height: 150px; margin-top: 0.9rem; }
+    .akt-tag { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; height: 100%; justify-content: flex-end; }
+    .akt-saeule { width: 100%; max-width: 40px; border-radius: 8px 8px 4px 4px; background: #EEF0F4;
+                  position: relative; transition: filter 0.16s; min-height: 4px; }
+    .akt-saeule.hat { background: linear-gradient(180deg, var(--indigo-hell), var(--indigo)); }
+    .akt-saeule.heute { background: linear-gradient(180deg, var(--violett), var(--coral)); }
+    .akt-tag:hover .akt-saeule { filter: brightness(1.08); }
+    .akt-zahl { position: absolute; top: -1.35rem; left: 50%; transform: translateX(-50%);
+                font-size: 0.72rem; font-weight: 800; font-family: var(--display); color: var(--text); }
+    .akt-label { font-size: 0.72rem; color: var(--grau-hell); font-weight: 600; }
+    .akt-tag.heute-tag .akt-label { color: var(--text); }
+    .akt-leer { color: var(--grau-hell); font-size: 0.84rem; text-align: center; padding: 2.2rem 0; }
+
+    /* --- Startklar: grosser Ring links, kompakte Liste rechts --- */
+    .sk-oben { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.7rem; }
+    .sk-ring { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+    .sk-ring .zahl { position: absolute; inset: 0; display: grid; place-items: center;
+                     font-family: var(--display); font-weight: 800; font-size: 1.05rem; }
+    .sk-text b { font-family: var(--display); font-size: 0.95rem; display: block; }
+    .sk-text span { color: var(--grau); font-size: 0.82rem; line-height: 1.45; }
+
+    /* --- Karten-Fusszeile mit Link (wie in den Referenzen) --- */
+    .karte-fuss { margin-top: auto; padding-top: 0.85rem; border-top: 1px solid var(--linie);
+                  display: flex; align-items: center; }
+    .karte-fuss button, .karte-fuss a { margin-top: 0.85rem; margin-top: 0; font: inherit; font-size: 0.82rem;
+      font-weight: 600; color: var(--indigo); background: none; border: 0; cursor: pointer; padding: 0;
+      display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none; }
+    .karte-fuss .ico { width: 13px; height: 13px; transition: transform 0.16s; }
+    .karte-fuss button:hover .ico, .karte-fuss a:hover .ico { transform: translateX(3px); }
+
+    /* Hero-Karte (dunkles Indigo) — hoch: laeuft ueber beide KPI-Reihen. */
+    .hero { grid-column: span 4; grid-row: span 2;
+            position: relative; overflow: hidden; color: #fff; border: 0;
             display: flex; flex-direction: column;
             background: linear-gradient(155deg, #312E81, var(--indigo) 52%, var(--violett)); }
     .hero::after { content: ""; position: absolute; left: -40px; bottom: -60px; width: 190px; height: 190px;
@@ -143,15 +212,7 @@
     .hero .a1 { background: rgba(255,255,255,0.08); color: #fff; border: 1.5px solid rgba(255,255,255,0.45) !important; }
     .hero .a2 { background: var(--indigo-hell); color: #fff; box-shadow: 0 8px 18px -8px rgba(0,0,0,0.4); }
 
-    /* Statistik-Ringe: Zahl IM Kreis, Label darunter (wie die Mockups) */
-    .statzeile { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
-    .stat { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
-    .ringwrap { position: relative; width: 76px; height: 76px; }
-    .ringwrap .zahl { position: absolute; inset: 0; display: grid; place-items: center;
-                      font-family: var(--display); font-weight: 800; font-size: 1.02rem; }
-    .stat .l { color: var(--grau); font-size: 0.8rem; }
-
-    /* Startklar-Checkliste: Zeilen mit Haken-Kreisen + Banner unten */
+    /* Startklar-Checkliste: Zeilen mit Haken-Kreisen (Ring + Satz siehe .sk-*) */
     .check-reihe { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.1rem;
                    border-bottom: 1px solid var(--linie); font-size: 0.88rem; }
     .check-reihe:last-child { border-bottom: 0; }
@@ -161,10 +222,6 @@
     .check-ic.done { background: var(--gruen); color: #fff; }
     .check-ic.fehlt { background: rgba(180,83,9,0.14); color: var(--amber); }
     .check-ic.offen { background: #EEF0F4; color: var(--grau); }
-    .startklar-banner { margin-top: 0.8rem; border-radius: 11px; padding: 0.6rem 0.9rem;
-                        font-size: 0.85rem; font-weight: 600; text-align: center; }
-    .startklar-banner.ok { background: rgba(34,197,94,0.1); color: #15803d; }
-    .startklar-banner.warnung { background: rgba(180,83,9,0.1); color: var(--amber); }
 
     /* "Eingestellt im Onboarding": Icon-Zeilen mit Bearbeiten-Link */
     .einst-reihe { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0;
@@ -308,6 +365,14 @@
     .embed .kopieren { font: inherit; font-size: 0.74rem; font-weight: 600; flex-shrink: 0;
       background: rgba(255,255,255,0.12); color: #fff; border: 0; border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; }
 
+    /* Mittelgrosse Fenster: 12 Spalten sind zu eng fuer 4 KPIs nebeneinander —
+       Hero volle Breite, KPIs zu zweit, breite Kacheln volle Breite. */
+    @media (min-width: 961px) and (max-width: 1240px) {
+      .hero { grid-column: 1 / -1; grid-row: auto; }
+      .sp4:not(.hero) { grid-column: span 6; }
+      .sp5, .sp7, .sp8 { grid-column: 1 / -1; }
+    }
+
     .ansicht { display: grid; gap: 1rem; }
     .leer-gross { text-align: center; padding: 4rem 1rem; }
     .leer-gross h2 { font-family: var(--display); font-size: 1.4rem; margin-bottom: 0.5rem; }
@@ -322,7 +387,11 @@
       .nav-item { white-space: nowrap; }
       .side .grow, .plan-box, .nutzer-side, .logo-sub { display: none; }
       .main { padding: 1rem 1rem 4rem; }
-      .raster-ue, .design-raster, .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
+      .design-raster, .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
+      /* Uebersicht: alles untereinander, Hero verliert seine Doppelhoehe. */
+      .raster-ue { grid-template-columns: 1fr; }
+      .raster-ue > *, .hero { grid-column: 1 / -1; grid-row: auto; }
+      .akt { height: 130px; }
       .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gzeile { grid-template-columns: 1fr; gap: 0.15rem; }
       .gzeile.gkopf { display: none; }
@@ -410,23 +479,65 @@
               </div>
             </div>
           </div>
-          <div class="karte">
-            <div class="kopfzeile"><h2>Dein Agent in Zahlen</h2></div>
-            <div class="statzeile" id="statzeile"></div>
-          </div>
-          <div class="karte">
-            <div class="kopfzeile"><h2>Startklar-Check</h2><button class="mehr" data-geh="wissen">Ergänzen <span data-icon="arrow-right"></span></button></div>
+          <!-- KPI-Kacheln: 2x2 neben der hohen Hero-Karte -->
+          <article class="karte kpi sp4">
+            <div class="kpi-top"><span class="kpi-ic ic-indigo" data-icon="messages-square"></span>
+              <button class="kpi-go" data-geh="gespraeche" aria-label="Zu den Gesprächen"><span data-icon="arrow-right"></span></button></div>
+            <span class="kpi-label">Gespräche</span>
+            <b class="kpi-wert" id="kpiGespraeche">0</b>
+            <span class="kpi-delta neutral" id="kpiGespraecheSub">noch keine</span>
+          </article>
+          <article class="karte kpi sp4">
+            <div class="kpi-top"><span class="kpi-ic ic-coral" data-icon="inbox"></span>
+              <button class="kpi-go" data-geh="posteingang" aria-label="Zum Posteingang"><span data-icon="arrow-right"></span></button></div>
+            <span class="kpi-label">Kontaktanfragen</span>
+            <b class="kpi-wert" id="kpiLeads">0</b>
+            <span class="kpi-delta neutral" id="kpiLeadsSub">noch keine</span>
+          </article>
+          <article class="karte kpi sp4">
+            <div class="kpi-top"><span class="kpi-ic ic-violett" data-icon="book-open"></span>
+              <button class="kpi-go" data-geh="wissen" aria-label="Zum Wissen"><span data-icon="arrow-right"></span></button></div>
+            <span class="kpi-label">Wissensquellen</span>
+            <b class="kpi-wert" id="kpiWissen">0</b>
+            <span class="kpi-delta neutral" id="kpiWissenSub">nichts hinterlegt</span>
+          </article>
+          <article class="karte kpi sp4">
+            <div class="kpi-top"><span class="kpi-ic ic-orange" data-icon="message-circle"></span>
+              <button class="kpi-go" data-geh="wissen" aria-label="Zu den häufigen Fragen"><span data-icon="arrow-right"></span></button></div>
+            <span class="kpi-label">Häufige Fragen</span>
+            <b class="kpi-wert" id="kpiFaq">0</b>
+            <span class="kpi-delta neutral" id="kpiFaqSub">noch keine</span>
+          </article>
+
+          <!-- Aktivität der letzten 7 Tage (aus echten Gesprächs-Zeitstempeln) -->
+          <article class="karte sp7" style="display:flex;flex-direction:column;">
+            <div class="kopfzeile"><h2>Aktivität</h2>
+              <span class="mehr" style="cursor:default;color:var(--grau-hell);font-weight:600;">letzte 7 Tage</span></div>
+            <div class="akt" id="aktChart"></div>
+            <div class="karte-fuss"><button data-geh="gespraeche">Alle Gespräche ansehen <span data-icon="arrow-right"></span></button></div>
+          </article>
+
+          <article class="karte sp5" style="display:flex;flex-direction:column;">
+            <div class="kopfzeile"><h2>Startklar-Check</h2></div>
+            <div class="sk-oben">
+              <div class="sk-ring" id="skRing"></div>
+              <div class="sk-text"><b id="skTitel">—</b><span id="skSatz"></span></div>
+            </div>
             <div id="startklarListe"></div>
-            <div class="startklar-banner" id="startklarSatz"></div>
-          </div>
-          <div class="karte">
-            <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2><button class="mehr" data-geh="persona">Anpassen <span data-icon="arrow-right"></span></button></div>
-            <div id="einstellungsListe"></div>
-          </div>
-          <div class="karte voll">
-            <div class="kopfzeile"><h2>Letzte Gespräche</h2><button class="mehr" data-geh="gespraeche">Alle Gespräche ansehen <span data-icon="arrow-right"></span></button></div>
+            <div class="karte-fuss"><button data-geh="wissen">Fehlendes ergänzen <span data-icon="arrow-right"></span></button></div>
+          </article>
+
+          <article class="karte sp7" style="display:flex;flex-direction:column;">
+            <div class="kopfzeile"><h2>Letzte Gespräche</h2></div>
             <div id="uebersichtGespraeche"></div>
-          </div>
+            <div class="karte-fuss"><button data-geh="gespraeche">Alle ansehen <span data-icon="arrow-right"></span></button></div>
+          </article>
+
+          <article class="karte sp5" style="display:flex;flex-direction:column;">
+            <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2></div>
+            <div id="einstellungsListe"></div>
+            <div class="karte-fuss"><button data-geh="persona">Anpassen <span data-icon="arrow-right"></span></button></div>
+          </article>
         </div>
       </section>
 
@@ -1031,14 +1142,18 @@
     }
 
     // ---------- Posteingang + Gespräche (nur mit Supabase gefüllt) ----------
+    // Auch die Uebersicht braucht die Anfragen (KPI-Kachel), darum global.
+    let leadsDaten = [];
     async function ladeLeads() {
       const el = $("leadsListe");
-      el.textContent = ""; $("leadZahl").hidden = true; $("leadBadge").hidden = true;
-      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; return; }
+      el.textContent = ""; leadsDaten = []; $("leadZahl").hidden = true; $("leadBadge").hidden = true;
+      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; zeigeKpis(); return; }
       const { data, error } = await sb.from("kontaktanfragen").select("*")
         .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
-      if (error) { el.innerHTML = '<p class="leer">Konnte die Anfragen nicht laden.</p>'; return; }
-      zeigeLeadsListe(data || []);
+      if (error) { el.innerHTML = '<p class="leer">Konnte die Anfragen nicht laden.</p>'; zeigeKpis(); return; }
+      leadsDaten = data || [];
+      zeigeLeadsListe(leadsDaten);
+      zeigeKpis();
     }
     // Rendern getrennt vom Laden — als Tabelle (Kontakt | Zeitpunkt | Nachricht | Aktion).
     function zeigeLeadsListe(data) {
@@ -1091,13 +1206,16 @@
     async function ladeGespraeche() {
       const el = $("gespraecheListe");
       el.textContent = ""; gespraecheDaten = [];
-      if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; zeigeUebersichtGespraeche(); return; }
+      // uebersichtAuffrischen deckt Tabelle, KPI-Kachel UND Aktivitaets-Chart ab —
+      // die haengen alle an gespraecheDaten und werden asynchron nachgeladen.
+      const uebersichtAuffrischen = () => { zeigeUebersichtGespraeche(); zeigeKpis(); zeigeAktivitaet(); };
+      if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; uebersichtAuffrischen(); return; }
       const { data, error } = await sb.from("gespraeche").select("frage,antwort,erstellt")
         .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(30);
-      if (error || !data || !data.length) { el.innerHTML = '<p class="leer">Noch keine Gespräche.</p>'; zeigeUebersichtGespraeche(); return; }
+      if (error || !data || !data.length) { el.innerHTML = '<p class="leer">Noch keine Gespräche.</p>'; uebersichtAuffrischen(); return; }
       gespraecheDaten = data;
       el.appendChild(gespraechTabelle(data));
-      zeigeUebersichtGespraeche();
+      uebersichtAuffrischen();
     }
     // Gespräche als Tabelle (wie die Mockups): Frage | Antwort | Zeit
     function gespraechTabelle(liste) {
@@ -1142,15 +1260,82 @@
       svg.appendChild(mach(farbe, anteil.toFixed(1)));
       return svg;
     }
-    function statKachel(wert, label, prozent, farbe) {
-      const box = document.createElement("div"); box.className = "stat";
-      const wrap = document.createElement("div"); wrap.className = "ringwrap";
-      wrap.appendChild(donut(prozent, farbe));
-      const zahl = document.createElement("div"); zahl.className = "zahl"; zahl.textContent = wert;
-      wrap.appendChild(zahl);
-      const l = document.createElement("div"); l.className = "l"; l.textContent = label;
-      box.append(wrap, l);
-      return box;
+    // --- KPI-Kacheln ---------------------------------------------------------
+    // Fuellt Zahl UND Kontextzeile. Die Kontextzeile ist bewusst kein erfundener
+    // Prozent-Trend: sie sagt entweder etwas Zaehlbares (diese Woche, offen) oder
+    // was zu tun ist. Lieber nichts als eine Zahl, die niemand belegen kann.
+    function setzeKpi(id, wert, subText, klasse, icon) {
+      const w = $(id); if (w) w.textContent = String(wert);
+      const s = $(id + "Sub"); if (!s) return;
+      s.className = "kpi-delta " + (klasse || "neutral");
+      if (icon) Icons.praefix(s, icon, subText); else s.textContent = subText;
+    }
+    function zeigeKpis() {
+      // Gespraeche: wie viele davon in den letzten 7 Tagen?
+      const grenze = Date.now() - 7 * 24 * 3600 * 1000;
+      const frisch = gespraecheDaten.filter((g) => new Date(g.erstellt).getTime() >= grenze).length;
+      setzeKpi("kpiGespraeche", gespraecheDaten.length,
+        gespraecheDaten.length ? frisch + " in den letzten 7 Tagen" : "noch keine",
+        frisch ? "hoch" : "neutral", frisch ? "arrow-right" : null);
+
+      const offen = leadsDaten.filter((l) => !l.erledigt).length;
+      setzeKpi("kpiLeads", leadsDaten.length,
+        leadsDaten.length ? (offen ? offen + " noch offen" : "alle erledigt") : "noch keine",
+        leadsDaten.length ? (offen ? "warn" : "hoch") : "neutral",
+        leadsDaten.length ? (offen ? "triangle-alert" : "check") : null);
+
+      const quellen = firma.wissensquellen.filter((q) => (q.text || "").trim()).length;
+      setzeKpi("kpiWissen", quellen,
+        quellen ? "gepflegt" : "nichts hinterlegt",
+        quellen ? "hoch" : "warn", quellen ? "check" : "triangle-alert");
+
+      const faq = (firma.faq || []).length;
+      setzeKpi("kpiFaq", faq, faq ? "beantwortet der Agent direkt" : "noch keine",
+        faq ? "hoch" : "neutral", faq ? "check" : null);
+    }
+
+    // --- Aktivitaet: 7 Balken aus den echten Gespraechs-Zeitstempeln ----------
+    const WOCHENTAG = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+    function zeigeAktivitaet() {
+      const box = $("aktChart");
+      if (!box) return;
+      box.textContent = "";
+      // Sieben Tagesfaecher, heute ganz rechts.
+      const tage = [];
+      const heute = new Date(); heute.setHours(0, 0, 0, 0);
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(heute); d.setDate(heute.getDate() - i);
+        tage.push({ datum: d, anzahl: 0 });
+      }
+      gespraecheDaten.forEach((g) => {
+        const d = new Date(g.erstellt); d.setHours(0, 0, 0, 0);
+        const treffer = tage.find((t) => t.datum.getTime() === d.getTime());
+        if (treffer) treffer.anzahl++;
+      });
+      const max = Math.max(1, ...tage.map((t) => t.anzahl));
+      if (!gespraecheDaten.length) {
+        box.className = "akt-leer";
+        box.textContent = "Noch keine Gespräche. Sobald dein Agent live ist, siehst du hier die Aktivität pro Tag.";
+        return;
+      }
+      box.className = "akt";
+      tage.forEach((t, i) => {
+        const spalte = document.createElement("div");
+        spalte.className = "akt-tag" + (i === 6 ? " heute-tag" : "");
+        const saeule = document.createElement("div");
+        // min. 4px, damit auch ein leerer Tag als Grundlinie sichtbar bleibt.
+        saeule.className = "akt-saeule" + (t.anzahl ? (i === 6 ? " heute" : " hat") : "");
+        saeule.style.height = t.anzahl ? Math.max(12, Math.round(t.anzahl / max * 100)) + "%" : "4px";
+        saeule.title = t.anzahl + (t.anzahl === 1 ? " Gespräch" : " Gespräche");
+        if (t.anzahl) {
+          const z = document.createElement("span"); z.className = "akt-zahl"; z.textContent = t.anzahl;
+          saeule.appendChild(z);
+        }
+        const l = document.createElement("span"); l.className = "akt-label";
+        l.textContent = i === 6 ? "Heute" : WOCHENTAG[t.datum.getDay()];
+        spalte.append(saeule, l);
+        box.appendChild(spalte);
+      });
     }
 
     // Startklar-Check: gleiche Logik wie im Onboarding (§8), nur auf dem
@@ -1186,28 +1371,21 @@
       };
       kritisch.forEach(([t, ok]) => zeile(t, ok, true));
       empfohlen.forEach(([t, ok]) => zeile(t, ok, false));
-      const banner = $("startklarSatz");
-      const fehlend = kritisch.filter(([, ok]) => !ok);
-      if (fehlend.length) {
-        banner.className = "startklar-banner warnung";
-        banner.textContent = "Es fehlen noch wichtige Infos: " + fehlend.map(([t]) => t).join(", ") + ".";
-      } else {
-        banner.className = "startklar-banner ok";
-        banner.textContent = "";
-        const feier = document.createElement("span"); Icons.setzeIcon(feier, "party-popper");
-        banner.append("Alles Wichtige erledigt! Dein Agent ist startklar. ", feier);
-      }
-    }
-    function zeigeStats() {
-      const { kritisch, empfohlen } = startklarStatus();
+
+      // Ring + Satz oben: ein Blick genuegt, um den Stand zu sehen.
       const alle = [...kritisch, ...empfohlen];
-      const prozent = Math.round(alle.filter(([, ok]) => ok).length / alle.length * 100);
-      const z = $("statzeile");
-      z.textContent = "";
-      z.appendChild(statKachel(prozent + "%", "eingerichtet", prozent, "#4F46E5"));
-      z.appendChild(statKachel(String(firma.wissensquellen.length), "Wissensquellen", Math.min(100, firma.wissensquellen.length * 25), "#8B5CF6"));
-      z.appendChild(statKachel(String((firma.faq || []).length), "Häufige Fragen", Math.min(100, (firma.faq || []).length * 20), "#FB7185"));
-      z.appendChild(statKachel(String(gespraecheDaten.length), "Gespräche", Math.min(100, gespraecheDaten.length * 10), "#F97316"));
+      const erledigt = alle.filter(([, ok]) => ok).length;
+      const prozent = Math.round(erledigt / alle.length * 100);
+      const fehlend = kritisch.filter(([, ok]) => !ok);
+      const ring = $("skRing");
+      ring.textContent = "";
+      ring.appendChild(donut(prozent, fehlend.length ? "#b45309" : "#22C55E"));
+      const zahl = document.createElement("div"); zahl.className = "zahl"; zahl.textContent = prozent + "%";
+      ring.appendChild(zahl);
+      $("skTitel").textContent = erledigt + " von " + alle.length + " erledigt";
+      $("skSatz").textContent = fehlend.length
+        ? "Es fehlen noch wichtige Infos: " + fehlend.map(([t]) => t).join(", ") + "."
+        : "Alles Wichtige erledigt, dein Agent ist startklar.";
     }
     // "Eingestellt im Onboarding": Icon-Zeilen mit Bearbeiten-Link (wie die Mockups).
     function zeigeEinstellungsliste() {
@@ -1248,7 +1426,8 @@
       else $("heroInitial").textContent = (firma.persona.name || firma.name || "A").slice(0, 1).toUpperCase();
     }
     function zeigeUebersicht() {
-      zeigeHero(); zeigeStartklar(); zeigeStats(); zeigeEinstellungsliste(); zeigeUebersichtGespraeche();
+      zeigeHero(); zeigeStartklar(); zeigeKpis(); zeigeAktivitaet();
+      zeigeEinstellungsliste(); zeigeUebersichtGespraeche();
     }
 
     // ---------- Abo + Einbett-Code ----------
