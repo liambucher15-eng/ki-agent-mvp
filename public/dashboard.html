@@ -114,22 +114,23 @@
            background: rgba(79,70,229,0.1); color: var(--indigo); font-size: 0.72rem; font-weight: 800;
            margin-right: 0.45rem; vertical-align: -4px; }
 
-    /* Übersicht: 12-Spalten-Raster. Kacheln haben BEWUSST unterschiedliche
-       Groessen (Hero hoch, KPIs klein, Chart/Tabelle breit) — das gibt der
-       Seite eine Ordnung statt einer Reihe gleich grosser Kaesten. */
-    .raster-ue { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem;
-                 grid-auto-rows: minmax(0, auto); align-items: stretch; }
-    .raster-ue > * { min-width: 0; }
+    /* EIN Raster fuer ALLE Ansichten: 12 Spalten. Kacheln haben bewusst
+       unterschiedliche Groessen (Hero hoch, KPIs klein, Tabellen breit) — das
+       gibt jeder Seite eine Ordnung statt einer Reihe gleich grosser Kaesten.
+       Die Spann-Klassen (.sp4/.sp5/.sp7) gelten damit ueberall gleich. */
+    .ansicht { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem;
+               grid-auto-rows: minmax(0, auto); align-items: stretch; }
+    .ansicht > * { min-width: 0; }
     .sp4 { grid-column: span 4; } .sp5 { grid-column: span 5; }
     .sp7 { grid-column: span 7; } .sp8 { grid-column: span 8; }
-    .raster-ue > .voll { grid-column: 1 / -1; }
+    .ansicht > .voll { grid-column: 1 / -1; }
     /* Sanftes, gestaffeltes Erscheinen beim Ansichtswechsel. */
     @media (prefers-reduced-motion: no-preference) {
-      .raster-ue > * { animation: kachelRein 0.42s cubic-bezier(0.22,1,0.36,1) backwards; }
-      .raster-ue > *:nth-child(1) { animation-delay: 0.02s } .raster-ue > *:nth-child(2) { animation-delay: 0.05s }
-      .raster-ue > *:nth-child(3) { animation-delay: 0.08s } .raster-ue > *:nth-child(4) { animation-delay: 0.11s }
-      .raster-ue > *:nth-child(5) { animation-delay: 0.14s } .raster-ue > *:nth-child(6) { animation-delay: 0.17s }
-      .raster-ue > *:nth-child(7) { animation-delay: 0.20s } .raster-ue > *:nth-child(8) { animation-delay: 0.23s }
+      .ansicht > * { animation: kachelRein 0.42s cubic-bezier(0.22,1,0.36,1) backwards; }
+      .ansicht > *:nth-child(1) { animation-delay: 0.02s } .ansicht > *:nth-child(2) { animation-delay: 0.05s }
+      .ansicht > *:nth-child(3) { animation-delay: 0.08s } .ansicht > *:nth-child(4) { animation-delay: 0.11s }
+      .ansicht > *:nth-child(5) { animation-delay: 0.14s } .ansicht > *:nth-child(6) { animation-delay: 0.17s }
+      .ansicht > *:nth-child(7) { animation-delay: 0.20s } .ansicht > *:nth-child(8) { animation-delay: 0.23s }
       @keyframes kachelRein { from { opacity: 0; transform: translateY(10px); } }
     }
 
@@ -152,6 +153,12 @@
     .kpi-delta { font-size: 0.76rem; font-weight: 600; display: flex; align-items: center; gap: 0.28rem; margin-top: 0.15rem; }
     .kpi-delta .ico { width: 12px; height: 12px; }
     .kpi-delta.hoch { color: #15803d; } .kpi-delta.neutral { color: var(--grau-hell); } .kpi-delta.warn { color: var(--amber); }
+
+    /* Kennzahlen-Streifen ueber Tabellen (Posteingang, Gespraeche): eigenes
+       Unter-Raster, damit die Kacheln unabhaengig vom 12er-Raster gleich breit
+       sind, egal wie viele es sind. */
+    .kpi-streifen { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+    .kpi-streifen:empty { display: none; }
 
     /* --- Aktivitaets-Diagramm: 7 Balken aus ECHTEN Gespraechs-Zeitstempeln --- */
     /* flex:1 statt fester Hoehe: die Karte ist so hoch wie ihre Nachbarin in
@@ -332,8 +339,7 @@
     .laktion.fertig { color: var(--gruen); cursor: default; }
     .lfuss { color: var(--grau-hell); font-size: 0.78rem; padding-top: 0.6rem; }
 
-    /* Design & Charakter */
-    .design-raster { display: grid; grid-template-columns: 360px 1fr; gap: 1rem; align-items: start; }
+    /* Design & Charakter (Spaltenaufteilung kommt jetzt aus dem .ansicht-Raster) */
     .farbfeld { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.78rem; font-weight: 600; }
     .farbfeld .hex { font-weight: 600; font-size: 0.72rem; color: var(--grau); }
     /* Immer alle 4 Ausdrücke nebeneinander (auf Mobile 2×2) */
@@ -365,15 +371,14 @@
     .embed .kopieren { font: inherit; font-size: 0.74rem; font-weight: 600; flex-shrink: 0;
       background: rgba(255,255,255,0.12); color: #fff; border: 0; border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; }
 
-    /* Mittelgrosse Fenster: 12 Spalten sind zu eng fuer 4 KPIs nebeneinander —
-       Hero volle Breite, KPIs zu zweit, breite Kacheln volle Breite. */
+    /* Mittelgrosse Fenster: nur die VIER KPI-Kacheln nebeneinander werden zu
+       eng — Hero volle Breite, KPIs zu zweit. Die 5/7-Paare (Formular + Liste)
+       bleiben nebeneinander, dafuer reicht der Platz noch locker. */
     @media (min-width: 961px) and (max-width: 1240px) {
       .hero { grid-column: 1 / -1; grid-row: auto; }
       .sp4:not(.hero) { grid-column: span 6; }
-      .sp5, .sp7, .sp8 { grid-column: 1 / -1; }
     }
 
-    .ansicht { display: grid; gap: 1rem; }
     .leer-gross { text-align: center; padding: 4rem 1rem; }
     .leer-gross h2 { font-family: var(--display); font-size: 1.4rem; margin-bottom: 0.5rem; }
 
@@ -387,10 +392,10 @@
       .nav-item { white-space: nowrap; }
       .side .grow, .plan-box, .nutzer-side, .logo-sub { display: none; }
       .main { padding: 1rem 1rem 4rem; }
-      .design-raster, .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
-      /* Uebersicht: alles untereinander, Hero verliert seine Doppelhoehe. */
-      .raster-ue { grid-template-columns: 1fr; }
-      .raster-ue > *, .hero { grid-column: 1 / -1; grid-row: auto; }
+      .zweispalt, .dreispalt, .faq-eintrag, .konto-zeile, .stil-zeile { grid-template-columns: 1fr; }
+      /* Alle Ansichten: alles untereinander, Hero verliert seine Doppelhoehe. */
+      .ansicht { grid-template-columns: 1fr; }
+      .ansicht > *, .hero { grid-column: 1 / -1; grid-row: auto; }
       .akt { height: 130px; }
       .char-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gzeile { grid-template-columns: 1fr; gap: 0.15rem; }
@@ -466,104 +471,101 @@
 
       <!-- ===== Ansicht: Übersicht ===== -->
       <section class="ansicht" id="view-uebersicht" hidden>
-        <div class="raster-ue">
-          <div class="karte hero">
-            <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
-            <div class="inhalt">
-              <div class="agent" id="heroAgent">—</div>
-              <div><span class="rolle-pill" id="heroRolle">Assistent</span></div>
-              <div class="firma" id="heroFirma">—</div>
-              <div class="aktionen">
-                <a class="a1" id="heroChat" target="_blank"><span data-icon="message-circle"></span> Agent testen</a>
-                <button class="a2" data-geh="wissen"><span data-icon="book-open"></span> Wissen pflegen</button>
-              </div>
+        <div class="karte hero">
+          <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
+          <div class="inhalt">
+            <div class="agent" id="heroAgent">—</div>
+            <div><span class="rolle-pill" id="heroRolle">Assistent</span></div>
+            <div class="firma" id="heroFirma">—</div>
+            <div class="aktionen">
+              <a class="a1" id="heroChat" target="_blank"><span data-icon="message-circle"></span> Agent testen</a>
+              <button class="a2" data-geh="wissen"><span data-icon="book-open"></span> Wissen pflegen</button>
             </div>
           </div>
-          <!-- KPI-Kacheln: 2x2 neben der hohen Hero-Karte -->
-          <article class="karte kpi sp4">
-            <div class="kpi-top"><span class="kpi-ic ic-indigo" data-icon="messages-square"></span>
-              <button class="kpi-go" data-geh="gespraeche" aria-label="Zu den Gesprächen"><span data-icon="arrow-right"></span></button></div>
-            <span class="kpi-label">Gespräche</span>
-            <b class="kpi-wert" id="kpiGespraeche">0</b>
-            <span class="kpi-delta neutral" id="kpiGespraecheSub">noch keine</span>
-          </article>
-          <article class="karte kpi sp4">
-            <div class="kpi-top"><span class="kpi-ic ic-coral" data-icon="inbox"></span>
-              <button class="kpi-go" data-geh="posteingang" aria-label="Zum Posteingang"><span data-icon="arrow-right"></span></button></div>
-            <span class="kpi-label">Kontaktanfragen</span>
-            <b class="kpi-wert" id="kpiLeads">0</b>
-            <span class="kpi-delta neutral" id="kpiLeadsSub">noch keine</span>
-          </article>
-          <article class="karte kpi sp4">
-            <div class="kpi-top"><span class="kpi-ic ic-violett" data-icon="book-open"></span>
-              <button class="kpi-go" data-geh="wissen" aria-label="Zum Wissen"><span data-icon="arrow-right"></span></button></div>
-            <span class="kpi-label">Wissensquellen</span>
-            <b class="kpi-wert" id="kpiWissen">0</b>
-            <span class="kpi-delta neutral" id="kpiWissenSub">nichts hinterlegt</span>
-          </article>
-          <article class="karte kpi sp4">
-            <div class="kpi-top"><span class="kpi-ic ic-orange" data-icon="message-circle"></span>
-              <button class="kpi-go" data-geh="wissen" aria-label="Zu den häufigen Fragen"><span data-icon="arrow-right"></span></button></div>
-            <span class="kpi-label">Häufige Fragen</span>
-            <b class="kpi-wert" id="kpiFaq">0</b>
-            <span class="kpi-delta neutral" id="kpiFaqSub">noch keine</span>
-          </article>
-
-          <!-- Aktivität der letzten 7 Tage (aus echten Gesprächs-Zeitstempeln) -->
-          <article class="karte sp7" style="display:flex;flex-direction:column;">
-            <div class="kopfzeile"><h2>Aktivität</h2>
-              <span class="mehr" style="cursor:default;color:var(--grau-hell);font-weight:600;">letzte 7 Tage</span></div>
-            <div class="akt" id="aktChart"></div>
-            <div class="karte-fuss"><button data-geh="gespraeche">Alle Gespräche ansehen <span data-icon="arrow-right"></span></button></div>
-          </article>
-
-          <article class="karte sp5" style="display:flex;flex-direction:column;">
-            <div class="kopfzeile"><h2>Startklar-Check</h2></div>
-            <div class="sk-oben">
-              <div class="sk-ring" id="skRing"></div>
-              <div class="sk-text"><b id="skTitel">—</b><span id="skSatz"></span></div>
-            </div>
-            <div id="startklarListe"></div>
-            <div class="karte-fuss"><button data-geh="wissen">Fehlendes ergänzen <span data-icon="arrow-right"></span></button></div>
-          </article>
-
-          <article class="karte sp7" style="display:flex;flex-direction:column;">
-            <div class="kopfzeile"><h2>Letzte Gespräche</h2></div>
-            <div id="uebersichtGespraeche"></div>
-            <div class="karte-fuss"><button data-geh="gespraeche">Alle ansehen <span data-icon="arrow-right"></span></button></div>
-          </article>
-
-          <article class="karte sp5" style="display:flex;flex-direction:column;">
-            <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2></div>
-            <div id="einstellungsListe"></div>
-            <div class="karte-fuss"><button data-geh="persona">Anpassen <span data-icon="arrow-right"></span></button></div>
-          </article>
         </div>
+        <!-- KPI-Kacheln: 2x2 neben der hohen Hero-Karte -->
+        <article class="karte kpi sp4">
+          <div class="kpi-top"><span class="kpi-ic ic-indigo" data-icon="messages-square"></span>
+            <button class="kpi-go" data-geh="gespraeche" aria-label="Zu den Gesprächen"><span data-icon="arrow-right"></span></button></div>
+          <span class="kpi-label">Gespräche</span>
+          <b class="kpi-wert" id="kpiGespraeche">0</b>
+          <span class="kpi-delta neutral" id="kpiGespraecheSub">noch keine</span>
+        </article>
+        <article class="karte kpi sp4">
+          <div class="kpi-top"><span class="kpi-ic ic-coral" data-icon="inbox"></span>
+            <button class="kpi-go" data-geh="posteingang" aria-label="Zum Posteingang"><span data-icon="arrow-right"></span></button></div>
+          <span class="kpi-label">Kontaktanfragen</span>
+          <b class="kpi-wert" id="kpiLeads">0</b>
+          <span class="kpi-delta neutral" id="kpiLeadsSub">noch keine</span>
+        </article>
+        <article class="karte kpi sp4">
+          <div class="kpi-top"><span class="kpi-ic ic-violett" data-icon="book-open"></span>
+            <button class="kpi-go" data-geh="wissen" aria-label="Zum Wissen"><span data-icon="arrow-right"></span></button></div>
+          <span class="kpi-label">Wissensquellen</span>
+          <b class="kpi-wert" id="kpiWissen">0</b>
+          <span class="kpi-delta neutral" id="kpiWissenSub">nichts hinterlegt</span>
+        </article>
+        <article class="karte kpi sp4">
+          <div class="kpi-top"><span class="kpi-ic ic-orange" data-icon="message-circle"></span>
+            <button class="kpi-go" data-geh="wissen" aria-label="Zu den häufigen Fragen"><span data-icon="arrow-right"></span></button></div>
+          <span class="kpi-label">Häufige Fragen</span>
+          <b class="kpi-wert" id="kpiFaq">0</b>
+          <span class="kpi-delta neutral" id="kpiFaqSub">noch keine</span>
+        </article>
+
+        <!-- Aktivität der letzten 7 Tage (aus echten Gesprächs-Zeitstempeln) -->
+        <article class="karte sp7" style="display:flex;flex-direction:column;">
+          <div class="kopfzeile"><h2>Aktivität</h2>
+            <span class="mehr" style="cursor:default;color:var(--grau-hell);font-weight:600;">letzte 7 Tage</span></div>
+          <div class="akt" id="aktChart"></div>
+          <div class="karte-fuss"><button data-geh="gespraeche">Alle Gespräche ansehen <span data-icon="arrow-right"></span></button></div>
+        </article>
+
+        <article class="karte sp5" style="display:flex;flex-direction:column;">
+          <div class="kopfzeile"><h2>Startklar-Check</h2></div>
+          <div class="sk-oben">
+            <div class="sk-ring" id="skRing"></div>
+            <div class="sk-text"><b id="skTitel">—</b><span id="skSatz"></span></div>
+          </div>
+          <div id="startklarListe"></div>
+          <div class="karte-fuss"><button data-geh="wissen">Fehlendes ergänzen <span data-icon="arrow-right"></span></button></div>
+        </article>
+
+        <article class="karte sp7" style="display:flex;flex-direction:column;">
+          <div class="kopfzeile"><h2>Letzte Gespräche</h2></div>
+          <div id="uebersichtGespraeche"></div>
+          <div class="karte-fuss"><button data-geh="gespraeche">Alle ansehen <span data-icon="arrow-right"></span></button></div>
+        </article>
+
+        <article class="karte sp5" style="display:flex;flex-direction:column;">
+          <div class="kopfzeile"><h2>Eingestellt im Onboarding</h2></div>
+          <div id="einstellungsListe"></div>
+          <div class="karte-fuss"><button data-geh="persona">Anpassen <span data-icon="arrow-right"></span></button></div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Wissen ===== -->
       <section class="ansicht" id="view-wissen" hidden>
-        <div class="karte">
+        <article class="karte sp5">
           <div class="kopfzeile"><h2><span class="num">1</span>Firma</h2></div>
-          <div class="zweispalt">
-            <div><label class="feld" for="f-name">Firmenname</label><input type="text" id="f-name" /></div>
-            <div><label class="feld" for="f-webseite">Webseite</label><input type="url" id="f-webseite" placeholder="https://…" /></div>
+          <p class="sub">Die Eckdaten, auf die sich dein Agent bei Rückfragen stützt.</p>
+          <div style="margin-top:0.7rem;">
+            <label class="feld" for="f-name">Firmenname</label><input type="text" id="f-name" />
+            <label class="feld" for="f-webseite">Webseite</label><input type="url" id="f-webseite" placeholder="https://…" />
+            <label class="feld" for="f-oeffnung">Öffnungszeiten</label>
+            <input type="text" id="f-oeffnung" placeholder="z.B. Mo–Fr 9–18 Uhr" />
+            <label class="feld" for="f-adresse">Adresse</label><input type="text" id="f-adresse" />
+            <label class="feld" for="f-kontakt">Kontakt (Telefon / E-Mail)</label><input type="text" id="f-kontakt" />
           </div>
-          <label class="feld" for="f-oeffnung">Öffnungszeiten</label>
-          <input type="text" id="f-oeffnung" placeholder="z.B. Mo–Fr 9–18 Uhr" />
-          <div class="zweispalt">
-            <div><label class="feld" for="f-adresse">Adresse</label><input type="text" id="f-adresse" /></div>
-            <div><label class="feld" for="f-kontakt">Kontakt (Telefon / E-Mail)</label><input type="text" id="f-kontakt" /></div>
-          </div>
-        </div>
+        </article>
 
-        <div class="karte">
+        <article class="karte sp7">
           <div class="kopfzeile"><h2><span class="num">2</span>Häufige Fragen</h2><button class="mehr" id="faqNeu">+ Frage</button></div>
           <p class="sub">Fragen, die dein Agent besonders gut beantworten soll.</p>
           <div id="faqListe"></div>
-        </div>
+        </article>
 
-        <div class="karte">
+        <article class="karte sp7">
           <div class="kopfzeile"><h2><span class="num">3</span>Wissensquellen</h2><button class="mehr" id="quelleNeu">+ Eigene Notiz</button></div>
           <p class="sub">Jede Quelle kennt ihre Herkunft und ihren Stand. Was du löschst, weiss der Agent ab sofort nicht mehr.</p>
           <div id="quellenListe"></div>
@@ -578,9 +580,9 @@
             </label>
           </div>
           <div class="status" id="docStatus" style="margin-top:0.4rem;"></div>
-        </div>
+        </article>
 
-        <div class="karte">
+        <article class="karte sp5">
           <div class="kopfzeile"><h2><span class="num">4</span>Webseite neu scannen</h2></div>
           <p class="sub">Liest deine Webseite erneut und schlägt einen aktualisierten Wissens-Text vor — du entscheidest, ob er übernommen wird.</p>
           <div class="zeile" style="margin-top:0.7rem;">
@@ -597,33 +599,44 @@
               <button class="btn sek klein" id="verwerfen">Verwerfen</button>
             </div>
           </div>
-        </div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Persönlichkeit ===== -->
       <section class="ansicht" id="view-persona" hidden>
-        <div class="karte">
+        <article class="karte sp5">
           <div class="kopfzeile"><h2>Identität</h2></div>
-          <div class="dreispalt">
-            <div><label class="feld" for="a-name">Name des Agenten</label><input type="text" id="a-name" /></div>
-            <div><label class="feld" for="a-rolle">Rolle</label>
-              <select class="select" id="a-rolle">
-                <option value="Gastgeber">Gastgeber</option><option value="Gastgeberin">Gastgeberin</option>
-                <option value="Berater">Berater</option><option value="Beraterin">Beraterin</option>
-                <option value="Service-Team">Service-Team</option><option value="Concierge">Concierge</option>
-                <option value="Assistent">Assistent</option>
-              </select>
-            </div>
-            <div><label class="feld">Anrede</label>
-              <div class="pers" id="anredeListe">
-                <button type="button" class="pers-chip" data-anrede="du">Du (locker)</button>
-                <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
-              </div>
+          <p class="sub">Wer ist dein Agent und wie spricht er die Besucher an?</p>
+          <div style="margin-top:0.7rem;">
+            <label class="feld" for="a-name">Name des Agenten</label><input type="text" id="a-name" />
+            <label class="feld" for="a-rolle">Rolle</label>
+            <select class="select" id="a-rolle">
+              <option value="Gastgeber">Gastgeber</option><option value="Gastgeberin">Gastgeberin</option>
+              <option value="Berater">Berater</option><option value="Beraterin">Beraterin</option>
+              <option value="Service-Team">Service-Team</option><option value="Concierge">Concierge</option>
+              <option value="Assistent">Assistent</option>
+            </select>
+            <label class="feld">Anrede</label>
+            <div class="pers" id="anredeListe">
+              <button type="button" class="pers-chip" data-anrede="du">Du (locker)</button>
+              <button type="button" class="pers-chip" data-anrede="sie">Sie (höflich)</button>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div class="karte">
+        <article class="karte sp7">
+          <div class="kopfzeile"><h2>Grenzen &amp; Übergabe</h2></div>
+          <p class="sub">Was passiert, wenn dein Agent an seine Grenzen kommt.</p>
+          <div style="margin-top:0.7rem;">
+            <label class="feld" for="a-fallbackKontakt">Wenn dein Agent etwas nicht weiss</label>
+            <textarea class="klein" id="a-fallbackKontakt" placeholder="z.B. Ruf uns an unter 044 123 45 67 oder schreib an hallo@firma.ch"></textarea>
+            <p class="mini" style="text-align:left;margin-top:0.3rem;">Er sagt dann ehrlich, dass er es nicht sicher weiss, und verweist auf diesen Kontakt.</p>
+            <label class="feld" for="a-grenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
+            <textarea class="klein" id="a-grenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
+          </div>
+        </article>
+
+        <article class="karte voll">
           <div class="kopfzeile"><h2>Ton &amp; Antwortstil</h2></div>
           <div class="stil-zeile"><span class="stil-label">Persönlichkeit</span>
             <div class="pers" id="tonListe">
@@ -658,28 +671,12 @@
             </div>
           </div>
           <div class="vorschau-box"><b><span data-icon="eye"></span> Vorschau</b><span id="antwortVorschau"></span></div>
-        </div>
-
-        <div class="karte">
-          <div class="kopfzeile"><h2>Grenzen &amp; Übergabe</h2></div>
-          <div class="zweispalt">
-            <div>
-              <label class="feld" for="a-fallbackKontakt">Wenn dein Agent etwas nicht weiss</label>
-              <textarea class="klein" id="a-fallbackKontakt" placeholder="z.B. Ruf uns an unter 044 123 45 67 oder schreib an hallo@firma.ch"></textarea>
-              <p class="mini" style="text-align:left;margin-top:0.3rem;">Er sagt dann ehrlich, dass er es nicht sicher weiss, und verweist auf diesen Kontakt.</p>
-            </div>
-            <div>
-              <label class="feld" for="a-grenzen">Was soll dein Agent nicht tun? <span style="font-weight:400;color:var(--grau)">(optional)</span></label>
-              <textarea class="klein" id="a-grenzen" placeholder="z.B. keine verbindlichen Preise oder medizinischen Auskünfte geben"></textarea>
-            </div>
-          </div>
-        </div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Design & Charakter ===== -->
       <section class="ansicht" id="view-design" hidden>
-        <div class="design-raster">
-          <div class="karte">
+          <article class="karte sp5">
             <div class="kopfzeile"><h2>Farben &amp; Schrift</h2></div>
             <p class="sub">Lege Farben, Schrift und Design deines Chat-Widgets fest.</p>
             <div class="zeile" style="margin-top:0.9rem; align-items:flex-end;">
@@ -707,9 +704,9 @@
               <button type="button" class="pers-chip" data-layout="sidebar">Seitenleiste</button>
               <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
             </div>
-          </div>
+          </article>
 
-          <div class="karte">
+          <article class="karte sp7">
             <div class="kopfzeile"><h2>Dein Charakter</h2></div>
             <p class="sub">Die vier Ausdrücke deiner Figur im Chat. Jedes Bild lässt sich einzeln per Anweisung nachbessern.</p>
             <div id="charLeer" class="leer" style="margin-top:0.7rem;" hidden>
@@ -725,35 +722,37 @@
             <div class="char-grid" id="charGrid"></div>
             <p class="mini-hinweis" id="charTipp" hidden><span data-icon="lightbulb"></span> Tipp: Je genauer deine Beschreibung, desto besser das Ergebnis.</p>
             <div class="status" id="charStatus" style="margin-top:0.3rem;"></div>
-          </div>
-        </div>
-        <div class="karte info-banner">
+          </article>
+        <article class="karte info-banner voll">
           <span data-icon="info"></span>
           <span><b>Gut zu wissen:</b> Dein Agent spiegelt die Persönlichkeit deiner Marke wider — Farben, Schrift und Charakter erscheinen genau so im Chat-Widget auf deiner Webseite.</span>
-        </div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Posteingang ===== -->
       <section class="ansicht" id="view-posteingang" hidden>
-        <div class="karte">
+        <!-- Kennzahlen-Streifen, wird aus leadsDaten gefuellt (siehe zeigeLeadKpis) -->
+        <div class="kpi-streifen voll" id="leadKpis"></div>
+        <article class="karte voll">
           <div class="kopfzeile"><h2>Kontaktanfragen <span class="zahl-pill" id="leadZahl" hidden></span></h2></div>
           <p class="sub">Alle Anfragen, die dein KI-Chat-Agent erhalten hat.</p>
           <div id="leadsListe" style="margin-top:0.5rem;"></div>
-        </div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Gespräche ===== -->
       <section class="ansicht" id="view-gespraeche" hidden>
-        <div class="karte">
+        <div class="kpi-streifen voll" id="gespraechKpis"></div>
+        <article class="karte voll">
           <div class="kopfzeile"><h2>Letzte Gespräche</h2></div>
           <p class="sub">Was Besucher deinen Agenten gefragt haben.</p>
           <div id="gespraecheListe"></div>
-        </div>
+        </article>
       </section>
 
       <!-- ===== Ansicht: Einstellungen ===== -->
       <section class="ansicht" id="view-einstellungen" hidden>
-        <div class="karte">
+        <article class="karte sp5">
           <div class="kopfzeile"><h2>Konto</h2></div>
           <p class="sub">Deine Kontodaten und Abo-Übersicht.</p>
           <div class="konto-zeile" style="margin-top:0.6rem;"><label class="klabel" for="e-email">E-Mail</label><input type="email" id="e-email" /></div>
@@ -764,8 +763,8 @@
               <button class="btn klein" id="aboCheckout" hidden>Abo abschliessen</button>
             </div>
           </div>
-        </div>
-        <div class="karte">
+        </article>
+        <article class="karte sp7">
           <div class="kopfzeile"><h2>Einbetten</h2></div>
           <p class="sub">Füge den folgenden Code in deine Webseite ein, um deinen Chat-Agenten zu aktivieren.</p>
           <div class="embed" style="margin-top:0.7rem;">
@@ -773,7 +772,7 @@
             <span id="embedText"></span>
           </div>
           <p class="mini-hinweis">Platziere das Snippet direkt vor dem <code>&lt;/body&gt;</code>-Tag für beste Ergebnisse.</p>
-        </div>
+        </article>
       </section>
     </main>
   </div>
@@ -1147,13 +1146,13 @@
     async function ladeLeads() {
       const el = $("leadsListe");
       el.textContent = ""; leadsDaten = []; $("leadZahl").hidden = true; $("leadBadge").hidden = true;
-      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; zeigeKpis(); return; }
+      if (!sb) { el.innerHTML = '<p class="leer">Kontaktanfragen erscheinen hier, sobald dein Agent live ist.</p>'; zeigeKpis(); zeigeLeadKpis(); return; }
       const { data, error } = await sb.from("kontaktanfragen").select("*")
         .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(50);
-      if (error) { el.innerHTML = '<p class="leer">Konnte die Anfragen nicht laden.</p>'; zeigeKpis(); return; }
+      if (error) { el.innerHTML = '<p class="leer">Konnte die Anfragen nicht laden.</p>'; zeigeKpis(); zeigeLeadKpis(); return; }
       leadsDaten = data || [];
       zeigeLeadsListe(leadsDaten);
-      zeigeKpis();
+      zeigeKpis(); zeigeLeadKpis();
     }
     // Rendern getrennt vom Laden — als Tabelle (Kontakt | Zeitpunkt | Nachricht | Aktion).
     function zeigeLeadsListe(data) {
@@ -1208,7 +1207,9 @@
       el.textContent = ""; gespraecheDaten = [];
       // uebersichtAuffrischen deckt Tabelle, KPI-Kachel UND Aktivitaets-Chart ab —
       // die haengen alle an gespraecheDaten und werden asynchron nachgeladen.
-      const uebersichtAuffrischen = () => { zeigeUebersichtGespraeche(); zeigeKpis(); zeigeAktivitaet(); };
+      const uebersichtAuffrischen = () => {
+        zeigeUebersichtGespraeche(); zeigeKpis(); zeigeAktivitaet(); zeigeGespraechKpis();
+      };
       if (!sb) { el.innerHTML = '<p class="leer">Gespräche erscheinen hier, sobald dein Agent live ist.</p>'; uebersichtAuffrischen(); return; }
       const { data, error } = await sb.from("gespraeche").select("frage,antwort,erstellt")
         .eq("firma_id", firma.id).order("erstellt", { ascending: false }).limit(30);
@@ -1292,6 +1293,53 @@
       const faq = (firma.faq || []).length;
       setzeKpi("kpiFaq", faq, faq ? "beantwortet der Agent direkt" : "noch keine",
         faq ? "hoch" : "neutral", faq ? "check" : null);
+    }
+
+    // Baut eine KPI-Kachel als DOM (fuer die Streifen ueber den Tabellen). Die
+    // Kacheln der Uebersicht stehen dagegen fest im HTML, damit sie schon beim
+    // ersten Zeichnen da sind — beide nutzen dieselben CSS-Klassen.
+    function kpiKachel({ icon, farbe, label, wert, sub, subKlasse, subIcon }) {
+      const k = document.createElement("article"); k.className = "karte kpi";
+      const top = document.createElement("div"); top.className = "kpi-top";
+      const ic = document.createElement("span"); ic.className = "kpi-ic ic-" + (farbe || "indigo");
+      Icons.setzeIcon(ic, icon);
+      top.appendChild(ic);
+      const l = document.createElement("span"); l.className = "kpi-label"; l.textContent = label;
+      const w = document.createElement("b"); w.className = "kpi-wert"; w.textContent = String(wert);
+      const s = document.createElement("span"); s.className = "kpi-delta " + (subKlasse || "neutral");
+      if (subIcon) Icons.praefix(s, subIcon, sub); else s.textContent = sub;
+      k.append(top, l, w, s);
+      return k;
+    }
+    function zeigeLeadKpis() {
+      const box = $("leadKpis"); if (!box) return;
+      box.textContent = "";
+      const offen = leadsDaten.filter((l) => !l.erledigt).length;
+      const erledigt = leadsDaten.length - offen;
+      box.append(
+        kpiKachel({ icon: "inbox", farbe: "coral", label: "Anfragen gesamt", wert: leadsDaten.length,
+          sub: leadsDaten.length ? "seit dem Start" : "noch keine" }),
+        kpiKachel({ icon: "triangle-alert", farbe: "orange", label: "Offen", wert: offen,
+          sub: offen ? "warten auf dich" : "nichts offen",
+          subKlasse: offen ? "warn" : "hoch", subIcon: offen ? null : "check" }),
+        kpiKachel({ icon: "check", farbe: "indigo", label: "Erledigt", wert: erledigt,
+          sub: erledigt ? "abgehakt" : "noch keine", subKlasse: erledigt ? "hoch" : "neutral" }),
+      );
+    }
+    function zeigeGespraechKpis() {
+      const box = $("gespraechKpis"); if (!box) return;
+      box.textContent = "";
+      const heute0 = new Date(); heute0.setHours(0, 0, 0, 0);
+      const heute = gespraecheDaten.filter((g) => new Date(g.erstellt) >= heute0).length;
+      const woche = gespraecheDaten.filter((g) => new Date(g.erstellt).getTime() >= Date.now() - 7 * 864e5).length;
+      box.append(
+        kpiKachel({ icon: "messages-square", farbe: "indigo", label: "Gespräche gesamt", wert: gespraecheDaten.length,
+          sub: gespraecheDaten.length ? "die letzten 30 gespeichert" : "noch keine" }),
+        kpiKachel({ icon: "message-circle", farbe: "violett", label: "Letzte 7 Tage", wert: woche,
+          sub: woche ? "in dieser Woche" : "diese Woche noch keine", subKlasse: woche ? "hoch" : "neutral" }),
+        kpiKachel({ icon: "sparkles", farbe: "orange", label: "Heute", wert: heute,
+          sub: heute ? "seit Mitternacht" : "heute noch keine", subKlasse: heute ? "hoch" : "neutral" }),
+      );
     }
 
     // --- Aktivitaet: 7 Balken aus den echten Gespraechs-Zeitstempeln ----------
