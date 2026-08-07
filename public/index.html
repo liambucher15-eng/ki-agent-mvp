@@ -44,10 +44,14 @@
     #kopfleiste .name { font-weight: 650; font-size: 1rem; }
     #kopfleiste .status { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 0.32rem; }
     #kopfleiste .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
-    #stimme { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linie);
-              background: #fff; color: var(--farbe); cursor: pointer; display: grid; place-items: center; padding: 0; }
+    #stimme { margin-left: auto; }
+    #stimme, #vollbild { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linie);
+              background: #fff; color: var(--farbe); cursor: pointer; display: grid; place-items: center; padding: 0;
+              flex-shrink: 0; transition: background 0.18s, color 0.18s; }
+    #stimme:hover, #vollbild:hover { background: var(--tint); }
     #stimme.an { background: var(--farbe); color: #fff; }
-    #stimme svg { width: 18px; height: 18px; display: block; }
+    #stimme svg, #vollbild svg { width: 18px; height: 18px; display: block; }
+    #vollbild svg[hidden] { display: none; }
 
     /* --figur steuert die Groesse der Figur an EINER Stelle (Bild + Notfall-
        Initial). Die Figur soll dominieren: man soll das Gefuehl haben, jemandem
@@ -175,6 +179,36 @@
        sie voellig frei unter dem Verlaufs-Kasten und gehoerte optisch zu nichts. */
     form { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;
            padding: 0.75rem 0.95rem; border-top: 1px solid var(--linie); background: #fff; }
+
+    /* ═══ VOLLBILD: zweispaltig ═══════════════════════════════════════════
+       NUR hier (Klasse kommt vom Vollbild-Knopf, plus genug Breite). Die Figur
+       bekommt eine eigene Spalte und bleibt dadurch IMMER gross — sie muss sich
+       den Platz nicht mehr mit dem Text teilen und schrumpft nie. Rechts leben
+       Verlauf und Eingabe zusammen. Ausserhalb des Vollbilds bleibt das Layout
+       unveraendert einspaltig. */
+    @media (min-width: 900px) {
+      body.vollbild { max-width: none; padding: 0; }
+      /* Zeile 1 Kopf ueber beide Spalten, darunter links die Figur (ueber beide
+         restlichen Zeilen), rechts Verlauf oben und Eingabe unten. */
+      body.vollbild #panel { border-radius: 0; border: 0; box-shadow: none;
+        display: grid; grid-template-columns: minmax(320px, 38%) 1fr;
+        grid-template-rows: auto 1fr auto; }
+      body.vollbild #kopfleiste { grid-column: 1 / -1; grid-row: 1;
+        padding: 0.8rem 1.3rem 0.7rem; border-bottom: 1px solid var(--linie); }
+      /* Linke Spalte: nur die Figur (+ Chips zu Beginn), mittig und GROSS.
+         Sie teilt sich den Platz nicht mehr mit dem Text und schrumpft nie. */
+      body.vollbild #buehne { grid-column: 1; grid-row: 2 / 4; min-height: 0;
+        justify-content: center; border-right: 1px solid var(--linie);
+        --figur: min(460px, 30vw, 58vh) !important; }
+      /* Rechte Spalte: Verlauf ist hier IMMER sichtbar (Platz genug), darunter
+         die Eingabe. */
+      body.vollbild #chat { grid-column: 2; grid-row: 2; display: flex !important;
+        border-top: 0; padding: 1.4rem 1.6rem; }
+      body.vollbild form { grid-column: 2; grid-row: 3; padding: 0.9rem 1.6rem; }
+      /* Sprechblase weg: derselbe Satz steht rechts schon im Verlauf. */
+      body.vollbild #blase { display: none; }
+      body.vollbild #fusszeile { display: none; }
+    }
     input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
             background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
     input:focus { outline: none; border-color: var(--farbe);
@@ -203,6 +237,12 @@
     <span class="status">online</span>
     <button id="stimme" aria-label="Vorlesen einschalten" aria-pressed="false" title="Antworten vorlesen">
       <svg id="stimme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    </button>
+    <!-- Vollbild: erst hier wird zweispaltig umgeschaltet (Figur links, Chat
+         rechts). Ausserhalb des Vollbilds bleibt das Layout unveraendert. -->
+    <button id="vollbild" aria-label="Vollbild einschalten" aria-pressed="false" title="Vollbild">
+      <svg id="vollbild-auf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      <svg id="vollbild-zu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
     </button>
   </div>
 
@@ -367,6 +407,8 @@
     const figur = ChatUI.figurRegler({
       buehne: document.getElementById("buehne"),
       chat,
+      // Im Vollbild hat die Figur eine eigene Spalte — dort nie schrumpfen.
+      aktiv: () => !document.body.classList.contains("vollbild"),
       stufen: [
         "min(300px, 62vw, 36vh)",
         "min(240px, 52vw, 30vh)",
@@ -388,6 +430,35 @@
       onAntwort: (text) => { setzeBlase(text); liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
+
+    // --- Vollbild -----------------------------------------------------------
+    // Nur im Vollbild wird zweispaltig umgeschaltet. Dort hat die Figur eine
+    // eigene Spalte und soll NIE schrumpfen — der Platz-Regler wird deshalb
+    // stillgelegt und seine bereits gesetzte Groesse zurueckgenommen, damit die
+    // CSS-Groesse der Vollbild-Spalte greift. Beim Verlassen laeuft er weiter.
+    const vollbildBtn = document.getElementById("vollbild");
+    const iconAuf = document.getElementById("vollbild-auf");
+    const iconZu = document.getElementById("vollbild-zu");
+    // Ohne Fullscreen-API (aeltere Browser, iOS-Safari im iframe) macht der
+    // Knopf nichts Sinnvolles — dann lieber gar nicht anbieten.
+    if (!document.documentElement.requestFullscreen) {
+      vollbildBtn.style.display = "none";
+    }
+    vollbildBtn.addEventListener("click", () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen().catch(() => {});
+    });
+    document.addEventListener("fullscreenchange", () => {
+      const an = !!document.fullscreenElement;
+      document.body.classList.toggle("vollbild", an);
+      iconAuf.hidden = an; iconZu.hidden = !an;
+      vollbildBtn.setAttribute("aria-pressed", String(an));
+      vollbildBtn.setAttribute("aria-label", an ? "Vollbild verlassen" : "Vollbild einschalten");
+      // Stufen-Groesse zuruecknehmen: im Vollbild gilt die Spaltengroesse,
+      // danach darf der Regler wieder frisch entscheiden.
+      figur.zuruecksetzen();
+      if (!an) figur.pruefe();
+    });
 
     function setzeAussehen(c) {
       if (c.farbe) { avatar.style.setProperty("--farbe", c.farbe); document.documentElement.style.setProperty("--farbe", c.farbe); }

@@ -96,6 +96,9 @@ window.ChatUI = (function () {
   //
   // cfg: buehne (Element, das --figur trägt), chat (scrollender Verlauf),
   //      stufen (CSS-Längen, grösste zuerst; die letzte ist die Untergrenze)
+  //      aktiv? (optional) — liefert false, wenn gar nicht geregelt werden soll
+  //             (z.B. im Vollbild, wo die Figur eine eigene Spalte hat und
+  //             deshalb nie schrumpfen muss)
   function figurRegler(cfg) {
     const buehne = cfg.buehne, chat = cfg.chat;
     const stufen = cfg.stufen || [];
@@ -139,6 +142,7 @@ window.ChatUI = (function () {
     }
     function pruefe() {
       if (!buehne || !chat) return;
+      if (cfg.aktiv && !cfg.aktiv()) return;
       if (!neuesteNachrichtPasstNicht()) return;
       if (setze(stufe + 1)) {
         setTimeout(() => {
