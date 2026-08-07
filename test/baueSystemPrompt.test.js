@@ -162,3 +162,14 @@ test("Produkt-Regel: nur bei der Fähigkeit 'produkte' im Prompt", () => {
   assert.match(mit, /statt sie im Text aufzuzählen/);
   assert.match(mit, /höchstens drei/);
 });
+
+test("Seiten-Regel: nur bei der Fähigkeit 'seite', mit ausdruecklicher Grenze", () => {
+  const ohne = baueSystemPrompt({ ...firma, faehigkeiten: ["kontakt"] });
+  assert.doesNotMatch(ohne, /seite_zeigen/);
+  const mit = baueSystemPrompt({ ...firma, faehigkeiten: ["seite"] });
+  assert.match(mit, /seite_zeigen/);
+  // Die Grenze muss im Prompt stehen, nicht nur im Code: der Agent soll gar
+  // nicht erst versuchen zu klicken.
+  assert.match(mit, /NICHTS anklicken/);
+  assert.match(mit, /entscheidet der Besucher selbst/);
+});

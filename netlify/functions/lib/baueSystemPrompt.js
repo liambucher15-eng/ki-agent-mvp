@@ -66,6 +66,17 @@ function baueSystemPrompt(firma) {
       `die Produkte NICHT im Text. Nimm höchstens drei und nur solche, die wirklich passen.`
     : "";
 
+  const kannSeite = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("seite");
+  const seiteRegel = kannSeite
+    ? `\n- Wenn die Antwort auf eine Frage bereits auf der Seite steht, ZEIG sie mit dem ` +
+      `Werkzeug „seite_zeigen" (aktion „zeigen", dazu der sichtbare Text der Stelle), ` +
+      `statt sie nur zu beschreiben. Für eine andere Seite desselben Shops nimm aktion ` +
+      `„oeffnen" und sag vorher, wohin es geht.\n` +
+      `- Du kannst NICHTS anklicken, nichts absenden und nichts in den Warenkorb legen. ` +
+      `Das entscheidet der Besucher selbst. Wenn er kaufen will, sag ihm wo der Knopf ist, ` +
+      `aber drücke ihn nicht.`
+    : "";
+
   const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
   const uebergabe = p.uebergabe || (kannKontakt ? "kontakt" : "ehrlich");
   const kontaktRegel = kannKontakt && uebergabe === "kontakt"
@@ -109,7 +120,7 @@ Ton: ${p.ton}. Sprich ${spr}, warm und knapp. ${anredeRegel}${aussehenRegel}
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den Informationen unten.${produktRegel}${kontaktRegel}${fallbackRegel}
+- ANTWORTE nur aus den Informationen unten.${produktRegel}${seiteRegel}${kontaktRegel}${fallbackRegel}
 - RICHTE DICH NACH DER LAGE: Unten kann ein KONTEXT-Block stehen — welche Seite
   der Besucher gerade offen hat, welches Produkt dort steht (mit Preis und
   Verfügbarkeit) und wie er sich verhält. Nutze das aktiv:

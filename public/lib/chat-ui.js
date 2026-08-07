@@ -324,6 +324,12 @@ window.ChatUI = (function () {
             cfg.chat.scrollTop = cfg.chat.scrollHeight;
             if (cfg.nachNachricht) cfg.nachNachricht();
           }
+          // Seiten-Aktion (zeigen/öffnen) an die Seite weiterreichen. Der Chat
+          // selbst führt sie nicht aus — er sitzt im iframe und käme gar nicht
+          // an die Seite heran. Wer sie ausführt, prüft sie noch einmal.
+          if (data.seitenAktion && cfg.onSeitenAktion) {
+            cfg.onSeitenAktion(data.seitenAktion);
+          }
           const unsicher = istUnsicher(data.reply);
           cfg.avatar(unsicher ? "verlegen" : "sprechen", 3000);
           if (cfg.onAntwort) cfg.onAntwort(data.reply, unsicher);

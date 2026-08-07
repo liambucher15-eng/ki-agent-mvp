@@ -419,6 +419,12 @@
       avatar: setCharakter,
       tipptAn: addTipptAnzeige,
       seiteInfo: seiteInfo,
+      // Zeige-Aktionen kann der Chat nicht selbst ausführen — er sitzt im
+      // iframe und kommt an die Seite gar nicht heran. Also weiterreichen an
+      // das Widget, das sie noch einmal prüft und dann ausführt.
+      onSeitenAktion: (a) => {
+        try { parent.postMessage({ type: "ki-agent-aktion", aktion: a }, "*"); } catch (e) {}
+      },
       chipsZiel: chips,
       nachNachricht: () => figur.pruefe(),
       onFrage: () => { document.body.classList.add("hat-verlauf"); },

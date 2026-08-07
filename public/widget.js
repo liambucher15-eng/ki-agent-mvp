@@ -581,9 +581,96 @@
   //    Figur macht mit (sofern die Charakterbilder geladen sind).
   window.addEventListener("message", function (e) {
     if (!e.data) return;
+    // Nur der eigene Chat-Frame darf etwas anweisen — sonst könnte jedes
+    // fremde Fenster die Seite fernsteuern.
+    if (e.origin !== basis) return;
     if (e.data.type === "ki-agent-schliessen") schliesse();
     if (e.data.type === "ki-agent-zustand" && typeof e.data.zustand === "string") {
       setFigurBild(e.data.zustand);
     }
+    if (e.data.type === "ki-agent-aktion") fuehreAktionAus(e.data.aktion);
   });
+
+  // ── Seiten-Aktionen ausführen ─────────────────────────────────────────────
+  //
+  // WAS HIER NICHT STEHT, PASSIERT NICHT. Es gibt genau zwei Aktionen, beide
+  // ohne bleibende Folgen: zu einer Stelle scrollen und sie kurz hervorheben,
+  // oder eine andere Seite DESSELBEN Shops öffnen (mit dem Zurück-Knopf
+  // umkehrbar). Kein Klicken, kein Absenden, kein Warenkorb — ein Kauf ist die
+  // Entscheidung des Besuchers.
+  //
+  // Serverseitig ist das schon geprüft. Hier wird es NOCH EINMAL geprüft, weil
+  // die Anweisung aus einer Modell-Antwort stammt und das Modell Seitentexte
+  // liest, die manipuliert sein können. Eine einzige Prüfstelle wäre eine
+  // einzige Stelle zum Umgehen.
+  var HEIKEL = /\b(kaufen|bestellen|bezahlen|zahlungspflichtig|absenden|abschicken|buy now|order now|checkout)\b/i;
+  var markierung = null;
+
+  function fuehreAktionAus(a) {
+    try {
+      if (!a || typeof a !== "object") return;
+      if (a.aktion === "zeigen") return zeigeStelle(a.ziel);
+      if (a.aktion === "oeffnen") return oeffneSeite(a.pfad);
+      // alles andere: bewusst nichts
+    } catch (e) { /* nie die Kundenseite stören */ }
+  }
+
+  function oeffneSeite(pfad) {
+    if (typeof pfad !== "string") return;
+    // Muss ein Pfad auf DIESER Seite sein. Absolute URLs werden gar nicht erst
+    // akzeptiert — so ist "gleiche Herkunft" eine Frage der Form, nicht einer
+    // Prüfung, die man falsch schreiben kann.
+    if (!/^\/[^/\s]/.test(pfad)) return;
+    location.href = pfad;
+  }
+
+  // Sucht die Stelle über ihren SICHTBAREN Text. Das Modell kann keine
+  // CSS-Pfade kennen — es kennt nur, was auf der Seite steht.
+  function findeStelle(text) {
+    var suche = String(text || "").toLowerCase().trim();
+    if (!suche) return null;
+    var kandidaten = document.querySelectorAll(
+      "h1,h2,h3,h4,dt,dd,th,td,summary,legend,label,p,li,section,article"
+    );
+    var bester = null;
+    for (var i = 0; i < kandidaten.length; i++) {
+      var el = kandidaten[i];
+      var t = (el.textContent || "").toLowerCase();
+      if (t.indexOf(suche) < 0) continue;
+      // Der KLEINSTE Treffer ist der genaueste: <body> enthält den Text auch,
+      // meint ihn aber nicht.
+      if (!bester || t.length < (bester.textContent || "").length) bester = el;
+    }
+    return bester;
+  }
+
+  function zeigeStelle(ziel) {
+    if (HEIKEL.test(String(ziel || ""))) return; // nicht auf Kaufknöpfe deuten
+    var el = findeStelle(ziel);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Hervorheben über eine eigene Ebene statt über die Stile der Kundenseite:
+    // so wird nichts an fremdem CSS verändert, das hinterher kaputt sein könnte.
+    if (markierung && markierung.parentNode) markierung.parentNode.removeChild(markierung);
+    var r = el.getBoundingClientRect();
+    markierung = document.createElement("div");
+    markierung.setAttribute("aria-hidden", "true");
+    markierung.style.cssText = [
+      "position:absolute", "z-index:2147482999", "pointer-events:none",
+      "border-radius:6px",
+      "box-shadow:0 0 0 3px " + farbe + ", 0 0 0 9999px rgba(15,23,42,0.08)",
+      "transition:opacity .4s ease", "opacity:1",
+      "left:" + (r.left + window.scrollX - 4) + "px",
+      "top:" + (r.top + window.scrollY - 4) + "px",
+      "width:" + (r.width + 8) + "px",
+      "height:" + (r.height + 8) + "px",
+    ].join(";");
+    (document.body || document.documentElement).appendChild(markierung);
+    var meine = markierung;
+    setTimeout(function () { meine.style.opacity = "0"; }, 2200);
+    setTimeout(function () {
+      if (meine.parentNode) meine.parentNode.removeChild(meine);
+      if (markierung === meine) markierung = null;
+    }, 2800);
+  }
 })();

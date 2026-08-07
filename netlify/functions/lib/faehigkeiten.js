@@ -46,6 +46,43 @@ const KATALOG = {
     },
   },
 
+  // Auf der Seite etwas zeigen. Was ein Verkäufer im Laden tut, wenn er auf ein
+  // Regal deutet — statt zu beschreiben, wo etwas steht.
+  //
+  // BEWUSSTE GRENZE: nur zeigen und blättern, niemals für den Besucher
+  // entscheiden. Warum, steht in lib/seiten-aktion.js.
+  seite: {
+    name: "seite_zeigen",
+    description:
+      "Zeig dem Besucher etwas auf der Seite, wenn er fragt wo etwas steht, oder wenn " +
+      "die Antwort auf seine Frage weiter unten auf der Seite bereits steht. Nutze " +
+      "aktion=\"zeigen\" mit dem sichtbaren Text der Stelle (z.B. \"Lieferzeit\" oder " +
+      "\"Rückgabe\") — die Seite scrollt dann dorthin und hebt sie kurz hervor. Nutze " +
+      "aktion=\"oeffnen\" mit einem Pfad, um auf eine andere Seite desselben Shops zu " +
+      "wechseln; sag vorher in der Antwort, wohin es geht. " +
+      "Du kannst NICHTS anklicken, nichts absenden und nichts in den Warenkorb legen — " +
+      "das macht der Besucher selbst. Zeig auch nicht auf Kauf- oder Bestellknöpfe.",
+    input_schema: {
+      type: "object",
+      properties: {
+        aktion: {
+          type: "string",
+          enum: ["zeigen", "oeffnen"],
+          description: "\"zeigen\" = zu einer Stelle scrollen, \"oeffnen\" = andere Seite laden",
+        },
+        ziel: {
+          type: "string",
+          description: "Bei \"zeigen\": der sichtbare Text der Stelle, z.B. \"Lieferzeit\"",
+        },
+        pfad: {
+          type: "string",
+          description: "Bei \"oeffnen\": Pfad auf derselben Seite, beginnend mit / (z.B. \"/shop/stuehle\")",
+        },
+      },
+      required: ["aktion"],
+    },
+  },
+
   kontakt: {
     name: "kontakt_hinterlassen",
     description:

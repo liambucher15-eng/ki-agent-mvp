@@ -13,12 +13,17 @@ const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz")
 const { rufeClaude } = require("./lib/claude");
 const { baueTools } = require("./lib/faehigkeiten");
 const { saubereVorschlaege } = require("./lib/vorschlaege");
+const { saubereAktion } = require("./lib/seiten-aktion");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
   beurteile: beurteileVerhalten,
   zusammenfassung: verhaltensZusammenfassung,
 } = require("./lib/verhalten");
+const {
+  beurteile: beurteileKaufweg,
+  zusammenfassung: kaufwegZusammenfassung,
+} = require("./lib/kaufweg");
 
 // Input-Limits (bremsen Kostenmissbrauch)
 const MAX_NACHRICHTEN = 40;
@@ -102,6 +107,14 @@ exports.handler = async (event) => {
       const beurteilung = beurteileVerhalten(seiteInfo.verhalten, seitenAnalyse.typ);
       const verhaltensText = verhaltensZusammenfassung(beurteilung);
       if (verhaltensText) SYSTEM_PROMPT += `\n\n${verhaltensText}`;
+
+      // Und wo auf dem WEG zum Kauf steht er? Seite und Verhalten zeigen je einen
+      // Ausschnitt; erst zusammen ergeben sie den Unterschied zwischen "erzähl mir
+      // davon" und "was hält dich noch auf?".
+      const wegText = kaufwegZusammenfassung(
+        beurteileKaufweg(seitenAnalyse.typ, beurteilung.signale, beurteilung.phase)
+      );
+      if (wegText) SYSTEM_PROMPT += `\n\n${wegText}`;
     }
   }
 
@@ -119,6 +132,7 @@ exports.handler = async (event) => {
     let reply = "(keine Antwort)";
     let toolErgebnis = null; // was das Tool bewirkt hat (für die Antwort an den Nutzer)
     let vorschlaege = [];    // Produktkarten, die der Browser zeichnen soll
+    let seitenAktion = null; // Zeige-Aktion, die das Widget ausfuehren soll
 
     // Tool-Loop: max. 3 Runden (Nachfragen -> Tool -> finale Antwort). Ein hartes
     // Limit verhindert Endlosschleifen und Kostenausreißer.
@@ -152,6 +166,21 @@ exports.handler = async (event) => {
           await speichereKontakt(firma.id || firmaId, eingabe);
           toolErgebnis = "kontakt";
           ergebnis = "Kontaktanfrage gespeichert. Das Team meldet sich.";
+        } else if (b.name === "seite_zeigen") {
+          // Wird nur durchgereicht — ausgeführt wird im Widget, das die Aktion
+          // ein ZWEITES Mal prüft. Doppelt, weil die Anweisung aus einer
+          // Modell-Antwort stammt und das Modell Seitentexte liest, die
+          // manipuliert sein können.
+          const geprueft = saubereAktion(b.input);
+          if (geprueft) {
+            seitenAktion = geprueft;
+            ergebnis = geprueft.aktion === "oeffnen"
+              ? `Die Seite ${geprueft.pfad} wird geöffnet. Sag dem Besucher kurz, was ihn dort erwartet.`
+              : `Die Stelle "${geprueft.ziel}" wird angesteuert und hervorgehoben. ` +
+                `Sag in einem kurzen Satz, was dort steht.`;
+          } else {
+            ergebnis = "Diese Aktion ist nicht erlaubt. Beschreibe es stattdessen in Worten.";
+          }
         } else if (b.name === "produkte_vorschlagen") {
           // Kein Seiteneffekt — die Vorschläge werden nur an den Browser
           // durchgereicht, der sie als Karten zeichnet. Gedeckelt und gesäubert,
@@ -180,6 +209,7 @@ exports.handler = async (event) => {
       reply,
       aktion: toolErgebnis || undefined,
       produkte: vorschlaege.length ? vorschlaege : undefined,
+      seitenAktion: seitenAktion || undefined,
     });
   } catch (err) {
     return json(500, { error: err.message });
