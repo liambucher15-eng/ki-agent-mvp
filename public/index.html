@@ -37,8 +37,10 @@
              box-shadow: 0 18px 50px -26px rgba(15,23,42,0.4); }
 
     /* --- Charakter-Bühne (gleiche Erfahrung wie im eingebetteten Widget) --- */
+    /* Keine Trennlinie: darunter beginnt sofort der Schein der Buehne, der
+       trennt weich genug. Eine harte Linie wirkte dort willkuerlich. */
     #kopfleiste { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
-                  padding: 0.7rem 0.95rem; border-bottom: 1px solid var(--linie); }
+                  padding: 0.7rem 0.95rem 0.5rem; }
     #kopfleiste .name { font-weight: 650; font-size: 1rem; }
     #kopfleiste .status { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 0.32rem; }
     #kopfleiste .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
@@ -150,6 +152,14 @@
        Sprechblase auf der Buehne. Beides gleichzeitig zu zeigen hiess, denselben
        Satz doppelt auf dem Schirm zu haben. */
     body:not(.hat-verlauf) #chat { display: none; }
+    /* Solange kein Verlauf da ist, FUELLT die Buehne das Panel und die Figur
+       steht gross und mittig. Ohne das haette nichts mehr flex:1 und unter der
+       Eingabe klaffte eine tote Flaeche. Im Gespraech uebernimmt der Verlauf
+       diese Rolle und die Buehne wird wieder zur festen Kopfzone. */
+    body:not(.hat-verlauf) #buehne {
+      flex: 1; min-height: 0; justify-content: center;
+      --figur: min(400px, 74vw, 46vh);
+    }
     #chat::-webkit-scrollbar { width: 6px; }
     #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
     .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 82%; white-space: pre-wrap; line-height: 1.45;

@@ -119,11 +119,22 @@ window.ChatUI = (function () {
     function neuesteNachrichtPasstNicht() {
       const letzte = chat.lastElementChild;
       if (!letzte) return false;
+      // Ist der Verlauf gar nicht sichtbar (z.B. Begruessungszustand, in dem nur
+      // die Sprechblase zaehlt), gibt es nichts zu messen. Ohne diese Bremse
+      // rechnet der Regler mit clientHeight 0 minus Polsterung einen NEGATIVEN
+      // Platz aus, haelt das fuer "viel zu eng" und schrumpft die Figur sofort
+      // auf die Untergrenze — genau der Fehler, der die Figur winzig machte.
+      if (chat.clientHeight <= 0) return false;
       // Gegen den INHALTSBEREICH messen, nicht gegen clientHeight: dort zaehlt
       // die Innenpolsterung mit, und der Regler haette zu frueh aufgehoert.
       const stil = getComputedStyle(chat);
+      // SICHERHEITSABSTAND: Zum Messzeitpunkt ist das Layout noch in Bewegung
+      // (Buehne wechselt gerade ihre Groesse), der Platz schrumpft danach oft
+      // noch um ein paar Pixel. Ohne Reserve entscheidet der Regler bei einer
+      // knapp passenden Antwort "passt" — und sie ragt dann doch unten raus.
+      const RESERVE = 12;
       const platz = chat.clientHeight
-        - parseFloat(stil.paddingTop || 0) - parseFloat(stil.paddingBottom || 0);
+        - parseFloat(stil.paddingTop || 0) - parseFloat(stil.paddingBottom || 0) - RESERVE;
       return letzte.getBoundingClientRect().height > platz;
     }
     function pruefe() {
