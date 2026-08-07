@@ -29,11 +29,16 @@
     h1 { font-size: 1.15rem; color: #475569; text-align: center; font-weight: 650; letter-spacing: 0.01em; }
 
     /* EIN Panel statt vier lose Zonen: Kopf, Figur, Verlauf und Eingabe sitzen
-       in DERSELBEN weissen Karte und sind nur durch Haarlinien getrennt. Vorher
-       hatte der Verlauf einen eigenen Rahmen, die Eingabe gar keinen und der
-       Kopf schwebte darueber — das zerfiel optisch in Einzelteile. */
+       in DERSELBEN weissen Karte. Vorher hatte der Verlauf einen eigenen Rahmen,
+       die Eingabe gar keinen und der Kopf schwebte darueber — das zerfiel
+       optisch in Einzelteile.
+       KONTURLOS: nirgends auf dieser Seite gibt es Rahmen oder Trennlinien.
+       Abgegrenzt wird ueber Schlagschatten, weiche Scheine und getoente
+       Fuellungen. Wo ein Element sonst weiss-auf-weiss verschwaende (Eingabe,
+       Bot-Blasen, Kopf-Knoepfe), traegt es eine Tint-Fuellung statt einer
+       Kontur — sonst waere es schlicht nicht mehr zu sehen. */
     #panel { flex: 1; min-height: 0; display: flex; flex-direction: column;
-             background: #fff; border: 1px solid var(--linie); overflow: hidden;
+             background: #fff; border-radius: 22px; overflow: hidden;
              box-shadow: 0 18px 50px -26px rgba(15,23,42,0.4); }
 
     /* --- Charakter-Bühne (gleiche Erfahrung wie im eingebetteten Widget) --- */
@@ -43,12 +48,14 @@
                   padding: 0.7rem 0.95rem 0.5rem; }
     #kopfleiste .name { font-weight: 650; font-size: 1rem; }
     #kopfleiste .status { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 0.32rem; }
-    #kopfleiste .status::before { content: ""; width: 7px; height: 7px; background: #4ade80; }
+    #kopfleiste .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
     #stimme { margin-left: auto; }
-    #stimme, #vollbild { width: 36px; height: 36px; border: 1px solid var(--linie);
-              background: #fff; color: var(--farbe); cursor: pointer; display: grid; place-items: center; padding: 0;
+    /* Getoente Fuellung statt Kontur — ohne beides waeren die Knoepfe auf der
+       weissen Karte unsichtbar. */
+    #stimme, #vollbild { width: 36px; height: 36px; border: 0; border-radius: 50%;
+              background: var(--tint); color: var(--farbe); cursor: pointer; display: grid; place-items: center; padding: 0;
               flex-shrink: 0; transition: background 0.18s, color 0.18s; }
-    #stimme:hover, #vollbild:hover { background: var(--tint); }
+    #stimme:hover, #vollbild:hover { background: color-mix(in srgb, var(--farbe) 16%, #fff); }
     #stimme.an { background: var(--farbe); color: #fff; }
     #stimme svg, #vollbild svg { width: 18px; height: 18px; display: block; }
     #vollbild svg[hidden] { display: none; }
@@ -72,15 +79,15 @@
               filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--farbe) 25%, transparent)); }
     #avatar svg, #avatar img { width: 100%; height: 100%; display: block; }
     #avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
-    #avatar-img { object-fit: contain; display: none; }
+    #avatar-img { object-fit: contain; display: none; border-radius: 18px; }
     /* Notfall-Anzeige, falls (noch) kein Charakterbild lädt: Initial in Markenfarbe. */
-    #initial { width: 100%; height: 100%; display: none;
+    #initial { width: 100%; height: 100%; border-radius: 50%; display: none;
                align-items: center; justify-content: center;
                font-weight: 700; font-size: calc(var(--figur) * 0.38); color: #fff; background: var(--farbe); }
     #avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     #welle { display: none; gap: 3px; align-items: center; height: 15px; }
-    #welle span { width: 3px; height: 15px; background: var(--farbe);
+    #welle span { width: 3px; height: 15px; border-radius: 2px; background: var(--farbe);
                   animation: welle 0.5s ease-in-out infinite; }
     #welle span:nth-child(2){animation-delay:.1s} #welle span:nth-child(3){animation-delay:.2s}
     #welle span:nth-child(4){animation-delay:.15s} #welle span:nth-child(5){animation-delay:.05s}
@@ -132,29 +139,31 @@
     /* Der Verlauf ist das EINZIGE, was scrollt, und nimmt den Platz, der nach
        Kopf, Figur und Eingabe übrig bleibt. min-height:0 ist Pflicht, sonst
        weigert sich ein Flex-Kind zu schrumpfen und drückt die Eingabe raus. */
-    /* Ohne eigenen Rahmen und Schatten — er sitzt IM Panel, eine Haarlinie
-       genuegt als Trennung zur Buehne darueber. */
     /* Der Verlauf ist von Anfang an sichtbar (Begruessung + Vorschlaege stehen
        direkt darin) statt erst nach der ersten Nachricht — die Vorschlaege
-       gehoeren zum Lesen/Antworten, nicht auf die Charakter-Buehne. */
-    #chat { padding: 1rem 1.1rem; border-top: 1px solid var(--linie);
+       gehoeren zum Lesen/Antworten, nicht auf die Charakter-Buehne.
+       Ohne Rahmen und ohne Trennlinie zur Buehne: darueber laeuft deren weicher
+       Schein aus, der trennt genug. */
+    #chat { padding: 1rem 1.1rem;
             flex: 1 1 auto; min-height: 0; overflow-y: auto;
             display: flex; flex-direction: column; gap: 0.55rem; }
     #chat::-webkit-scrollbar { width: 6px; }
-    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); }
-    .msg { padding: 0.62rem 0.85rem; max-width: 82%; white-space: pre-wrap; line-height: 1.45;
+    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
+    .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 82%; white-space: pre-wrap; line-height: 1.45;
            animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1) both; }
     @keyframes msgRein { from { opacity: 0; transform: translateY(7px) scale(0.98); } to { opacity: 1; transform: none; } }
-    .user { align-self: flex-end; color: #fff;
+    .user { align-self: flex-end; color: #fff; border-bottom-right-radius: 5px;
             background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
             box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--farbe) 70%, transparent); }
-    .bot  { align-self: flex-start; background: #fff; border: 1px solid var(--linie);
+    /* Getoente Fuellung statt Kontur: eine weisse Blase auf weisser Karte waere
+       ohne Rahmen nicht mehr zu sehen. */
+    .bot  { align-self: flex-start; background: var(--tint); border-bottom-left-radius: 5px;
             box-shadow: 0 4px 14px -10px rgba(15,23,42,0.4); }
     .meta { color: #94a3b8; font-style: italic; box-shadow: none; background: transparent; }
-    /* Eingabe als Fuss DES Panels, durch eine Haarlinie abgesetzt — vorher stand
-       sie voellig frei unter dem Verlaufs-Kasten und gehoerte optisch zu nichts. */
+    /* Eingabe als Fuss DES Panels — ohne Trennlinie, das getoente Eingabefeld
+       setzt sich von selbst genug ab. */
     form { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;
-           padding: 0.75rem 0.95rem; border-top: 1px solid var(--linie); background: #fff; }
+           padding: 0.75rem 0.95rem; background: #fff; }
 
     /* ═══ VOLLBILD: zweispaltig ═══════════════════════════════════════════
        NUR hier (Klasse kommt vom Vollbild-Knopf, plus genug Breite). Die Figur
@@ -166,28 +175,33 @@
       body.vollbild { max-width: none; padding: 0; }
       /* Zeile 1 Kopf ueber beide Spalten, darunter links die Figur (ueber beide
          restlichen Zeilen), rechts Verlauf oben und Eingabe unten. */
-      body.vollbild #panel { border: 0; box-shadow: none;
+      body.vollbild #panel { border-radius: 0; box-shadow: none;
         display: grid; grid-template-columns: minmax(320px, 38%) 1fr;
         grid-template-rows: auto 1fr auto; }
       body.vollbild #kopfleiste { grid-column: 1 / -1; grid-row: 1;
-        padding: 0.8rem 1.3rem 0.7rem; border-bottom: 1px solid var(--linie); }
+        padding: 0.8rem 1.3rem 0.7rem; }
       /* Linke Spalte: nur die Figur, mittig und GROSS — noch etwas grosszuegiger
          als vorher, da sie hier eine eigene Spalte hat und den Platz mit
          niemandem teilt. */
+      /* Statt einer Trennlinie zur rechten Spalte traegt die Buehne hier ihren
+         eigenen weichen Schein — der grenzt die Figur ab, ohne zu schneiden. */
       body.vollbild #buehne { grid-column: 1; grid-row: 2 / 4; min-height: 0;
-        justify-content: center; border-right: 1px solid var(--linie);
+        justify-content: center;
+        background: radial-gradient(72% 58% at 50% 45%, var(--tint), transparent 76%);
         --figur: min(520px, 34vw, 62vh) !important; }
       /* Rechte Spalte: Verlauf (samt Vorschlaegen) oben, darunter die Eingabe. */
-      body.vollbild #chat { grid-column: 2; grid-row: 2;
-        border-top: 0; padding: 1.4rem 1.6rem; }
+      body.vollbild #chat { grid-column: 2; grid-row: 2; padding: 1.4rem 1.6rem; }
       body.vollbild form { grid-column: 2; grid-row: 3; padding: 0.9rem 1.6rem; }
       body.vollbild #fusszeile { display: none; }
     }
-    input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); font: inherit;
-            background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
-    input:focus { outline: none; border-color: var(--farbe);
+    /* Getoente Fuellung statt Kontur — sonst waere das Feld auf der weissen
+       Karte gar nicht mehr als Eingabe zu erkennen. Der Fokus zeigt sich ueber
+       den Ring, nicht mehr ueber eine Rahmenfarbe. */
+    input { flex: 1; padding: 0.7rem 0.95rem; border: 0; border-radius: 999px; font: inherit;
+            background: var(--tint); transition: background 0.2s, box-shadow 0.2s; }
+    input:focus { outline: none; background: #fff;
                   box-shadow: 0 0 0 3px color-mix(in srgb, var(--farbe) 18%, transparent); }
-    button { padding: 0.7rem 1.2rem; border: 0; color: #fff; cursor: pointer; font-weight: 600;
+    button { padding: 0.7rem 1.2rem; border: 0; border-radius: 999px; color: #fff; cursor: pointer; font-weight: 600;
              background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
              box-shadow: 0 5px 14px -6px color-mix(in srgb, var(--farbe) 70%, transparent);
              transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
@@ -195,7 +209,7 @@
     button:disabled { opacity: 0.5; cursor: default; }
     /* "denkt nach"-Punkte (Standard-Tipp-Anzeige im Verlauf) */
     .tippt { display: inline-flex; gap: 4px; align-items: center; }
-    .tippt span { width: 7px; height: 7px; background: #94a3b8; animation: tip 1.3s infinite; }
+    .tippt span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: tip 1.3s infinite; }
     .tippt span:nth-child(2){animation-delay:.18s} .tippt span:nth-child(3){animation-delay:.36s}
     @keyframes tip { 0%,60%,100%{opacity:.28;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
     @media (prefers-reduced-motion: reduce) {

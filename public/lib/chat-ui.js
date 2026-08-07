@@ -32,9 +32,11 @@ window.ChatUI = (function () {
     const s = document.createElement("style");
     s.textContent =
       ".ki-vorschlaege{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 2px}" +
-      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:7px 13px;" +
-      "border:1px solid color-mix(in srgb,var(--farbe,#4F46E5) 30%,transparent);" +
-      "background:color-mix(in srgb,var(--farbe,#4F46E5) 6%,#fff);color:var(--farbe,#4F46E5);" +
+      // Kein Rahmen mehr (bewusste Design-Entscheidung): die Fuellung ist dafuer
+      // kraeftiger, sonst waere der Chip auf weissem Grund kaum zu sehen.
+      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:7px 13px;border-radius:999px;" +
+      "border:0;" +
+      "background:color-mix(in srgb,var(--farbe,#4F46E5) 12%,#fff);color:var(--farbe,#4F46E5);" +
       "box-shadow:0 2px 6px -4px color-mix(in srgb,var(--farbe,#4F46E5) 60%,transparent);" +
       "transition:background .18s,color .18s,transform .18s,box-shadow .18s}" +
       ".ki-vorschlag:hover{background:var(--farbe,#4F46E5);color:#fff;transform:translateY(-1px);" +
@@ -51,11 +53,13 @@ window.ChatUI = (function () {
     micStilDa = true;
     const s = document.createElement("style");
     s.textContent =
-      ".ki-mic{flex-shrink:0;width:40px;height:40px;border:1px solid #d1d5db;" +
-      "background:#fff;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;" +
-      "transition:color .15s,border-color .15s,background .15s}" +
-      ".ki-mic:hover{color:var(--farbe,#4F46E5);border-color:var(--farbe,#4F46E5)}" +
-      ".ki-mic.hoert{color:#fff;background:#ef4444;border-color:#ef4444;animation:ki-mic-puls 1.2s ease-in-out infinite}" +
+      // Kein Rahmen: getoente Fuellung uebernimmt die Abgrenzung.
+      ".ki-mic{flex-shrink:0;width:40px;height:40px;border:0;border-radius:10px;" +
+      "background:color-mix(in srgb,var(--farbe,#4F46E5) 8%,#fff);color:#6b7280;" +
+      "cursor:pointer;display:flex;align-items:center;justify-content:center;" +
+      "transition:color .15s,background .15s}" +
+      ".ki-mic:hover{color:var(--farbe,#4F46E5);background:color-mix(in srgb,var(--farbe,#4F46E5) 16%,#fff)}" +
+      ".ki-mic.hoert{color:#fff;background:#ef4444;animation:ki-mic-puls 1.2s ease-in-out infinite}" +
       "@keyframes ki-mic-puls{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}";
     document.head.appendChild(s);
   }
