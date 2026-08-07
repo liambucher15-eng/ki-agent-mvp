@@ -32,7 +32,7 @@ window.ChatUI = (function () {
     const s = document.createElement("style");
     s.textContent =
       ".ki-vorschlaege{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 2px}" +
-      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:7px 13px;border-radius:999px;" +
+      ".ki-vorschlag{font:inherit;font-size:0.82rem;cursor:pointer;padding:7px 13px;" +
       "border:1px solid color-mix(in srgb,var(--farbe,#4F46E5) 30%,transparent);" +
       "background:color-mix(in srgb,var(--farbe,#4F46E5) 6%,#fff);color:var(--farbe,#4F46E5);" +
       "box-shadow:0 2px 6px -4px color-mix(in srgb,var(--farbe,#4F46E5) 60%,transparent);" +
@@ -51,7 +51,7 @@ window.ChatUI = (function () {
     micStilDa = true;
     const s = document.createElement("style");
     s.textContent =
-      ".ki-mic{flex-shrink:0;width:40px;height:40px;border-radius:10px;border:1px solid #d1d5db;" +
+      ".ki-mic{flex-shrink:0;width:40px;height:40px;border:1px solid #d1d5db;" +
       "background:#fff;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:center;" +
       "transition:color .15s,border-color .15s,background .15s}" +
       ".ki-mic:hover{color:var(--farbe,#4F46E5);border-color:var(--farbe,#4F46E5)}" +

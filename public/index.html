@@ -33,7 +33,7 @@
        hatte der Verlauf einen eigenen Rahmen, die Eingabe gar keinen und der
        Kopf schwebte darueber — das zerfiel optisch in Einzelteile. */
     #panel { flex: 1; min-height: 0; display: flex; flex-direction: column;
-             background: #fff; border: 1px solid var(--linie); border-radius: 22px; overflow: hidden;
+             background: #fff; border: 1px solid var(--linie); overflow: hidden;
              box-shadow: 0 18px 50px -26px rgba(15,23,42,0.4); }
 
     /* --- Charakter-Bühne (gleiche Erfahrung wie im eingebetteten Widget) --- */
@@ -43,9 +43,9 @@
                   padding: 0.7rem 0.95rem 0.5rem; }
     #kopfleiste .name { font-weight: 650; font-size: 1rem; }
     #kopfleiste .status { font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 0.32rem; }
-    #kopfleiste .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
+    #kopfleiste .status::before { content: ""; width: 7px; height: 7px; background: #4ade80; }
     #stimme { margin-left: auto; }
-    #stimme, #vollbild { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linie);
+    #stimme, #vollbild { width: 36px; height: 36px; border: 1px solid var(--linie);
               background: #fff; color: var(--farbe); cursor: pointer; display: grid; place-items: center; padding: 0;
               flex-shrink: 0; transition: background 0.18s, color 0.18s; }
     #stimme:hover, #vollbild:hover { background: var(--tint); }
@@ -72,43 +72,28 @@
               filter: drop-shadow(0 12px 22px color-mix(in srgb, var(--farbe) 25%, transparent)); }
     #avatar svg, #avatar img { width: 100%; height: 100%; display: block; }
     #avatar svg { transform-origin: center bottom; animation: atmen 3.5s ease-in-out infinite; }
-    #avatar-img { object-fit: contain; display: none; border-radius: 18px; }
+    #avatar-img { object-fit: contain; display: none; }
     /* Notfall-Anzeige, falls (noch) kein Charakterbild lädt: Initial in Markenfarbe. */
-    #initial { width: 100%; height: 100%; border-radius: 50%; display: none;
+    #initial { width: 100%; height: 100%; display: none;
                align-items: center; justify-content: center;
                font-weight: 700; font-size: calc(var(--figur) * 0.38); color: #fff; background: var(--farbe); }
     #avatar.sprechen { animation: redenBob 0.5s ease-in-out infinite; }
     @keyframes redenBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     #welle { display: none; gap: 3px; align-items: center; height: 15px; }
-    #welle span { width: 3px; height: 15px; border-radius: 2px; background: var(--farbe);
+    #welle span { width: 3px; height: 15px; background: var(--farbe);
                   animation: welle 0.5s ease-in-out infinite; }
     #welle span:nth-child(2){animation-delay:.1s} #welle span:nth-child(3){animation-delay:.2s}
     #welle span:nth-child(4){animation-delay:.15s} #welle span:nth-child(5){animation-delay:.05s}
     @keyframes welle { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
-    #blase { background: #fff; border: 1px solid var(--linie); border-radius: 16px; padding: 0.85rem 1.15rem;
-             font-size: 1rem; line-height: 1.5; max-width: 440px; color: #0f172a;
-             box-shadow: 0 8px 20px -14px rgba(15,23,42,0.55); }
-    #blase.rein { animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1); }
-    #blase .tippt span { background: color-mix(in srgb, var(--farbe) 55%, #94a3b8); }
-    #chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
-    #chips:empty { display: none; }
-    /* Sobald das Gespräch läuft, verschwinden Bühnen-Sprechblase und Chips.
-       Grund: Die Antwort stand danach DOPPELT auf dem Schirm, einmal gross in
-       der Blase und einmal im Verlauf darunter. Bei einer langen Antwort war die
-       Blase groesser als die Figur und drueckte den Verlauf auf einen Streifen
-       zusammen. Ab jetzt ist der Verlauf der eine Ort zum Lesen, die Figur
-       behaelt ihren Platz. Das eingebettete Widget macht es genauso. */
-    body.hat-verlauf #blase, body.hat-verlauf #chips { display: none; }
     /* Auf schmalen Schirmen brachen die Vorschlags-Chips auf drei bis vier
-       Zeilen um und frassen 162px, mehr als die halbe Figur. Eine einzige,
-       seitlich schiebbare Zeile kostet nur noch eine Zeilenhoehe, alle
-       Vorschlaege bleiben erreichbar. */
+       Zeilen um. Eine einzige, seitlich schiebbare Zeile kostet nur noch eine
+       Zeilenhoehe, alle Vorschlaege bleiben erreichbar. */
     @media (max-width: 560px) {
-      #chips .ki-vorschlaege { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
+      #chat .ki-vorschlaege { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start;
                                scrollbar-width: none; -ms-overflow-style: none;
                                padding-bottom: 2px; max-width: 100%; }
-      #chips .ki-vorschlaege::-webkit-scrollbar { display: none; }
-      #chips .ki-vorschlag { flex-shrink: 0; }
+      #chat .ki-vorschlaege::-webkit-scrollbar { display: none; }
+      #chat .ki-vorschlag { flex-shrink: 0; }
     }
     #fusszeile { text-align: center; margin: 0.55rem 0 0; font-size: 0.78rem; flex-shrink: 0; }
 
@@ -149,30 +134,21 @@
        weigert sich ein Flex-Kind zu schrumpfen und drückt die Eingabe raus. */
     /* Ohne eigenen Rahmen und Schatten — er sitzt IM Panel, eine Haarlinie
        genuegt als Trennung zur Buehne darueber. */
+    /* Der Verlauf ist von Anfang an sichtbar (Begruessung + Vorschlaege stehen
+       direkt darin) statt erst nach der ersten Nachricht — die Vorschlaege
+       gehoeren zum Lesen/Antworten, nicht auf die Charakter-Buehne. */
     #chat { padding: 1rem 1.1rem; border-top: 1px solid var(--linie);
             flex: 1 1 auto; min-height: 0; overflow-y: auto;
             display: flex; flex-direction: column; gap: 0.55rem; }
-    /* Am Anfang gibt es noch nichts nachzulesen: Die Begruessung steht in der
-       Sprechblase auf der Buehne. Beides gleichzeitig zu zeigen hiess, denselben
-       Satz doppelt auf dem Schirm zu haben. */
-    body:not(.hat-verlauf) #chat { display: none; }
-    /* Solange kein Verlauf da ist, FUELLT die Buehne das Panel und die Figur
-       steht gross und mittig. Ohne das haette nichts mehr flex:1 und unter der
-       Eingabe klaffte eine tote Flaeche. Im Gespraech uebernimmt der Verlauf
-       diese Rolle und die Buehne wird wieder zur festen Kopfzone. */
-    body:not(.hat-verlauf) #buehne {
-      flex: 1; min-height: 0; justify-content: center;
-      --figur: min(400px, 74vw, 46vh);
-    }
     #chat::-webkit-scrollbar { width: 6px; }
-    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
-    .msg { padding: 0.62rem 0.85rem; border-radius: 16px; max-width: 82%; white-space: pre-wrap; line-height: 1.45;
+    #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); }
+    .msg { padding: 0.62rem 0.85rem; max-width: 82%; white-space: pre-wrap; line-height: 1.45;
            animation: msgRein 0.34s cubic-bezier(0.22,1,0.36,1) both; }
     @keyframes msgRein { from { opacity: 0; transform: translateY(7px) scale(0.98); } to { opacity: 1; transform: none; } }
-    .user { align-self: flex-end; color: #fff; border-bottom-right-radius: 5px;
+    .user { align-self: flex-end; color: #fff;
             background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
             box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--farbe) 70%, transparent); }
-    .bot  { align-self: flex-start; background: #fff; border: 1px solid var(--linie); border-bottom-left-radius: 5px;
+    .bot  { align-self: flex-start; background: #fff; border: 1px solid var(--linie);
             box-shadow: 0 4px 14px -10px rgba(15,23,42,0.4); }
     .meta { color: #94a3b8; font-style: italic; box-shadow: none; background: transparent; }
     /* Eingabe als Fuss DES Panels, durch eine Haarlinie abgesetzt — vorher stand
@@ -190,42 +166,40 @@
       body.vollbild { max-width: none; padding: 0; }
       /* Zeile 1 Kopf ueber beide Spalten, darunter links die Figur (ueber beide
          restlichen Zeilen), rechts Verlauf oben und Eingabe unten. */
-      body.vollbild #panel { border-radius: 0; border: 0; box-shadow: none;
+      body.vollbild #panel { border: 0; box-shadow: none;
         display: grid; grid-template-columns: minmax(320px, 38%) 1fr;
         grid-template-rows: auto 1fr auto; }
       body.vollbild #kopfleiste { grid-column: 1 / -1; grid-row: 1;
         padding: 0.8rem 1.3rem 0.7rem; border-bottom: 1px solid var(--linie); }
-      /* Linke Spalte: nur die Figur (+ Chips zu Beginn), mittig und GROSS.
-         Sie teilt sich den Platz nicht mehr mit dem Text und schrumpft nie. */
+      /* Linke Spalte: nur die Figur, mittig und GROSS — noch etwas grosszuegiger
+         als vorher, da sie hier eine eigene Spalte hat und den Platz mit
+         niemandem teilt. */
       body.vollbild #buehne { grid-column: 1; grid-row: 2 / 4; min-height: 0;
         justify-content: center; border-right: 1px solid var(--linie);
-        --figur: min(460px, 30vw, 58vh) !important; }
-      /* Rechte Spalte: Verlauf ist hier IMMER sichtbar (Platz genug), darunter
-         die Eingabe. */
-      body.vollbild #chat { grid-column: 2; grid-row: 2; display: flex !important;
+        --figur: min(520px, 34vw, 62vh) !important; }
+      /* Rechte Spalte: Verlauf (samt Vorschlaegen) oben, darunter die Eingabe. */
+      body.vollbild #chat { grid-column: 2; grid-row: 2;
         border-top: 0; padding: 1.4rem 1.6rem; }
       body.vollbild form { grid-column: 2; grid-row: 3; padding: 0.9rem 1.6rem; }
-      /* Sprechblase weg: derselbe Satz steht rechts schon im Verlauf. */
-      body.vollbild #blase { display: none; }
       body.vollbild #fusszeile { display: none; }
     }
-    input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
+    input { flex: 1; padding: 0.7rem 0.95rem; border: 1px solid var(--linie); font: inherit;
             background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
     input:focus { outline: none; border-color: var(--farbe);
                   box-shadow: 0 0 0 3px color-mix(in srgb, var(--farbe) 18%, transparent); }
-    button { padding: 0.7rem 1.2rem; border: 0; border-radius: 999px; color: #fff; cursor: pointer; font-weight: 600;
+    button { padding: 0.7rem 1.2rem; border: 0; color: #fff; cursor: pointer; font-weight: 600;
              background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
              box-shadow: 0 5px 14px -6px color-mix(in srgb, var(--farbe) 70%, transparent);
              transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
     button:hover:not(:disabled) { transform: translateY(-1px); }
     button:disabled { opacity: 0.5; cursor: default; }
-    /* "denkt nach"-Punkte in der Sprechblase */
+    /* "denkt nach"-Punkte (Standard-Tipp-Anzeige im Verlauf) */
     .tippt { display: inline-flex; gap: 4px; align-items: center; }
-    .tippt span { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: tip 1.3s infinite; }
+    .tippt span { width: 7px; height: 7px; background: #94a3b8; animation: tip 1.3s infinite; }
     .tippt span:nth-child(2){animation-delay:.18s} .tippt span:nth-child(3){animation-delay:.36s}
     @keyframes tip { 0%,60%,100%{opacity:.28;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
     @media (prefers-reduced-motion: reduce) {
-      .msg, #avatar svg, #avatar.sprechen, #blase.rein, .augen, #welle span, .tippt span { animation: none !important; }
+      .msg, #avatar svg, #avatar.sprechen, .augen, #welle span, .tippt span { animation: none !important; }
     }
   </style>
 </head>
@@ -246,9 +220,10 @@
     </button>
   </div>
 
-  <!-- Charakter-Bühne: die Figur ist die Hauptperson; die Antwort erscheint als
-       ihre Sprechblase, optional laut vorgelesen, mit Klappmaul beim Sprechen.
-       #avatar = Platzhalter-SVG (Fallback), #avatar-img = generiertes Bild. -->
+  <!-- Charakter-Bühne: die Figur ist die Hauptperson, zeigt aber keinen Text
+       mehr (der steht im Verlauf darunter) — nur Reaktion + Klappmaul beim
+       Vorlesen. #avatar = Platzhalter-SVG (Fallback), #avatar-img = generiertes
+       Bild. -->
   <div id="buehne">
     <div id="avatar">
       <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
@@ -268,8 +243,6 @@
       <div id="initial" aria-hidden="true"></div>
     </div>
     <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-    <div id="blase">Hallo! Schön, dass du da bist. Wie kann ich dir helfen?</div>
-    <div id="chips"></div>
   </div>
 
   <div id="chat"></div>
@@ -294,8 +267,6 @@
     const avatar = document.getElementById("avatar");
     const avatarImg = document.getElementById("avatar-img");
     const avatarName = document.getElementById("avatar-name");
-    const blase = document.getElementById("blase");
-    const chips = document.getElementById("chips");
     const welle = document.getElementById("welle");
     const stimmeBtn = document.getElementById("stimme");
 
@@ -348,19 +319,6 @@
         initialEl.style.display = "flex";
       }
       if (dauer) revertTimer = setTimeout(() => setCharakter("idle"), dauer);
-    }
-
-    // --- Sprechblase der Bühne + Denk-Anzeige ---
-    function setzeBlase(text) {
-      blase.textContent = text;
-      blase.classList.remove("rein"); void blase.offsetWidth; blase.classList.add("rein");
-    }
-    function zeigeDenken() {
-      blase.classList.remove("rein"); void blase.offsetWidth; blase.classList.add("rein");
-      blase.textContent = "";
-      const d = document.createElement("span");
-      d.className = "tippt"; d.innerHTML = "<span></span><span></span><span></span>";
-      blase.appendChild(d);
     }
 
     // --- Stimme: liest die Antwort laut vor (Browser-TTS), standardmässig AUS ---
@@ -417,17 +375,16 @@
       ],
     });
 
-    // Gemeinsame Chat-Logik aus lib/chat-ui.js. Die Bühne (Sprechblase + Stimme)
-    // wird über onFrage/onAntwort gesteuert; der Verlauf (#chat) füllt sich weiter.
+    // Gemeinsame Chat-Logik aus lib/chat-ui.js. Die Bühne (nur noch Stimme/
+    // Reaktion, keine Sprechblase mehr) wird über onFrage/onAntwort gesteuert;
+    // der Verlauf (#chat) füllt sich weiter und trägt jetzt auch die Vorschlaege.
     const ui = ChatUI.starten({
       chat, form, input, send,
       firmaId: FIRMA_ID,
       nachNachricht: () => figur.pruefe(),
       avatar: setCharakter,
       holeFirmaConfig: () => firmaConfig,
-      chipsZiel: chips,
-      onFrage: () => { document.body.classList.add("hat-verlauf"); zeigeDenken(); },
-      onAntwort: (text) => { setzeBlase(text); liesVor(text); },
+      onAntwort: (text) => { liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
 
@@ -507,8 +464,7 @@
 
       setCharakter("freuen", 700);
       const gruss = "Hallo! Schön, dass du da bist. Wie kann ich dir helfen?";
-      setzeBlase(gruss);                 // gross auf der Bühne
-      ui.addBubble(gruss, "bot");        // und im nachlesbaren Verlauf
+      ui.addBubble(gruss, "bot");
       ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
     }
 
