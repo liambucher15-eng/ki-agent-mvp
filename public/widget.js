@@ -24,6 +24,12 @@
 //   Neu & optional/abwärtskompatibel: sendet zusätzlich den sichtbaren Seitentext
 //   an den Chat-Frame; die Sprechblase holt eine passende KI-Frage (gecacht) und
 //   fällt bei Fehler auf den bisherigen statischen Satz zurück.
+// Version: 5 (Ansprache nur bei Anlass)
+//   VERHALTENSÄNDERUNG, bewusst: Die proaktive Sprechblase erscheint nicht mehr
+//   pauschal nach 9 Sekunden bei jedem Besucher, sondern nur, wenn ein echter
+//   Anlass vorliegt (zögert nach vollständigem Lesen, steckt an der Kasse fest,
+//   vergleicht, sucht, will gehen). Ohne Anlass bleibt es still. Für den
+//   Einbau-Code der Kunden ändert sich nichts.
 // Version: 4 (Seitenverständnis — strukturierte Produktdaten)
 //   Neu & optional/abwärtskompatibel: sammelt zusätzlich die strukturierten
 //   Auszeichnungen der Seite (JSON-LD, og:/product:-Meta) und reicht sie roh
@@ -421,24 +427,39 @@
   }
   bubble.addEventListener("click", function () { offen ? schliesse() : oeffne(); });
 
-  // --- Proaktive Sprechblase: selten, wegklickbar, einmal pro Besucher/Firma ---
+  // --- Proaktive Sprechblase: nur bei echtem Anlass, selten, wegklickbar ------
+  //
+  // Vorher: EIN Hinweis nach 9 Sekunden, unabhängig davon, ob der Besucher ihn
+  // gebrauchen konnte. Jetzt: das Widget beobachtet still und meldet sich erst,
+  // wenn sich lokal etwas Bemerkenswertes ändert (lange da und alles gelesen,
+  // an der Kasse festgefahren, im Begriff zu gehen). Ob dann WIRKLICH gesprochen
+  // wird, entscheidet die Regel serverseitig (lib/ansprache.js).
+  //
+  // Die Sperren stehen bewusst HIER, nicht nur auf dem Server: sie greifen ohne
+  // Netz und ohne Verzögerung, und keine Netzstörung kann sie aushebeln.
   var HINWEIS_KEY = "kiagent-hinweis-" + firma;
   var hinweisTimer;
-  // Statischer Fallback nach Pfad — greift, wenn die KI-Frage (noch) nicht da ist
-  // oder der Server nicht antwortet. So wartet das Widget NIE auf das Netz.
-  function statischerSatz() {
-    var p = String(location.pathname || "").toLowerCase();
-    if (/preis|pricing|tarif|abo|plan/.test(p)) return "Soll ich dir die Preise erklären?";
-    if (/produkt|product|leistung|service|angebot/.test(p)) return "Fragen zum Angebot? Ich helfe gern.";
-    if (/kontakt|contact|support|hilfe/.test(p)) return "Kann ich dir weiterhelfen?";
-    return "Kann ich dir helfen?";
-  }
-  // KI-Frage passend zum Seiteninhalt holen (serverseitig gecacht). Kurzer
-  // Timeout; bei Fehler/Leere bleibt der Fallback. Jeder fetch mit catch — ein
-  // Ausfall darf die Kundenseite nie beeinträchtigen (Update-Vertrag).
-  function holeHinweisSatz(cb) {
+  var schonAngesprochen = 0;
+  var letzteAnspracheZeit = 0;
+  var weggeklickt = false;
+  var anspracheLaeuft = false;
+  var pruefTimer = null;
+  var MAX_ANSPRACHEN = 2;      // spiegelt lib/ansprache.js — Server bleibt die Wahrheit
+  var RUHE_MS = 90000;
+  // Den statischen Rückfallsatz ("Kann ich dir helfen?") gibt es bewusst NICHT
+  // mehr: Er war der Grund, warum sich jeder Besucher angesprochen fühlte, ohne
+  // dass es einen Anlass gab. Antwortet der Server nicht, wird geschwiegen —
+  // eine ausgebliebene Blase ärgert niemanden, eine überflüssige schon.
+  //
+  // Kurzer Timeout; jeder fetch mit catch — ein Ausfall darf die Kundenseite
+  // nie beeinträchtigen (Update-Vertrag).
+  // Fragt den Server: gibt es gerade einen Anlass, und wenn ja, welcher Satz?
+  // Antwortet der Server nicht oder verneint er, passiert NICHTS — Schweigen ist
+  // der sichere Rückfall. (Der statische Satz greift nur beim Erst-Hinweis ohne
+  // Anlass, damit sich das Widget wie bisher verhält, wenn der Server hängt.)
+  function frageAnsprache(cb) {
     var fertig = false;
-    var ab = setTimeout(function () { if (!fertig) { fertig = true; cb(statischerSatz()); } }, 2500);
+    var ab = setTimeout(function () { if (!fertig) { fertig = true; cb(null); } }, 3000);
     var k = vollerKontext();
     try {
       fetch(basis + "/.netlify/functions/seiten-hinweis", {
@@ -446,35 +467,82 @@
         body: JSON.stringify({
           firmaId: firma, pfad: k.pfad, titel: k.titel, inhalt: k.inhalt,
           jsonLd: k.jsonLd, meta: k.meta,
+          verhalten: k.verhalten,
+          schonAngesprochen: schonAngesprochen,
+          sekundenSeitLetzter: letzteAnspracheZeit
+            ? Math.round((Date.now() - letzteAnspracheZeit) / 1000) : null,
+          chatOffen: offen,
+          weggeklickt: weggeklickt,
         }),
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (fertig) return;
           fertig = true; clearTimeout(ab);
-          cb(d && d.text ? d.text : statischerSatz());
+          cb(d && d.ansprechen && d.text ? d.text : null);
         })
-        .catch(function () { if (!fertig) { fertig = true; clearTimeout(ab); cb(statischerSatz()); } });
-    } catch (e) { if (!fertig) { fertig = true; clearTimeout(ab); cb(statischerSatz()); } }
+        .catch(function () { if (!fertig) { fertig = true; clearTimeout(ab); cb(null); } });
+    } catch (e) { if (!fertig) { fertig = true; clearTimeout(ab); cb(null); } }
   }
   function versteckeHinweis() {
     clearTimeout(hinweisTimer);
     hinweis.classList.remove("sichtbar");
   }
-  function zeigeHinweis() {
-    if (offen) return; // Chat schon offen -> nicht nötig
-    try { if (localStorage.getItem(HINWEIS_KEY)) return; } catch (e) {} // nie zweimal nerven
-    holeHinweisSatz(function (satz) {
-      if (offen) return; // Besucher hat inzwischen selbst geöffnet
-      hinweisTextEl.textContent = satz;
-      hinweis.classList.add("sichtbar");
-      try { localStorage.setItem(HINWEIS_KEY, "1"); } catch (e) {}
-      hinweisTimer = setTimeout(versteckeHinweis, 6500); // verschwindet von selbst
+  function zeigeSatz(satz) {
+    if (offen || !satz) return;
+    hinweisTextEl.textContent = satz;
+    hinweis.classList.add("sichtbar");
+    schonAngesprochen++;
+    letzteAnspracheZeit = Date.now();
+    hinweisTimer = setTimeout(versteckeHinweis, 8000); // verschwindet von selbst
+  }
+
+  // Lokale Vorprüfung. Erst wenn sie durchgeht, wird überhaupt gefragt — sonst
+  // liefe bei jedem Besucher im Sekundentakt eine Server-Anfrage.
+  function darfUeberhauptFragen() {
+    if (offen || weggeklickt || anspracheLaeuft) return false;
+    if (schonAngesprochen >= MAX_ANSPRACHEN) return false;
+    if (letzteAnspracheZeit && Date.now() - letzteAnspracheZeit < RUHE_MS) return false;
+    var s = verhaltensSignale();
+    // Grobe Vorfilter, die den Server-Regeln entsprechen: gar nicht erst fragen,
+    // solange offensichtlich kein Anlass vorliegt.
+    if (s.exitAbsicht) return true;                       // gleich weg
+    if (s.leerlauf >= 25 && s.verweildauer >= 40) return true; // stockt
+    if (s.verweildauer >= 120 && s.scrolltiefe >= 55) return true; // gelesen, zögert
+    if (s.produkteGesehen >= 2 && s.wiederkehr >= 1) return true;  // vergleicht
+    if (s.seitenInSitzung >= 4 && s.verweildauer >= 15) return true; // sucht
+    return false;
+  }
+  function pruefeAnlass() {
+    if (!darfUeberhauptFragen()) return;
+    anspracheLaeuft = true;
+    frageAnsprache(function (satz) {
+      anspracheLaeuft = false;
+      zeigeSatz(satz);
     });
   }
+
   hinweisTextEl.addEventListener("click", function () { versteckeHinweis(); oeffne(); });
-  hinweisZu.addEventListener("click", function (e) { e.stopPropagation(); versteckeHinweis(); });
-  setTimeout(zeigeHinweis, 9000); // ruhig ein paar Sekunden nach dem Erscheinen
+  // Wegklicken ist eine Antwort: für diesen Besuch ist dann Ruhe.
+  hinweisZu.addEventListener("click", function (e) {
+    e.stopPropagation();
+    weggeklickt = true;
+    try { localStorage.setItem(HINWEIS_KEY, "weg"); } catch (e2) {}
+    versteckeHinweis();
+  });
+  // Hat der Besucher früher schon einmal weggeklickt, gilt das weiter.
+  try { if (localStorage.getItem(HINWEIS_KEY) === "weg") weggeklickt = true; } catch (e) {}
+
+  // Alle 5 Sekunden lokal nachsehen; gefragt wird nur, wenn die Vorprüfung
+  // durchgeht. Erst nach 15 Sekunden anfangen — wer gerade erst angekommen ist,
+  // wird nicht angesprungen.
+  pruefTimer = setInterval(pruefeAnlass, 5000);
+  setTimeout(function () { pruefeAnlass(); }, 15000);
+  // Exit-Absicht sofort prüfen statt bis zum nächsten Takt zu warten — danach
+  // ist der Besucher womöglich weg.
+  document.addEventListener("mouseout", function (e) {
+    if (!e.relatedTarget && e.clientY <= 0) setTimeout(pruefeAnlass, 60);
+  });
 
   // Nachrichten aus dem Chat-iframe:
   //  - "ki-agent-schliessen": ×-Button im Chat-Header
