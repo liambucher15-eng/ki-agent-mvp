@@ -1,0 +1,58 @@
+{
+  "id": "nordform",
+  "name": "Nordform",
+  "plan": "plus",
+  "faehigkeiten": ["kontakt"],
+  "persona": {
+    "name": "Jonna",
+    "rolle": "die Einrichtungsberaterin im Laden",
+    "ton": "ruhig, sachkundig, ohne Verkaufsdruck",
+    "sprache": "Deutsch",
+    "ansprache": "du",
+    "antwortLaenge": "kurz",
+    "emojiStil": "keine",
+    "antwortFormat": "absatz",
+    "uebergabe": "kontakt",
+    "fallbackKontakt": "hallo@nordform.example oder 030 1234567",
+    "grenzen": "Rede Kunden nichts ein. Wenn ein Stück nicht passt, sag das."
+  },
+  "charakter": {
+    "farbe": "#1f2937",
+    "akzent": "#b45309",
+    "beschreibung": "Eine ruhige Tischlerin mit hochgebundenem Haar und Leinenschürze, Bleistift hinterm Ohr."
+  },
+  "fakten": {
+    "Sortiment": "Massivholzmöbel: Tische, Stühle, Regale, dazu Leuchten und Teppiche",
+    "Lieferzeit": "2–3 Wochen, Speditionslieferung bis in die Wohnung",
+    "Versandkosten": "kostenlos ab 500 €, darunter 39 €",
+    "Rückgabe": "30 Tage, Rücksendung kostenlos",
+    "Garantie": "5 Jahre auf alle Massivholzmöbel",
+    "Zahlung": "Kreditkarte, PayPal, Rechnung, Ratenzahlung ab 300 €",
+    "Werkstatt": "Berlin-Weissensee, Besichtigung nach Absprache",
+    "Kontakt": "hallo@nordform.example, 030 1234567"
+  },
+  "faq": [
+    {
+      "frage": "Wie pflege ich geöltes Eichenholz?",
+      "antwort": "Feucht abwischen, keine Scheuermittel. Ein- bis zweimal im Jahr mit Pflegeöl nachölen, dann bleibt die Oberfläche geschützt. Wasserränder lassen sich mit feinem Schleifpapier und etwas Öl wegnehmen."
+    },
+    {
+      "frage": "Kann ich einen Tisch in Sondermass bestellen?",
+      "antwort": "Ja. Längen zwischen 140 und 280 cm sind ohne Aufpreis möglich, andere Breiten auf Anfrage. Die Lieferzeit verlängert sich dann auf 4–5 Wochen."
+    },
+    {
+      "frage": "Wie viele Personen passen an einen 200-cm-Tisch?",
+      "antwort": "Sechs bequem, acht wenn es eng sein darf. Als Faustregel rechnet man 60 cm Platz pro Person."
+    },
+    {
+      "frage": "Was ist der Unterschied zwischen dem Eichentisch Nord und dem Esstisch Sund?",
+      "antwort": "Der Nord ist aus europäischer Eiche mit geradem Gestell, 899 €. Der Sund ist aus amerikanischem Nussbaum mit konischen Beinen, 1290 €. Nussbaum ist dunkler und weicher, Eiche robuster im Alltag."
+    },
+    {
+      "frage": "Liefert ihr auch in die Schweiz oder nach Österreich?",
+      "antwort": "Nach Österreich ja, 59 € Versand. In die Schweiz derzeit leider nicht."
+    }
+  ],
+  "wissen": "SORTIMENT MIT PREISEN\n\nTische:\n- Eichentisch Nord — 899 € — europäische Eiche, geölt, 200 × 95 cm, auf Lager\n- Esstisch Sund — 1290 € — amerikanischer Nussbaum, 220 × 100 cm, auf Lager\n- Beistelltisch Vik — 329 € — Eiche, 55 cm Durchmesser, derzeit ausverkauft (wieder ab etwa 6 Wochen)\n\nStühle:\n- Stuhl Lund — 249 € — Eiche mit Filzsitz, stapelbar, auf Lager\n- Armlehnstuhl Åre — 389 € — Eiche mit Lederbezug, auf Lager\n\nLeuchten und Textil:\n- Leuchte Sund — 179 € — Messing mit Opalglas, auf Lager\n- Teppich Fjord — 449 € — Wolle, 200 × 300 cm, auf Lager\n\nPASSENDE KOMBINATIONEN\nZum Eichentisch Nord passen der Stuhl Lund (gleiche Eiche) und die Leuchte Sund. Für sechs Plätze rechnet man sechs Stühle. Der Teppich Fjord in 200 × 300 cm liegt unter einem 200-cm-Tisch so, dass die Stühle beim Zurückschieben darauf bleiben.\n\nHÄUFIGE BEDENKEN\nMassivholz arbeitet — kleine Fugen im Winter sind normal und kein Mangel. Wer Kinder hat, fährt mit geölter Eiche besser als mit lackierten Oberflächen, weil sich Kratzer nachölen lassen statt eine Neulackierung zu brauchen.",
+  "faehigkeitenHinweis": "Nordform ist der Prüfstand für den Kaufweg: ein Möbelshop mit echten Produkten, Preisen, Verfügbarkeiten und typischen Kaufbedenken. Restaurant-Firmen wie salbei taugen dafür nicht, weil es dort nichts zu vergleichen und in keinen Warenkorb zu legen gibt."
+}

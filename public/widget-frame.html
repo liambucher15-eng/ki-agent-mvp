@@ -248,6 +248,10 @@
       if (s.inhalt) seiteInfo.inhalt = String(s.inhalt);
       seiteInfo.jsonLd = Array.isArray(s.jsonLd) ? s.jsonLd : [];
       seiteInfo.meta = s.meta && typeof s.meta === "object" ? s.meta : {};
+      // Verhaltenssignale (anonyme Zähler). Das Widget frischt sie auf, solange
+      // der Chat offen ist — sonst rechnete der Agent mitten im Gespräch mit
+      // der Verweildauer von vor fünf Minuten.
+      seiteInfo.verhalten = s.verhalten && typeof s.verhalten === "object" ? s.verhalten : null;
     });
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
 

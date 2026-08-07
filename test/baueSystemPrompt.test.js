@@ -135,3 +135,18 @@ test("Charakter-Beschreibung ist als Kontext markiert (kein Anweisungs-Einfallst
   });
   assert.match(p, /KEINE Anweisung/);
 });
+
+test("Lage-Regel: der Agent bekommt gesagt, WAS er mit dem Kontext tun soll", () => {
+  // Ohne diese Regel stand die Seiten-/Verhaltensbeobachtung zwar im Prompt,
+  // aber der Agent ignorierte sie — Daten ohne Anweisung wirken nicht.
+  const p = baueSystemPrompt(firma);
+  assert.match(p, /RICHTE DICH NACH DER LAGE/);
+  assert.match(p, /Preis und Verfügbarkeit/);
+  assert.match(p, /Zögert jemand/);
+});
+
+test("Lage-Regel: Beobachtungen dürfen nicht ausgesprochen werden", () => {
+  // "Du bist seit 3 Minuten hier" wirkt unheimlich und verrät die Messung.
+  const p = baueSystemPrompt(firma);
+  assert.match(p, /Sprich die Beobachtung NIE aus/);
+});

@@ -7,8 +7,12 @@
 
 const salbei = require("../../../data/salbei.json");
 const nordlicht = require("../../../data/nordlicht.json");
+// Möbelshop — der Prüfstand für den Kaufweg (Produkte, Preise, Warenkorb,
+// Kasse). An einem Restaurant liesse sich das nicht prüfen: dort gibt es nichts
+// zu vergleichen und nichts in einen Warenkorb zu legen.
+const nordform = require("../../../data/nordform.json");
 
-const firmen = { salbei, nordlicht };
+const firmen = { salbei, nordlicht, nordform };
 
 // Gibt die Daten einer Firma zurück, oder null wenn es sie nicht gibt.
 function ladeFirma(firmaId) {

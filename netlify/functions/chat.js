@@ -14,6 +14,10 @@ const { rufeClaude } = require("./lib/claude");
 const { baueTools } = require("./lib/faehigkeiten");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
+const {
+  beurteile: beurteileVerhalten,
+  zusammenfassung: verhaltensZusammenfassung,
+} = require("./lib/verhalten");
 
 // Input-Limits (bremsen Kostenmissbrauch)
 const MAX_NACHRICHTEN = 40;
@@ -88,6 +92,15 @@ exports.handler = async (event) => {
           ? `\nSichtbarer Text dieser Seite (nur zur Orientierung):\n"""${seitenAnalyse.inhalt}"""`
           : "") +
         `\nNutze das, um gezielt zu dieser Seite zu helfen.`;
+    }
+
+    // Wie verhält sich der Besucher gerade? Das entscheidet den TON: jemand, der
+    // seit drei Minuten zögert, braucht etwas anderes als jemand, der eben erst
+    // angekommen ist. Auch das bleibt Beobachtung, nicht Befehl.
+    if (seiteInfo.verhalten) {
+      const beurteilung = beurteileVerhalten(seiteInfo.verhalten, seitenAnalyse.typ);
+      const verhaltensText = verhaltensZusammenfassung(beurteilung);
+      if (verhaltensText) SYSTEM_PROMPT += `\n\n${verhaltensText}`;
     }
   }
 

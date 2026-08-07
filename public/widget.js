@@ -107,13 +107,113 @@
     } catch (e) { /* egal */ }
     return { jsonLd: jsonLd, meta: meta };
   }
-  // Voller Kontext = wo + was steht dort + wie ist es ausgezeichnet.
+  // Voller Kontext = wo + was steht dort + wie ist es ausgezeichnet + wie
+  // verhält sich der Besucher.
   function vollerKontext() {
     var k = seitenKontext();
     var s = strukturDaten();
     k.jsonLd = s.jsonLd;
     k.meta = s.meta;
+    k.verhalten = verhaltensSignale();
     return k;
+  }
+
+  // ── Verhaltenssignale ─────────────────────────────────────────────────────
+  // WANN braucht jemand Hilfe? Dafür zählt nicht der Seiteninhalt, sondern das
+  // Verhalten: wie lange schon hier, wie weit gelesen, wie lange keine Regung,
+  // wie viele Seiten im Besuch, schon mal hier gewesen, gleich weg?
+  //
+  // DATENSPARSAM (bewusste Grenze): nur anonyme Zähler — Sekunden, Prozent,
+  // Anzahl. Keine Namen, keine Klickpfade, keine Kennungen. Alles in
+  // sessionStorage, also weg, sobald der Tab zugeht, und nur für DIESE Seite.
+  // Nichts wird seitenübergreifend verfolgt. Gedeutet wird serverseitig
+  // (lib/verhalten.js); hier wird nur gezählt.
+  var SITZUNG_SCHLUESSEL = "kiagent-sitzung";
+  var seitenStart = Date.now();
+  var letzteRegung = Date.now();
+  var maxScroll = 0;
+  var exitAbsicht = false;
+
+  function liesSitzung() {
+    try { return JSON.parse(sessionStorage.getItem(SITZUNG_SCHLUESSEL)) || {}; }
+    catch (e) { return {}; }
+  }
+  function schreibeSitzung(s) {
+    try { sessionStorage.setItem(SITZUNG_SCHLUESSEL, JSON.stringify(s)); } catch (e) {}
+  }
+
+  // Trägt DIESE Seite eine Produkt-Auszeichnung? Bewusst nur ein flacher Blick
+  // auf die schon eingesammelten Daten — die eigentliche Deutung bleibt auf dem
+  // Server. Hier geht es nur darum, den richtigen Zähler zu erhöhen.
+  function siehtNachProduktAus(daten) {
+    try {
+      if (/product/i.test(String(daten.meta["og:type"] || ""))) return true;
+      if (daten.meta["product:price:amount"]) return true;
+      return JSON.stringify(daten.jsonLd).indexOf('"Product"') > -1;
+    } catch (e) { return false; }
+  }
+
+  // Diesen Seitenaufruf einmalig in der Sitzung vermerken (nur wegen der
+  // Zähler — der Rückgabewert wird nicht gebraucht, gelesen wird später frisch).
+  (function () {
+    var s = liesSitzung();
+    var pfad = String(location.pathname || "/");
+    s.seiten = s.seiten && typeof s.seiten === "object" ? s.seiten : {};
+    s.seiten[pfad] = (s.seiten[pfad] || 0) + 1;
+    s.produkte = Array.isArray(s.produkte) ? s.produkte : [];
+    if (siehtNachProduktAus(strukturDaten()) && s.produkte.indexOf(pfad) < 0) {
+      s.produkte.push(pfad);
+      if (s.produkte.length > 50) s.produkte = s.produkte.slice(-50); // nicht endlos wachsen
+    }
+    schreibeSitzung(s);
+  })();
+
+  function scrollProzent() {
+    try {
+      var doc = document.documentElement;
+      var gesamt = Math.max(doc.scrollHeight, document.body ? document.body.scrollHeight : 0);
+      var rest = gesamt - window.innerHeight;
+      // Passt die Seite ganz auf den Schirm, gibt es nichts zu scrollen — dann
+      // hat der Besucher sie gesehen, nicht 0% gelesen.
+      if (rest <= 0) return 100;
+      return Math.min(100, Math.max(0, Math.round((window.scrollY / rest) * 100)));
+    } catch (e) { return 0; }
+  }
+  function regung() { letzteRegung = Date.now(); }
+  try {
+    window.addEventListener("scroll", function () {
+      regung();
+      var p = scrollProzent();
+      if (p > maxScroll) maxScroll = p;
+    }, { passive: true });
+    ["mousemove", "keydown", "click", "touchstart"].forEach(function (e) {
+      window.addEventListener(e, regung, { passive: true });
+    });
+    // Exit-Absicht: Maus verlässt das Fenster nach OBEN (Richtung Tableiste /
+    // Adresszeile). Der verlässlichste Hinweis, den eine Seite bekommt, dass
+    // jemand gleich weg ist. Auf Touch-Geräten gibt es das nicht — dort bleibt
+    // das Signal einfach aus, statt falsch zu raten.
+    document.addEventListener("mouseout", function (e) {
+      if (!e.relatedTarget && e.clientY <= 0) exitAbsicht = true;
+    });
+  } catch (e) { /* nie die Kundenseite stören */ }
+
+  function verhaltensSignale() {
+    var jetzt = Date.now();
+    var pfad = String(location.pathname || "/");
+    var s = liesSitzung();
+    var seiten = s.seiten || {};
+    var anzahlSeiten = 0;
+    for (var k in seiten) { if (Object.prototype.hasOwnProperty.call(seiten, k)) anzahlSeiten++; }
+    return {
+      verweildauer: Math.round((jetzt - seitenStart) / 1000),
+      scrolltiefe: Math.max(maxScroll, scrollProzent()),
+      leerlauf: Math.round((jetzt - letzteRegung) / 1000),
+      seitenInSitzung: anzahlSeiten || 1,
+      produkteGesehen: (s.produkte || []).length,
+      wiederkehr: Math.max(0, (seiten[pfad] || 1) - 1),
+      exitAbsicht: exitAbsicht,
+    };
   }
   function baueFrameUrl() {
     var k = seitenKontext();
@@ -269,6 +369,7 @@
   // Frame mit den URL-Parametern (Version 3), also gibt es nie einen Zustand ohne
   // Kontext, nur einen kurz weniger genauen.
   var frameEl = null;
+  var auffrischTimer = null;
   function sendeSeiteAnFrame() {
     if (!frameEl || !frameEl.contentWindow) return;
     try {
@@ -278,6 +379,14 @@
       );
     } catch (e) { /* nie die Kundenseite stören */ }
   }
+  // Die Verhaltenssignale altern, während der Chat offen ist (Verweildauer
+  // läuft weiter). Ohne Auffrischung würde der Agent mitten im Gespräch mit
+  // den Zahlen von vor fünf Minuten argumentieren.
+  function starteAuffrischen() {
+    clearInterval(auffrischTimer);
+    auffrischTimer = setInterval(sendeSeiteAnFrame, 20000);
+  }
+  function stoppeAuffrischen() { clearInterval(auffrischTimer); auffrischTimer = null; }
 
   function oeffne() {
     versteckeHinweis();
@@ -295,6 +404,7 @@
       // Single-Page-Shops kann sich die Seite inzwischen geändert haben.
       sendeSeiteAnFrame();
     }
+    starteAuffrischen();
     panel.classList.add("auf");
     // Grosses Fenster deckt die Orb-Ecke ab -> Launcher ausblenden, solange offen
     // (zu wird über das × im Chat-Kopf). Beim Schliessen kommt er wieder.
@@ -303,6 +413,7 @@
     offen = true;
   }
   function schliesse() {
+    stoppeAuffrischen();
     panel.classList.remove("auf");
     bubble.classList.add("sichtbar"); // Orb wieder zeigen
     bubble.setAttribute("aria-label", "Chat öffnen");
