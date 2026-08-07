@@ -226,11 +226,29 @@
     const FIRMA_ID = _p.get("firma") || "salbei";
     // Seiten-Kontext vom Widget: welche Unterseite (pfad/titel) UND was steht
     // dort (inhalt, gekürzt) — damit der Agent zum Seiteninhalt antworten kann.
+    // Start aus den URL-Parametern, damit sofort Kontext da ist.
+    // BEWUSST dasselbe Objekt behalten und nur befüllen: ChatUI.starten() merkt
+    // sich diese Referenz einmal beim Start. Eine Neuzuweisung käme dort nie an.
     const seiteInfo = {
       pfad: _p.get("pfad") || "",
       titel: _p.get("titel") || "",
       inhalt: _p.get("inhalt") || "",
     };
+    // Nachschlag vom Widget: die strukturierten Auszeichnungen der Seite
+    // (JSON-LD, og:/product:-Meta). Zu gross für die URL, darum per Nachricht.
+    // Nur vom eigenen Eltern-Fenster annehmen — sonst könnte jedes fremde Fenster
+    // dem Agenten eine erfundene Produktseite unterschieben.
+    window.addEventListener("message", (e) => {
+      if (e.source !== parent) return;
+      if (!e.data || e.data.type !== "ki-agent-seite") return;
+      const s = e.data.seite;
+      if (!s || typeof s !== "object") return;
+      if (s.pfad) seiteInfo.pfad = String(s.pfad);
+      if (s.titel) seiteInfo.titel = String(s.titel);
+      if (s.inhalt) seiteInfo.inhalt = String(s.inhalt);
+      seiteInfo.jsonLd = Array.isArray(s.jsonLd) ? s.jsonLd : [];
+      seiteInfo.meta = s.meta && typeof s.meta === "object" ? s.meta : {};
+    });
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
 
     // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---

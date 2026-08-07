@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eichentisch Nord — Nordform</title>
+
+  <!-- ══ PRÜFSTAND ═══════════════════════════════════════════════════════════
+       Diese Seite tut so, als wäre sie ein fremder Möbel-Shop. Sie weiss nichts
+       vom Agenten ausser der einen Script-Zeile ganz unten.
+
+       Sie ist bewusst so ausgezeichnet, wie es echte Shops tun (JSON-LD nach
+       schema.org + Open-Graph-Meta), damit sich prüfen lässt, ob der Agent das
+       Produkt WIRKLICH versteht — Name, Preis, Verfügbarkeit — statt nur
+       Fliesstext zu sehen.
+
+       Mit ?seite=kategorie / ?seite=warenkorb / ?seite=kasse lassen sich die
+       anderen Stationen des Kaufwegs testen (siehe Skript unten).
+       ═══════════════════════════════════════════════════════════════════════ -->
+
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="Eichentisch Nord" />
+  <meta property="og:description" content="Massivholztisch aus europäischer Eiche, 200 × 95 cm." />
+  <meta property="product:price:amount" content="899.00" />
+  <meta property="product:price:currency" content="EUR" />
+  <meta property="product:availability" content="instock" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Eichentisch Nord",
+    "description": "Massivholztisch aus europäischer Eiche, geölt. 200 × 95 cm, für sechs bis acht Personen.",
+    "brand": { "@type": "Brand", "name": "Nordform" },
+    "sku": "NF-TISCH-200",
+    "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.7", "reviewCount": "128" },
+    "offers": {
+      "@type": "Offer",
+      "price": "899.00",
+      "priceCurrency": "EUR",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
+  <style>
+    :root { --ton: #1f2937; --linie: #e5e7eb; --akzent: #b45309; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0;
+           color: var(--ton); line-height: 1.65; background: #fdfcfb; }
+    header { border-bottom: 1px solid var(--linie); background: #fff; }
+    .leiste { max-width: 1040px; margin: 0 auto; padding: 1rem 1.5rem;
+              display: flex; align-items: center; gap: 1.5rem; }
+    .marke { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.02em; }
+    nav { display: flex; gap: 1.1rem; margin-left: auto; font-size: 0.92rem; }
+    nav a { color: #6b7280; text-decoration: none; }
+    nav a:hover { color: var(--ton); }
+    main { max-width: 1040px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    .produkt { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    @media (max-width: 760px) { .produkt { grid-template-columns: 1fr; gap: 1.5rem; } }
+    .bild { aspect-ratio: 4/3; background:
+      linear-gradient(135deg, #d6c3a5, #b08d5f 60%, #8a6a3f);
+      border-radius: 4px; display: grid; place-items: center; color: #fff8ee;
+      font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { font-size: 2rem; margin: 0 0 0.4rem; }
+    .marke-klein { color: #9ca3af; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .preis { font-size: 1.6rem; font-weight: 600; margin: 1.2rem 0 0.3rem; }
+    .lager { color: #15803d; font-size: 0.9rem; }
+    .kaufen { margin-top: 1.6rem; display: flex; gap: 0.7rem; flex-wrap: wrap; }
+    button { font: inherit; padding: 0.85rem 1.6rem; border: 0; border-radius: 4px; cursor: pointer; }
+    .primaer { background: var(--ton); color: #fff; font-weight: 600; }
+    .primaer:hover { background: #374151; }
+    .zweit { background: #fff; border: 1px solid var(--linie); }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 1.5rem;
+         margin: 2rem 0 0; padding-top: 1.5rem; border-top: 1px solid var(--linie); font-size: 0.94rem; }
+    dt { color: #6b7280; }
+    dd { margin: 0; }
+    section { margin-top: 3.5rem; }
+    h2 { font-size: 1.2rem; }
+    .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+    .karte { background: #fff; border: 1px solid var(--linie); border-radius: 4px; overflow: hidden; }
+    .karte .bild { aspect-ratio: 1; border-radius: 0; font-size: 0.7rem; }
+    .karte .text { padding: 0.8rem 0.9rem; }
+    .karte .name { font-weight: 600; font-size: 0.95rem; }
+    .karte .p { color: #6b7280; font-size: 0.9rem; }
+    .hinweis { margin-top: 4rem; padding: 1rem 1.2rem; background: #fffbeb;
+               border-left: 3px solid var(--akzent); font-size: 0.88rem; color: #78350f; }
+    .hinweis code { background: #fef3c7; padding: 0.1rem 0.35rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="leiste">
+      <span class="marke">NORDFORM</span>
+      <nav>
+        <a href="?seite=kategorie">Tische</a>
+        <a href="?seite=kategorie">Stühle</a>
+        <a href="?seite=kategorie">Leuchten</a>
+        <a href="?seite=warenkorb">Warenkorb (1)</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="produkt">
+      <div class="bild">Eichentisch Nord</div>
+      <div>
+        <p class="marke-klein">Nordform</p>
+        <h1>Eichentisch Nord</h1>
+        <p>Massivholztisch aus europäischer Eiche, von Hand geölt. Mit 200 × 95 cm
+        bietet er sechs bis acht Personen Platz. Die Maserung ist bei jedem Stück
+        anders, kein Tisch gleicht dem anderen.</p>
+
+        <p class="preis">899,00 €</p>
+        <p class="lager">Auf Lager · Lieferung in 2–3 Wochen</p>
+
+        <div class="kaufen">
+          <button class="primaer" id="in-den-warenkorb">In den Warenkorb</button>
+          <button class="zweit">Musterstück bestellen</button>
+        </div>
+
+        <dl>
+          <dt>Material</dt><dd>Eiche massiv, geölt</dd>
+          <dt>Maße</dt><dd>200 × 95 × 75 cm</dd>
+          <dt>Gewicht</dt><dd>68 kg</dd>
+          <dt>Lieferzeit</dt><dd>2–3 Wochen</dd>
+          <dt>Rückgabe</dt><dd>30 Tage</dd>
+        </dl>
+      </div>
+    </div>
+
+    <section>
+      <h2>Passt dazu</h2>
+      <div class="raster">
+        <div class="karte"><div class="bild">Stuhl Lund</div>
+          <div class="text"><div class="name">Stuhl Lund</div><div class="p">249,00 €</div></div></div>
+        <div class="karte"><div class="bild">Leuchte Sund</div>
+          <div class="text"><div class="name">Leuchte Sund</div><div class="p">179,00 €</div></div></div>
+        <div class="karte"><div class="bild">Teppich Fjord</div>
+          <div class="text"><div class="name">Teppich Fjord</div><div class="p">449,00 €</div></div></div>
+      </div>
+    </section>
+
+    <div class="hinweis">
+      <strong>Prüfstand.</strong> Diese Seite gibt es nur zum Testen des Agenten.
+      Andere Stationen des Kaufwegs:
+      <code>?seite=kategorie</code>, <code>?seite=warenkorb</code>, <code>?seite=kasse</code>.
+      Über <code>?firma=…</code> lässt sich eine andere Firma einbetten.
+    </div>
+  </main>
+
+  <script>
+    // Simuliert die übrigen Stationen des Kaufwegs, damit sich prüfen lässt, ob
+    // der Agent Warenkorb und Kasse als solche erkennt (und dort anders hilft).
+    // Verändert Pfad, Titel und die strukturierten Daten — genau die Signale,
+    // an denen die Seitenanalyse den Seitentyp festmacht.
+    (function () {
+      var seite = new URLSearchParams(location.search).get("seite");
+      if (!seite || seite === "produkt") return;
+
+      var ldKnoten = document.querySelector('script[type="application/ld+json"]');
+      function setzeLd(objekt) {
+        if (ldKnoten) ldKnoten.textContent = JSON.stringify(objekt);
+      }
+      function setzePfad(pfad, titel) {
+        // history.replaceState ändert location.pathname, ohne neu zu laden —
+        // so sieht das Widget denselben Pfad wie bei einer echten Unterseite.
+        try { history.replaceState(null, "", pfad + location.search); } catch (e) {}
+        document.title = titel;
+        var h1 = document.querySelector("h1");
+        if (h1) h1.textContent = titel;
+      }
+
+      if (seite === "kategorie") {
+        setzePfad("/shop/tische", "Tische");
+        setzeLd({
+          "@context": "https://schema.org", "@type": "ItemList",
+          itemListElement: [
+            { "@type": "ListItem", item: { "@type": "Product", name: "Eichentisch Nord",
+              offers: { "@type": "Offer", price: "899.00", priceCurrency: "EUR",
+                        availability: "https://schema.org/InStock" } } },
+            { "@type": "ListItem", item: { "@type": "Product", name: "Esstisch Sund",
+              offers: { "@type": "Offer", price: "1290.00", priceCurrency: "EUR",
+                        availability: "https://schema.org/InStock" } } },
+            { "@type": "ListItem", item: { "@type": "Product", name: "Beistelltisch Vik",
+              offers: { "@type": "Offer", price: "329.00", priceCurrency: "EUR",
+                        availability: "https://schema.org/OutOfStock" } } },
+          ],
+        });
+      } else if (seite === "warenkorb") {
+        setzePfad("/warenkorb", "Warenkorb");
+        setzeLd({});
+      } else if (seite === "kasse") {
+        setzePfad("/checkout/zahlung", "Zur Kasse");
+        setzeLd({});
+      }
+    })();
+  </script>
+
+  <!-- Die EINE Zeile, die ein Kunde einbaut. Mehr nicht. -->
+  <script src="/widget.js" data-firma="salbei" data-farbe="#1f2937"></script>
+</body>
+</html>

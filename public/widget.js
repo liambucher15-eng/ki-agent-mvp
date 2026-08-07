@@ -24,6 +24,14 @@
 //   Neu & optional/abwärtskompatibel: sendet zusätzlich den sichtbaren Seitentext
 //   an den Chat-Frame; die Sprechblase holt eine passende KI-Frage (gecacht) und
 //   fällt bei Fehler auf den bisherigen statischen Satz zurück.
+// Version: 4 (Seitenverständnis — strukturierte Produktdaten)
+//   Neu & optional/abwärtskompatibel: sammelt zusätzlich die strukturierten
+//   Auszeichnungen der Seite (JSON-LD, og:/product:-Meta) und reicht sie roh
+//   weiter. GEDEUTET wird ausschliesslich serverseitig (lib/seiten-analyse.js) —
+//   damit lässt sich das Verständnis verbessern, ohne dass ein Kunde je etwas
+//   neu einbetten muss. Die URL-Parameter von Version 3 bleiben unverändert
+//   erhalten; die neuen Daten kommen per postMessage nach. Kommt die Nachricht
+//   nicht an, verhält sich alles exakt wie in Version 3.
 // ════════════════════════════════════════════════════════════════════════════
 
 (function () {
@@ -62,6 +70,50 @@
       titel: String(document.title || (h1 && h1.textContent) || "").slice(0, 200),
       inhalt: seitenText(),
     };
+  }
+
+  // Strukturierte Auszeichnungen der Seite. Damit weiss der Agent nicht nur, DASS
+  // dort ein Text steht, sondern dass es ein Produkt ist, was es kostet und ob es
+  // lieferbar ist — die Voraussetzung, um sinnvoll zu empfehlen.
+  //
+  // Hier wird NUR eingesammelt und geparst, nicht gedeutet: die Deutung liegt
+  // serverseitig, damit sie sich verbessern lässt, ohne dass Kunden neu einbetten.
+  // Harte Deckel, weil das bei jeder Anfrage mitgeht und von einer fremden Seite
+  // stammt, deren Grösse wir nicht kennen.
+  var MAX_JSONLD_BLOCK = 12000;   // ein einzelner Block
+  var MAX_JSONLD_GESAMT = 12000;  // alle Blöcke zusammen
+  function strukturDaten() {
+    var jsonLd = [];
+    var meta = {};
+    try {
+      var knoten = document.querySelectorAll('script[type="application/ld+json"]');
+      var summe = 0;
+      for (var i = 0; i < knoten.length && i < 12 && jsonLd.length < 8; i++) {
+        var roh = knoten[i].textContent || "";
+        if (!roh || roh.length > MAX_JSONLD_BLOCK) continue;
+        if (summe + roh.length > MAX_JSONLD_GESAMT) break;
+        try { jsonLd.push(JSON.parse(roh)); summe += roh.length; }
+        catch (e) { /* kaputtes JSON-LD überspringen */ }
+      }
+    } catch (e) { /* egal */ }
+    try {
+      var m = document.querySelectorAll("meta[property], meta[name]");
+      for (var j = 0; j < m.length; j++) {
+        var s = m[j].getAttribute("property") || m[j].getAttribute("name");
+        // Nur was ausgewertet wird — nicht die halben Kopfdaten mitschleppen.
+        if (!s || !/^(og:|twitter:|product:)/i.test(s)) continue;
+        meta[s.toLowerCase()] = String(m[j].getAttribute("content") || "").slice(0, 500);
+      }
+    } catch (e) { /* egal */ }
+    return { jsonLd: jsonLd, meta: meta };
+  }
+  // Voller Kontext = wo + was steht dort + wie ist es ausgezeichnet.
+  function vollerKontext() {
+    var k = seitenKontext();
+    var s = strukturDaten();
+    k.jsonLd = s.jsonLd;
+    k.meta = s.meta;
+    return k;
   }
   function baueFrameUrl() {
     var k = seitenKontext();
@@ -212,6 +264,21 @@
   // Verzögertes, ruhiges Erscheinen (kein aufdringliches Sofort-Pop-up).
   setTimeout(function () { bubble.classList.add("sichtbar"); }, 2500);
 
+  // Die strukturierten Seitendaten passen nicht sinnvoll in eine URL — sie kommen
+  // per postMessage nach, sobald der Frame geladen ist. Bis dahin arbeitet der
+  // Frame mit den URL-Parametern (Version 3), also gibt es nie einen Zustand ohne
+  // Kontext, nur einen kurz weniger genauen.
+  var frameEl = null;
+  function sendeSeiteAnFrame() {
+    if (!frameEl || !frameEl.contentWindow) return;
+    try {
+      frameEl.contentWindow.postMessage(
+        { type: "ki-agent-seite", seite: vollerKontext() },
+        basis
+      );
+    } catch (e) { /* nie die Kundenseite stören */ }
+  }
+
   function oeffne() {
     versteckeHinweis();
     if (!geladen) {
@@ -219,8 +286,14 @@
       f.src = baueFrameUrl(); // Seiten-Kontext beim Öffnen mitgeben
       f.title = "Chat";
       f.setAttribute("allow", "clipboard-write; microphone");
+      f.addEventListener("load", sendeSeiteAnFrame);
       panel.appendChild(f);
+      frameEl = f;
       geladen = true;
+    } else {
+      // Schon geladen (Besucher öffnet erneut): Kontext auffrischen — bei
+      // Single-Page-Shops kann sich die Seite inzwischen geändert haben.
+      sendeSeiteAnFrame();
     }
     panel.classList.add("auf");
     // Grosses Fenster deckt die Orb-Ecke ab -> Launcher ausblenden, solange offen
@@ -255,11 +328,14 @@
   function holeHinweisSatz(cb) {
     var fertig = false;
     var ab = setTimeout(function () { if (!fertig) { fertig = true; cb(statischerSatz()); } }, 2500);
-    var k = seitenKontext();
+    var k = vollerKontext();
     try {
       fetch(basis + "/.netlify/functions/seiten-hinweis", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ firmaId: firma, pfad: k.pfad, titel: k.titel, inhalt: k.inhalt }),
+        body: JSON.stringify({
+          firmaId: firma, pfad: k.pfad, titel: k.titel, inhalt: k.inhalt,
+          jsonLd: k.jsonLd, meta: k.meta,
+        }),
       })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
