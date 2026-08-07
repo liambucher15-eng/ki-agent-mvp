@@ -2,7 +2,7 @@
   "id": "nordform",
   "name": "Nordform",
   "plan": "plus",
-  "faehigkeiten": ["kontakt"],
+  "faehigkeiten": ["kontakt", "produkte"],
   "persona": {
     "name": "Jonna",
     "rolle": "die Einrichtungsberaterin im Laden",

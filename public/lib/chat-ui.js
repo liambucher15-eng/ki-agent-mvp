@@ -44,6 +44,69 @@ window.ChatUI = (function () {
     document.head.appendChild(s);
   }
 
+  // ── Produktkarten ─────────────────────────────────────────────────────────
+  // "Der Stuhl Lund passt dazu, 249 €" liest man weg. Eine Karte mit Namen,
+  // Preis und Link ist ein Weg, den man geht. Deshalb bekommen Produktvorschläge
+  // eine eigene Darstellung statt im Fliesstext unterzugehen.
+  //
+  // Bewusst per DOM aufgebaut, nicht per innerHTML: Name, Preis und Grund
+  // stammen aus einer Modell-Antwort. textContent kann nichts ausführen,
+  // eingesetzter Markup-Text bliebe Text.
+  let kartenStilDa = false;
+  function sorgeFuerKartenStil() {
+    if (kartenStilDa) return;
+    kartenStilDa = true;
+    const s = document.createElement("style");
+    s.textContent =
+      ".ki-karten{display:flex;flex-direction:column;gap:8px;margin:8px 0 2px;align-self:stretch}" +
+      ".ki-karte{display:block;text-decoration:none;color:inherit;padding:10px 12px;" +
+      "background:color-mix(in srgb,var(--farbe,#4F46E5) 6%,#fff);" +
+      "box-shadow:0 2px 8px -5px rgba(15,23,42,.5);transition:background .18s,transform .18s}" +
+      "a.ki-karte:hover{background:color-mix(in srgb,var(--farbe,#4F46E5) 12%,#fff);transform:translateY(-1px)}" +
+      ".ki-karte-kopf{display:flex;align-items:baseline;gap:8px;justify-content:space-between}" +
+      ".ki-karte-name{font-weight:650;font-size:0.92rem}" +
+      ".ki-karte-preis{font-weight:600;font-size:0.9rem;color:var(--farbe,#4F46E5);white-space:nowrap}" +
+      ".ki-karte-grund{font-size:0.82rem;line-height:1.4;color:#475569;margin-top:2px}";
+    document.head.appendChild(s);
+  }
+
+  // Baut die Karten. Ein Vorschlag MIT Link wird ein <a>, einer ohne ein <div> —
+  // ein Link, der nirgends hinführt, ist eine Enttäuschung.
+  function baueKarten(produkte) {
+    sorgeFuerKartenStil();
+    const box = document.createElement("div");
+    box.className = "ki-karten";
+    for (const p of produkte) {
+      const karte = document.createElement(p.url ? "a" : "div");
+      karte.className = "ki-karte";
+      if (p.url) {
+        karte.href = p.url;
+        // Das Widget lebt im iframe — ohne _top öffnete der Link IM Chatfenster.
+        karte.target = "_top";
+        karte.rel = "noopener";
+      }
+      const kopf = document.createElement("div");
+      kopf.className = "ki-karte-kopf";
+      const name = document.createElement("span");
+      name.className = "ki-karte-name";
+      name.textContent = p.name;
+      kopf.appendChild(name);
+      if (p.preis) {
+        const preis = document.createElement("span");
+        preis.className = "ki-karte-preis";
+        preis.textContent = p.preis;
+        kopf.appendChild(preis);
+      }
+      karte.appendChild(kopf);
+      const grund = document.createElement("div");
+      grund.className = "ki-karte-grund";
+      grund.textContent = p.grund;
+      karte.appendChild(grund);
+      box.appendChild(karte);
+    }
+    return box;
+  }
+
   // Spracheingabe (Web Speech API). Aktiviert den Mikrofon-Knopf, wenn der Browser
   // es kann; sonst wird der Knopf ausgeblendet. Gesprochenes landet live im
   // Eingabefeld — abgeschickt wird bewusst NICHT automatisch (Nutzer prüft/ergänzt).
@@ -254,6 +317,13 @@ window.ChatUI = (function () {
         } else {
           addBubble(data.reply, "bot");
           messages.push({ role: "assistant", content: data.reply });
+          // Produktvorschläge als Karten UNTER die Antwort. Sie gehören nicht in
+          // den Gesprächsverlauf für das Modell — es hat sie ja selbst erzeugt.
+          if (Array.isArray(data.produkte) && data.produkte.length) {
+            cfg.chat.appendChild(baueKarten(data.produkte));
+            cfg.chat.scrollTop = cfg.chat.scrollHeight;
+            if (cfg.nachNachricht) cfg.nachNachricht();
+          }
           const unsicher = istUnsicher(data.reply);
           cfg.avatar(unsicher ? "verlegen" : "sprechen", 3000);
           if (cfg.onAntwort) cfg.onAntwort(data.reply, unsicher);

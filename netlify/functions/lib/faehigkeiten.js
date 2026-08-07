@@ -7,6 +7,45 @@
 // (eine Kontaktanfrage aufnehmen), nicht nur antworten.
 
 const KATALOG = {
+  // Produkte vorschlagen. Der Agent hat das Sortiment im Prompt (aus dem Wissen
+  // der Firma) und sieht die aktuelle Seite — er KANN also längst über Produkte
+  // reden. Dieses Werkzeug macht daraus einen ausdrücklichen Vorschlag, der im
+  // Chat als anklickbare Karten erscheint statt als Fliesstext.
+  //
+  // Warum das den Unterschied macht: "Der Stuhl Lund passt dazu, 249 €" liest
+  // man weg. Eine Karte mit Namen, Preis und Link ist ein Weg, den man geht.
+  // Die Daten kommen aus dem Wissen der Firma; der Agent darf nichts erfinden.
+  produkte: {
+    name: "produkte_vorschlagen",
+    description:
+      "Schlage dem Besucher ein bis drei konkrete Produkte vor, wenn er nach einer " +
+      "Empfehlung fragt, unentschlossen wirkt, etwas Passendes zu seinem aktuellen " +
+      "Produkt sucht, oder wenn du ihm die Auswahl erleichtern willst. Nimm NUR " +
+      "Produkte, die in deinen Informationen stehen, mit deren echten Namen und " +
+      "Preisen. Erfinde nichts. Schreibe zusätzlich einen kurzen Satz, WARUM du " +
+      "genau diese vorschlägst.",
+    input_schema: {
+      type: "object",
+      properties: {
+        produkte: {
+          type: "array",
+          description: "Ein bis drei Produkte, das passendste zuerst.",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Genauer Produktname aus deinen Informationen" },
+              preis: { type: "string", description: "Preis wie in deinen Informationen, z.B. \"899 €\"" },
+              grund: { type: "string", description: "In einem kurzen Satz: warum passt es zu diesem Besucher?" },
+              url: { type: "string", description: "Link zum Produkt, falls dir einer bekannt ist" },
+            },
+            required: ["name", "grund"],
+          },
+        },
+      },
+      required: ["produkte"],
+    },
+  },
+
   kontakt: {
     name: "kontakt_hinterlassen",
     description:

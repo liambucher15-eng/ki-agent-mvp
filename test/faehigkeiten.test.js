@@ -33,3 +33,25 @@ test("Tool-Definition hat die von der Claude-API erwartete Form", () => {
   assert.equal(typeof t.input_schema.properties, "object");
   assert.equal(Array.isArray(t.input_schema.required), true);
 });
+
+test("baueTools: 'produkte' liefert das produkte_vorschlagen-Tool", () => {
+  const tools = baueTools({ faehigkeiten: ["produkte"] });
+  assert.equal(tools.length, 1);
+  assert.equal(tools[0].name, "produkte_vorschlagen");
+  const schema = tools[0].input_schema.properties.produkte;
+  assert.equal(schema.type, "array");
+  assert.deepEqual(schema.items.required, ["name", "grund"]);
+});
+
+test("produkte_vorschlagen: verbietet Erfinden ausdrücklich", () => {
+  // Ohne diese Ansage empfiehlt das Modell munter Produkte, die es nicht gibt.
+  assert.match(KATALOG.produkte.description, /Erfinde nichts/);
+  assert.match(KATALOG.produkte.description, /NUR/);
+});
+
+test("baueTools: mehrere Fähigkeiten ergeben mehrere Tools", () => {
+  const tools = baueTools({ faehigkeiten: ["kontakt", "produkte"] });
+  assert.equal(tools.length, 2);
+  const namen = tools.map((t) => t.name).sort();
+  assert.deepEqual(namen, ["kontakt_hinterlassen", "produkte_vorschlagen"]);
+});

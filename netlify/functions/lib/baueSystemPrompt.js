@@ -55,6 +55,17 @@ function baueSystemPrompt(firma) {
     ? `Sprich die Besucher mit „Sie“ an (höflich-professionell).`
     : `Sprich die Besucher mit „Du“ an (locker-nahbar).`;
 
+  // Ein Werkzeug zu HABEN reicht nicht — der Agent muss wissen, WANN er es
+  // greift. Ohne diese Regel zählt er passende Produkte brav im Fliesstext auf
+  // und die Karten bleiben leer (genau so passiert, bevor es diese Zeilen gab).
+  const kannProdukte = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("produkte");
+  const produktRegel = kannProdukte
+    ? `\n- Sobald du konkrete Produkte empfiehlst, nutze IMMER das Werkzeug ` +
+      `„produkte_vorschlagen" statt sie im Text aufzuzählen. Der Besucher bekommt sie ` +
+      `dann als anklickbare Karten. Schreib dazu nur einen kurzen Satz und wiederhole ` +
+      `die Produkte NICHT im Text. Nimm höchstens drei und nur solche, die wirklich passen.`
+    : "";
+
   const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
   const uebergabe = p.uebergabe || (kannKontakt ? "kontakt" : "ehrlich");
   const kontaktRegel = kannKontakt && uebergabe === "kontakt"
@@ -98,7 +109,7 @@ Ton: ${p.ton}. Sprich ${spr}, warm und knapp. ${anredeRegel}${aussehenRegel}
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den Informationen unten.${kontaktRegel}${fallbackRegel}
+- ANTWORTE nur aus den Informationen unten.${produktRegel}${kontaktRegel}${fallbackRegel}
 - RICHTE DICH NACH DER LAGE: Unten kann ein KONTEXT-Block stehen — welche Seite
   der Besucher gerade offen hat, welches Produkt dort steht (mit Preis und
   Verfügbarkeit) und wie er sich verhält. Nutze das aktiv:

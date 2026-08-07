@@ -150,3 +150,15 @@ test("Lage-Regel: Beobachtungen dürfen nicht ausgesprochen werden", () => {
   const p = baueSystemPrompt(firma);
   assert.match(p, /Sprich die Beobachtung NIE aus/);
 });
+
+test("Produkt-Regel: nur bei der Fähigkeit 'produkte' im Prompt", () => {
+  // Ein Werkzeug zu haben reicht nicht — der Agent muss wissen, WANN er es
+  // greift. Ohne diese Regel zaehlte er Produkte im Fliesstext auf und die
+  // Karten blieben leer.
+  const ohne = baueSystemPrompt({ ...firma, faehigkeiten: ["kontakt"] });
+  assert.doesNotMatch(ohne, /produkte_vorschlagen/);
+  const mit = baueSystemPrompt({ ...firma, faehigkeiten: ["kontakt", "produkte"] });
+  assert.match(mit, /produkte_vorschlagen/);
+  assert.match(mit, /statt sie im Text aufzuzählen/);
+  assert.match(mit, /höchstens drei/);
+});

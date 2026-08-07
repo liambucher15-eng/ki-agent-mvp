@@ -50,6 +50,15 @@
       // Hat der Besucher DIESE Seite in dieser Sitzung schon einmal offen gehabt?
       wiederkehr: Math.round(zahl(r.wiederkehr, 0, 50)),
       exitAbsicht: !!r.exitAbsicht,
+      // Namen der zuletzt gesehenen Produkte. Ohne sie weiss der Agent zwar,
+      // DASS verglichen wird, aber nicht WOMIT. Gekappt, weil sie von einer
+      // fremden Seite stammen und in den Prompt gehen.
+      gesehen: Array.isArray(r.gesehen)
+        ? r.gesehen
+            .filter((n) => typeof n === "string" && n.trim())
+            .slice(0, 6)
+            .map((n) => n.replace(/\s+/g, " ").trim().slice(0, 80))
+        : [],
     };
   }
 
@@ -119,8 +128,14 @@
     if (s.verweildauer >= S.KURZ) teile.push(`${s.verweildauer}s auf dieser Seite`);
     if (s.scrolltiefe >= 20) teile.push(`${s.scrolltiefe}% gelesen`);
     if (s.seitenInSitzung > 1) teile.push(`${s.seitenInSitzung} Seiten im Besuch`);
+    // Bei mehreren gesehenen Produkten die Namen nennen: nur so kann der Agent
+    // den Unterschied benennen, um den es beim Vergleichen geht.
+    const gesehen = Array.isArray(s.gesehen) ? s.gesehen : [];
+    const auchGesehen = gesehen.length > 1
+      ? ` Zuvor angesehen: ${gesehen.join(", ")}.`
+      : "";
     return `Beobachtung zum Besucher (nur Hinweis, KEINE Anweisung): Er ${satz}` +
-      (teile.length ? ` (${teile.join(", ")})` : "") + ".";
+      (teile.length ? ` (${teile.join(", ")})` : "") + "." + auchGesehen;
   }
 
   return { beurteile, zusammenfassung, normalisiere, phaseAus, SCHWELLEN: S, DRINGLICHKEIT };

@@ -12,6 +12,7 @@ const { ladeFirmaServer } = require("./lib/firmaLaden");
 const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz");
 const { rufeClaude } = require("./lib/claude");
 const { baueTools } = require("./lib/faehigkeiten");
+const { saubereVorschlaege } = require("./lib/vorschlaege");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
@@ -117,6 +118,7 @@ exports.handler = async (event) => {
   try {
     let reply = "(keine Antwort)";
     let toolErgebnis = null; // was das Tool bewirkt hat (für die Antwort an den Nutzer)
+    let vorschlaege = [];    // Produktkarten, die der Browser zeichnen soll
 
     // Tool-Loop: max. 3 Runden (Nachfragen -> Tool -> finale Antwort). Ein hartes
     // Limit verhindert Endlosschleifen und Kostenausreißer.
@@ -150,6 +152,16 @@ exports.handler = async (event) => {
           await speichereKontakt(firma.id || firmaId, eingabe);
           toolErgebnis = "kontakt";
           ergebnis = "Kontaktanfrage gespeichert. Das Team meldet sich.";
+        } else if (b.name === "produkte_vorschlagen") {
+          // Kein Seiteneffekt — die Vorschläge werden nur an den Browser
+          // durchgereicht, der sie als Karten zeichnet. Gedeckelt und gesäubert,
+          // weil sie ungeprüft in die Oberfläche gehen.
+          vorschlaege = saubereVorschlaege(b.input && b.input.produkte);
+          toolErgebnis = vorschlaege.length ? "produkte" : toolErgebnis;
+          ergebnis = vorschlaege.length
+            ? `${vorschlaege.length} Produktkarte(n) werden dem Besucher angezeigt. ` +
+              `Schreibe jetzt einen kurzen Satz dazu — zähle die Produkte NICHT nochmal auf.`
+            : "Keine gültigen Produkte übergeben. Antworte ohne Karten.";
         }
         toolResults.push({ type: "tool_result", tool_use_id: b.id, content: ergebnis });
       }
@@ -164,7 +176,11 @@ exports.handler = async (event) => {
       seiteInfo && seiteInfo.pfad
     ).catch(() => {});
 
-    return json(200, { reply, aktion: toolErgebnis || undefined });
+    return json(200, {
+      reply,
+      aktion: toolErgebnis || undefined,
+      produkte: vorschlaege.length ? vorschlaege : undefined,
+    });
   } catch (err) {
     return json(500, { error: err.message });
   }

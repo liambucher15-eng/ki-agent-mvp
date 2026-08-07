@@ -158,6 +158,23 @@
       return JSON.stringify(daten.jsonLd).indexOf('"Product"') > -1;
     } catch (e) { return false; }
   }
+  // Der Name des Produkts auf dieser Seite — flach aus den schon eingesammelten
+  // Daten gegriffen, ohne Deutung. Nur damit der Agent beim Vergleichen sagen
+  // kann, WORIN sich die Stücke unterscheiden.
+  function produktName(daten) {
+    try {
+      var m = String(daten.meta["og:title"] || "").trim();
+      if (m) return m.slice(0, 80);
+      for (var i = 0; i < daten.jsonLd.length; i++) {
+        var k = daten.jsonLd[i];
+        if (k && typeof k === "object" && k.name && /product/i.test(JSON.stringify(k["@type"] || ""))) {
+          return String(k.name).slice(0, 80);
+        }
+      }
+      var h1 = document.querySelector("h1");
+      return h1 ? String(h1.textContent || "").replace(/\s+/g, " ").trim().slice(0, 80) : "";
+    } catch (e) { return ""; }
+  }
 
   // Diesen Seitenaufruf einmalig in der Sitzung vermerken (nur wegen der
   // Zähler — der Rückgabewert wird nicht gebraucht, gelesen wird später frisch).
@@ -167,9 +184,20 @@
     s.seiten = s.seiten && typeof s.seiten === "object" ? s.seiten : {};
     s.seiten[pfad] = (s.seiten[pfad] || 0) + 1;
     s.produkte = Array.isArray(s.produkte) ? s.produkte : [];
-    if (siehtNachProduktAus(strukturDaten()) && s.produkte.indexOf(pfad) < 0) {
+    var daten = strukturDaten();
+    if (siehtNachProduktAus(daten) && s.produkte.indexOf(pfad) < 0) {
       s.produkte.push(pfad);
       if (s.produkte.length > 50) s.produkte = s.produkte.slice(-50); // nicht endlos wachsen
+    }
+    // Zusätzlich der NAME des Produkts. Ohne ihn weiss der Agent zwar, DASS
+    // verglichen wird, aber nicht WOMIT — und kann den Unterschied nicht
+    // benennen, um den es eigentlich geht. Der Name steht ohnehin sichtbar auf
+    // der Seite und ist keine personenbezogene Angabe.
+    s.gesehen = Array.isArray(s.gesehen) ? s.gesehen : [];
+    var name = produktName(daten);
+    if (name && s.gesehen.indexOf(name) < 0) {
+      s.gesehen.push(name);
+      if (s.gesehen.length > 12) s.gesehen = s.gesehen.slice(-12);
     }
     schreibeSitzung(s);
   })();
@@ -217,6 +245,9 @@
       leerlauf: Math.round((jetzt - letzteRegung) / 1000),
       seitenInSitzung: anzahlSeiten || 1,
       produkteGesehen: (s.produkte || []).length,
+      // Die Namen der zuletzt gesehenen Produkte — damit der Agent beim
+      // Vergleichen konkret werden kann statt nur zu wissen, DASS verglichen wird.
+      gesehen: (s.gesehen || []).slice(-6),
       wiederkehr: Math.max(0, (seiten[pfad] || 1) - 1),
       exitAbsicht: exitAbsicht,
     };
