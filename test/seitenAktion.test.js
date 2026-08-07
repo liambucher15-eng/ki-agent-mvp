@@ -89,3 +89,37 @@ test("die Erlaubnisliste enthält ausschliesslich folgenlose Aktionen", () => {
   // was der Besucher selbst rückgängig machen kann.
   assert.deepEqual(Object.keys(A.ERLAUBT).sort(), ["oeffnen", "zeigen"]);
 });
+
+// ── Steht das Ziel überhaupt auf der Seite? ─────────────────────────────────
+
+test("zielStehtAufSeite: erkennt vorhandenen Text", () => {
+  const seite = "Material Eiche massiv. Lieferzeit 2-3 Wochen. Rückgabe 30 Tage.";
+  assert.equal(A.zielStehtAufSeite("Lieferzeit", seite), true);
+  assert.equal(A.zielStehtAufSeite("lieferzeit", seite), true);
+  assert.equal(A.zielStehtAufSeite("Rückgabe", seite), true);
+});
+
+test("zielStehtAufSeite: mehrwortige Ziele finden ihre Wörter einzeln", () => {
+  // "Rückgabe Bedingungen" scheitert sonst an der genauen Schreibweise.
+  const seite = "Unsere Bedingungen zur Rückgabe: 30 Tage.";
+  assert.equal(A.zielStehtAufSeite("Rückgabe Bedingungen", seite), true);
+});
+
+test("zielStehtAufSeite: was nicht auf der Seite steht, wird abgelehnt", () => {
+  // Genau der Fehler aus dem Live-Test: "Garantie" stand im Firmenwissen, aber
+  // nicht auf der Seite. Der Agent kündigte ein Scrollen an, das nie kam.
+  const seite = "Material Eiche massiv. Lieferzeit 2-3 Wochen.";
+  assert.equal(A.zielStehtAufSeite("Garantie", seite), false);
+  assert.equal(A.zielStehtAufSeite("Ratenzahlung", seite), false);
+});
+
+test("zielStehtAufSeite: ohne Seitentext oder Ziel immer false", () => {
+  assert.equal(A.zielStehtAufSeite("Lieferzeit", ""), false);
+  assert.equal(A.zielStehtAufSeite("", "viel Text"), false);
+  assert.equal(A.zielStehtAufSeite(null, null), false);
+});
+
+test("zielStehtAufSeite: kurze Füllwörter allein reichen nicht als Treffer", () => {
+  // Sonst gilt "der die das" als gefunden, weil die Wörter überall vorkommen.
+  assert.equal(A.zielStehtAufSeite("der die", "der Tisch ist die beste Wahl"), false);
+});

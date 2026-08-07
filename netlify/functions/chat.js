@@ -13,7 +13,7 @@ const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz")
 const { rufeClaude } = require("./lib/claude");
 const { baueTools } = require("./lib/faehigkeiten");
 const { saubereVorschlaege } = require("./lib/vorschlaege");
-const { saubereAktion } = require("./lib/seiten-aktion");
+const { saubereAktion, zielStehtAufSeite } = require("./lib/seiten-aktion");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
@@ -172,14 +172,25 @@ exports.handler = async (event) => {
           // Modell-Antwort stammt und das Modell Seitentexte liest, die
           // manipuliert sein können.
           const geprueft = saubereAktion(b.input);
-          if (geprueft) {
+          if (!geprueft) {
+            ergebnis = "Diese Aktion ist nicht erlaubt. Beschreibe es stattdessen in Worten.";
+          } else if (
+            geprueft.aktion === "zeigen" &&
+            !zielStehtAufSeite(geprueft.ziel, seitenAnalyse && seitenAnalyse.inhalt)
+          ) {
+            // Der Agent kennt auch das Wissen der Firma und verwechselt es mit
+            // dem, was auf der Seite steht. Ohne diese Prüfung kündigt er ein
+            // Scrollen an, das nicht passieren kann — ein sichtbar gebrochenes
+            // Versprechen ist schlimmer als gar keine Hilfe.
+            ergebnis =
+              `"${geprueft.ziel}" steht nicht auf dieser Seite — es wird nichts angesteuert. ` +
+              `Sag die Information einfach direkt, ohne auf die Seite zu verweisen.`;
+          } else {
             seitenAktion = geprueft;
             ergebnis = geprueft.aktion === "oeffnen"
               ? `Die Seite ${geprueft.pfad} wird geöffnet. Sag dem Besucher kurz, was ihn dort erwartet.`
               : `Die Stelle "${geprueft.ziel}" wird angesteuert und hervorgehoben. ` +
                 `Sag in einem kurzen Satz, was dort steht.`;
-          } else {
-            ergebnis = "Diese Aktion ist nicht erlaubt. Beschreibe es stattdessen in Worten.";
           }
         } else if (b.name === "produkte_vorschlagen") {
           // Kein Seiteneffekt — die Vorschläge werden nur an den Browser
