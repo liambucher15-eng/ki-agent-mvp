@@ -37,6 +37,7 @@ const KATALOG = {
               preis: { type: "string", description: "Preis wie in deinen Informationen, z.B. \"899 €\"" },
               grund: { type: "string", description: "In einem kurzen Satz: warum passt es zu diesem Besucher?" },
               url: { type: "string", description: "Link zum Produkt, falls dir einer bekannt ist" },
+              bild: { type: "string", description: "Bild-URL des Produkts, falls dir eine bekannt ist" },
             },
             required: ["name", "grund"],
           },

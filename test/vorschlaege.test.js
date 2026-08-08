@@ -113,3 +113,31 @@ test("saubereVorschlaege: Preis ist optional", () => {
   assert.equal(v[0].preis, undefined);
   assert.equal(v[0].name, "Auf Anfrage");
 });
+
+// ── Produktbild ─────────────────────────────────────────────────────────────
+
+test("saubereVorschlaege: Bild kommt durch und wird wie der Link geprüft", () => {
+  // Das Bild wird ein echtes <img src> — dieselbe Angriffsfläche wie der Link.
+  const v = V.saubereVorschlaege([
+    { name: "Stuhl Lund", grund: "passt", bild: "/bilder/produkte/stuhl-lund.svg" },
+    { name: "Leuchte Sund", grund: "passt", bild: "https://shop.example/b.jpg" },
+  ]);
+  assert.equal(v[0].bild, "/bilder/produkte/stuhl-lund.svg");
+  assert.equal(v[1].bild, "https://shop.example/b.jpg");
+});
+
+test("saubereVorschlaege: unsicheres Bild fliegt raus, die Karte bleibt", () => {
+  const v = V.saubereVorschlaege([
+    { name: "A", grund: "x", bild: "javascript:alert(1)" },
+    { name: "B", grund: "x", bild: "//fremd.example/b.jpg" },
+    { name: "C", grund: "x", bild: "data:image/svg+xml,<svg onload=alert(1)>" },
+  ]);
+  assert.equal(v.length, 3);
+  for (const k of v) assert.equal(k.bild, undefined, k.name + ": Bild haette wegfallen muessen");
+});
+
+test("saubereVorschlaege: Bild ist optional — ohne Bild bleibt die Karte gültig", () => {
+  const v = V.saubereVorschlaege([{ name: "Auf Anfrage", grund: "Sondermass" }]);
+  assert.equal(v.length, 1);
+  assert.equal(v[0].bild, undefined);
+});

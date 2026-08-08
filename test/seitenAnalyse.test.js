@@ -290,3 +290,41 @@ test("zusammenfassung: kommt ohne Produkte aus", () => {
   assert.ok(s.length > 10);
   assert.ok(!s.includes("- "));
 });
+
+// ── Produktbild ─────────────────────────────────────────────────────────────
+
+test("ersteBildUrl: String, Array und ImageObject werden gleich behandelt", () => {
+  // schema.org erlaubt alle drei Formen — die Karte zeigt ohnehin nur eines.
+  assert.equal(A.ersteBildUrl("https://shop.example/a.jpg"), "https://shop.example/a.jpg");
+  assert.equal(A.ersteBildUrl(["/b/1.jpg", "/b/2.jpg"]), "/b/1.jpg");
+  assert.equal(A.ersteBildUrl({ "@type": "ImageObject", contentUrl: "/b/3.jpg" }), "/b/3.jpg");
+  assert.equal(A.ersteBildUrl({ url: "/b/4.jpg" }), "/b/4.jpg");
+});
+
+test("ersteBildUrl: unsichere und fremde Quellen werden verworfen", () => {
+  // Der Wert wird ein echtes <img src> — dieselbe Sorgfalt wie beim Link.
+  assert.equal(A.ersteBildUrl("javascript:alert(1)"), "");
+  assert.equal(A.ersteBildUrl("data:image/svg+xml,<svg onload=alert(1)>"), "");
+  assert.equal(A.ersteBildUrl("//fremd.example/a.jpg"), "");
+  assert.equal(A.ersteBildUrl(""), "");
+  assert.equal(A.ersteBildUrl(null), "");
+});
+
+test("ersteBildUrl: überspringt unbrauchbare Einträge im Array", () => {
+  assert.equal(A.ersteBildUrl(["javascript:x", "//fremd/a.jpg", "/gut.jpg"]), "/gut.jpg");
+});
+
+test("produkteAusJsonLd: Bild wird mit übernommen", () => {
+  const p = A.produkteAusJsonLd([{
+    "@type": "Product", name: "Stuhl Lund",
+    image: ["https://shop.example/lund.jpg"],
+    offers: { price: "249", priceCurrency: "EUR" },
+  }]);
+  assert.equal(p[0].bild, "https://shop.example/lund.jpg");
+});
+
+test("produkteAusJsonLd: Produkt ohne Bild bleibt gültig", () => {
+  const p = A.produkteAusJsonLd([{ "@type": "Product", name: "Ohne Bild" }]);
+  assert.equal(p.length, 1);
+  assert.equal(p[0].bild, undefined);
+});

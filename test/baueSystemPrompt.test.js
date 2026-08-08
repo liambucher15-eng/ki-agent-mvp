@@ -159,8 +159,13 @@ test("Produkt-Regel: nur bei der Fähigkeit 'produkte' im Prompt", () => {
   assert.doesNotMatch(ohne, /produkte_vorschlagen/);
   const mit = baueSystemPrompt({ ...firma, faehigkeiten: ["kontakt", "produkte"] });
   assert.match(mit, /produkte_vorschlagen/);
-  assert.match(mit, /statt sie im Text aufzuzählen/);
-  assert.match(mit, /höchstens drei/);
+  assert.match(mit, /PRODUKTNAMEN GEHÖREN NIE IN DEINEN ANTWORTTEXT/);
+  assert.match(mit, /Höchstens drei/);
+  // Die Regel muss ABSOLUT sein, nicht bedingt: die bedingte Fassung verlangte
+  // eine Selbsteinschätzung ("wenn du empfiehlst") und wurde bei "was passt
+  // dazu?" nachweislich uebergangen.
+  assert.doesNotMatch(mit, /Sobald du konkrete Produkte empfiehlst/);
+  assert.match(mit, /Link und Bild/);
 });
 
 test("Seiten-Regel: nur bei der Fähigkeit 'seite', mit ausdruecklicher Grenze", () => {

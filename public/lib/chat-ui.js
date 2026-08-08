@@ -58,50 +58,103 @@ window.ChatUI = (function () {
     kartenStilDa = true;
     const s = document.createElement("style");
     s.textContent =
-      ".ki-karten{display:flex;flex-direction:column;gap:8px;margin:8px 0 2px;align-self:stretch}" +
-      ".ki-karte{display:block;text-decoration:none;color:inherit;padding:10px 12px;" +
-      "background:color-mix(in srgb,var(--farbe,#4F46E5) 6%,#fff);" +
-      "box-shadow:0 2px 8px -5px rgba(15,23,42,.5);transition:background .18s,transform .18s}" +
-      "a.ki-karte:hover{background:color-mix(in srgb,var(--farbe,#4F46E5) 12%,#fff);transform:translateY(-1px)}" +
-      ".ki-karte-kopf{display:flex;align-items:baseline;gap:8px;justify-content:space-between}" +
-      ".ki-karte-name{font-weight:650;font-size:0.92rem}" +
-      ".ki-karte-preis{font-weight:600;font-size:0.9rem;color:var(--farbe,#4F46E5);white-space:nowrap}" +
-      ".ki-karte-grund{font-size:0.82rem;line-height:1.4;color:#475569;margin-top:2px}";
+      ".ki-karten{display:flex;flex-direction:column;gap:10px;margin:10px 0 2px;align-self:stretch}" +
+      // Die Karte ist ein Kasten mit Bild links und Text rechts — wie eine
+      // Produktkachel im Shop, nur klein. Kein <a> um das Ganze: der Knopf ist
+      // das Klickziel, sonst weiss man nicht, was der Klick auslöst.
+      ".ki-karte{display:flex;gap:11px;padding:11px;border-radius:12px;background:#fff;" +
+      "box-shadow:0 1px 2px rgba(15,23,42,.06),0 6px 16px -10px rgba(15,23,42,.45)}" +
+      // Feste Bildgrösse: unterschiedlich hohe Karten wirken unruhig, und die
+      // Höhe darf nicht davon abhängen, welches Bild gerade lädt.
+      ".ki-karte-bild{width:64px;height:64px;flex-shrink:0;border-radius:9px;object-fit:cover;" +
+      "background:color-mix(in srgb,var(--farbe,#4F46E5) 7%,#f1f5f9);display:block}" +
+      // Platzhalter, wenn es kein Bild gibt oder es nicht lädt: die Initiale des
+      // Produkts. Nie ein leeres Loch und nie ein kaputtes Bild-Symbol.
+      ".ki-karte-platz{display:grid;place-items:center;font-weight:700;font-size:1.5rem;" +
+      "color:var(--farbe,#4F46E5)}" +
+      ".ki-karte-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}" +
+      ".ki-karte-name{font-weight:650;font-size:0.9rem;line-height:1.25}" +
+      ".ki-karte-preis{font-weight:700;font-size:0.9rem;color:#0f172a}" +
+      ".ki-karte-grund{font-size:0.79rem;line-height:1.35;color:#64748b}" +
+      // Der Knopf steht bewusst am Ende und trägt die Markenfarbe: er ist das
+      // Einzige, was der Besucher hier anklicken kann.
+      ".ki-karte-knopf{display:inline-block;margin-top:5px;align-self:flex-start;" +
+      "font:inherit;font-size:0.78rem;font-weight:600;text-decoration:none;" +
+      "padding:6px 13px;border-radius:999px;border:0;cursor:pointer;" +
+      "background:var(--farbe,#4F46E5);color:#fff;transition:opacity .18s,transform .18s}" +
+      ".ki-karte-knopf:hover{opacity:.88;transform:translateY(-1px)}";
     document.head.appendChild(s);
   }
 
-  // Baut die Karten. Ein Vorschlag MIT Link wird ein <a>, einer ohne ein <div> —
-  // ein Link, der nirgends hinführt, ist eine Enttäuschung.
+  // Baut die Karten: Bild links, Name/Preis/Grund rechts, darunter der Knopf.
+  //
+  // Der Knopf ist das EINZIGE Klickziel, nicht die ganze Karte. Bei einer
+  // klickbaren Karte weiss man nie, was der Klick auslöst — beim beschrifteten
+  // Knopf schon. Fehlt der Link, entfällt der Knopf: einer, der nirgends
+  // hinführt, ist schlimmer als keiner.
   function baueKarten(produkte) {
     sorgeFuerKartenStil();
     const box = document.createElement("div");
     box.className = "ki-karten";
     for (const p of produkte) {
-      const karte = document.createElement(p.url ? "a" : "div");
+      const karte = document.createElement("div");
       karte.className = "ki-karte";
-      if (p.url) {
-        karte.href = p.url;
-        // Das Widget lebt im iframe — ohne _top öffnete der Link IM Chatfenster.
-        karte.target = "_top";
-        karte.rel = "noopener";
+
+      // Bild oder Initiale. Lädt das Bild nicht (tote URL, Netzfehler), wird
+      // still auf die Initiale gewechselt — ein kaputtes Bild-Symbol in einer
+      // Empfehlung sieht nach Pfusch aus.
+      const platzhalter = () => {
+        const d = document.createElement("div");
+        d.className = "ki-karte-bild ki-karte-platz";
+        d.textContent = (p.name.trim().charAt(0) || "•").toUpperCase();
+        d.setAttribute("aria-hidden", "true");
+        return d;
+      };
+      if (p.bild) {
+        const img = document.createElement("img");
+        img.className = "ki-karte-bild";
+        img.src = p.bild;
+        img.alt = "";           // der Name steht daneben — sonst doppelt vorgelesen
+        // Bewusst KEIN loading="lazy": höchstens drei kleine Bilder, die sofort
+        // sichtbar sind. Lazy sparte hier nichts und liess die Karten messbar
+        // einen Moment leer stehen.
+        img.decoding = "async";
+        img.addEventListener("error", () => {
+          if (img.parentNode) img.parentNode.replaceChild(platzhalter(), img);
+        });
+        karte.appendChild(img);
+      } else {
+        karte.appendChild(platzhalter());
       }
-      const kopf = document.createElement("div");
-      kopf.className = "ki-karte-kopf";
-      const name = document.createElement("span");
+
+      const text = document.createElement("div");
+      text.className = "ki-karte-text";
+      const name = document.createElement("div");
       name.className = "ki-karte-name";
       name.textContent = p.name;
-      kopf.appendChild(name);
+      text.appendChild(name);
       if (p.preis) {
-        const preis = document.createElement("span");
+        const preis = document.createElement("div");
         preis.className = "ki-karte-preis";
         preis.textContent = p.preis;
-        kopf.appendChild(preis);
+        text.appendChild(preis);
       }
-      karte.appendChild(kopf);
       const grund = document.createElement("div");
       grund.className = "ki-karte-grund";
       grund.textContent = p.grund;
-      karte.appendChild(grund);
+      text.appendChild(grund);
+
+      if (p.url) {
+        const knopf = document.createElement("a");
+        knopf.className = "ki-karte-knopf";
+        knopf.href = p.url;
+        // Das Widget lebt im iframe — ohne _top öffnete der Link IM Chatfenster.
+        knopf.target = "_top";
+        knopf.rel = "noopener";
+        knopf.textContent = "Ansehen";
+        text.appendChild(knopf);
+      }
+      karte.appendChild(text);
       box.appendChild(karte);
     }
     return box;

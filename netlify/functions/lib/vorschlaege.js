@@ -54,6 +54,11 @@
       if (preis) karte.preis = preis;
       const url = saubereUrl(eintrag.url);
       if (url) karte.url = url;
+      // Das Bild wird ein echtes <img src>. Dieselbe Prüfung wie beim Link:
+      // relativer Pfad oder http(s), sonst nichts. Ohne Bild sieht die Karte
+      // anders aus, aber sie funktioniert — deshalb ist es optional.
+      const bild = saubereUrl(eintrag.bild);
+      if (bild) karte.bild = bild;
       raus.push(karte);
     }
     return raus;

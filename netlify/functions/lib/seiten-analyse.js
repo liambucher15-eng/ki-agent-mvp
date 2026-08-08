@@ -98,6 +98,28 @@
     };
   }
 
+  // `image` kommt in schema.org in drei Formen vor: als URL-String, als Array
+  // davon, oder als ImageObject mit contentUrl/url. Nur http(s) und relative
+  // Pfade — der Wert wird später ein echtes <img src>.
+  function ersteBildUrl(wert, tiefe) {
+    const t = tiefe || 0;
+    if (!wert || t > 3) return "";
+    if (Array.isArray(wert)) {
+      for (const eintrag of wert) {
+        const gefunden = ersteBildUrl(eintrag, t + 1);
+        if (gefunden) return gefunden;
+      }
+      return "";
+    }
+    if (typeof wert === "object") {
+      return ersteBildUrl(wert.contentUrl || wert.url, t + 1);
+    }
+    const s = text(wert, 300);
+    if (!s || s.startsWith("//")) return "";
+    if (s.startsWith("/")) return s;
+    return /^https?:\/\/[^\s]+$/i.test(s) ? s : "";
+  }
+
   function istTyp(objekt, gesucht) {
     const t = objekt && objekt["@type"];
     if (Array.isArray(t)) return t.some((x) => String(x).toLowerCase() === gesucht);
@@ -120,6 +142,10 @@
     if (marke) produkt.marke = marke;
     const url = text(objekt.url, 300);
     if (url) produkt.url = url;
+    // schema.org erlaubt für `image` einen String, ein Array oder ein
+    // ImageObject. Das erste brauchbare genügt — die Karte zeigt nur eines.
+    const bild = ersteBildUrl(objekt.image);
+    if (bild) produkt.bild = bild;
     if (angebot && angebot.preis) {
       produkt.preis = angebot.preis;
       if (angebot.betrag != null) produkt.betrag = angebot.betrag;
@@ -263,6 +289,6 @@
   return {
     analysiere, zusammenfassung,
     // einzeln exportiert, damit sie gezielt getestet werden koennen
-    produkteAusJsonLd, produktAusMeta, seitenTyp, zuBetrag, preisText, verfuegbarkeit,
+    produkteAusJsonLd, produktAusMeta, seitenTyp, zuBetrag, preisText, verfuegbarkeit, ersteBildUrl,
   };
 });

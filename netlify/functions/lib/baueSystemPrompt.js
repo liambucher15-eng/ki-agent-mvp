@@ -59,11 +59,20 @@ function baueSystemPrompt(firma) {
   // greift. Ohne diese Regel zählt er passende Produkte brav im Fliesstext auf
   // und die Karten bleiben leer (genau so passiert, bevor es diese Zeilen gab).
   const kannProdukte = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("produkte");
+  // Die Regel ist bewusst ABSOLUT formuliert ("nenne nie einen Produktnamen im
+  // Text") statt bedingt ("wenn du empfiehlst"). Die bedingte Fassung verlangte
+  // vom Agenten eine Selbsteinschätzung — und "was passt dazu?" zählte für ihn
+  // nicht als Empfehlung, also schrieb er die Produkte doch in den Fliesstext.
+  // Eine Regel, die man ohne Auslegung befolgen kann, wird zuverlässig befolgt.
   const produktRegel = kannProdukte
-    ? `\n- Sobald du konkrete Produkte empfiehlst, nutze IMMER das Werkzeug ` +
-      `„produkte_vorschlagen" statt sie im Text aufzuzählen. Der Besucher bekommt sie ` +
-      `dann als anklickbare Karten. Schreib dazu nur einen kurzen Satz und wiederhole ` +
-      `die Produkte NICHT im Text. Nimm höchstens drei und nur solche, die wirklich passen.`
+    ? `\n- PRODUKTNAMEN GEHÖREN NIE IN DEINEN ANTWORTTEXT. Sobald du auch nur ein ` +
+      `bestimmtes Produkt nennen willst — ob als Empfehlung, als Antwort auf „was passt ` +
+      `dazu", als Vergleich oder als Aufzählung — übergib es stattdessen dem Werkzeug ` +
+      `„produkte_vorschlagen". Der Besucher bekommt es dann als Karte mit Bild, Preis ` +
+      `und Knopf. Dein Text daneben ist EIN kurzer Satz, der die Produkte nicht ` +
+      `wiederholt. Höchstens drei Stück, und nur solche, die wirklich passen. Gib immer ` +
+      `Link und Bild mit, wenn sie in deinen Informationen stehen — ohne sie ist die ` +
+      `Karte nur halb so nützlich.`
     : "";
 
   const kannSeite = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("seite");
