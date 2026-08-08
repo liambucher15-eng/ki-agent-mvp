@@ -87,13 +87,24 @@
     if (typeof offers !== "object") return null;
     const waehrung = text(offers.priceCurrency, 8).toUpperCase();
     // AggregateOffer: Preisspanne statt Einzelpreis.
-    const einzeln = offers.price != null ? offers.price : offers.lowPrice;
-    const betrag = zuBetrag(einzeln);
-    const hoch = zuBetrag(offers.highPrice);
+    //
+    // Nicht "price != null" prüfen, sondern ob sich daraus wirklich eine Zahl
+    // ergibt: Ein leeres price-Feld (kommt vor) bestand die null-Prüfung, und
+    // lowPrice wurde nie herangezogen — herausgekommen ist dann "–1800,00 €"
+    // mit führendem Gedankenstrich. Dieselbe Falle wie bei den og:-Metas.
+    let betrag = zuBetrag(offers.price);
+    if (betrag == null) betrag = zuBetrag(offers.lowPrice);
+    let hoch = zuBetrag(offers.highPrice);
+    // Nur ein highPrice und sonst nichts ist keine Spanne, sondern der Preis.
+    if (betrag == null && hoch != null) { betrag = hoch; hoch = null; }
+    // Eine Spanne braucht ZWEI Werte und einen echten Unterschied.
+    const istSpanne = betrag != null && hoch != null && hoch !== betrag;
     return {
       betrag,
       waehrung,
-      preis: preisText(betrag, waehrung) + (hoch != null && hoch !== betrag ? `–${preisText(hoch, waehrung)}` : ""),
+      preis: betrag == null
+        ? ""
+        : preisText(betrag, waehrung) + (istSpanne ? `–${preisText(hoch, waehrung)}` : ""),
       verfuegbar: verfuegbarkeit(offers.availability),
     };
   }

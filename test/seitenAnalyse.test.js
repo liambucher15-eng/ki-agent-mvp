@@ -328,3 +328,58 @@ test("produkteAusJsonLd: Produkt ohne Bild bleibt gültig", () => {
   assert.equal(p.length, 1);
   assert.equal(p[0].bild, undefined);
 });
+
+// ── Preis-Grenzfaelle (im Entwicklungs-Loop gefunden) ───────────────────────
+
+test("leeres price-Feld verdraengt lowPrice nicht", () => {
+  // Dieselbe Falle wie bei den og:-Metas: "" bestand die != null-Pruefung,
+  // lowPrice wurde nie herangezogen. Ergebnis war "–1800,00 €".
+  const p = A.produkteAusJsonLd([{
+    "@type": "Product", name: "Sofa",
+    offers: { "@type": "AggregateOffer", price: "", lowPrice: "1200", highPrice: "1800", priceCurrency: "EUR" },
+  }]);
+  assert.equal(p[0].preis, "1200,00 €–1800,00 €");
+  assert.equal(p[0].betrag, 1200);
+});
+
+test("nur highPrice ist keine Spanne, sondern der Preis", () => {
+  const p = A.produkteAusJsonLd([{
+    "@type": "Product", name: "X", offers: { highPrice: "99", priceCurrency: "EUR" },
+  }]);
+  assert.equal(p[0].preis, "99,00 €");
+});
+
+test("kein Preis liefert gar keine Preisangabe statt eines Gedankenstrichs", () => {
+  for (const offers of [{ priceCurrency: "EUR" }, { price: "auf Anfrage", priceCurrency: "EUR" }]) {
+    const p = A.produkteAusJsonLd([{ "@type": "Product", name: "X", offers }]);
+    assert.equal(p[0].preis, undefined, JSON.stringify(offers));
+  }
+});
+
+test("gleiche low- und highPrice ergeben einen Einzelpreis", () => {
+  const p = A.produkteAusJsonLd([{
+    "@type": "Product", name: "X", offers: { lowPrice: "50", highPrice: "50", priceCurrency: "EUR" },
+  }]);
+  assert.equal(p[0].preis, "50,00 €");
+});
+
+test("Preis 0 gilt als gueltiger Preis (Gratisartikel)", () => {
+  const p = A.produkteAusJsonLd([{
+    "@type": "Product", name: "Probe", offers: { price: 0, priceCurrency: "EUR" },
+  }]);
+  assert.equal(p[0].preis, "0,00 €");
+  assert.equal(p[0].betrag, 0);
+});
+
+test("keine Preisangabe erzeugt niemals einen fuehrenden Gedankenstrich", () => {
+  // Waechter gegen die Rueckkehr des Fehlers in jeder Variante.
+  for (const offers of [
+    { price: "", highPrice: "80", priceCurrency: "EUR" },
+    { lowPrice: "", highPrice: "80", priceCurrency: "EUR" },
+    { highPrice: "80", priceCurrency: "EUR" },
+  ]) {
+    const p = A.produkteAusJsonLd([{ "@type": "Product", name: "X", offers }]);
+    assert.ok(!String(p[0].preis || "").startsWith("–"),
+      "fuehrender Gedankenstrich bei " + JSON.stringify(offers) + ": " + p[0].preis);
+  }
+});

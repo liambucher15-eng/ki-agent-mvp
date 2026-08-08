@@ -123,3 +123,26 @@ test("zielStehtAufSeite: kurze Füllwörter allein reichen nicht als Treffer", (
   // Sonst gilt "der die das" als gefunden, weil die Wörter überall vorkommen.
   assert.equal(A.zielStehtAufSeite("der die", "der Tisch ist die beste Wahl"), false);
 });
+
+// ── Zeichenprüfung im Pfad ──────────────────────────────────────────────────
+
+test("sauberePfad: Steuerzeichen werden abgewiesen", () => {
+  // Steuerzeichen haben in einem URL-Pfad nichts verloren und können in Logs
+  // und Kopfzeilen Unfug anrichten. Bewusst programmatisch erzeugt — im
+  // Quelltext wären sie unsichtbar. Genau das war das Problem: die Regel selbst
+  // stand als LITERALES Steuerzeichen in seiten-aktion.js, wodurch Git die
+  // ganze Datei als binär behandelte (kein Diff, keine Review).
+  for (const code of [0x00, 0x09, 0x0a, 0x1f]) {
+    const pfad = "/shop" + String.fromCharCode(code) + "x";
+    assert.equal(A.sauberePfad(pfad), "", "Steuerzeichen 0x" + code.toString(16) + " muss abgewiesen werden");
+  }
+});
+
+test("sauberePfad: echte Shop-Pfade mit Bindestrichen bleiben erlaubt", () => {
+  // Wächter: fast jede echte Shop-URL enthält Bindestriche. Eine zu strenge
+  // Zeichenprüfung würde die Seiten-Navigation vollständig lahmlegen.
+  for (const p of ["/collections/new-arrivals", "/products/celia-dots-234946",
+                   "/pages/t-shirt-guide", "/p/eichentisch-nord"]) {
+    assert.equal(A.sauberePfad(p), p, p + " muss erlaubt bleiben");
+  }
+});
