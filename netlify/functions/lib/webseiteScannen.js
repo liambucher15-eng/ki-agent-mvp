@@ -155,12 +155,30 @@ function formatiereAdresse(a) {
     .filter(Boolean).map(String).map((s) => s.trim()).filter(Boolean).join(", ");
 }
 
+// Leere Einträge aus einer Öffnungszeiten-Angabe entfernen.
+// Baukästen wie Squarespace schreiben für geschlossene Tage einen LEEREN Platz
+// in die Liste. Herausgekommen ist dann ", Tu 07:00-22:00, ..., " — mit
+// führendem Komma. Ungefiltert würde der Agent das genau so vorlesen.
+// Bewusst wird NICHT ergänzt, welche Tage geschlossen sind: das steht nirgends,
+// und Geschäftszeiten zu erfinden wäre schlimmer als sie wegzulassen.
+function saubereZeitangabe(s) {
+  return String(s || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 function formatiereOeffnung(o) {
   if (!o) return "";
   const liste = Array.isArray(o) ? o : [o];
   const teile = [];
   for (const e of liste) {
-    if (typeof e === "string") { teile.push(e); continue; }
+    if (typeof e === "string") {
+      const sauber = saubereZeitangabe(e);
+      if (sauber) teile.push(sauber);
+      continue;
+    }
     if (e && typeof e === "object" && e.opens && e.closes) {
       const tage = (Array.isArray(e.dayOfWeek) ? e.dayOfWeek : [e.dayOfWeek])
         .filter(Boolean)
@@ -539,4 +557,5 @@ module.exports = {
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
   parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,
   produktKatalog, katalogText, produktMeta, absolut, aufHttps, sortiereWichtige,
+  formatiereOeffnung, saubereZeitangabe,
 };

@@ -353,3 +353,41 @@ test("produktKatalog: eine Kategorieseite ist KEIN Produkt", () => {
     []
   );
 });
+
+// ── Öffnungszeiten aus Baukasten-Seiten ─────────────────────────────────────
+
+test("saubereZeitangabe: leere Einträge fallen raus", () => {
+  // Squarespace schreibt für geschlossene Tage einen LEEREN Platz in die Liste.
+  // An einem echten Gastro-Betrieb kam so ", Tu 07:00-22:00, ..., " heraus —
+  // mit führendem Komma, das der Agent genau so vorgelesen haette.
+  assert.equal(
+    W.saubereZeitangabe(", Tu 07:00-22:00, We 07:00-22:00, Sa 08:00-23:00, "),
+    "Tu 07:00-22:00, We 07:00-22:00, Sa 08:00-23:00"
+  );
+});
+
+test("saubereZeitangabe: saubere Angaben bleiben unveraendert", () => {
+  assert.equal(W.saubereZeitangabe("Mo-Fr 09:00-18:00"), "Mo-Fr 09:00-18:00");
+  assert.equal(W.saubereZeitangabe(""), "");
+  assert.equal(W.saubereZeitangabe(null), "");
+});
+
+test("formatiereOeffnung: String-Angaben werden gesaeubert", () => {
+  assert.equal(
+    W.formatiereOeffnung(", Tu 07:00-22:00, Fr 07:00-23:00, "),
+    "Tu 07:00-22:00, Fr 07:00-23:00"
+  );
+});
+
+test("formatiereOeffnung: eine Angabe, die NUR aus Trennern besteht, ergibt leer", () => {
+  // Besser gar keine Angabe als eine sinnlose — der Agent sagt dann ehrlich,
+  // dass er die Zeiten nicht kennt.
+  assert.equal(W.formatiereOeffnung(", , ,"), "");
+});
+
+test("formatiereOeffnung: strukturierte Angaben funktionieren weiter", () => {
+  assert.match(
+    W.formatiereOeffnung({ dayOfWeek: "https://schema.org/Monday", opens: "09:00", closes: "18:00" }),
+    /Monday 09:00.18:00/
+  );
+});
