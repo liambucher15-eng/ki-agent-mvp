@@ -158,12 +158,16 @@
 
   // Läuft durch beliebig verschachteltes JSON-LD (@graph, ItemList, Arrays) und
   // sammelt alle Produkte ein. Tiefenbegrenzt gegen bösartige/kaputte Strukturen.
-  function produkteAusJsonLd(objekte) {
+  // maxAnzahl: normalerweise der Deckel für den Chat-Prompt. Der Website-Scan
+  // baut damit einen KATALOG auf und darf mehr einsammeln — er läuft einmal
+  // beim Einrichten, nicht bei jeder Anfrage.
+  function produkteAusJsonLd(objekte, maxAnzahl) {
+    const deckel = Math.max(1, Math.min(200, Number(maxAnzahl) || MAX_PRODUKTE));
     const gefunden = [];
     const gesehen = new Set();
 
     function gehe(knoten, tiefe) {
-      if (!knoten || tiefe > MAX_TIEFE || gefunden.length >= MAX_PRODUKTE) return;
+      if (!knoten || tiefe > MAX_TIEFE || gefunden.length >= deckel) return;
       if (Array.isArray(knoten)) {
         for (const k of knoten) gehe(k, tiefe + 1);
         return;
@@ -206,6 +210,10 @@
     if (beschreibung) produkt.beschreibung = beschreibung;
     const url = text(meta["og:url"], 300);
     if (url) produkt.url = url;
+    // og:image ist bei Shops ohne JSON-LD die einzige Bildquelle — ohne sie
+    // bliebe die Produktkarte dort dauerhaft ohne Bild.
+    const bild = ersteBildUrl(meta["og:image"] || meta["twitter:image"]);
+    if (bild) produkt.bild = bild;
     if (betrag != null) {
       produkt.preis = preisText(betrag, waehrung);
       produkt.betrag = betrag;
@@ -276,12 +284,22 @@
     }[a.typ] || "eine Seite";
     zeilen.push(`Der Besucher ist gerade auf "${a.titel || a.pfad || "?"}" (${a.pfad || "/"}). Das ist ${typName}.`);
 
+    // Link und Bild gehören mit in den Prompt. Ohne sie erkennt der Agent zwar
+    // das Produkt, kann es aber nicht als Karte zeigen — er hat schlicht keine
+    // Bild-URL zum Mitgeben. Genau daran scheiterte es zuerst: das Bild wurde
+    // sauber aus dem JSON-LD gelesen und dann hier weggelassen.
     for (const p of (a.produkte || [])) {
       const teile = [p.name];
       if (p.preis) teile.push(p.preis);
       if (p.verfuegbar) teile.push(p.verfuegbar);
       if (p.marke) teile.push("Marke: " + p.marke);
-      zeilen.push("- " + teile.join(" · ") + (p.beschreibung ? ` — ${p.beschreibung}` : ""));
+      let zeile = "- " + teile.join(" · ") + (p.beschreibung ? ` — ${p.beschreibung}` : "");
+      if (p.url) zeile += `\n  Link: ${p.url}`;
+      if (p.bild) zeile += `\n  Bild: ${p.bild}`;
+      zeilen.push(zeile);
+    }
+    if ((a.produkte || []).some((p) => p.bild || p.url)) {
+      zeilen.push("Link und Bild kannst du bei einem Produktvorschlag direkt übernehmen.");
     }
     return zeilen.join("\n");
   }

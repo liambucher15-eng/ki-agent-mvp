@@ -15,6 +15,9 @@ function normalisiere(url) {
 // keine privaten/internen IPs, Redirects werden einzeln geprüft).
 const { sichererFetch } = require("./sichererFetch");
 const { rufeClaude } = require("./claude");
+// Produkte werden mit DERSELBEN Deutung gelesen wie später im Chat — sonst
+// versteht das System denselben Shop an zwei Stellen unterschiedlich.
+const { produkteAusJsonLd, produktAusMeta } = require("./seiten-analyse");
 async function hole(url, timeout = 8000) {
   const res = await sichererFetch(url, { timeout });
   if (!res.ok) throw new Error("HTTP " + res.status);
@@ -176,6 +179,101 @@ function strukturierteDaten(htmls) {
     }
   }
   return erg;
+}
+
+// --- Produktkatalog ---------------------------------------------------------
+// Sammelt beim Scan die Produkte der Seite MIT Bild und Link ein.
+//
+// Warum das nötig ist: Der Agent kann Produkte nur dann als Karte mit Bild
+// zeigen, wenn er die Bild-URL kennt. Sein Wissen entsteht aber genau hier, beim
+// Scan. Ohne diesen Schritt blieben die Karten auf jeder echten Seite bildlos —
+// dieselben Daten liegen im JSON-LD des Shops, sie wurden nur nie gelesen.
+//
+// Gedeutet wird mit derselben Funktion wie im Chat (lib/seiten-analyse.js),
+// damit ein Shop nicht an zwei Stellen unterschiedlich verstanden wird.
+const MAX_KATALOG = 40;
+
+// Bild- und Produktlinks stehen im HTML oft relativ ("/media/stuhl.jpg"). Der
+// Katalog wird aber GESPEICHERT und später von unserer Domain aus benutzt —
+// relativ zeigte dann ins Leere. Deshalb hier absolut machen.
+function absolut(pfad, basisUrl) {
+  const s = String(pfad || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  try { return new URL(s, basisUrl).href; } catch { return ""; }
+}
+
+// Produktdaten aus den og:/product:-Metas einer Seite (für Shops ohne JSON-LD).
+function produktMeta(html) {
+  const lies = (name) => {
+    const m = String(html).match(
+      new RegExp('<meta[^>]*(?:property|name)=["\']' + name + '["\'][^>]*>', "i"));
+    return m ? ((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
+  };
+  return {
+    "og:type": lies("og:type"),
+    "og:title": lies("og:title"),
+    "og:description": lies("og:description"),
+    "og:image": lies("og:image"),
+    "og:url": lies("og:url"),
+    "product:price:amount": lies("product:price:amount"),
+    "product:price:currency": lies("product:price:currency"),
+    "product:availability": lies("product:availability"),
+  };
+}
+
+// htmls: [{ html, url }] — die URL wird gebraucht, um relative Pfade aufzulösen
+// und um ein Produkt ohne eigene url-Angabe trotzdem verlinken zu können.
+function produktKatalog(seiten, basisUrl) {
+  const katalog = [];
+  const gesehen = new Set();
+  for (const seite of (seiten || [])) {
+    if (katalog.length >= MAX_KATALOG) break;
+    const html = seite && seite.html;
+    if (!html) continue;
+    const seitenUrl = (seite && seite.url) || basisUrl;
+
+    let gefunden = produkteAusJsonLd(extrahiereJsonLd(html), MAX_KATALOG);
+    if (!gefunden.length) {
+      const ausMeta = produktAusMeta(produktMeta(html));
+      if (ausMeta) gefunden = [ausMeta];
+    }
+    for (const p of gefunden) {
+      if (katalog.length >= MAX_KATALOG) break;
+      const schluessel = p.name.toLowerCase();
+      if (gesehen.has(schluessel)) continue;
+      gesehen.add(schluessel);
+      const eintrag = { name: p.name };
+      if (p.preis) eintrag.preis = p.preis;
+      if (p.verfuegbar) eintrag.verfuegbar = p.verfuegbar;
+      if (p.beschreibung) eintrag.beschreibung = p.beschreibung;
+      // Ohne eigene url-Angabe ist die Seite, auf der das Produkt steht, der
+      // beste verfügbare Link.
+      const url = absolut(p.url || seitenUrl, basisUrl);
+      if (url) eintrag.url = url;
+      const bild = absolut(p.bild, basisUrl);
+      if (bild) eintrag.bild = bild;
+      katalog.push(eintrag);
+    }
+  }
+  return katalog;
+}
+
+// Der Katalog als Textblock fürs Firmen-Wissen. Bewusst eine Zeile pro Produkt
+// mit benannten Feldern: so kann der Agent Link und Bild sicher zuordnen.
+function katalogText(katalog) {
+  if (!katalog || !katalog.length) return "";
+  const zeilen = katalog.map((p) => {
+    const kopf = [p.name, p.preis, p.verfuegbar].filter(Boolean).join(" — ");
+    const teile = [kopf];
+    if (p.beschreibung) teile.push("  " + p.beschreibung);
+    if (p.url) teile.push("  Link: " + p.url);
+    if (p.bild) teile.push("  Bild: " + p.bild);
+    return "- " + teile.join("\n");
+  });
+  return "PRODUKTE (aus der Webseite gelesen)\n" +
+    "Nutze Link und Bild, wenn du eines dieser Produkte vorschlägst.\n\n" +
+    zeilen.join("\n");
 }
 
 // og:-Meta der Hauptseite (Beschreibung ist oft eine gute Angebots-Zusammenfassung).
@@ -343,6 +441,11 @@ async function scanneWebseite(rohUrl) {
 
   // Strukturierte Daten (JSON-LD) aus allen Seiten — präziser als Text-Extraktion.
   const strukturiert = strukturierteDaten([hauptHtml, ...unterResultate]);
+  // Produktkatalog MIT Bild und Link — die Grundlage fuer Produktkarten im Chat.
+  const katalog = produktKatalog(
+    [{ html: hauptHtml, url }, ...unterResultate.map((h, i) => ({ html: h, url: unterseiten[i] }))],
+    url
+  );
   const og = ogMeta(hauptHtml);
 
   const texte = [htmlZuText(hauptHtml).slice(0, MAX_TEXT_PRO_SEITE)];
@@ -399,6 +502,7 @@ async function scanneWebseite(rohUrl) {
   return {
     name, angebot, oeffnungszeiten, adresse, kontakt, faq,
     leistungen, preise, team, besonderheiten, weiteres, wissen, hinweis,
+    katalog,
     farbe1: farben.farbe1,
     farbe2: farben.farbe2,
     gescannt: [url, ...unterseiten],
@@ -410,4 +514,5 @@ module.exports = {
   // einzelne Helfer exportiert für Unit-Tests
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
   parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,
+  produktKatalog, katalogText, produktMeta, absolut,
 };

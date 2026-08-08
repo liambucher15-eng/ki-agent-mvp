@@ -7,6 +7,8 @@ const assert = require("node:assert/strict");
 const {
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
 } = require("../netlify/functions/lib/webseiteScannen");
+// Der Katalog-Teil wird als Namensraum genutzt, damit die Liste oben schlank bleibt.
+const W = require("../netlify/functions/lib/webseiteScannen");
 
 // --- normalisiere ---
 test("normalisiere: ergänzt https:// wenn Schema fehlt", () => {
@@ -195,4 +197,100 @@ test("ogMeta: liest og:title/description/site_name", () => {
   assert.equal(og.titel, "Salbei — Restaurant");
   assert.equal(og.beschreibung, "Saisonale Küche in Zürich");
   assert.equal(og.name, "Salbei");
+});
+
+// ── Produktkatalog aus dem Scan ─────────────────────────────────────────────
+//
+// Ohne diesen Schritt kennt der Agent nach dem Onboarding keine Produktbilder
+// und die Karten im Chat bleiben auf jeder echten Seite bildlos — obwohl die
+// Daten im JSON-LD des Shops stehen.
+
+const ldSeite = (objekt) =>
+  '<html><head><script type="application/ld+json">' + JSON.stringify(objekt) +
+  '</script></head><body>x</body></html>';
+
+test("produktKatalog: liest Produkt mit Bild aus JSON-LD", () => {
+  const html = ldSeite({
+    "@context": "https://schema.org", "@type": "Product", name: "Stuhl Lund",
+    description: "Eiche mit Filzsitz", image: "/media/lund.jpg",
+    offers: { price: "249.00", priceCurrency: "EUR", availability: "https://schema.org/InStock" },
+  });
+  const k = W.produktKatalog([{ html, url: "https://shop.example/p/lund" }], "https://shop.example");
+  assert.equal(k.length, 1);
+  assert.equal(k[0].name, "Stuhl Lund");
+  assert.equal(k[0].preis, "249,00 €");
+  assert.equal(k[0].verfuegbar, "verfuegbar");
+});
+
+test("produktKatalog: relative Bild- und Link-Pfade werden absolut", () => {
+  // Der Katalog wird GESPEICHERT und spaeter von unserer Domain aus benutzt —
+  // ein relativer Pfad zeigte dann ins Leere.
+  const html = ldSeite({ "@type": "Product", name: "Stuhl", image: "/media/lund.jpg" });
+  const k = W.produktKatalog([{ html, url: "https://shop.example/p/lund" }], "https://shop.example");
+  assert.equal(k[0].bild, "https://shop.example/media/lund.jpg");
+  assert.equal(k[0].url, "https://shop.example/p/lund");
+});
+
+test("produktKatalog: absolute Bild-URLs (CDN) bleiben unveraendert", () => {
+  const html = ldSeite({ "@type": "Product", name: "Stuhl", image: "https://cdn.example/a.jpg" });
+  const k = W.produktKatalog([{ html, url: "https://shop.example/p/x" }], "https://shop.example");
+  assert.equal(k[0].bild, "https://cdn.example/a.jpg");
+});
+
+test("produktKatalog: Shops ohne JSON-LD liefern ueber og:-Metas", () => {
+  const html = '<html><head>' +
+    '<meta property="og:type" content="product">' +
+    '<meta property="og:title" content="Leuchte Sund">' +
+    '<meta property="og:image" content="/media/leuchte.jpg">' +
+    '<meta property="product:price:amount" content="179.00">' +
+    '<meta property="product:price:currency" content="EUR">' +
+    '</head><body>x</body></html>';
+  const k = W.produktKatalog([{ html, url: "https://shop.example/p/leuchte" }], "https://shop.example");
+  assert.equal(k[0].name, "Leuchte Sund");
+  assert.equal(k[0].bild, "https://shop.example/media/leuchte.jpg");
+});
+
+test("produktKatalog: dasselbe Produkt auf mehreren Seiten erscheint einmal", () => {
+  const html = ldSeite({ "@type": "Product", name: "Stuhl Lund" });
+  const k = W.produktKatalog([
+    { html, url: "https://shop.example/p/lund" },
+    { html, url: "https://shop.example/shop" },
+  ], "https://shop.example");
+  assert.equal(k.length, 1);
+});
+
+test("produktKatalog: Seiten ohne Produkte liefern einen leeren Katalog", () => {
+  const k = W.produktKatalog([
+    { html: "<html><body>Ueber uns</body></html>", url: "https://shop.example/ueber" },
+    { html: null, url: "https://shop.example/kaputt" },
+  ], "https://shop.example");
+  assert.deepEqual(k, []);
+});
+
+test("produktKatalog: deckelt die Anzahl", () => {
+  const seiten = [];
+  for (let i = 0; i < 60; i++) {
+    seiten.push({ html: ldSeite({ "@type": "Product", name: "P" + i }), url: "https://shop.example/p/" + i });
+  }
+  assert.equal(W.produktKatalog(seiten, "https://shop.example").length, 40);
+});
+
+test("absolut: unbrauchbare Pfade ergeben leer statt einer kaputten URL", () => {
+  assert.equal(W.absolut("", "https://shop.example"), "");
+  assert.equal(W.absolut(null, "https://shop.example"), "");
+});
+
+test("katalogText: nennt Link und Bild benannt, damit der Agent sie zuordnen kann", () => {
+  const t = W.katalogText([
+    { name: "Stuhl Lund", preis: "249,00 €", url: "https://shop.example/p/lund",
+      bild: "https://shop.example/media/lund.jpg" },
+  ]);
+  assert.match(t, /PRODUKTE/);
+  assert.match(t, /Link: https:\/\/shop\.example\/p\/lund/);
+  assert.match(t, /Bild: https:\/\/shop\.example\/media\/lund\.jpg/);
+});
+
+test("katalogText: leerer Katalog ergibt leeren Text (kein Wissens-Rauschen)", () => {
+  assert.equal(W.katalogText([]), "");
+  assert.equal(W.katalogText(null), "");
 });
