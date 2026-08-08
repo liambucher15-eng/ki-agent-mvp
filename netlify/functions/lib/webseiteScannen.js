@@ -43,10 +43,26 @@ const MAX_TEXT_PRO_SEITE = 6000;
 const MAX_TEXT_GESAMT = 48000;
 
 const ASSET_ENDUNG = /\.(jpg|jpeg|png|gif|svg|webp|avif|pdf|zip|mp4|css|js|mjs|json|rss|atom|ico|woff2?|ttf|otf|eot)$/i;
-const WICHTIG = /(ueber|über|about|kontakt|contact|leistung|angebot|service|produkt|menu|speisekarte|preise|pricing|team|faq|standort|geschichte|story|werte|shop)/i;
+// "produkt" (deutsch, mit k) matcht NICHT "products" (englisch, mit c) — an
+// einem echten Shop landeten deshalb Suche, Konto, Warenkorb und AGB im Scan,
+// waehrend die neun vorhandenen Produktseiten aus dem Deckel fielen. Beide
+// Schreibweisen, dazu die ueblichen Shop-Pfade.
+const WICHTIG = /(ueber|über|about|kontakt|contact|leistung|angebot|service|produkt|product|collection|katalog|menu|speisekarte|preise|pricing|team|faq|standort|geschichte|story|werte|shop)/i;
+// Reine Funktionsseiten tragen zwar oft ein WICHTIG-Wort ("shop-all", "search"),
+// enthalten aber kein Wissen ueber die Firma. Sie kosten nur Scan-Budget.
+const OHNE_INHALT = /\/(search|account|login|register|cart|checkout|warenkorb|kasse|policies|agb|impressum|datenschutz|privacy|terms)(\/|$|\?)|\.oembed$/i;
 
 function sortiereWichtige(liste) {
-  return [...liste.filter((l) => WICHTIG.test(l)), ...liste.filter((l) => !WICHTIG.test(l))];
+  const brauchbar = liste.filter((l) => !OHNE_INHALT.test(l));
+  // Produktseiten zuerst: Sie tragen Preis, Verfügbarkeit und Bild und sind
+  // damit die einzige Quelle für einen Produktkatalog. Danach die übrigen
+  // Inhaltsseiten, danach alles Weitere.
+  const istProduktSeite = (l) => /\/(products?|produkte?)\//i.test(l);
+  return [
+    ...brauchbar.filter(istProduktSeite),
+    ...brauchbar.filter((l) => !istProduktSeite(l) && WICHTIG.test(l)),
+    ...brauchbar.filter((l) => !istProduktSeite(l) && !WICHTIG.test(l)),
+  ];
 }
 
 // Interne Unterseiten aus den Links der Hauptseite — wichtige zuerst.
@@ -199,8 +215,16 @@ const MAX_KATALOG = 40;
 function absolut(pfad, basisUrl) {
   const s = String(pfad || "").trim();
   if (!s) return "";
-  if (/^https?:\/\//i.test(s)) return s;
-  try { return new URL(s, basisUrl).href; } catch { return ""; }
+  if (/^https?:\/\//i.test(s)) return aufHttps(s);
+  try { return aufHttps(new URL(s, basisUrl).href); } catch { return ""; }
+}
+
+// Shopify liefert og:image mit http://, obwohl der Shop selbst über https läuft.
+// Ein http-Bild auf einer https-Seite wird vom Browser als gemischter Inhalt
+// blockiert — die Produktkarte bliebe leer. Ein Hochstufen kann nichts
+// verschlimmern: das Bild wäre sonst ohnehin nicht zu sehen.
+function aufHttps(url) {
+  return String(url || "").replace(/^http:\/\//i, "https://");
 }
 
 // Produktdaten aus den og:/product:-Metas einer Seite (für Shops ohne JSON-LD).
@@ -514,5 +538,5 @@ module.exports = {
   // einzelne Helfer exportiert für Unit-Tests
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
   parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,
-  produktKatalog, katalogText, produktMeta, absolut,
+  produktKatalog, katalogText, produktMeta, absolut, aufHttps, sortiereWichtige,
 };

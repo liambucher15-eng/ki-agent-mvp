@@ -200,8 +200,12 @@
     if (!meta || typeof meta !== "object") return null;
     const name = text(meta["og:title"] || meta["twitter:title"], MAX_NAME);
     if (!name) return null;
+    // BEWUSST auf Wahrheitswert prüfen, nicht auf != null: Wer die Metas
+    // einsammelt, liefert für fehlende Felder einen LEEREN String — und "" != null
+    // ist wahr. Damit galt an einem echten Shop jede Kategorieseite als Produkt
+    // und der Seitentitel wurde zum Produktnamen.
     const istProdukt = /product/i.test(String(meta["og:type"] || "")) ||
-      meta["product:price:amount"] != null;
+      !!String(meta["product:price:amount"] || "").trim();
     if (!istProdukt) return null;
     const waehrung = text(meta["product:price:currency"], 8).toUpperCase();
     const betrag = zuBetrag(meta["product:price:amount"]);

@@ -294,3 +294,62 @@ test("katalogText: leerer Katalog ergibt leeren Text (kein Wissens-Rauschen)", (
   assert.equal(W.katalogText([]), "");
   assert.equal(W.katalogText(null), "");
 });
+
+// ── Was der Test an einem echten Shop (Shopify) zutage gefördert hat ────────
+
+test("sortiereWichtige: Produktseiten kommen zuerst", () => {
+  // "produkt" (deutsch, mit k) matcht NICHT "products" (englisch, mit c).
+  // An einem echten Shop fielen deshalb alle neun Produktseiten aus dem Deckel,
+  // waehrend Suche, Konto und AGB gescannt wurden.
+  const sortiert = W.sortiereWichtige([
+    "https://s.example/collections/shop-all",
+    "https://s.example/products/karolina",
+    "https://s.example/pages/about",
+    "https://s.example/products/alina",
+  ]);
+  assert.ok(/\/products\//.test(sortiert[0]), "erste sollte Produktseite sein: " + sortiert[0]);
+  assert.ok(/\/products\//.test(sortiert[1]), "zweite sollte Produktseite sein: " + sortiert[1]);
+});
+
+test("sortiereWichtige: reine Funktionsseiten fallen raus", () => {
+  // Sie tragen zwar oft ein wichtiges Wort ("shop-all"), enthalten aber kein
+  // Wissen ueber die Firma und kosten nur Scan-Budget.
+  const sortiert = W.sortiereWichtige([
+    "https://s.example/search",
+    "https://s.example/account",
+    "https://s.example/cart",
+    "https://s.example/policies/shipping-policy",
+    "https://s.example/collections/new-arrivals.oembed",
+    "https://s.example/products/karolina",
+  ]);
+  assert.deepEqual(sortiert, ["https://s.example/products/karolina"]);
+});
+
+test("aufHttps: http-Bilder werden hochgestuft (gemischter Inhalt)", () => {
+  // Shopify liefert og:image mit http://, obwohl der Shop ueber https laeuft.
+  // Der Browser blockiert das Bild dann als gemischten Inhalt.
+  assert.equal(W.aufHttps("http://shop.example/a.jpg"), "https://shop.example/a.jpg");
+  assert.equal(W.aufHttps("https://shop.example/a.jpg"), "https://shop.example/a.jpg");
+  assert.equal(W.aufHttps(""), "");
+});
+
+test("absolut: stuft http-URLs mit hoch", () => {
+  assert.equal(W.absolut("http://cdn.example/a.jpg", "https://s.example"),
+    "https://cdn.example/a.jpg");
+});
+
+test("produktKatalog: eine Kategorieseite ist KEIN Produkt", () => {
+  // Genau der Fehlbefund am echten Shop: og:type war "website", aber die
+  // leeren product:-Metas galten wegen "" != null als vorhanden — der
+  // Seitentitel wurde zum Produktnamen.
+  const kategorie = '<html><head>' +
+    '<meta property="og:type" content="website">' +
+    '<meta property="og:title" content="New In | Shop">' +
+    '<meta property="og:image" content="/media/kategorie.png">' +
+    '<meta property="product:price:amount" content="">' +
+    '</head><body>Neuheiten</body></html>';
+  assert.deepEqual(
+    W.produktKatalog([{ html: kategorie, url: "https://s.example/collections/new" }], "https://s.example"),
+    []
+  );
+});

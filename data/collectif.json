@@ -1,0 +1,25 @@
+{
+  "id": "collectif",
+  "name": "Collectif mon Amour",
+  "plan": "plus",
+  "faehigkeiten": [
+    "produkte"
+  ],
+  "persona": {
+    "name": "Mona",
+    "rolle": "die Stilberaterin",
+    "ton": "freundlich, knapp",
+    "sprache": "Deutsch",
+    "ansprache": "du",
+    "antwortLaenge": "kurz",
+    "emojiStil": "keine"
+  },
+  "charakter": {
+    "farbe": "#111827"
+  },
+  "fakten": {
+    "Sortiment": "Damenmode",
+    "Waehrung": "CHF"
+  },
+  "wissen": "PRODUKTE (aus der Webseite gelesen)\nNutze Link und Bild, wenn du eines dieser Produkte vorschlägst.\n\n- Celia Dots — 98,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/celia-dots-234946\n  Bild: https://collectifmonamour.com/cdn/shop/files/234946-131-01-Celia-Dot-1052_1000x.jpg?v=1786178034\n- Karolina — 89,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/karolina-234943\n  Bild: https://collectifmonamour.com/cdn/shop/files/234943-632-Karolina-1543_1000x.jpg?v=1786176497\n- Neva — 119,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/neva-234944\n  Bild: https://collectifmonamour.com/cdn/shop/files/234944-270-Neva-1418_1000x.jpg?v=1786176813\n- Amira — 119,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/amira-234942\n  Bild: https://collectifmonamour.com/cdn/shop/files/234942-531-Amira-1754_1000x.jpg?v=1786177219\n- Alina — 139,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/alina-234940\n  Bild: https://collectifmonamour.com/cdn/shop/files/234940-434-Alina-1674_1000x.jpg?v=1786177510\n- Hanna — 98,00 CHF — verfuegbar\n  Link: https://collectifmonamour.com/products/hanna-234938\n  Bild: https://collectifmonamour.com/cdn/shop/files/234938-320-Hanna-1614_1000x.jpg?v=1786177017"
+}

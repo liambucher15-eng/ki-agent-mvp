@@ -11,8 +11,10 @@ const nordlicht = require("../../../data/nordlicht.json");
 // Kasse). An einem Restaurant liesse sich das nicht prüfen: dort gibt es nichts
 // zu vergleichen und nichts in einen Warenkorb zu legen.
 const nordform = require("../../../data/nordform.json");
+// Aus einem ECHTEN Shop gescannt — Beleg, dass der Katalog im Feld traegt.
+const collectif = require("../../../data/collectif.json");
 
-const firmen = { salbei, nordlicht, nordform };
+const firmen = { salbei, nordlicht, nordform, collectif };
 
 // Gibt die Daten einer Firma zurück, oder null wenn es sie nicht gibt.
 function ladeFirma(firmaId) {
