@@ -442,3 +442,26 @@ test("katalogText: lange Beschreibungen werden gekuerzt und markiert", () => {
   assert.match(t, /…/, "Kuerzung sollte sichtbar markiert sein");
   assert.ok(!t.includes("a".repeat(120)), "Beschreibung wurde nicht gekuerzt");
 });
+
+// ── CMS-Maschinen-Endpunkte (an wp-experten.ch gefunden) ───────────────────
+
+test("sortiereWichtige: WordPress-Endpunkte fallen raus", () => {
+  // An einer echten WordPress-Seite belegten /feed, /wp-json,
+  // /wp-json/oembed/1.0/embed, /wp-json/wp/v2/pages/9349 und /xmlrpc.php
+  // FUENF von elf Scan-Plaetzen. Sie liefern JSON oder XML, kein Firmenwissen —
+  // waehrend echte Inhaltsseiten aus dem Deckel fielen.
+  const raus = ["https://a.ch/wp-json", "https://a.ch/wp-json/wp/v2/pages/9349",
+    "https://a.ch/xmlrpc.php", "https://a.ch/feed", "https://a.ch/blog/feed",
+    "https://a.ch/wp-admin", "https://a.ch/wp-login.php", "https://a.ch/rss"];
+  assert.deepEqual(W.sortiereWichtige(raus), []);
+});
+
+test("sortiereWichtige: aehnlich benannte Inhaltsseiten bleiben erhalten", () => {
+  // Waechter gegen zu breite Muster: /feedback ist kein /feed, /atomkraft kein
+  // /atom, /embedded-systeme kein /embed.
+  const drin = ["https://a.ch/feedback", "https://a.ch/newsfeed-abo",
+    "https://a.ch/wordpress-experten", "https://a.ch/embedded-systeme",
+    "https://a.ch/atomkraft", "https://a.ch/amphitheater",
+    "https://a.ch/webdesign-agentur-zuerich"];
+  assert.equal(W.sortiereWichtige(drin).length, drin.length);
+});

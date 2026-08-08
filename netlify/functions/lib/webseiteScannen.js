@@ -51,9 +51,15 @@ const WICHTIG = /(ueber|über|about|kontakt|contact|leistung|angebot|service|pro
 // Reine Funktionsseiten tragen zwar oft ein WICHTIG-Wort ("shop-all", "search"),
 // enthalten aber kein Wissen ueber die Firma. Sie kosten nur Scan-Budget.
 const OHNE_INHALT = /\/(search|account|login|register|cart|checkout|warenkorb|kasse|policies|agb|impressum|datenschutz|privacy|terms)(\/|$|\?)|\.oembed$/i;
+// Maschinen-Endpunkte von CMS-Systemen. An einer echten WordPress-Seite
+// (wp-experten.ch) belegten /feed, /wp-json, /wp-json/oembed/1.0/embed,
+// /wp-json/wp/v2/pages/9349 und /xmlrpc.php FUENF von elf Scan-Plaetzen —
+// waehrend echte Inhaltsseiten wie /webdesign-agentur-zuerich und drei
+// Referenzen herausfielen. Sie liefern JSON oder XML, kein Firmenwissen.
+const TECHNISCH = /\/(wp-json|wp-admin|wp-content|wp-includes|xmlrpc\.php|wp-login\.php)(\/|$|\?)|\/(feed|rss|atom|embed|amp|oembed)(\/|$|\?)/i;
 
 function sortiereWichtige(liste) {
-  const brauchbar = liste.filter((l) => !OHNE_INHALT.test(l));
+  const brauchbar = liste.filter((l) => !OHNE_INHALT.test(l) && !TECHNISCH.test(l));
   // Produktseiten zuerst: Sie tragen Preis, Verfügbarkeit und Bild und sind
   // damit die einzige Quelle für einen Produktkatalog. Danach die übrigen
   // Inhaltsseiten, danach alles Weitere.
