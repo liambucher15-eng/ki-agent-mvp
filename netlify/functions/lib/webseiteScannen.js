@@ -17,23 +17,26 @@ const { sichererFetch } = require("./sichererFetch");
 const { rufeClaude } = require("./claude");
 // Produkte werden mit DERSELBEN Deutung gelesen wie später im Chat — sonst
 // versteht das System denselben Shop an zwei Stellen unterschiedlich.
-const { produkteAusJsonLd, produktAusMeta } = require("./seiten-analyse");
+const { produkteAusJsonLd, produktAusMeta, ergaenzeAusMeta, entschluessele } = require("./seiten-analyse");
 async function hole(url, timeout = 8000) {
   const res = await sichererFetch(url, { timeout });
   if (!res.ok) throw new Error("HTTP " + res.status);
   return await res.text();
 }
 
+// Sechs Entities von Hand aufzuloesen reichte nicht: Ein echter Wix-Shop
+// schreibt Apostrophe als &#x27; und Gedankenstriche als &#8211; — die standen
+// dann so im Firmen-Wissen. entschluessele() kennt die numerische Form
+// (dezimal und hex) und die gaengigen Namen, und loest in EINEM Durchgang auf.
 function htmlZuText(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ").trim();
+  return entschluessele(
+    String(html)
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<[^>]+>/g, " ")
+  ).replace(/\s+/g, " ").trim();
 }
 
 // Seiten-Budgets (Milestone 7): mehr Seiten, mehr Text — aber pro Seite
@@ -42,7 +45,10 @@ const MAX_UNTERSEITEN = 11; // + Hauptseite = 12 Seiten
 const MAX_TEXT_PRO_SEITE = 6000;
 const MAX_TEXT_GESAMT = 48000;
 
-const ASSET_ENDUNG = /\.(jpg|jpeg|png|gif|svg|webp|avif|pdf|zip|mp4|css|js|mjs|json|rss|atom|ico|woff2?|ttf|otf|eot)$/i;
+// Dateien, die kein Firmenwissen tragen. .webmanifest kam dazu, weil an einer
+// handgebauten Seite /assets/favicons/site.webmanifest einen der elf Scan-
+// Plaetze belegte — eine Datei mit Icon-Groessen statt Text ueber die Firma.
+const ASSET_ENDUNG = /\.(jpg|jpeg|png|gif|svg|svgz|webp|avif|bmp|tiff?|pdf|zip|gz|tgz|tar|rar|7z|mp4|mov|webm|avi|mp3|wav|m4a|css|js|mjs|json|webmanifest|map|rss|atom|ico|woff2?|ttf|otf|eot|csv|docx?|xlsx?|pptx?|dmg|exe|apk)$/i;
 // "produkt" (deutsch, mit k) matcht NICHT "products" (englisch, mit c) — an
 // einem echten Shop landeten deshalb Suche, Konto, Warenkorb und AGB im Scan,
 // waehrend die neun vorhandenen Produktseiten aus dem Deckel fielen. Beide
@@ -63,7 +69,13 @@ function sortiereWichtige(liste) {
   // Produktseiten zuerst: Sie tragen Preis, Verfügbarkeit und Bild und sind
   // damit die einzige Quelle für einen Produktkatalog. Danach die übrigen
   // Inhaltsseiten, danach alles Weitere.
-  const istProduktSeite = (l) => /\/(products?|produkte?)\//i.test(l);
+  // Jedes System benennt seine Produktseiten anders: Shopify /products/,
+  // WooCommerce /produkt/, Wix /product-page/, Squarespace /shop/p/. Das Muster
+  // kannte nur die ersten beiden — an einem echten Wix-Shop lagen die 14
+  // Produktseiten deshalb nur zufaellig vorn, naemlich weil "product" auch im
+  // allgemeinen WICHTIG-Muster steht. Bei anderer Sitemap-Reihenfolge waeren
+  // sie hinter leeren Kategorieseiten aus dem Deckel gefallen.
+  const istProduktSeite = (l) => /\/(products?|produkte?|product-page|artikel|shop\/p)\//i.test(l);
   return [
     ...brauchbar.filter(istProduktSeite),
     ...brauchbar.filter((l) => !istProduktSeite(l) && WICHTIG.test(l)),
@@ -218,6 +230,10 @@ function strukturierteDaten(htmls) {
         erg.oeffnungszeiten = formatiereOeffnung(o.openingHours || o.openingHoursSpecification);
     }
   }
+  // JSON-LD steht in einem <script>-Block — Entities loest dort niemand auf.
+  // Ohne diesen Schritt hiesse eine Firma dauerhaft "Mueller &amp; Sohn", und
+  // zwar an der wichtigsten Stelle ueberhaupt: im Namen des Agenten-Wissens.
+  for (const feld of Object.keys(erg)) erg[feld] = entschluessele(erg[feld]).trim();
   return erg;
 }
 
@@ -256,7 +272,7 @@ function produktMeta(html) {
   const lies = (name) => {
     const m = String(html).match(
       new RegExp('<meta[^>]*(?:property|name)=["\']' + name + '["\'][^>]*>', "i"));
-    return m ? ((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
+    return m ? entschluessele((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
   };
   return {
     "og:type": lies("og:type"),
@@ -285,6 +301,10 @@ function produktKatalog(seiten, basisUrl) {
     if (!gefunden.length) {
       const ausMeta = produktAusMeta(produktMeta(html));
       if (ausMeta) gefunden = [ausMeta];
+    } else {
+      // Wix schreibt den Preis NUR in die Metas — ohne diesen Abgleich hätte
+      // jede Produktkarte dieses Shops keinen Preis.
+      gefunden = ergaenzeAusMeta(gefunden, produktMeta(html));
     }
     for (const p of gefunden) {
       if (katalog.length >= MAX_KATALOG) break;
@@ -353,9 +373,11 @@ function katalogText(katalog) {
 
 // og:-Meta der Hauptseite (Beschreibung ist oft eine gute Angebots-Zusammenfassung).
 function ogMeta(html) {
+  // Meta-Werte stehen in Attributen — dort loest niemand Entities auf. Ohne
+  // entschluessele() ginge "Web &amp; Graphic Design" genau so ins Firmen-Wissen.
   const lies = (prop) => {
     const m = String(html).match(new RegExp('<meta[^>]*property=["\']og:' + prop + '["\'][^>]*>', "i"));
-    return m ? ((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
+    return m ? entschluessele((m[0].match(/content=["']([^"']*)["']/i) || [])[1] || "").trim() : "";
   };
   return { titel: lies("title"), beschreibung: lies("description"), name: lies("site_name") };
 }

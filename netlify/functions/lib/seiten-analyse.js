@@ -28,10 +28,46 @@
   const MAX_BESCHREIBUNG = 240;
   const MAX_TIEFE = 6; // Rekursionsbremse für verschachteltes JSON-LD
 
+  // ── HTML-Entities ─────────────────────────────────────────────────────────
+  // JSON-LD steht in einem <script>-Block und Meta-Werte in Attributen: Beides
+  // liest niemand für uns auf. An einem echten Wix-Shop hiess ein Produkt
+  // deshalb "A4 &#x27;COLOUR YOUR OWN&#x27; PRINT SET" — genau so stand es dann
+  // im Prompt und auf der Produktkarte. Ein Durchgang, damit "&amp;lt;" zu
+  // "&lt;" wird und nicht zu "<": doppeltes Auflösen wäre eine Lücke.
+  const BENANNT = {
+    amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ",
+    shy: "", // weiches Trennzeichen: unsichtbar gemeint, gehoert also weg
+
+    ndash: "–", mdash: "—", hellip: "…", bull: "•", middot: "·", times: "×",
+    laquo: "«", raquo: "»", ldquo: "“", rdquo: "”", lsquo: "‘", rsquo: "’",
+    bdquo: "„", sbquo: "‚", euro: "€", pound: "£", yen: "¥", cent: "¢",
+    copy: "©", reg: "®", trade: "™", deg: "°", plusmn: "±", frac12: "½",
+    auml: "ä", ouml: "ö", uuml: "ü", szlig: "ß",
+    Auml: "Ä", Ouml: "Ö", Uuml: "Ü",
+    eacute: "é", egrave: "è", agrave: "à", ccedil: "ç", ntilde: "ñ",
+  };
+  function entschluessele(wert) {
+    return String(wert == null ? "" : wert).replace(
+      /&(#[xX][0-9a-fA-F]{1,6}|#\d{1,7}|[a-zA-Z][a-zA-Z0-9]{1,9});/g,
+      (ganz, code) => {
+        if (code[0] === "#") {
+          const zahl = (code[1] === "x" || code[1] === "X")
+            ? parseInt(code.slice(2), 16)
+            : parseInt(code.slice(1), 10);
+          // Steuerzeichen und Ungültiges bleiben stehen, statt zu Unsinn zu werden.
+          if (!isFinite(zahl) || zahl < 9 || zahl > 0x10ffff) return ganz;
+          try { return String.fromCodePoint(zahl); } catch { return ganz; }
+        }
+        const treffer = BENANNT[code] !== undefined ? BENANNT[code] : BENANNT[code.toLowerCase()];
+        return treffer === undefined ? ganz : treffer;
+      }
+    );
+  }
+
   function text(wert, max) {
     if (typeof wert === "number") wert = String(wert);
     if (typeof wert !== "string") return "";
-    return wert.replace(/\s+/g, " ").trim().slice(0, max);
+    return entschluessele(wert).replace(/\s+/g, " ").trim().slice(0, max);
   }
 
   // ── Preise ────────────────────────────────────────────────────────────────
@@ -239,6 +275,32 @@
     return produkt;
   }
 
+  // Ein Produkt steht oft in ZWEI Quellen — und in jeder unvollständig.
+  // Gemessen an einem echten Wix-Shop: Das JSON-LD trägt Name, Beschreibung und
+  // fünf Bilder, aber KEINEN offers-Block; der Preis steht ausschliesslich in
+  // product:price:amount. Wer die Metas nur als Ersatz nimmt, wenn JSON-LD gar
+  // nichts liefert, verliert dort den Preis JEDER Produktkarte.
+  // Deshalb: JSON-LD führt, die Metas füllen nur Lücken.
+  // Nur bei GENAU EINEM Produkt: Auf einer Liste gehören die Seiten-Metas zur
+  // Seite, nicht zu einem bestimmten Eintrag — welchem, wäre geraten.
+  function ergaenzeAusMeta(produkte, meta) {
+    if (!Array.isArray(produkte) || produkte.length !== 1) return produkte;
+    const ausMeta = produktAusMeta(meta);
+    if (!ausMeta) return produkte;
+    const p = Object.assign({}, produkte[0]);
+    for (const feld of ["beschreibung", "url", "bild", "verfuegbar"]) {
+      if (!p[feld] && ausMeta[feld]) p[feld] = ausMeta[feld];
+    }
+    // Der Preis wird nur GANZ übernommen: Betrag und Währung gehören zusammen,
+    // sonst stünde "8,00 €" neben einem Betrag in Pfund.
+    if (!p.preis && ausMeta.preis) {
+      p.preis = ausMeta.preis;
+      if (ausMeta.betrag != null) p.betrag = ausMeta.betrag;
+      if (ausMeta.waehrung) p.waehrung = ausMeta.waehrung;
+    }
+    return [p];
+  }
+
   // ── Seitentyp ─────────────────────────────────────────────────────────────
   // Wonach der Agent sein Verhalten richtet. Der Pfad ist das verlässlichste
   // Signal für Warenkorb/Kasse (dort steht selten strukturierte Produktauszeichnung),
@@ -291,6 +353,8 @@
     if (!produkte.length) {
       const ausMeta = produktAusMeta(r.meta);
       if (ausMeta) produkte = [ausMeta];
+    } else {
+      produkte = ergaenzeAusMeta(produkte, r.meta);
     }
     produkte = produkte.slice(0, MAX_PRODUKTE);
 
@@ -340,6 +404,7 @@
   return {
     analysiere, zusammenfassung,
     // einzeln exportiert, damit sie gezielt getestet werden koennen
-    produkteAusJsonLd, produktAusMeta, seitenTyp, zuBetrag, preisText, verfuegbarkeit, ersteBildUrl,
+    produkteAusJsonLd, produktAusMeta, ergaenzeAusMeta, seitenTyp, zuBetrag, preisText,
+    verfuegbarkeit, ersteBildUrl, entschluessele,
   };
 });

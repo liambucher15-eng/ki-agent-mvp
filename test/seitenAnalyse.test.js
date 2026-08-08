@@ -420,3 +420,96 @@ test("seitenTyp: Bestaetigung UNTERHALB der Kasse schlaegt die Kasse", () => {
   // Die echte Kasse bleibt aber Kasse.
   assert.equal(A.seitenTyp({ pfad: "/checkout/zahlung", titel: "Zur Kasse" }), "kasse");
 });
+
+// ── Zwei Quellen, eine Wahrheit (an dopplepress.com/Wix gefunden) ──────────
+
+test("ergaenzeAusMeta: Preis aus den Metas fuellt die Luecke im JSON-LD", () => {
+  // Echter Wix-Shop: Das JSON-LD traegt Name, Beschreibung und fuenf Bilder,
+  // aber KEINEN offers-Block. Der Preis steht nur in product:price:amount.
+  // Ohne Abgleich haette jede Produktkarte dieses Shops keinen Preis.
+  const jsonLd = [{ "@type": "Product", name: "A4 Print Set",
+                    image: "https://s.example/b.jpg" }];
+  const meta = { "og:type": "product", "og:title": "A4 Print Set | Dopple",
+                 "product:price:amount": "8", "product:price:currency": "GBP",
+                 "og:url": "https://s.example/product-page/a4" };
+  const a = A.analysiere({ pfad: "/product-page/a4", titel: "A4", jsonLd, meta });
+  assert.equal(a.produkte.length, 1);
+  assert.equal(a.produkte[0].preis, "8,00 £");
+  assert.equal(a.produkte[0].betrag, 8);
+  assert.equal(a.produkte[0].waehrung, "GBP");
+  // Der Name bleibt der aus dem JSON-LD: der aus den Metas traegt den
+  // Seitentitel-Anhang "| Dopple".
+  assert.equal(a.produkte[0].name, "A4 Print Set");
+  assert.equal(a.produkte[0].bild, "https://s.example/b.jpg");
+  assert.equal(a.produkte[0].url, "https://s.example/product-page/a4");
+});
+
+test("ergaenzeAusMeta: vorhandene Werte werden NICHT ueberschrieben", () => {
+  const produkte = [{ name: "X", preis: "19,90 €", betrag: 19.9, waehrung: "EUR",
+                      bild: "https://s.example/echt.jpg" }];
+  const meta = { "og:type": "product", "og:title": "X",
+                 "product:price:amount": "99", "product:price:currency": "USD",
+                 "og:image": "https://s.example/falsch.jpg" };
+  const [p] = A.ergaenzeAusMeta(produkte, meta);
+  assert.equal(p.preis, "19,90 €");
+  assert.equal(p.waehrung, "EUR");
+  assert.equal(p.bild, "https://s.example/echt.jpg");
+});
+
+test("ergaenzeAusMeta: bei mehreren Produkten wird nichts ergaenzt", () => {
+  // Auf einer Uebersicht gehoeren die Seiten-Metas zur Seite, nicht zu einem
+  // bestimmten Eintrag. Welchem, waere geraten.
+  const produkte = [{ name: "A" }, { name: "B" }];
+  const meta = { "og:type": "product", "og:title": "Kategorie",
+                 "product:price:amount": "8", "product:price:currency": "GBP" };
+  const raus = A.ergaenzeAusMeta(produkte, meta);
+  assert.equal(raus.length, 2);
+  assert.ok(!raus[0].preis && !raus[1].preis);
+});
+
+test("ergaenzeAusMeta: Metas ohne Produkt-Kennzeichen aendern nichts", () => {
+  const produkte = [{ name: "X" }];
+  const meta = { "og:type": "website", "og:title": "Startseite",
+                 "og:description": "Willkommen", "product:price:amount": "" };
+  const [p] = A.ergaenzeAusMeta(produkte, meta);
+  assert.equal(p.beschreibung, undefined);
+  assert.equal(p.preis, undefined);
+});
+
+// ── HTML-Entities (an dopplepress.com gefunden) ────────────────────────────
+
+test("entschluessele: numerische Entities, dezimal und hex", () => {
+  // Echter Fund: "A4 &#x27;COLOUR YOUR OWN&#x27; PRINT SET" stand so im
+  // Firmen-Wissen. htmlZuText kannte nur &#39; — die Hex-Form nicht.
+  assert.equal(A.entschluessele("A4 &#x27;COLOUR&#x27; SET"), "A4 'COLOUR' SET");
+  assert.equal(A.entschluessele("Riso &#8211; Druck"), "Riso – Druck");
+  assert.equal(A.entschluessele("&#233;clair"), "éclair");
+  assert.equal(A.entschluessele("&#X2764;"), "❤");
+});
+
+test("entschluessele: benannte Entities inkl. Umlaute", () => {
+  assert.equal(A.entschluessele("Web &amp; Design"), "Web & Design");
+  assert.equal(A.entschluessele("Gr&ouml;&szlig;e &Uuml;bersicht"), "Größe Übersicht");
+  assert.equal(A.entschluessele("9,90&nbsp;&euro;"), "9,90 €");
+});
+
+test("entschluessele: loest nur EINEN Durchgang auf", () => {
+  // "&amp;lt;" muss "&lt;" ergeben, nicht "<" — sonst liesse sich eine
+  // maskierte Angabe durch doppeltes Aufloesen wieder zu Markup machen.
+  assert.equal(A.entschluessele("&amp;lt;script&amp;gt;"), "&lt;script&gt;");
+});
+
+test("entschluessele: laesst Unbekanntes und Ungueltiges stehen", () => {
+  assert.equal(A.entschluessele("5 &foo; 6"), "5 &foo; 6");
+  assert.equal(A.entschluessele("a &#0; b"), "a &#0; b");        // Steuerzeichen
+  assert.equal(A.entschluessele("100 &lt 200"), "100 &lt 200");  // ohne Semikolon
+  assert.equal(A.entschluessele("Preis: 5 & 6"), "Preis: 5 & 6");
+});
+
+test("Produktname aus JSON-LD kommt entschluesselt an", () => {
+  // JSON-LD steht in einem <script>-Block: Entities loest dort niemand auf.
+  const jsonLd = [{ "@type": "Product", name: "Tee &amp; Kr&auml;uter",
+                    offers: { price: "12.50", priceCurrency: "EUR" } }];
+  const a = A.analysiere({ pfad: "/p/tee", titel: "Tee", jsonLd });
+  assert.equal(a.produkte[0].name, "Tee & Kräuter");
+});

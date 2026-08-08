@@ -465,3 +465,90 @@ test("sortiereWichtige: aehnlich benannte Inhaltsseiten bleiben erhalten", () =>
     "https://a.ch/webdesign-agentur-zuerich"];
   assert.equal(W.sortiereWichtige(drin).length, drin.length);
 });
+
+// ── Wix und handgebaute Seiten (4. und 5. Praxistest) ──────────────────────
+
+test("findeUnterseiten: .webmanifest belegt keinen Scan-Platz", () => {
+  // An einer handgebauten Seite belegte /assets/favicons/site.webmanifest
+  // einen der elf Plaetze — eine Datei mit Icon-Groessen statt Firmenwissen.
+  const html = `<a href="/about">Über</a>
+    <a href="/assets/favicons/site.webmanifest">manifest</a>
+    <a href="/preisliste.pdf">PDF</a><a href="/daten.csv">CSV</a>
+    <a href="/handbuch.docx">Word</a><a href="/kontakt">Kontakt</a>`;
+  const raus = W.findeUnterseiten(html, "https://a.ch", 11);
+  assert.deepEqual(raus.sort(), ["https://a.ch/about", "https://a.ch/kontakt"].sort());
+});
+
+test("sortiereWichtige: Produktseiten aller gaengigen Systeme kommen zuerst", () => {
+  // Shopify /products/, WooCommerce /produkt/, Wix /product-page/,
+  // Squarespace /shop/p/. Das Muster kannte nur die ersten beiden.
+  const liste = ["https://a.ch/ueber-uns",
+    "https://a.ch/category/untitled-2",
+    "https://a.ch/product-page/a4-print-set",
+    "https://a.ch/shop/p/vase",
+    "https://a.ch/produkt/stuhl",
+    "https://a.ch/products/tisch"];
+  const s = W.sortiereWichtige(liste);
+  assert.deepEqual(s.slice(0, 4).sort(), [
+    "https://a.ch/product-page/a4-print-set", "https://a.ch/shop/p/vase",
+    "https://a.ch/produkt/stuhl", "https://a.ch/products/tisch",
+  ].sort());
+});
+
+test("htmlZuText: hex- und dezimalcodierte Entities werden aufgeloest", () => {
+  // Echter Wix-Shop: "&#x27;" stand so im Firmen-Wissen.
+  const t = W.htmlZuText("<p>A4 &#x27;COLOUR YOUR OWN&#x27; SET &#8211; 8&nbsp;&pound;</p>");
+  assert.equal(t, "A4 'COLOUR YOUR OWN' SET – 8 £");
+});
+
+test("ogMeta und produktMeta liefern entschluesselte Werte", () => {
+  const html = `<meta property="og:title" content="Web &amp; Graphic Design"/>
+    <meta property="og:description" content="Gr&ouml;&szlig;e &#x27;M&#x27;"/>
+    <meta property="og:site_name" content="D&amp;D"/>`;
+  const og = W.ogMeta(html);
+  assert.equal(og.titel, "Web & Graphic Design");
+  assert.equal(og.beschreibung, "Größe 'M'");
+  assert.equal(og.name, "D&D");
+  assert.equal(W.produktMeta(html)["og:title"], "Web & Graphic Design");
+});
+
+test("produktKatalog: Preis aus den Metas ergaenzt das JSON-LD", () => {
+  // Der Wix-Fall, jetzt ueber den ganzen Katalog-Weg.
+  const html = `<script type="application/ld+json">
+      {"@type":"Product","name":"A4 Print Set","image":"/b/a4.jpg"}</script>
+    <meta property="og:type" content="product"/>
+    <meta property="og:title" content="A4 Print Set | Dopple"/>
+    <meta property="product:price:amount" content="8"/>
+    <meta property="product:price:currency" content="GBP"/>`;
+  const [p] = W.produktKatalog([{ html, url: "https://a.ch/product-page/a4" }], "https://a.ch");
+  assert.equal(p.name, "A4 Print Set");
+  assert.equal(p.preis, "8,00 £");
+  assert.equal(p.bild, "https://a.ch/b/a4.jpg");
+  assert.equal(p.url, "https://a.ch/product-page/a4");
+});
+
+test("produktKatalog: Uebersichtsseite bekommt keinen fremden Preis", () => {
+  // Zwei Produkte im JSON-LD, ein Preis in den Seiten-Metas: der gehoert zu
+  // keinem der beiden sicher — also zu keinem.
+  const html = `<script type="application/ld+json">
+      [{"@type":"Product","name":"Vase"},{"@type":"Product","name":"Schale"}]</script>
+    <meta property="og:type" content="product"/>
+    <meta property="og:title" content="Kategorie"/>
+    <meta property="product:price:amount" content="8"/>
+    <meta property="product:price:currency" content="GBP"/>`;
+  const k = W.produktKatalog([{ html, url: "https://a.ch/category/alle" }], "https://a.ch");
+  assert.equal(k.length, 2);
+  assert.ok(k.every((p) => !p.preis), JSON.stringify(k));
+});
+
+test("strukturierteDaten: Firmenname und Kontakt kommen entschluesselt an", () => {
+  // Auch JSON-LD steht in einem <script>-Block. Ohne Auflösen hiesse die Firma
+  // dauerhaft "Mueller &amp; Sohn" — im Namen des gesamten Agenten-Wissens.
+  const html = `<script type="application/ld+json">{"@type":"LocalBusiness",
+    "name":"M\u00fcller &amp; Sohn","telephone":"+41 44 000",
+    "address":{"@type":"PostalAddress","streetAddress":"Haupt&shy;strasse 1",
+    "addressLocality":"Z&uuml;rich"}}</script>`;
+  const d = W.strukturierteDaten([html]);
+  assert.equal(d.name, "Müller & Sohn");
+  assert.ok(d.adresse.includes("Zürich"), d.adresse);
+});
