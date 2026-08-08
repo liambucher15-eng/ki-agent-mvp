@@ -50,6 +50,10 @@
     if (!roh) return "";
     if (!roh.startsWith("/")) return "";   // relativ zur Wurzel, sonst nichts
     if (roh.startsWith("//")) return "";   // protokoll-relativ -> fremde Domain
+    // Kein Leerraum: ein echter URL-Pfad hat keinen (dort stünde %20). Muss VOR
+    // der Steuerzeichen-Prüfung stehen, denn text() macht aus Tab und Umbruch
+    // bereits ein Leerzeichen — sie kämen sonst nie bei der Prüfung an.
+    if (/\s/.test(roh)) return "";
     if (/[\x00-\x1f]/.test(roh)) return "";
     return roh;
   }
