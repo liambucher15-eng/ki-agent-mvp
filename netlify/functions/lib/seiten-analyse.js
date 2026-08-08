@@ -250,11 +250,29 @@
     const beides = pfad + " " + titel;
     const produkte = Array.isArray(e.produkte) ? e.produkte : [];
 
+    // Bestellbestätigung ZUERST: Sie liegt bei vielen Shops UNTERHALB der Kasse
+    // ("/checkout/danke", "/checkout/thank_you"). Stünde die Kassen-Prüfung
+    // davor, gälte die fertige Bestellung als laufender Bezahlvorgang — der
+    // Agent würde dann schweigen statt zu bestätigen.
+    //
+    // Das Wort muss ein GANZER Pfadabschnitt sein, nicht irgendwo enthalten:
+    // sonst galt eine Produktseite wie "/produkte/dankeschoen-set" als
+    // Bestätigung, und der Agent hätte zu einem Kauf gratuliert, den es nie
+    // gab. Im Titel wird auf ganze Wendungen geprüft, nicht auf "danke" allein
+    // — "Danke für deinen Besuch" steht auf vielen Startseiten.
+    const abschnitte = pfad.split("/").filter(Boolean);
+    const istBestaetigungsAbschnitt = (a) =>
+      /^(danke|dankeseite|bestellbestaetigung|bestellbestätigung|bestellabschluss|confirmation|success)$/.test(a) ||
+      /^(thank[-_]?you|order[-_]?confirm(ation)?|checkout[-_]?success)$/.test(a);
+    if (abschnitte.some(istBestaetigungsAbschnitt) ||
+        /vielen dank für (deine|ihre) bestellung|bestellung (eingegangen|bestätigt|erfolgreich)|order confirmed|thank you for your order/.test(titel)) {
+      return "bestaetigung";
+    }
+
     if (/(^|\/)(kasse|checkout|zahlung|payment|bestellabschluss|order)(\/|$|\?)/.test(pfad) ||
         /checkout|zur kasse|zahlung/.test(titel)) return "kasse";
     if (/(^|\/)(warenkorb|cart|basket|korb)(\/|$|\?)/.test(pfad) ||
         /warenkorb|einkaufswagen/.test(titel)) return "warenkorb";
-    if (/danke|bestellbest|order-confirm|thank-you|thankyou/.test(beides)) return "bestaetigung";
 
     if (produkte.length === 1) return "produkt";
     if (produkte.length > 1) return "kategorie";

@@ -391,3 +391,54 @@ test("formatiereOeffnung: strukturierte Angaben funktionieren weiter", () => {
     /Monday 09:00.18:00/
   );
 });
+
+// ── Katalog-Groesse im Prompt (Zyklus 2) ───────────────────────────────────
+
+test("katalogText: bleibt auch bei vollem Katalog bezahlbar", () => {
+  // Der Katalog geht ins Firmen-Wissen und damit in JEDE Chat-Anfrage. Ohne
+  // Deckel waren es gemessen 17.600 Zeichen (~4.400 Token) pro Nachricht.
+  const kat = [];
+  for (let i = 0; i < 40; i++) {
+    kat.push({ name: "Produkt " + i, preis: "1234,00 CHF", verfuegbar: "verfuegbar",
+      beschreibung: "y".repeat(240),
+      url: "https://shop.example/products/sehr-langer-produkt-name-" + i,
+      bild: "https://shop.example/cdn/shop/files/1234567-abc-Name-9999_1000x.jpg?v=1786178034" });
+  }
+  const t = W.katalogText(kat);
+  assert.ok(t.length <= 8200, "Katalogtext zu gross: " + t.length);
+});
+
+test("katalogText: sagt ehrlich, wenn nicht alles aufgefuehrt ist", () => {
+  // Sonst glaubt der Agent, er kenne das ganze Sortiment.
+  // Bewusst mit realistisch LANGEN Shopify-URLs: mit kurzen Pfaden passen 40
+  // Produkte noch unter den Deckel, dann gaebe es zu Recht keinen Hinweis.
+  const kat = [];
+  for (let i = 0; i < 40; i++) {
+    kat.push({ name: "Produkt " + i, preis: "1234,00 CHF", verfuegbar: "verfuegbar",
+      beschreibung: "z".repeat(240),
+      url: "https://shop.example/products/sehr-langer-produkt-name-" + i,
+      bild: "https://shop.example/cdn/shop/files/1234567-abc-Name-9999_1000x.jpg?v=1786178034" });
+  }
+  const t = W.katalogText(kat);
+  assert.match(t, /nicht aufgeführt/);
+  assert.ok((t.match(/^- /gm) || []).length < 40, "es sollten nicht alle 40 drinstehen");
+});
+
+test("katalogText: kleine Kataloge werden vollstaendig und ungekuerzt gezeigt", () => {
+  const kat = [
+    { name: "Celia Dots", preis: "98,00 CHF", verfuegbar: "verfuegbar",
+      url: "https://s.example/p/celia", bild: "https://s.example/b/celia.jpg" },
+    { name: "Karolina", preis: "89,00 CHF", verfuegbar: "verfuegbar",
+      url: "https://s.example/p/karolina", bild: "https://s.example/b/karolina.jpg" },
+  ];
+  const t = W.katalogText(kat);
+  assert.match(t, /Celia Dots/);
+  assert.match(t, /Karolina/);
+  assert.doesNotMatch(t, /nicht aufgeführt/);
+});
+
+test("katalogText: lange Beschreibungen werden gekuerzt und markiert", () => {
+  const t = W.katalogText([{ name: "X", beschreibung: "a".repeat(300), url: "https://s.example/x" }]);
+  assert.match(t, /…/, "Kuerzung sollte sichtbar markiert sein");
+  assert.ok(!t.includes("a".repeat(120)), "Beschreibung wurde nicht gekuerzt");
+});

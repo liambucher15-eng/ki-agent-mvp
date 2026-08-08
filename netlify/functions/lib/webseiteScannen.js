@@ -303,19 +303,46 @@ function produktKatalog(seiten, basisUrl) {
 
 // Der Katalog als Textblock fürs Firmen-Wissen. Bewusst eine Zeile pro Produkt
 // mit benannten Feldern: so kann der Agent Link und Bild sicher zuordnen.
+// Der Katalog geht ins Firmen-Wissen und damit in JEDE Chat-Anfrage. Bei 40
+// Produkten mit voller Beschreibung waren das gemessen 17.600 Zeichen (rund
+// 4.400 Token) pro Nachricht — mehr als das Zehnfache des restlichen Wissens
+// einer typischen Firma. Deshalb zwei Deckel:
+//   - Die Beschreibung wird stark gekürzt. Entscheidend sind Name, Preis,
+//     Verfügbarkeit, Link und Bild; die Feinheiten stehen auf der Produktseite,
+//     und dorthin führt die Karte ja.
+//   - Der ganze Block ist gedeckelt. Wird gekürzt, sagt der Text es ehrlich,
+//     damit der Agent weiss, dass er nicht das ganze Sortiment kennt.
+const MAX_KATALOG_BESCHREIBUNG = 90;
+const MAX_KATALOG_TEXT = 8000;
+
 function katalogText(katalog) {
   if (!katalog || !katalog.length) return "";
-  const zeilen = katalog.map((p) => {
+  const kopfzeile = "PRODUKTE (aus der Webseite gelesen)\n" +
+    "Nutze Link und Bild, wenn du eines dieser Produkte vorschlägst.\n\n";
+
+  const zeilen = [];
+  let laenge = kopfzeile.length;
+  let gekuerzt = 0;
+  for (const p of katalog) {
     const kopf = [p.name, p.preis, p.verfuegbar].filter(Boolean).join(" — ");
     const teile = [kopf];
-    if (p.beschreibung) teile.push("  " + p.beschreibung);
+    if (p.beschreibung) {
+      const kurz = String(p.beschreibung).slice(0, MAX_KATALOG_BESCHREIBUNG);
+      teile.push("  " + kurz + (kurz.length < String(p.beschreibung).length ? "…" : ""));
+    }
     if (p.url) teile.push("  Link: " + p.url);
     if (p.bild) teile.push("  Bild: " + p.bild);
-    return "- " + teile.join("\n");
-  });
-  return "PRODUKTE (aus der Webseite gelesen)\n" +
-    "Nutze Link und Bild, wenn du eines dieser Produkte vorschlägst.\n\n" +
-    zeilen.join("\n");
+    const zeile = "- " + teile.join("\n");
+    if (laenge + zeile.length > MAX_KATALOG_TEXT) { gekuerzt = katalog.length - zeilen.length; break; }
+    zeilen.push(zeile);
+    laenge += zeile.length + 1;
+  }
+
+  return kopfzeile + zeilen.join("\n") +
+    (gekuerzt
+      ? `\n\n(Weitere ${gekuerzt} Produkte sind hier nicht aufgeführt. Wenn jemand ` +
+        `etwas sucht, das oben fehlt, sag ehrlich, dass du dazu nachsehen müsstest.)`
+      : "");
 }
 
 // og:-Meta der Hauptseite (Beschreibung ist oft eine gute Angebots-Zusammenfassung).

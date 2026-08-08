@@ -383,3 +383,40 @@ test("keine Preisangabe erzeugt niemals einen fuehrenden Gedankenstrich", () => 
       "fuehrender Gedankenstrich bei " + JSON.stringify(offers) + ": " + p[0].preis);
   }
 });
+
+// ── Bestellbestätigung: Wortgrenzen (Zyklus 2) ─────────────────────────────
+
+test("seitenTyp: 'danke' muss ein ganzer Pfadabschnitt sein", () => {
+  // Ohne Wortgrenze galt eine Produktseite wie "/produkte/dankeschoen-set" als
+  // Bestellbestaetigung. Der Agent haette dort zu einem Kauf gratuliert, den es
+  // nie gab, und keine Produkte mehr empfohlen.
+  assert.equal(A.seitenTyp({ pfad: "/produkte/dankeschoen-set", titel: "Dankeschön-Set",
+                             produkte: [{ name: "Set" }] }), "produkt");
+  assert.equal(A.seitenTyp({ pfad: "/p/danke-karte", titel: "Dankeskarte",
+                             produkte: [{ name: "Karte" }] }), "produkt");
+  assert.equal(A.seitenTyp({ pfad: "/blog/danke-an-unser-team" }), "info");
+});
+
+test("seitenTyp: 'Danke für deinen Besuch' im Titel ist keine Bestellung", () => {
+  // Steht auf vielen Startseiten. Nur ganze Wendungen zaehlen.
+  assert.equal(A.seitenTyp({ pfad: "/", titel: "Danke für deinen Besuch" }), "info");
+});
+
+test("seitenTyp: echte Bestaetigungsseiten werden weiterhin erkannt", () => {
+  for (const pfad of ["/danke", "/thank-you", "/thankyou", "/order-confirmation",
+                      "/bestellbestaetigung"]) {
+    assert.equal(A.seitenTyp({ pfad }), "bestaetigung", pfad);
+  }
+  assert.equal(A.seitenTyp({ pfad: "/x", titel: "Vielen Dank für deine Bestellung" }),
+               "bestaetigung");
+});
+
+test("seitenTyp: Bestaetigung UNTERHALB der Kasse schlaegt die Kasse", () => {
+  // Shopify legt die Bestaetigung unter /checkout/. Ohne Vorrang gaelte die
+  // fertige Bestellung als laufender Bezahlvorgang — der Agent wuerde
+  // schweigen statt zu bestaetigen.
+  assert.equal(A.seitenTyp({ pfad: "/checkout/danke" }), "bestaetigung");
+  assert.equal(A.seitenTyp({ pfad: "/checkout/thank_you" }), "bestaetigung");
+  // Die echte Kasse bleibt aber Kasse.
+  assert.equal(A.seitenTyp({ pfad: "/checkout/zahlung", titel: "Zur Kasse" }), "kasse");
+});
