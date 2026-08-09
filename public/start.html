@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuraChat — Der Mitarbeiter, den du sonst nicht einstellen könntest</title>
+  <meta name="description" content="Ein KI-Agent mit eigenem Gesicht für deine Webseite. Lernt alles selbst von deiner Seite, keine Vorbereitung nötig. CHF 49 im Monat, ein Preis ohne Zähler." />
+  <meta property="og:title" content="AuraChat — Der Mitarbeiter, den du sonst nicht einstellen könntest" />
+  <meta property="og:description" content="Ein KI-Agent mit eigenem Gesicht für deine Webseite. CHF 49 im Monat, ein Preis ohne Zähler." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ──────────────────────────────────────────────────────────────────────
+       AuraChat — Landingpage
+
+       WARUM DIESE SEITE ANDERS AUSSIEHT ALS ONBOARDING UND DASHBOARD:
+       Onboarding und Dashboard tragen die Standard-Widget-Farben (Indigo/
+       Coral, Plus Jakarta Sans). Das sind die VORGABEN FÜR DAS WIDGET DES
+       KUNDEN, nicht die Hausfarben von AuraChat — die gab es bisher gar
+       nicht. Diese Seite füllt also eine Lücke, sie überschreibt keine
+       Entscheidung.
+
+       Die Wahl ist bewusst gegen das Feld gesetzt. Gemessen an den drei
+       untersuchten Wettbewerbern: Marine (#080f1e / #080f1a) und Signalblau
+       sind doppelt besetzt, Orange gehört sichtbar dem Marktführer, und
+       unbunt-mit-Geist ist die Standardeinstellung des KI-Werkzeugmarktes.
+       Übrig bleibt die Welt, in der die KUNDEN arbeiten: Ladenfront-Grün,
+       Papier, Messing. Gewerbe, nicht Software.
+       ────────────────────────────────────────────────────────────────────── */
+    :root {
+      --tafel: #17352a;        /* Ladenfront-Grün, fast schwarz */
+      --tafel-tief: #0e241c;
+      --sand: #f4f0e7;         /* warmes Papier */
+      --sand-tief: #e9e3d5;
+      --kreide: #fbfaf6;
+      --messing: #b9722a;      /* der einzige Akzent */
+      --messing-hell: #d08b3f;
+      --grau: #6b7a72;         /* Grau mit Grünstich, nicht neutral */
+      --grau-fein: #d8d3c6;
+      --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+      --sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body {
+      background: var(--sand); color: var(--tafel);
+      font-family: var(--sans); font-size: 17px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .bahn { max-width: 68rem; margin: 0 auto; padding: 0 1.5rem; }
+    h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.025em; line-height: 1.06; text-wrap: balance; }
+    a { color: inherit; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      font-family: var(--sans); font-size: 1rem; font-weight: 600; text-decoration: none;
+      padding: 0.85rem 1.5rem; border-radius: 8px; border: 2px solid transparent;
+      cursor: pointer; transition: transform 0.12s ease, background 0.15s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-haupt { background: var(--tafel); color: var(--kreide); }
+    .btn-haupt:hover { background: var(--tafel-tief); }
+    .btn-rand { background: transparent; color: var(--tafel); border-color: var(--tafel); }
+    .btn-rand:hover { background: rgba(23,53,42,0.06); }
+    .btn-hell { background: var(--messing); color: #fff; }
+    .btn-hell:hover { background: var(--messing-hell); }
+    :focus-visible { outline: 3px solid var(--messing); outline-offset: 3px; border-radius: 4px; }
+
+    /* ── Kopfzeile ────────────────────────────────────────────────────── */
+    header { padding: 1.4rem 0; }
+    header .bahn { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .marke { display: flex; align-items: center; gap: 0.55rem; font-family: var(--display); font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; text-decoration: none; }
+    .marke .zeichen { width: 26px; height: 26px; border-radius: 7px; background: var(--tafel); position: relative; flex: none; }
+    .marke .zeichen::after { content: ""; position: absolute; inset: 7px 7px auto auto; width: 6px; height: 6px; border-radius: 50%; background: var(--messing); }
+    .kopf-rechts { display: flex; align-items: center; gap: 1rem; font-size: 0.95rem; }
+    .kopf-rechts a.text { text-decoration: none; font-weight: 500; }
+    .kopf-rechts a.text:hover { text-decoration: underline; }
+    @media (max-width: 560px) { .kopf-rechts .btn { display: none; } }
+
+    /* ── Hero ─────────────────────────────────────────────────────────── */
+    .hero { padding: 3rem 0 4.5rem; }
+    .hero-raster { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3.5rem; align-items: center; }
+    @media (max-width: 900px) { .hero-raster { grid-template-columns: 1fr; gap: 2.5rem; } }
+    .augen { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--messing);
+      border: 1.5px solid var(--messing); padding: 0.3rem 0.7rem; border-radius: 999px; margin-bottom: 1.5rem; }
+    h1 { font-size: clamp(2.5rem, 6vw, 4.05rem); font-weight: 800; margin-bottom: 1.2rem; }
+    .hero p.gross { font-size: 1.18rem; color: var(--grau); max-width: 40ch; margin-bottom: 1.9rem; line-height: 1.55; }
+    .hero p.gross strong { color: var(--tafel); font-weight: 600; }
+    .knopfreihe { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin-bottom: 1.4rem; }
+    .preisnotiz { font-size: 0.95rem; color: var(--grau); }
+    .preisnotiz b { color: var(--tafel); font-weight: 600; }
+
+    /* ── Widget-Vorschau (rechte Heroseite) ───────────────────────────── */
+    .schaufenster { position: relative; background: var(--kreide); border-radius: 16px;
+      box-shadow: 0 30px 60px -35px rgba(14,36,28,0.55), 0 0 0 1px var(--grau-fein); overflow: hidden; }
+    .sf-leiste { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 0.9rem; background: var(--sand-tief); }
+    .sf-leiste i { width: 9px; height: 9px; border-radius: 50%; background: var(--grau-fein); display: block; }
+    .sf-leiste span { margin-left: 0.5rem; font-size: 0.74rem; color: var(--grau); font-family: ui-monospace, monospace; }
+    .sf-inhalt { padding: 1.1rem 1.1rem 1.4rem; }
+    .sf-zeile { height: 9px; border-radius: 999px; background: var(--sand-tief); margin-bottom: 0.55rem; }
+    .sf-zeile.kurz { width: 55%; }
+    .sf-zeile.mittel { width: 78%; }
+    .sf-bild { height: 74px; border-radius: 10px; background: linear-gradient(135deg, var(--sand-tief), #dfd7c4); margin-bottom: 0.9rem; }
+    .chat { margin-top: 1.1rem; border-top: 1px dashed var(--grau-fein); padding-top: 1rem; display: grid; gap: 0.6rem; }
+    .blase { max-width: 88%; padding: 0.6rem 0.85rem; border-radius: 14px; font-size: 0.9rem; line-height: 1.45; }
+    .blase.gast { justify-self: end; background: var(--sand-tief); border-bottom-right-radius: 5px; }
+    .blase.agent { justify-self: start; background: var(--tafel); color: var(--kreide); border-bottom-left-radius: 5px; }
+    .figur-zeile { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.2rem; }
+    .figur { width: 42px; height: 42px; border-radius: 50%; background: var(--messing); flex: none;
+      display: grid; place-items: center; color: #fff; font-family: var(--display); font-weight: 800; font-size: 1.05rem;
+      box-shadow: 0 6px 16px -8px rgba(185,114,42,0.9); }
+    .figur-name { font-size: 0.8rem; color: var(--grau); }
+    .figur-name b { display: block; color: var(--tafel); font-size: 0.9rem; font-weight: 600; }
+
+    /* ── Abschnitte ───────────────────────────────────────────────────── */
+    section { padding: 4.5rem 0; }
+    .dunkel { background: var(--tafel); color: var(--sand); }
+    .dunkel h2 { color: var(--kreide); }
+    .dunkel .grau { color: rgba(244,240,231,0.68); }
+    .abschnitts-kopf { max-width: 46ch; margin-bottom: 2.5rem; }
+    h2 { font-size: clamp(1.9rem, 4vw, 2.8rem); margin-bottom: 0.9rem; }
+    .abschnitts-kopf p { font-size: 1.08rem; color: var(--grau); }
+    .augen-klein { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--messing); margin-bottom: 0.8rem; display: block; }
+
+    .drei { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.6rem; }
+    .kachel { background: var(--kreide); border-radius: 14px; padding: 1.6rem 1.5rem; box-shadow: 0 0 0 1px var(--grau-fein); }
+    .dunkel .kachel { background: rgba(255,255,255,0.05); box-shadow: 0 0 0 1px rgba(255,255,255,0.1); }
+    .kachel .nr { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--messing); font-weight: 600; letter-spacing: 0.08em; }
+    .kachel h3 { font-size: 1.22rem; margin: 0.55rem 0 0.5rem; }
+    .kachel p { font-size: 0.97rem; color: var(--grau); }
+    .dunkel .kachel p { color: rgba(244,240,231,0.68); }
+
+    /* ── Preis ────────────────────────────────────────────────────────── */
+    /* min-width:0 auf den Rasterkindern: Ohne das behalten Grid-Elemente ihre
+       min-content-Breite. Auf 375 px lief die Preiskarte dadurch 65 px über den
+       Rand, weil "CHF 49 / Monat" in 3,6 rem nicht umbrechen konnte — die ganze
+       Seite scrollte seitwärts. Zusatz: die Zahl skaliert jetzt mit. */
+    .preisfeld { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 3rem; align-items: start; }
+    .preisfeld > * { min-width: 0; }
+    @media (max-width: 860px) { .preisfeld { grid-template-columns: 1fr; gap: 2rem; } }
+    .preiskarte { background: var(--kreide); border-radius: 18px; padding: 2rem 1.9rem; box-shadow: 0 0 0 1px var(--grau-fein); }
+    .preiskarte .zahl { font-family: var(--display); font-size: clamp(2.6rem, 9vw, 3.6rem); font-weight: 800;
+      letter-spacing: -0.04em; line-height: 1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.4rem; }
+    .preiskarte .zahl small { font-size: 1.05rem; font-weight: 500; color: var(--grau); letter-spacing: 0; font-family: var(--sans); }
+    .preiskarte ul { list-style: none; margin: 1.5rem 0; display: grid; gap: 0.6rem; }
+    .preiskarte li { display: flex; gap: 0.6rem; font-size: 0.97rem; align-items: flex-start; }
+    .preiskarte li::before { content: ""; flex: none; width: 18px; height: 18px; margin-top: 3px; border-radius: 50%;
+      background: var(--messing); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6L9 17l-5-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6L9 17l-5-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat; }
+    .vergleich { overflow-x: auto; }
+    .vergleich table { border-collapse: collapse; width: 100%; font-size: 0.94rem; min-width: 26rem; }
+    .vergleich th, .vergleich td { text-align: left; padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--grau-fein); vertical-align: top; }
+    .vergleich thead th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--grau); font-weight: 600; }
+    .vergleich tbody tr:last-child td { border-bottom: 0; }
+    .vergleich .uns { font-weight: 600; }
+    .vergleich .andere { color: var(--grau); }
+
+    /* ── Grenzen ──────────────────────────────────────────────────────── */
+    .zwei { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+    @media (max-width: 760px) { .zwei { grid-template-columns: 1fr; } }
+    .liste { list-style: none; display: grid; gap: 0.7rem; }
+    .liste li { display: flex; gap: 0.65rem; font-size: 1rem; align-items: flex-start; line-height: 1.45; }
+    .zeichen-ja, .zeichen-nein { flex: none; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+      font-size: 0.85rem; font-weight: 700; margin-top: 1px; }
+    .zeichen-ja { background: rgba(185,114,42,0.9); color: #fff; }
+    .zeichen-nein { background: rgba(244,240,231,0.16); color: var(--sand); }
+
+    /* ── Abschluss ────────────────────────────────────────────────────── */
+    .schluss { text-align: center; padding: 5rem 0; }
+    .schluss h2 { max-width: 20ch; margin: 0 auto 1rem; }
+    .schluss p { color: var(--grau); max-width: 46ch; margin: 0 auto 2rem; font-size: 1.08rem; }
+    footer { border-top: 1px solid var(--grau-fein); padding: 2rem 0 3rem; font-size: 0.88rem; color: var(--grau); }
+    footer .bahn { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
+    footer a { text-decoration: none; } footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="bahn">
+    <a class="marke" href="#"><span class="zeichen" aria-hidden="true"></span>AuraChat</a>
+    <nav class="kopf-rechts">
+      <a class="text" href="#preis">Preis</a>
+      <a class="text" href="dashboard.html">Anmelden</a>
+      <a class="btn btn-haupt" href="onboarding-aura.html">Agent einrichten</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ── HERO ────────────────────────────────────────────────────────────
+       Die erste Aussage ist der Vergleichsmaßstab: Personal, nicht Software.
+       Ein Betrieb mit fünf Leuten vergleicht nicht mit anderen Chatbots — er
+       vergleicht mit "jemanden einstellen, der ans Telefon geht". Gegen ein
+       Gehalt sieht CHF 49 klein aus; gegen ein Gratis-Widget sieht es teuer
+       aus. Die Überschrift setzt deshalb den richtigen Anker. -->
+  <section class="hero">
+    <div class="bahn hero-raster">
+      <div>
+        <span class="augen">Für kleine Betriebe</span>
+        <h1>Der Mitarbeiter, den du sonst nicht einstellen könntest.</h1>
+        <p class="gross">
+          AuraChat gibt deiner Webseite eine eigene Figur, die deine Besucher begrüsst,
+          ihre Fragen beantwortet und sie zum richtigen Angebot führt.
+          <strong>Sie lernt alles selbst von deiner Seite</strong> — du musst nichts vorbereiten.
+        </p>
+        <div class="knopfreihe">
+          <a class="btn btn-haupt" href="onboarding-aura.html">In 3 Minuten einrichten</a>
+          <a class="btn btn-rand" href="#so">Erst ansehen</a>
+        </div>
+        <p class="preisnotiz"><b>CHF 49 im Monat.</b> Ein Preis, kein Zähler, jederzeit kündbar.</p>
+      </div>
+
+      <!-- Schaufenster: zeigt das Produkt an seinem Einsatzort statt eines
+           abstrakten Produkt-Screenshots. Bewusst mit Figur, weil genau das
+           der Unterschied ist. -->
+      <div class="schaufenster" aria-hidden="true">
+        <div class="sf-leiste"><i></i><i></i><i></i><span>deine-baeckerei.ch</span></div>
+        <div class="sf-inhalt">
+          <div class="sf-bild"></div>
+          <div class="sf-zeile"></div>
+          <div class="sf-zeile mittel"></div>
+          <div class="sf-zeile kurz"></div>
+          <div class="chat">
+            <div class="figur-zeile">
+              <div class="figur">M</div>
+              <div class="figur-name"><b>Mira</b>Deine Agentin</div>
+            </div>
+            <div class="blase gast">Habt ihr am Sonntag offen?</div>
+            <div class="blase agent">Ja, sonntags von 8 bis 12 Uhr. Der Zopf ist meist bis 10 Uhr weg — soll ich dir einen zurücklegen lassen?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SO FUNKTIONIERT ES ──────────────────────────────────────────────
+       Die drei Schritte sind ein echter Ablauf, keine Deko — deshalb
+       nummeriert. Schritt 1 ist der Wettbewerbsvorteil: Andere Anbieter
+       verlangen eine gepflegte Wissensdatenbank, bevor überhaupt etwas
+       funktioniert. -->
+  <section id="so">
+    <div class="bahn">
+      <div class="abschnitts-kopf">
+        <span class="augen-klein">So läuft es</span>
+        <h2>Du gibst deine Adresse ein. Den Rest macht sie selbst.</h2>
+        <p>Keine Wissensdatenbank, keine Dokumentation, keine Agentur. Die drei Schritte dauern zusammen etwa drei Minuten.</p>
+      </div>
+      <div class="drei">
+        <div class="kachel">
+          <span class="nr">01</span>
+          <h3>Sie liest deine Seite</h3>
+          <p>Adresse eingeben, fertig. Sie liest deine Unterseiten, findet Öffnungszeiten, Angebot, Preise und Kontakt — und zeigt dir, was sie verstanden hat, bevor irgendetwas live geht.</p>
+        </div>
+        <div class="kachel">
+          <span class="nr">02</span>
+          <h3>Sie bekommt ein Gesicht</h3>
+          <p>Name, Rolle, Tonfall — und eine gezeichnete Figur, die zu deinem Betrieb passt. Sie schaut freundlich, denkt nach, spricht. Kein graues Sprechblasen-Symbol wie überall sonst.</p>
+        </div>
+        <div class="kachel">
+          <span class="nr">03</span>
+          <h3>Eine Zeile in deine Seite</h3>
+          <p>Ein kurzer Code-Schnipsel, den du einmal einfügst. Danach ist sie da — auf jeder Unterseite, auf dem Handy genauso, rund um die Uhr.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DIE FIGUR (der eigentliche Unterschied) ────────────────────── -->
+  <section class="dunkel">
+    <div class="bahn">
+      <div class="abschnitts-kopf">
+        <span class="augen-klein">Der Unterschied</span>
+        <h2>Ein Gesicht bleibt im Kopf. Ein Chatfenster nicht.</h2>
+        <p class="grau">Grosse Anbieter bauen Werkzeuge, die Anfragen wegräumen sollen. Das ergibt Sinn, wenn du eine Supportabteilung hast. Wenn nicht, ist der Agent kein Sparposten — er ist zusätzliches Personal im Schaufenster.</p>
+      </div>
+      <div class="drei">
+        <div class="kachel">
+          <span class="nr">Aussehen</span>
+          <h3>Eine eigene Figur, nicht ein Logo</h3>
+          <p>Sie wird für deinen Betrieb gezeichnet und kann in fünf Zuständen reagieren: wartend, zuhörend, nachdenkend, sprechend, verlegen. Besucher sprechen mit jemandem, nicht mit einem Feld.</p>
+        </div>
+        <div class="kachel">
+          <span class="nr">Verhalten</span>
+          <h3>Sie merkt, wann sie stört</h3>
+          <p>Sie meldet sich nicht bei jedem Seitenaufruf, sondern wenn jemand wirklich sucht — höchstens zweimal pro Besuch, mit Ruhepausen dazwischen. Aufdringlichkeit vertreibt Kunden.</p>
+        </div>
+        <div class="kachel">
+          <span class="nr">Wissen</span>
+          <h3>Sie sagt, wenn sie etwas nicht weiss</h3>
+          <p>Statt zu raten, gibt sie deine Kontaktdaten weiter und nimmt die Anfrage auf. Du findest sie am nächsten Morgen im Posteingang deines Dashboards.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PREIS ───────────────────────────────────────────────────────────
+       Der Vergleich nennt bewusst KEINE Konkurrenznamen, sondern nur
+       Abrechnungsmodelle. Das ist sachlich richtig, fair und rechtlich
+       unproblematisch — und es trifft trotzdem genau den Punkt, an dem der
+       Markt seine schlechtesten Bewertungen einsammelt. -->
+  <section id="preis">
+    <div class="bahn">
+      <div class="abschnitts-kopf">
+        <span class="augen-klein">Preis</span>
+        <h2>Eine Zahl. Die gleiche im nächsten Monat.</h2>
+        <p>Kein Guthaben, das mitten im Betrieb ausgeht. Keine Abrechnung pro Gespräch. Keine automatische Höherstufung.</p>
+      </div>
+      <div class="preisfeld">
+        <div class="preiskarte">
+          <div class="zahl">CHF 49<small>/ Monat</small></div>
+          <ul>
+            <li>Eigene Figur mit fünf Zuständen</li>
+            <li>Unbegrenzte Gespräche</li>
+            <li>Automatischer Neu-Scan deiner Seite</li>
+            <li>Posteingang für aufgenommene Anfragen</li>
+            <li>Auf allen Unterseiten, auch mobil</li>
+            <li>Monatlich kündbar, keine Einrichtungsgebühr</li>
+          </ul>
+          <a class="btn btn-hell" href="onboarding-aura.html" style="width:100%">Agent einrichten</a>
+        </div>
+
+        <div>
+          <h3 style="font-size:1.25rem;margin-bottom:0.9rem;">Warum das ungewöhnlich ist</h3>
+          <div class="vergleich">
+            <table>
+              <thead>
+                <tr><th>Was passiert, wenn …</th><th>Übliche Modelle</th><th>Bei uns</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>… ein Gespräch gelöst wird</td>
+                  <td class="andere">Kostet extra, pro Ergebnis</td>
+                  <td class="uns">Im Preis enthalten</td>
+                </tr>
+                <tr>
+                  <td>… viel los ist</td>
+                  <td class="andere">Guthaben leer, Agent schweigt</td>
+                  <td class="uns">Er antwortet weiter</td>
+                </tr>
+                <tr>
+                  <td>… das Kontingent fast voll ist</td>
+                  <td class="andere">Automatisch teurerer Tarif</td>
+                  <td class="uns">Passiert nicht</td>
+                </tr>
+                <tr>
+                  <td>… du kündigen willst</td>
+                  <td class="andere">Support kontaktieren</td>
+                  <td class="uns">Ein Klick im Dashboard</td>
+                </tr>
+                <tr>
+                  <td>… die Rechnung kommt</td>
+                  <td class="andere">In US-Dollar, ohne MwSt.</td>
+                  <td class="uns">In Franken, mit MwSt.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:0.86rem;color:var(--grau);margin-top:1rem;">
+            „Übliche Modelle" beschreibt die verbreiteten Abrechnungsarten in dieser Kategorie
+            (pro gelöstem Gespräch, pro Nachrichten-Guthaben, mehrere getrennte Zähler) —
+            keinen bestimmten Anbieter.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GRENZEN ─────────────────────────────────────────────────────────
+       Die Sicherheitsgrenzen sind bereits im Produkt eingebaut (Aktions-
+       Allowlist, doppelt geprüft). Sie hier zu zeigen, verwandelt eine
+       technische Entscheidung in ein Vertrauensargument — und beantwortet
+       die häufigste Angst: "Was macht das Ding auf meiner Seite?" -->
+  <section class="dunkel">
+    <div class="bahn">
+      <div class="abschnitts-kopf">
+        <span class="augen-klein">Grenzen</span>
+        <h2>Was sie darf — und was sie ausdrücklich nicht darf.</h2>
+        <p class="grau">Sie liest Texte, die jeder auf deiner Seite hinterlegen kann. Deshalb ist ihr Handlungsspielraum fest begrenzt, und zwar an zwei Stellen unabhängig voneinander geprüft.</p>
+      </div>
+      <div class="zwei">
+        <div class="kachel">
+          <h3 style="margin-bottom:1rem;">Sie darf</h3>
+          <ul class="liste">
+            <li><span class="zeichen-ja">✓</span> Fragen beantworten, aus deinen echten Angaben</li>
+            <li><span class="zeichen-ja">✓</span> Passende Produkte oder Leistungen zeigen</li>
+            <li><span class="zeichen-ja">✓</span> Zu einer Stelle auf der Seite scrollen</li>
+            <li><span class="zeichen-ja">✓</span> Eine Unterseite deiner eigenen Seite öffnen</li>
+            <li><span class="zeichen-ja">✓</span> Kontaktdaten aufnehmen und weitergeben</li>
+          </ul>
+        </div>
+        <div class="kachel">
+          <h3 style="margin-bottom:1rem;">Sie darf nicht</h3>
+          <ul class="liste">
+            <li><span class="zeichen-nein">✕</span> Etwas anklicken oder ein Formular abschicken</li>
+            <li><span class="zeichen-nein">✕</span> Etwas in den Warenkorb legen</li>
+            <li><span class="zeichen-nein">✕</span> Eine Bestellung auslösen</li>
+            <li><span class="zeichen-nein">✕</span> Auf fremde Seiten führen</li>
+            <li><span class="zeichen-nein">✕</span> Besucher über Seiten hinweg verfolgen</li>
+          </ul>
+        </div>
+      </div>
+      <p class="grau" style="margin-top:1.6rem;max-width:60ch;font-size:0.95rem;">
+        Der Kauf bleibt die Entscheidung deiner Kundschaft. Ein Klick auf „Bestellen" lässt
+        sich nicht rückgängig machen — deshalb drückt sie ihn nie.
+      </p>
+    </div>
+  </section>
+
+  <section class="schluss">
+    <div class="bahn">
+      <h2>Sieh dir an, was sie über deine Seite weiss.</h2>
+      <p>Adresse eingeben, Scan abwarten, Ergebnis anschauen. Bis dahin kostet es nichts und du brauchst keine Karte.</p>
+      <a class="btn btn-haupt" href="onboarding-aura.html">Agent einrichten</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="bahn">
+    <span>AuraChat — KI-Agenten für kleine Betriebe</span>
+    <span><a href="onboarding-aura.html">Einrichten</a> · <a href="dashboard.html">Anmelden</a> · <a href="#preis">Preis</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

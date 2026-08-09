@@ -1009,6 +1009,32 @@
       e.target.textContent = ""; const kic = document.createElement("span"); Icons.setzeIcon(kic, "check");
       e.target.append("Kopiert ", kic);
     });
+    // Freischalten direkt aus dem Onboarding. Bis hierher war der einzige Weg
+    // zur Bezahlung ein Knopf in den Dashboard-Einstellungen — ohne Preis und
+    // drei Klicks entfernt vom Moment der höchsten Absicht. Dieselbe Function
+    // wie im Dashboard, damit es nur EINEN Checkout-Weg gibt.
+    document.getElementById("obCheckout").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const status = document.getElementById("speicherStatus");
+      if (!daten.id) { status.style.color = "#e11d48"; status.textContent = "Bitte zuerst den Agenten speichern (Agent testen)."; return; }
+      btn.disabled = true;
+      try {
+        const res = await fetch("/.netlify/functions/abo-checkout", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ firmaId: daten.id, plan: "plus", basis: location.origin }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.status === 501) { status.style.color = "#e11d48"; status.textContent = "Bezahlung ist noch nicht eingerichtet."; return; }
+        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
+        location.href = d.url;
+      } catch (err) {
+        status.style.color = "#e11d48";
+        status.textContent = "Freischaltung konnte nicht gestartet werden: " + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     document.getElementById("fertig").addEventListener("click", async () => {
       sammle();
       daten.id = daten.id || "firma"; // letzter Fallback, falls gar nichts eingegeben wurde

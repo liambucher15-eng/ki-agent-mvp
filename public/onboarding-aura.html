@@ -63,6 +63,33 @@
     .willkommen .hero-titel { font-size: 2.55rem; }
     .willkommen .hero-sub { font-size: 1.02rem; max-width: 32ch; }
 
+    /* Preisklarheit. Der QA-Bericht vom 17.07. nannte als groesste offene
+       Schwaeche: "Der Nutzer sieht nirgends, was das Abo kostet." Danach wurde
+       die Checkout-Box aus dem letzten Schritt sogar noch entfernt — mit der
+       Begruendung, die Zahlung passiere vor dem Onboarding. Sie passiert dort
+       aber nicht: Der einzige Checkout-Knopf sitzt im Dashboard, ohne Preis.
+       Ergebnis war ein Ablauf, in dem jemand 14 Schritte durchlaeuft und
+       Charakterbilder generieren laesst, ohne je den Preis zu erfahren.
+       Deshalb steht er jetzt im ERSTEN Schritt: vor dem Aufwand, nicht danach.
+       Bewusst eine Zeile statt einer Box — Schritt 0 hatte 0 px Ueberlauf und
+       soll ihn behalten. */
+    .preiszeile { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.55rem;
+      margin-top: 1rem; font-size: 0.92rem; color: var(--text); }
+    .preiszeile b { font-size: 1.12rem; font-weight: 800; letter-spacing: -0.01em; }
+    .preiszeile .dazu { color: var(--grau); }
+    .preiszeile .kein-zaehler { display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.78rem; font-weight: 700; color: var(--indigo);
+      background: rgba(79,70,229,0.09); padding: 0.22rem 0.6rem; border-radius: 999px; }
+
+    /* Freischalt-Zeile im letzten Schritt. Flach, damit kein Ueberlauf entsteht. */
+    .freischalten { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+      flex-wrap: wrap; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 0.6rem 0.75rem; margin: 0.5rem 0 0.4rem; }
+    .freischalten .fs-text { font-size: 0.86rem; color: var(--text); line-height: 1.35; }
+    .freischalten .fs-text b { font-size: 1.02rem; font-weight: 800; }
+    .freischalten .fs-dazu { display: block; font-size: 0.76rem; color: var(--grau); }
+    .freischalten .fs-btn { padding: 0.5rem 0.9rem; font-size: 0.86rem; white-space: nowrap; }
+
     /* Teil-Zähler: "Teil 1 von 2" bei aufgeteilten Themen. Sitzt per order UNTEN
        direkt über der Nav, damit er nicht mit den Fortschritts-Dots oben kollidiert. */
     .teil-zaehler { order: 100; display: inline-flex; align-items: center; gap: 0.4rem; align-self: center;
@@ -430,6 +457,14 @@
             <span class="eyebrow">Dein eigener KI-Agent</span>
             <h1 class="hero-titel">Willkommen bei<br>AuraChat</h1>
             <p class="sub hero-sub">In wenigen Minuten steht dein persönlicher Chat-Agent, er lernt alles direkt von deiner Website und ist rund um die Uhr für deine Besucher da.</p>
+            <!-- Preis steht bewusst hier, im ersten Schritt: Wer 14 Schritte
+                 durchläuft und Charakterbilder generieren lässt, soll vorher
+                 wissen, was das kostet. Kein Zähler, keine Guthaben, keine
+                 Nachzahlung — genau das ist der Unterschied zum Markt. -->
+            <div class="preiszeile">
+              <b>CHF 49</b><span class="dazu">pro Monat, jederzeit kündbar</span>
+              <span class="kein-zaehler">Ein Preis, keine Nachzahlung</span>
+            </div>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-primar" data-next>Jetzt starten</button></div>
           </div>
@@ -766,6 +801,15 @@
               <span id="embed-text">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</span>
             </div>
             <p class="mini" id="speicherStatus" style="min-height:1.1em;"></p>
+            <!-- Freischalten am Ort der höchsten Absicht. Vorher fuehrte der
+                 einzige Weg zur Bezahlung ueber einen Knopf in den Dashboard-
+                 Einstellungen — ohne Preis. Das ist der teuerste Abbruchpunkt
+                 im ganzen Ablauf. Bewusst eine Zeile statt einer Box: Schritt
+                 13 hat aktuell 0 px Ueberlauf und soll ihn behalten. -->
+            <div class="freischalten" id="freischaltenZeile">
+              <div class="fs-text"><b>CHF 49</b> pro Monat, jederzeit kündbar<span class="fs-dazu">Ohne Freischaltung bleibt der Agent im Testbetrieb.</span></div>
+              <button class="btn btn-primar fs-btn" id="obCheckout">Jetzt freischalten</button>
+            </div>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard <span data-icon="arrow-right"></span></a></p>
             <div class="grow"></div>
             <div class="nav"><button class="btn btn-zurueck" data-prev><span data-icon="arrow-left"></span></button><button class="btn btn-primar" id="fertig">Agent testen</button></div>

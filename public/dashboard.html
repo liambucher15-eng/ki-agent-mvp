@@ -760,7 +760,10 @@
           <div class="konto-zeile"><span class="klabel">Abo</span>
             <div class="zeile">
               <span class="badge basis" id="aboBadge"></span>
-              <button class="btn klein" id="aboCheckout" hidden>Abo abschliessen</button>
+              <!-- Preis gehört auf den Knopf, nicht auf eine Seite dahinter.
+                   Vorher stand hier nur "Abo abschliessen" — der Kunde erfuhr
+                   den Preis erst auf der Stripe-Seite. -->
+              <button class="btn klein" id="aboCheckout" hidden>Für CHF 49/Monat freischalten</button>
             </div>
           </div>
         </article>
