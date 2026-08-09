@@ -19,37 +19,30 @@
        AuraChat — Startseite
 
        WARUM DER TEXT DUNKEL IST, OBWOHL DER ENTWURF WEISS AUF SCHWARZ ZEIGTE
+       Das Hintergrundbild wurde pixelweise abgetastet. Kontrast gegen weissen
+       Text: oben Mitte 1,00 · Titelzone 1,00 · Unterzeile 1,02 · dunkelste
+       Stelle 2,16. WCAG verlangt 3,0 fuer grosse Schrift. Weiss ist auf
+       diesem Bild nirgends lesbar. Gegen dunklen Text: 18,9 / 18,9 / 18,5 /
+       8,8. Die Anordnung aus dem Entwurf bleibt, die Farbrichtung dreht.
 
-       Das Hintergrundbild wurde pixelweise abgetastet. Ergebnis:
-         oben Mitte          #ffffff  -> Kontrast zu weissem Text 1,00
-         Titelzone           #ffffff  -> 1,00
-         Unterzeilen-Zone    #fefcfd  -> 1,02
-         dunkelste Stelle    #df94f8  -> 2,16
-       WCAG verlangt 3,0 fuer grosse und 4,5 fuer normale Schrift. Weisser
-       Text ist auf diesem Bild an KEINER Stelle lesbar.
-
-       Dieselben Stellen gegen dunklen Text (#111): 18,9 / 18,9 / 18,5 / 8,8.
-       Deshalb bleibt die Anordnung aus dem Entwurf (zentriert, Titel gross,
-       Unterzeile, Eingabe-Pille) exakt erhalten, nur die Farbrichtung dreht.
-
-       Die obere Bildhaelfte ist reinweiss, der Text sitzt also genau dort,
-       wo er im Entwurf sass. Figur und Browserfenster bleiben unten sichtbar.
+       WARUM DAS BILD UNTER DEM TEXT LIEGT UND NICHT DAHINTER
+       Als Vollflaechen-Hintergrund lief der zentrierte Grosstext gemessen in
+       die Figur (Titel 4,83 auf #7474e6, Unterzeile 1,21 auf #534f67). Sie
+       beginnt auf 26 % Bildhoehe, der Titel endet auf rund 37 % Fensterhoehe.
+       Das Bild ist 16:9, also auf voller Breite immer 56 % der Breite hoch —
+       zusammen mit dem Textblock passt das auf keinen Bildschirm. Deshalb:
+       Text auf weissem Grund, Bild randlos darunter.
        ────────────────────────────────────────────────────────────────────── */
     :root {
       --grund: #ffffff;
       --tinte: #111114;
-      /* Unterzeile. #5c5c6b sah auf Reinweiss gut aus, lag im gerenderten
-         Zustand aber bei nur 4,1:1 — der cover-Zuschnitt schiebt die Zeile
-         auf #d0cbcf statt auf Weiss. AA verlangt 4,5. Auf #45454f gesetzt:
-         gemessen 5,9:1 gegen den echten Hintergrund, 9,5:1 gegen Weiss,
-         also mit Reserve fuer andere Fensterhoehen. */
+      /* Unterzeile: #5c5c6b lag gerendert bei nur 4,1:1, weil der Zuschnitt
+         sie auf #d0cbcf schob statt auf Weiss. AA verlangt 4,5. */
       --tinte-weich: #45454f;
-      --platzhalter: #86868f;
-      --feld: #f4f2f7;           /* Eingabe-Pille, hebt sich vom Weiss ab */
-      --feld-rand: #e2dfea;
+      --rand-linie: #d9d6e0;
       --nav-linie: rgba(17,17,20,0.08);
       --violett: #6d6de4;        /* aus der Figur im Bild entnommen */
-      --rand: clamp(1.25rem, 5vw, 3rem);  /* seitlicher Rand des Textbereichs */
+      --rand: clamp(1.25rem, 5vw, 3rem);
       --sans: "Inter", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
 
@@ -60,13 +53,13 @@
       font-family: var(--sans); font-size: 16px; line-height: 1.5;
       -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
-    :focus-visible { outline: 2px solid var(--violett); outline-offset: 3px; border-radius: 4px; }
+    :focus-visible { outline: 2px solid var(--violett); outline-offset: 3px; border-radius: 6px; }
 
     /* ── Kopfzeile ────────────────────────────────────────────────────── */
     .kopf {
       position: fixed; inset: 0 0 auto 0; z-index: 50;
       display: flex; align-items: center; justify-content: space-between;
-      gap: 1rem; padding: 1.1rem clamp(1.25rem, 4vw, 3rem);
+      gap: 1rem; padding: 1.1rem var(--rand);
       border-bottom: 1px solid transparent;
       transition: background-color .25s ease, border-color .25s ease, backdrop-filter .25s ease;
     }
@@ -97,123 +90,87 @@
     @media (max-width: 820px) { .nav { display: none; } }
 
     /* ── Hero ─────────────────────────────────────────────────────────── */
-    /* Das Bild liegt UNTER dem Text, nicht dahinter.
-
-       Gemessen wurde zuerst die Variante "Bild als Vollflaechen-Hintergrund".
-       Ergebnis mit einem Raster ueber die Textflaechen:
-         Titel      schlechtester Kontrast 4,83 auf #7474e6 (die Figur selbst)
-         Unterzeile schlechtester Kontrast 1,21 auf #534f67
-       Der zentrierte Grosstext laeuft bei voller Bildbreite unvermeidlich in
-       die Figur hinein: Sie beginnt auf 26 % Bildhoehe, der Titel endet auf
-       rund 37 % Fensterhoehe. Schmaler setzen half nicht, dafuer muesste der
-       Titel auf ein Drittel seiner Breite schrumpfen.
-
-       Deshalb: Text auf reinweissem Grund, Bild darunter in voller Breite.
-       Die Anordnung aus dem Entwurf bleibt, die Figur bleibt unbedeckt. */
     .hero {
-      position: relative;
-      min-height: 100dvh;
+      position: relative; min-height: 100dvh;
       display: flex; flex-direction: column; align-items: center;
       text-align: center;
-      padding: clamp(6.5rem, 14vh, 9rem) var(--rand) 0;
-      background: var(--grund);
+      padding: clamp(5rem, 11vh, 6.5rem) var(--rand) 0;
       overflow: hidden;
-    }
-    /* Bricht aus dem seitlichen Rand des Textbereichs aus, damit das Bild
-       randlos ueber die volle Fensterbreite laeuft. */
-    .hero-bild-zone {
-      width: calc(100% + 2 * var(--rand));
-      margin: auto calc(-1 * var(--rand)) 0;
-      position: relative; line-height: 0;
-    }
-    /* Volle Breite, natuerliches Seitenverhaeltnis, beschnitten NUR von oben.
-       Die Figur reicht im Bild von 26 % bis 87 % der Hoehe, oberhalb davon
-       ist die Flaeche leer. Ein erster Versuch mit fester Zonenhoehe und
-       object-position "center 88 %" schnitt gemessen erst ab 41 % an und
-       koepfte damit die Figur. Die Deckelung liegt jetzt so, dass hoechstens
-       die oberen 23 % wegfallen. */
-    .hero-bild {
-      width: 100%; height: auto; display: block;
-      max-height: min(80vh, 40rem);
-      object-fit: cover; object-position: center bottom;
-    }
-    /* Weicher Uebergang, damit zwischen weissem Textbereich und dem oberen
-       Bildrand keine harte Kante entsteht. */
-    .hero-bild-zone::before {
-      content: ""; position: absolute; inset: 0 0 auto 0; height: 4.5rem;
-      background: linear-gradient(to bottom, var(--grund), rgba(255,255,255,0));
-      pointer-events: none;
     }
 
     h1 {
-      font-size: clamp(2.5rem, 7vw, 6rem);
-      font-weight: 600;
-      line-height: 0.98;
-      letter-spacing: -0.035em;
+      font-size: clamp(2.3rem, 5.4vw, 4.4rem);
+      font-weight: 600; line-height: 0.98; letter-spacing: -0.035em;
       /* 26ch: Die laengere Zeile ("persönlichen Mitarbeiter.") hat 25 Zeichen.
          Knapper gesetzt brach sie gemessen auf eine dritte Zeile um. Kein
          text-wrap: balance, der Umbruch steht per <br>. */
       max-width: 26ch;
-      margin-bottom: clamp(1.3rem, 2.4vw, 1.9rem);
+      margin-bottom: 1rem;
     }
     @media (max-width: 700px) { h1 br { display: none; } h1 { max-width: 15ch; } }
 
     .unterzeile {
       color: var(--tinte-weich);
-      font-size: clamp(1rem, 1.15vw, 1.1rem);
-      line-height: 1.6;
-      max-width: 46ch;
-      margin-bottom: clamp(1.8rem, 3vw, 2.4rem);
-      text-wrap: pretty;
+      font-size: clamp(.97rem, 1.1vw, 1.05rem);
+      line-height: 1.6; max-width: 46ch;
+      margin-bottom: 1.6rem; text-wrap: pretty;
     }
 
-    /* ── Eingabe-Pille ────────────────────────────────────────────────── */
-    .warteliste { width: min(100%, 29rem); }
-    .pille {
-      display: flex; align-items: center; gap: .5rem;
-      background: var(--feld); border: 1px solid var(--feld-rand);
-      border-radius: 999px; padding: .38rem .38rem .38rem 1.3rem;
-      box-shadow: 0 10px 30px -18px rgba(17,17,20,0.35);
-      transition: border-color .18s ease, background-color .18s ease;
+    /* ── Die zwei Knoepfe ─────────────────────────────────────────────── */
+    /* Form nach Liams Vorlage: zwei gleichrangige Knoepfe nebeneinander, der
+       erste gefuellt, der zweite mit Rand. Farben und Schrift aus dieser
+       Seite, nicht aus der Vorlage. Radius 10 px statt Pille, damit sie
+       ruhiger wirken als das fruehere Eingabefeld. */
+    .knoepfe { display: flex; flex-wrap: wrap; gap: .7rem; justify-content: center; }
+    .knopf {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: inherit; font-size: 1rem; font-weight: 500;
+      text-decoration: none; white-space: nowrap;
+      padding: .85rem 1.6rem; border-radius: 10px;
+      border: 1px solid transparent;
+      transition: background-color .18s ease, border-color .18s ease, transform .12s ease;
     }
-    .pille:focus-within { border-color: var(--violett); background: #fff; }
-    .pille input {
-      flex: 1; min-width: 0; background: none; border: 0; outline: none;
-      color: var(--tinte); font-family: inherit; font-size: .97rem; padding: .55rem 0;
-    }
-    .pille input::placeholder { color: var(--platzhalter); }
-    .pille button {
-      flex: none; border: 0; cursor: pointer;
-      background: var(--tinte); color: #fff;
-      font-family: inherit; font-size: .75rem; font-weight: 700;
-      letter-spacing: .06em; text-transform: uppercase;
-      padding: .8rem 1.3rem; border-radius: 999px;
-      transition: transform .12s ease, background-color .18s ease;
-    }
-    .pille button:hover { background: #2a2a33; }
-    .pille button:active { transform: translateY(1px); }
-    .pille button:disabled { opacity: .55; cursor: default; transform: none; }
+    .knopf:active { transform: translateY(1px); }
+    .knopf-voll { background: var(--tinte); color: #fff; }
+    .knopf-voll:hover { background: #2a2a33; }
+    .knopf-rand { background: var(--grund); color: var(--tinte); border-color: var(--rand-linie); }
+    .knopf-rand:hover { border-color: var(--tinte); }
 
-    .meldung {
-      min-height: 1.4rem; margin-top: .8rem;
-      font-size: .87rem; color: var(--tinte-weich);
-    }
-    .meldung[data-art="fehler"] { color: #c22f2f; }
-    .meldung[data-art="erfolg"] { color: #1c6b3a; }
-
-    @media (max-width: 460px) {
-      .pille { flex-direction: column; align-items: stretch; gap: .5rem;
-               border-radius: 22px; padding: .85rem; }
-      .pille input { padding: .3rem .4rem; text-align: center; }
-      .pille button { width: 100%; }
+    .knopf-notiz {
+      margin-top: .95rem; font-size: .86rem; color: var(--tinte-weich);
     }
 
-    /* Schmale Bildschirme: "cover" wuerde die Figur seitlich wegschneiden,
-       weil sie im rechten Drittel des Bildes sitzt. Der Ausschnitt wandert
-       deshalb nach rechts, damit sie im Bild bleibt. */
-    @media (max-width: 860px) {
-      .hero-bild { object-position: 72% 88%; }
+    @media (max-width: 430px) {
+      .knoepfe { flex-direction: column; align-items: stretch; width: min(100%, 20rem); }
+      .knopf { width: 100%; }
     }
+
+    /* ── Bild ─────────────────────────────────────────────────────────── */
+    /* Bricht aus dem seitlichen Rand aus, damit es randlos laeuft. */
+    .hero-bild-zone {
+      width: calc(100% + 2 * var(--rand));
+      margin: auto calc(-1 * var(--rand)) 0;
+      position: relative; line-height: 0;
+    }
+    /* Weicher Uebergang zum weissen Textbereich. */
+    .hero-bild-zone::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 4rem;
+      background: linear-gradient(to bottom, var(--grund), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+    /* Deckel in vw, nicht in rem: Der Beschnitt haengt an der BREITE, weil die
+       Bildhoehe bei voller Breite immer 55,8 % der Breite betraegt. Mit einem
+       rem-Deckel wuchs der Beschnitt bei breiten Fenstern auf gemessene 31,5 %
+       und koepfte die Figur (sie beginnt bei 26 %). 42vw haelt ihn konstant
+       bei rund 24 %, unabhaengig von der Fenstergroesse. */
+    .hero-bild {
+      width: 100%; height: auto; display: block;
+      max-height: 42vw;
+      object-fit: cover; object-position: center bottom;
+    }
+    /* Schmale Bildschirme: Die Figur sitzt im rechten Drittel des Bildes und
+       wuerde bei mittigem Ausschnitt seitlich wegfallen. */
+    @media (max-width: 860px) { .hero-bild { object-position: 72% bottom; } }
 
     @media (prefers-reduced-motion: reduce) {
       * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -247,15 +204,11 @@
       selbst von deiner Webseite, du musst nichts vorbereiten.
     </p>
 
-    <form class="warteliste" id="wartelisteForm" novalidate>
-      <div class="pille">
-        <label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">E-Mail-Adresse</label>
-        <input type="email" id="email" name="email" placeholder="Deine E-Mail-Adresse"
-               autocomplete="email" required />
-        <button type="submit" id="eintragen">Auf die Warteliste</button>
-      </div>
-      <p class="meldung" id="meldung" role="status" aria-live="polite"></p>
-    </form>
+    <div class="knoepfe">
+      <a class="knopf knopf-voll" href="demo-restaurant.html">Demo testen</a>
+      <a class="knopf knopf-rand" href="onboarding-aura.html">Gratis Version testen</a>
+    </div>
+    <p class="knopf-notiz">Keine Kreditkarte nötig.</p>
 
     <div class="hero-bild-zone">
       <img class="hero-bild" src="bilder/hero-hintergrund.webp" alt="" role="presentation" />
@@ -263,69 +216,13 @@
   </main>
 
 <script>
-  // Kopfzeile bekommt ab 24 px Scrollhoehe einen Grund, damit die Links
-  // beim Durchscrollen nicht auf dem Bild verschwinden.
+  // Kopfzeile bekommt ab 24 px Scrollhoehe einen Grund, damit die Links beim
+  // Durchscrollen nicht auf dem Bild verschwinden.
   (function () {
     const kopf = document.getElementById("kopf");
     const pruefe = () => kopf.setAttribute("data-gescrollt", window.scrollY > 24 ? "ja" : "nein");
     pruefe();
     window.addEventListener("scroll", pruefe, { passive: true });
-  })();
-
-  // Warteliste. Die Adresse wird bewusst NICHT an einen erfundenen Endpunkt
-  // geschickt: Es gibt noch keinen. Bis der Empfaenger steht, prueft das
-  // Formular nur die Eingabe und sagt ehrlich, was passiert.
-  // Zum Anschliessen: unten ENDPUNKT setzen.
-  (function () {
-    const form = document.getElementById("wartelisteForm");
-    const feld = document.getElementById("email");
-    const knopf = document.getElementById("eintragen");
-    const meldung = document.getElementById("meldung");
-    const ENDPUNKT = ""; // z.B. "/.netlify/functions/warteliste"
-
-    const sage = (text, art) => {
-      meldung.textContent = text;
-      if (art) meldung.setAttribute("data-art", art); else meldung.removeAttribute("data-art");
-    };
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const adresse = feld.value.trim();
-
-      // Bewusst schlicht: Wer eine Adresse mit Punkt nach dem @ eintippt,
-      // soll durchkommen. Strengere Muster weisen echte Adressen ab.
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adresse)) {
-        sage("Bitte gib eine gültige E-Mail-Adresse ein.", "fehler");
-        feld.focus();
-        return;
-      }
-
-      if (!ENDPUNKT) {
-        sage("Die Warteliste ist noch nicht angeschlossen. Deine Adresse wurde nicht gespeichert.", "fehler");
-        return;
-      }
-
-      knopf.disabled = true;
-      sage("Wird eingetragen …");
-      try {
-        const res = await fetch(ENDPUNKT, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: adresse }),
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        form.reset();
-        sage("Danke, du stehst auf der Liste. Wir melden uns.", "erfolg");
-      } catch (err) {
-        sage("Das hat nicht geklappt. Versuch es später noch einmal.", "fehler");
-      } finally {
-        knopf.disabled = false;
-      }
-    });
-
-    feld.addEventListener("input", () => {
-      if (meldung.getAttribute("data-art") === "fehler") sage("");
-    });
   })();
 </script>
 
