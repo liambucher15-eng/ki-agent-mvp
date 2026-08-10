@@ -324,8 +324,24 @@
        geschieht per Klick und zusätzlich automatisch; die automatische
        Weiterschaltung stoppt dauerhaft, sobald jemand selbst klickt, und
        startet bei prefers-reduced-motion gar nicht erst. */
-    .ablauf { display: grid; gap: clamp(2rem, 4vw, 3.5rem); grid-template-columns: 1fr; align-items: start; }
-    @media (min-width: 900px) { .ablauf { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+    /* Diese Sektion traegt ausnahmsweise KEINEN eigenen Abstand: Die Buehne
+       soll oben, rechts und unten bis an die Sektionskante laufen. Den
+       Abstand uebernimmt die Textspalte. */
+    #so { padding-inline: 0; padding-block: 0; }
+    .ablauf { display: grid; grid-template-columns: 1fr; align-items: stretch; }
+    .ablauf-text { padding: clamp(4rem, 9vw, 7rem) var(--rand); }
+    .ablauf-inhalt { width: 100%; }
+    @media (min-width: 900px) {
+      .ablauf { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      /* Rechtsbuendig an der Spaltenkante, also genau an der Fenstermitte.
+         Ein 36rem breiter Block beginnt damit exakt dort, wo der Inhalt der
+         uebrigen Sektionen beginnt: Die Bahn ist 72rem breit und zentriert,
+         ihre linke Haelfte misst 36rem. Bewusst ueber die Blockbreite
+         geloest statt ueber eine 100vw-Rechnung, denn 100vw zaehlt die
+         Bildlaufleiste mit und laege ein paar Pixel daneben. */
+      .ablauf-text { padding-right: 0; display: flex; justify-content: flex-end; }
+      .ablauf-inhalt { max-width: 36rem; padding-right: clamp(2rem, 4vw, 3.5rem); }
+    }
 
     .schritte { list-style: none; display: grid; gap: 0; margin: 0 0 2rem; }
     .schritt {
@@ -380,25 +396,20 @@
        aspect-ratio: Die Hoehe kommt vom Fenster plus Innenabstand, dann kann
        das Fenster nie abgeschnitten werden, egal wie breit die Spalte wird. */
     .buehne {
-      position: relative; border-radius: 18px; overflow: hidden;
+      position: relative; overflow: hidden;
       display: grid; place-items: center;
-      padding: clamp(1.1rem, 2.6vw, 2.4rem);
+      padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem);
       background: #dcdafa;
     }
     .buehne-grund {
       position: absolute; inset: 0; z-index: 0;
       background: var(--ablauf-grund) center / cover no-repeat;
     }
-    /* Bis an den Fensterrand ziehen. Ein blosses negatives var(--rand)
-       reichte nicht: Die Bahn ist auf 72rem gedeckelt und zentriert, es
-       blieben gemessen 89 px stehen. Diese Rechnung ueberbrueckt genau den
-       Abstand von der rechten Bahnkante zum Fensterrand. */
-    @media (min-width: 1200px) {
-      .buehne {
-        margin-right: calc((100vw - min(72rem, 100vw - 2 * var(--rand))) / -2);
-        border-radius: 18px 0 0 18px;
-      }
-    }
+    /* Kein Ausbruch nach rechts mehr noetig: Die Buehne IST die rechte
+       Rasterspalte der randlosen Sektion und endet damit von sich aus am
+       Fensterrand. Die fruehere negative Randrechnung mit 100vw ist raus,
+       sie hatte die Buehne um die Breite der Bildlaufleiste ueberstehen
+       lassen. */
     /* Browser-Fenster, das auf dem Hintergrund schwebt. */
     .fenster {
       position: relative; z-index: 1; width: 100%; max-width: 26rem;
@@ -682,14 +693,14 @@
   <!-- ══ SO FUNKTIONIERT ES ════════════════════════════════════════════
        Nummeriert, weil es wirklich eine Reihenfolge ist. -->
   <section id="so">
-    <div class="bahn">
-      <div class="kopfblock">
-        <span class="augen">In fünf Schritten</span>
-        <h2>In rund zehn Minuten steht er.</h2>
-        <p class="lead">Keine Wissensdatenbank, keine Dokumentation, keine Agentur.</p>
-      </div>
       <div class="ablauf">
-        <div>
+        <div class="ablauf-text">
+         <div class="ablauf-inhalt">
+          <div class="kopfblock">
+            <span class="augen">In fünf Schritten</span>
+            <h2>In rund zehn Minuten steht er.</h2>
+            <p class="lead">Keine Wissensdatenbank, keine Dokumentation, keine Agentur.</p>
+          </div>
           <!-- Die Schritte sind Knoepfe, nicht Divs: Sie sind bedienbar und
                damit auch per Tastatur erreichbar. -->
           <ul class="schritte" id="schritte">
@@ -730,6 +741,7 @@
             </li>
           </ul>
           <a class="knopf knopf-voll" href="onboarding-aura.html">Jetzt einrichten</a>
+         </div>
         </div>
 
         <!-- Buehne in drei Lagen: Hintergrund, schwebendes Fenster, Aufnahme.
@@ -792,7 +804,6 @@
           </div>
         </div>
       </div>
-    </div>
   </section>
 
   <!-- ══ DIE FIGUR ══════════════════════════════════════════════════════
