@@ -198,14 +198,78 @@
     }
     @media (max-width: 860px) { .hero-bild { object-position: 72% bottom; } }
 
-    /* ── Vertrauensleiste ─────────────────────────────────────────────── */
-    .vertrauen { padding-top: clamp(3rem, 6vw, 4.5rem); padding-bottom: clamp(3rem, 6vw, 4.5rem); }
-    .vertrauen h2 { font-size: clamp(1.4rem, 2.4vw, 1.9rem); max-width: 26ch; margin-bottom: 2rem; }
-    .vier { display: grid; gap: 1.6rem 2rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
-    .vier > div { border-top: 2px solid var(--tinte); padding-top: .9rem; }
-    .vier b { display: block; font-size: 1.02rem; font-weight: 600; margin-bottom: .3rem; }
-    .vier span { font-size: .93rem; color: var(--tinte-weich); line-height: 1.55; }
-    .vertrauen .fussnote { margin-top: 2rem; font-size: .88rem; color: var(--tinte-hell); }
+    /* ── Aussage + Kachelraster ───────────────────────────────────────── */
+    /* Ersetzt die frühere schlichte Vertrauensleiste. Gleiche Botschaft,
+       stärker gesetzt: eine grosse zentrierte Aussage mit Zeichen im Text,
+       darunter vier Kacheln in ungleichen Grössen.
+
+       ALLE ZAHLEN SIND ECHT. 3 Minuten, 1 Zeile, 5 Zustände, CHF 49 lassen
+       sich am Produkt nachprüfen. Kundenzahlen, Bewertungen oder Umsatzwerte
+       stehen bewusst nicht da, es gibt sie noch nicht. */
+    .aussage { text-align: center; }
+    .augen-mitte {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .74rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--tinte-weich); margin-bottom: 1.4rem;
+    }
+    .augen-mitte::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--violett);
+    }
+    .grosse-aussage {
+      font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 600;
+      line-height: 1.16; letter-spacing: -0.03em;
+      max-width: 20ch; margin: 0 auto clamp(2.5rem, 5vw, 4rem);
+    }
+    .grosse-aussage .leise { color: var(--tinte-hell); }
+    /* Zeichen mitten im Satz, Grösse relativ zur Schrift, damit sie beim
+       Skalieren mitwachsen und nie aus der Zeile fallen. */
+    .satzzeichen {
+      display: inline-grid; place-items: center;
+      width: .86em; height: .86em; border-radius: 50%;
+      vertical-align: -0.07em; margin: 0 .1em;
+    }
+    .satzzeichen svg { width: .5em; height: .5em; display: block; }
+    .satzzeichen.voll { background: var(--violett); color: #fff; }
+    .satzzeichen.zart { background: #dcdafa; color: var(--tinte); }
+
+    .bento {
+      display: grid; gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      text-align: left;
+    }
+    .bento > * { border-radius: 18px; padding: clamp(1.2rem, 2.4vw, 1.7rem); min-width: 0; }
+    .kachel-hoch { grid-row: span 2; }
+    @media (max-width: 900px) {
+      .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .kachel-hoch { grid-row: span 1; }
+    }
+    @media (max-width: 600px) { .bento { grid-template-columns: minmax(0, 1fr); } }
+
+    .k-zahl { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+    .k-label { font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
+    .k-text { font-size: .95rem; line-height: 1.55; margin-top: .7rem; }
+
+    /* Bildkachel: der Ausschnitt zeigt die Figur, nicht den leeren Verlauf. */
+    .k-bild {
+      padding: 0; overflow: hidden; position: relative;
+      background: var(--flaeche); display: flex; flex-direction: column; min-height: 17rem;
+    }
+    .k-bild img { width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: 78% 45%; display: block; }
+    .k-bild .karte-innen {
+      margin: -3.5rem 1rem 1rem; position: relative; z-index: 1;
+      background: #fff; border-radius: 14px; padding: 1.1rem 1.2rem;
+      box-shadow: 0 16px 34px -22px rgba(17,17,20,.5);
+    }
+    .k-hell { background: var(--flaeche); }
+    .k-violett { background: #dcdafa; }
+    .k-dunkel { background: var(--dunkel); color: #fff; }
+    .k-dunkel .k-label { opacity: .55; }
+    .k-code {
+      margin-top: .9rem; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .78rem; background: rgba(17,17,20,.07); border-radius: 8px;
+      padding: .55rem .7rem; overflow-x: auto; white-space: nowrap;
+    }
+    .aussage .fussnote { margin-top: 1.6rem; font-size: .88rem; color: var(--tinte-hell); }
 
     /* ── Zweispalter (Problem / Loesung, Grenzen) ─────────────────────── */
     .zwei { display: grid; gap: clamp(1.5rem, 3vw, 2.5rem); grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
@@ -269,7 +333,9 @@
     .blase.agent { justify-self: start; background: var(--tinte); color: #fff; border-bottom-left-radius: 5px; }
     .agent-zeile { display: flex; align-items: center; gap: .6rem; margin-bottom: .3rem; }
     .agent-punkt {
-      width: 34px; height: 34px; border-radius: 50%; background: var(--violett); flex: none;
+      /* --violett-text statt --violett: Der Buchstabe im Avatar ist echter
+         Text und lag auf dem helleren Ton bei nur 4,24:1. */
+      width: 34px; height: 34px; border-radius: 50%; background: var(--violett-text); flex: none;
       display: grid; place-items: center; color: #fff; font-weight: 600; font-size: .9rem;
     }
     .agent-name { font-size: .78rem; color: var(--tinte-hell); }
@@ -386,28 +452,59 @@
        Statt erfundener Kundenzahlen: was heute wirklich stimmt. Diese
        Fassung funktioniert nur, solange die Marke neu ist, und genau das
        macht sie glaubwuerdig. Der Platz fuer echte Referenzen ist markiert. -->
-  <section class="vertrauen">
+  <section class="aussage">
     <div class="bahn">
-      <h2>Noch keine 10 000 Kunden. Dafür das hier:</h2>
-      <div class="vier">
-        <div>
-          <b>Keine Vorbereitung</b>
-          <span>Kein Wissensdokument, keine Agentur, keine Einrichtungsgebühr.</span>
+      <span class="augen-mitte">Warum AuraChat</span>
+
+      <h2 class="grosse-aussage">
+        Ein Mitarbeiter, der deine Seite
+        <span class="satzzeichen voll" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+          </svg>
+        </span>
+        auswendig kennt
+        <span class="leise">und immer da ist,
+        <span class="satzzeichen zart" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path>
+          </svg>
+        </span>
+        wenn jemand fragt.</span>
+      </h2>
+
+      <div class="bento">
+        <!-- Bildkachel: zeigt die Figur, nicht den leeren Verlauf -->
+        <div class="k-bild kachel-hoch">
+          <img src="bilder/hero-hintergrund.webp" alt="Die gezeichnete Agenten-Figur" />
+          <div class="karte-innen">
+            <div class="k-zahl">5</div>
+            <div class="k-label" style="margin-top:.3rem;">Zustände</div>
+            <p class="k-text">Wartend, zuhörend, nachdenkend, sprechend, verlegen. Besucher merken, dass jemand zuhört.</p>
+          </div>
         </div>
-        <div>
-          <b>Kein Zähler</b>
-          <span>Dieselbe Rechnung im nächsten Monat, egal wie viel los ist.</span>
+
+        <div class="k-hell kachel-hoch">
+          <div class="k-label">Einrichtung</div>
+          <div class="k-zahl" style="margin-top:.5rem;">3 Minuten</div>
+          <p class="k-text">Adresse eingeben, Scan abwarten, Gesicht geben. Kein Wissensdokument, keine Agentur, keine Einrichtungsgebühr.</p>
+          <p class="k-text" style="color:var(--tinte-hell);">Er liest deine Seite selbst und zeigt dir vorher, was er verstanden hat.</p>
         </div>
-        <div>
-          <b>Schweizer Rechnung</b>
-          <span>In Franken, mit MwSt., monatlich kündbar.</span>
+
+        <div class="k-violett">
+          <div class="k-label">Einbau</div>
+          <div class="k-zahl" style="margin-top:.5rem;">1 Zeile</div>
+          <div class="k-code">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</div>
         </div>
-        <div>
-          <b>Nur deine Angaben</b>
-          <span>Er erfindet nichts. Weiss er etwas nicht, sagt er es.</span>
+
+        <div class="k-dunkel">
+          <div class="k-label">Preis</div>
+          <div class="k-zahl" style="margin-top:.5rem;">CHF 49</div>
+          <p class="k-text" style="opacity:.72;">Pro Monat, in Franken, mit MwSt. Kein Zähler, keine Nachzahlung, monatlich kündbar.</p>
         </div>
       </div>
-      <p class="fussnote">Sobald die ersten Betriebe live sind, stehen sie hier.</p>
+
+      <p class="fussnote">Alle Zahlen hier lassen sich am Produkt nachprüfen. Kundenzahlen stehen bewusst nicht dabei, es gibt noch keine.</p>
     </div>
   </section>
 
