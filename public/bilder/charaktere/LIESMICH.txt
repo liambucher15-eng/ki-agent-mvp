@@ -1,0 +1,25 @@
+Charakter-Galerie der Startseite (Sektion "Charaktere" in start.html)
+
+Hier gehoeren die Beispiel-Figuren hinein, die mit AuraChat selbst erzeugt
+wurden. Solange eine Datei fehlt, zeigt die Kachel einen Platzhalter; das
+Skript am Seitenende entfernt das kaputte Bild, damit kein Bruchsymbol
+erscheint. Sobald die Datei da ist, deckt sie den Platzhalter zu. Es muss
+nichts am Code geaendert werden.
+
+Erwartete Dateien:
+  restaurant.webp
+  zahnarztpraxis.webp
+  velowerkstatt.webp
+  coiffeursalon.webp
+  treuhandbuero.webp
+  fitnessstudio.webp
+  blumenladen.webp
+  autogarage.webp
+
+Format: quadratisch (1:1), Figur mittig, heller oder freigestellter
+Hintergrund. Die Kachel ist auf dem Desktop rund 271 px breit, auf dem
+Handy rund 160 px; 600x600 reicht also aus.
+
+Die Branchen sind bewusst weit auseinander gewaehlt: Die Sektion soll
+zeigen, wie unterschiedlich die Figuren ausfallen koennen. Wenn du andere
+Branchen nimmst, die Beschriftung in start.html mit anpassen.

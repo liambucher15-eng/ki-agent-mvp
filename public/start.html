@@ -456,20 +456,61 @@
       color: var(--tinte-weich);
     }
 
-    /* ── Figur-Sektion ────────────────────────────────────────────────── */
-    .figur-raster { display: grid; gap: clamp(2rem, 4vw, 3.5rem); grid-template-columns: 1fr; align-items: center; }
-    @media (min-width: 900px) { .figur-raster { grid-template-columns: 1.05fr .95fr; } }
-    .figur-bild {
-      border-radius: 20px; overflow: hidden; line-height: 0;
-      background: #fff; aspect-ratio: 4 / 3;
+    /* ── Vorteile ──────────────────────────────────────────────────────
+       Loest die frueheren Sektionen "Das Problem" und "Der Unterschied"
+       ab. Die beiden standen nacheinander und trugen dasselbe Argument
+       zweimal vor, bevor ueberhaupt etwas zu sehen war. Das dazugehoerige
+       .figur-raster-CSS ist mit ausgebaut, es hatte danach keinen Nutzer
+       mehr. */
+    .vorteile { display: grid; gap: clamp(1.6rem, 3vw, 2.4rem); grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .vorteile { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .vorteil {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: clamp(1.4rem, 2.6vw, 1.9rem);
     }
-    .figur-bild img {
-      width: 100%; height: 100%; display: block;
-      object-fit: cover; object-position: 88% 58%;
+    .vorteil .marke {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2.1rem; height: 2.1rem; border-radius: 9px; margin-bottom: .9rem;
+      background: rgba(165,165,240,0.16); color: #c9c9f7;
+      font-size: .82rem; font-weight: 700; font-variant-numeric: tabular-nums;
     }
-    .figur-punkte { display: grid; gap: 1.5rem; }
-    .figur-punkte h3 { color: var(--auf-dunkel); }
-    .figur-punkte p { font-size: .98rem; color: var(--auf-dunkel-weich); line-height: 1.58; }
+    .vorteil h3 { color: var(--auf-dunkel); }
+    .vorteil p { font-size: .98rem; color: var(--auf-dunkel-weich); line-height: 1.58; }
+
+    /* ── Charakter-Galerie ──────────────────────────────────────────────
+       Der einzige Beleg fuer die Kernbehauptung, dass jede Firma ein
+       eigenes Wesen bekommt. Solange keine echten Figuren hinterlegt sind,
+       steht in jeder Kachel ein Platzhalter mit der Branche.
+       ZUM ERSETZEN: Bild unter public/bilder/charaktere/<name>.webp
+       ablegen, der src-Pfad in der Kachel stimmt dann schon. Quadratisch,
+       Figur mittig, heller oder freigestellter Hintergrund. */
+    .galerie { display: grid; gap: clamp(.9rem, 1.8vw, 1.4rem); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 700px) { .galerie { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1000px) { .galerie { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .figur {
+      position: relative; border-radius: 14px; overflow: hidden;
+      background: var(--flaeche); border: 1px solid var(--rand-fein);
+      aspect-ratio: 1 / 1;
+    }
+    .figur img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* Der Platzhalter liegt UNTER dem Bild, nicht darueber: Fehlt die
+       Datei, bleibt er sichtbar; ist sie da, deckt das Bild ihn zu. Damit
+       braucht es kein Skript, das ihn wegnimmt. */
+    .figur-platzhalter {
+      position: absolute; inset: 0; display: grid; place-content: center; gap: .45rem;
+      text-align: center; padding: 1rem;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.55) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.55) 75%),
+        linear-gradient(45deg, rgba(255,255,255,.55) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.55) 75%);
+      background-size: 24px 24px; background-position: 0 0, 12px 12px;
+    }
+    .figur-platzhalter .ph-marke { font-size: .62rem; }
+    .figur img { position: relative; z-index: 1; }
+    .figur .branche {
+      position: absolute; inset: auto 0 0 0; z-index: 2;
+      padding: .55rem .8rem; font-size: .82rem; font-weight: 500; color: var(--tinte);
+      background: rgba(255,255,255,0.9); border-top: 1px solid var(--rand-fein);
+    }
 
     /* ── Demo ─────────────────────────────────────────────────────────── */
     .browser {
@@ -661,31 +702,96 @@
   </section>
 
   <!-- ══ PROBLEM UND LÖSUNG ════════════════════════════════════════════ -->
-  <section class="hellflaeche">
+  <!-- ══ WARUM ÜBERHAUPT ═══════════════════════════════════════════════
+       Fasst die frueheren Sektionen "Das Problem" und "Der Unterschied"
+       zusammen. Getrennt trugen die beiden dasselbe Argument zweimal
+       hintereinander vor, bevor auf der Seite ueberhaupt etwas zu sehen
+       war. -->
+  <section class="dunkel">
     <div class="bahn">
       <div class="kopfblock">
-        <span class="augen">Das Problem</span>
-        <h2>Deine Webseite ist offen. Aber es ist niemand da.</h2>
+        <span class="augen">Warum überhaupt</span>
+        <h2>Ein Gesicht bleibt im Kopf. Ein Chatfenster nicht.</h2>
+        <p class="lead">Die grossen Anbieter bauen Werkzeuge, die Anfragen wegräumen sollen. Das ergibt Sinn, wenn du eine Supportabteilung hast. Hast du keine, ist dein Mitarbeiter kein Sparposten, sondern zusätzliches Personal im Schaufenster.</p>
       </div>
-      <div class="zwei">
-        <div class="spalte">
-          <h3>So ist es jetzt</h3>
-          <ul class="liste">
-            <li><span class="zeichen-punkt" aria-hidden="true">·</span>Jemand sucht die Öffnungszeiten, findet sie nicht und geht.</li>
-            <li><span class="zeichen-punkt" aria-hidden="true">·</span>Dieselben drei Fragen landen jede Woche in deinem Postfach.</li>
-            <li><span class="zeichen-punkt" aria-hidden="true">·</span>Ein Kontaktformular fühlt sich an wie eine verschlossene Tür.</li>
-            <li><span class="zeichen-punkt" aria-hidden="true">·</span>Abends und am Wochenende antwortet niemand. Dann sind die Leute aber online.</li>
-          </ul>
+      <div class="vorteile">
+        <div class="vorteil">
+          <span class="marke" aria-hidden="true">01</span>
+          <h3>Jemand ist da, wenn du zu hast</h3>
+          <p>Abends und am Wochenende sind deine Leute online, du nicht. Er antwortet sofort aus deinen echten Angaben und legt dir die Anfragen ins Postfach.</p>
         </div>
-        <div class="spalte">
-          <h3>So ist es mit deinem Mitarbeiter</h3>
-          <ul class="liste">
-            <li><span class="zeichen-ja" aria-hidden="true">✓</span>Er antwortet sofort, in ganzen Sätzen, aus deinen echten Angaben.</li>
-            <li><span class="zeichen-ja" aria-hidden="true">✓</span>Er nimmt Anfragen auf, während du zu hast. Am Morgen liegen sie im Posteingang.</li>
-            <li><span class="zeichen-ja" aria-hidden="true">✓</span>Er fragt zurück, statt ein Formular hinzustellen.</li>
-            <li><span class="zeichen-ja" aria-hidden="true">✓</span>Rund um die Uhr, auf jeder Unterseite, auch auf dem Handy.</li>
-          </ul>
+        <div class="vorteil">
+          <span class="marke" aria-hidden="true">02</span>
+          <h3>Er fragt zurück, statt ein Formular hinzustellen</h3>
+          <p>Ein Kontaktformular fühlt sich an wie eine verschlossene Tür. Er führt das Gespräch weiter, bis klar ist, was jemand sucht.</p>
         </div>
+        <div class="vorteil">
+          <span class="marke" aria-hidden="true">03</span>
+          <h3>Für deinen Betrieb gezeichnet</h3>
+          <p>Keine Vorlage aus einer Sammlung. Die Figur entsteht aus deiner Seite und deiner Branche, du bestimmst Ton und Anrede, und du änderst sie, bis sie passt.</p>
+        </div>
+        <div class="vorteil">
+          <span class="marke" aria-hidden="true">04</span>
+          <h3>Man sieht ihm an, dass er zuhört</h3>
+          <p>Wartend, zuhörend, nachdenkend, sprechend. Besucher merken, dass jemand da ist, statt dass ein Feld lädt.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CHARAKTER-GALERIE ═════════════════════════════════════════════
+       Der einzige echte Beleg fuer die Kernbehauptung. Die Konkurrenz
+       kann diese Sektion nicht nachbauen, sie hat keine Charaktere.
+       Solange keine Bilder hinterlegt sind, steht in jeder Kachel ein
+       Platzhalter mit der Branche. -->
+  <section class="hellflaeche" id="charaktere">
+    <div class="bahn">
+      <div class="kopfblock">
+        <span class="augen">Charaktere</span>
+        <h2>Jede Firma bekommt ihr eigenes Wesen.</h2>
+        <p class="lead">Alle diese Figuren sind hier entstanden, aus nichts als der Webseite und ein paar Angaben zum Betrieb. Deine sieht anders aus.</p>
+      </div>
+      <div class="galerie">
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/restaurant.webp" alt="Agenten-Figur für ein Restaurant" loading="lazy" />
+          <figcaption class="branche">Restaurant</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/zahnarztpraxis.webp" alt="Agenten-Figur für eine Zahnarztpraxis" loading="lazy" />
+          <figcaption class="branche">Zahnarztpraxis</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/velowerkstatt.webp" alt="Agenten-Figur für eine Velowerkstatt" loading="lazy" />
+          <figcaption class="branche">Velowerkstatt</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/coiffeursalon.webp" alt="Agenten-Figur für einen Coiffeursalon" loading="lazy" />
+          <figcaption class="branche">Coiffeursalon</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/treuhandbuero.webp" alt="Agenten-Figur für ein Treuhandbüro" loading="lazy" />
+          <figcaption class="branche">Treuhandbüro</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/fitnessstudio.webp" alt="Agenten-Figur für ein Fitnessstudio" loading="lazy" />
+          <figcaption class="branche">Fitnessstudio</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/blumenladen.webp" alt="Agenten-Figur für einen Blumenladen" loading="lazy" />
+          <figcaption class="branche">Blumenladen</figcaption>
+        </figure>
+        <figure class="figur">
+          <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
+          <img src="bilder/charaktere/autogarage.webp" alt="Agenten-Figur für eine Autogarage" loading="lazy" />
+          <figcaption class="branche">Autogarage</figcaption>
+        </figure>
       </div>
     </div>
   </section>
@@ -804,37 +910,6 @@
           </div>
         </div>
       </div>
-  </section>
-
-  <!-- ══ DIE FIGUR ══════════════════════════════════════════════════════
-       Dunkel gesetzt, weil hier der eigentliche Unterschied steht. -->
-  <section class="dunkel">
-    <div class="bahn">
-      <div class="kopfblock">
-        <span class="augen">Der Unterschied</span>
-        <h2>Ein Gesicht bleibt im Kopf. Ein Chatfenster nicht.</h2>
-        <p class="lead">Die grossen Anbieter bauen Werkzeuge, die Anfragen wegräumen sollen. Das ergibt Sinn, wenn du eine Supportabteilung hast. Hast du keine, ist dein Mitarbeiter kein Sparposten, sondern zusätzliches Personal im Schaufenster.</p>
-      </div>
-      <div class="figur-raster">
-        <div class="figur-bild">
-          <img src="bilder/hero-hintergrund.webp" alt="Beispiel einer gezeichneten Agenten-Figur neben einem Browserfenster" />
-        </div>
-        <div class="figur-punkte">
-          <div>
-            <h3>Für deinen Betrieb gezeichnet</h3>
-            <p>Keine Vorlage aus einer Galerie. Die Figur entsteht aus deiner Seite, deiner Branche, deinem Ton, und du bearbeitest sie, bis sie passt.</p>
-          </div>
-          <div>
-            <h3>Sie reagiert</h3>
-            <p>Wartend, zuhörend, nachdenkend, sprechend, verlegen. Besucher merken, dass jemand zuhört, nicht dass ein Feld lädt.</p>
-          </div>
-          <div>
-            <h3>Sie klingt wie ihr</h3>
-            <p>Du legst fest, ob sie duzt oder siezt, wie ausführlich sie antwortet und wo ihre Grenzen liegen. Dieselbe Person auf jeder Unterseite.</p>
-          </div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- ══ WAS ER KANN ════════════════════════════════════════════════════ -->
@@ -1204,6 +1279,17 @@
     }, { threshold: 0.35 }).observe(liste);
 
     zeige(0);
+  })();
+
+  // Charakter-Galerie: Noch fehlende Bilder entfernen, damit der
+  // Platzhalter darunter sichtbar bleibt statt eines Bruchsymbols. Die
+  // zweite Pruefung ist noetig, weil ein Bild schon fehlgeschlagen sein
+  // kann, bevor dieses Skript am Seitenende ueberhaupt laeuft.
+  (function () {
+    document.querySelectorAll(".figur img").forEach((b) => {
+      b.addEventListener("error", () => b.remove());
+      if (b.complete && b.naturalWidth === 0) b.remove();
+    });
   })();
 
   // FAQ: immer nur eine Antwort offen. Ohne das entsteht beim Durchklicken
