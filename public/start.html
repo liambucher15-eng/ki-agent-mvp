@@ -58,6 +58,14 @@
          darauf. Also: --violett fuer Flaechen, --violett-text fuer Schrift. */
       --violett: #6d6de4;        /* aus der Figur im Bild entnommen */
       --violett-text: #5252c9;   /* gemessen 6,16:1 auf Weiss, 5,6:1 auf --flaeche */
+      /* Hintergrund der Ablauf-Buehne. Bis ein echtes Bild da ist, steht hier
+         ein Verlauf als Ersatz. ZUM ERSETZEN: Bild unter
+         public/bilder/ablauf-hintergrund.webp ablegen und diesen Wert durch
+         url("bilder/ablauf-hintergrund.webp") ersetzen, sonst nichts. */
+      --ablauf-grund:
+        radial-gradient(70% 55% at 15% 12%, rgba(255,255,255,.75), transparent 60%),
+        radial-gradient(65% 60% at 88% 90%, rgba(109,109,228,.45), transparent 65%),
+        linear-gradient(150deg, #eceafc 0%, #d6d3f8 48%, #bfbaf3 100%);
       --rand: clamp(1.25rem, 5vw, 3rem);
       --sans: "Inter", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
@@ -331,17 +339,20 @@
       content: ""; position: absolute; left: 0; top: .35rem; bottom: .35rem; width: 2px;
       background: var(--rand-linie); border-radius: 2px;
     }
+    /* Der Fortschritt ist KEINE CSS-Animation mehr, sondern haengt an der
+       Variable --fortschritt (0 bis 1), die das Skript setzt. Grund: Vorher
+       lief hier eine Keyframe-Animation, und die Weiterschaltung haing an
+       deren animationend. Das ergab zwei gemessene Fehler. Erstens setzte ein
+       Klick vonHand=true und schaltete die Automatik fuer immer ab. Zweitens
+       griff das Pausieren beim Rausscrollen nie, weil die animation-
+       Kurzschrift in der spezifischeren Regel animation-play-state wieder auf
+       running zurueckstellte. Jetzt liest der Balken dieselbe Uhr wie der
+       Wechsel, die beiden koennen nicht mehr auseinanderlaufen. */
     .schritt::after {
-      content: ""; position: absolute; left: 0; top: .35rem; width: 2px; height: 0;
-      background: var(--violett-text); border-radius: 2px;
+      content: ""; position: absolute; left: 0; top: .35rem; width: 2px;
+      height: calc(100% - .7rem); background: var(--violett-text); border-radius: 2px;
+      transform: scaleY(var(--fortschritt, 0)); transform-origin: top;
     }
-    .schritt[aria-current="true"]::after { height: calc(100% - .7rem); }
-    .schritt[aria-current="true"][data-lauf="ja"]::after {
-      animation: spur var(--takt, 7s) linear forwards;
-    }
-    .schritt[data-pause="ja"]::after { animation-play-state: paused; }
-    @keyframes spur { from { height: 0; } to { height: calc(100% - .7rem); } }
-    @media (prefers-reduced-motion: reduce) { .schritt::after { animation: none !important; } }
 
     .schritt .nr {
       font-size: .95rem; font-weight: 600; color: var(--tinte-hell);
@@ -363,11 +374,20 @@
     .schritt[aria-current="true"] .wie { max-height: 9rem; opacity: 1; margin-top: .45rem; }
 
     /* Bühne rechts. Bricht auf grossen Schirmen nach rechts aus dem Raster
-       aus, damit sie wie in der Vorlage bis zum Fensterrand laeuft. */
+       aus, damit sie wie in der Vorlage bis zum Fensterrand laeuft.
+       Aufbau in drei Lagen: Hintergrund, darauf ein schwebendes Browser-
+       Fenster, darin die Aufnahme zum jeweiligen Schritt. Bewusst KEINE feste
+       aspect-ratio: Die Hoehe kommt vom Fenster plus Innenabstand, dann kann
+       das Fenster nie abgeschnitten werden, egal wie breit die Spalte wird. */
     .buehne {
       position: relative; border-radius: 18px; overflow: hidden;
-      background: var(--violett-flaeche, #dcdafa);
-      aspect-ratio: 16 / 10;
+      display: grid; place-items: center;
+      padding: clamp(1.1rem, 2.6vw, 2.4rem);
+      background: #dcdafa;
+    }
+    .buehne-grund {
+      position: absolute; inset: 0; z-index: 0;
+      background: var(--ablauf-grund) center / cover no-repeat;
     }
     /* Bis an den Fensterrand ziehen. Ein blosses negatives var(--rand)
        reichte nicht: Die Bahn ist auf 72rem gedeckelt und zentriert, es
@@ -379,6 +399,24 @@
         border-radius: 18px 0 0 18px;
       }
     }
+    /* Browser-Fenster, das auf dem Hintergrund schwebt. */
+    .fenster {
+      position: relative; z-index: 1; width: 100%; max-width: 44rem;
+      border-radius: 12px; overflow: hidden; background: #fff;
+      box-shadow: 0 28px 55px -22px rgba(20,20,40,.5), 0 6px 16px -8px rgba(20,20,40,.28);
+    }
+    .fenster-leiste {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .5rem .75rem; background: #f2f1f7; border-bottom: 1px solid var(--rand-fein);
+    }
+    .fenster-leiste i { width: 9px; height: 9px; border-radius: 50%; background: #d3d1dc; }
+    .fenster-leiste .adresse {
+      margin-left: .45rem; font-size: .7rem; color: var(--tinte-hell);
+      background: #fff; border-radius: 5px; padding: .15rem .6rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;
+    }
+    .fenster-buehne { position: relative; aspect-ratio: 16 / 9; background: #fff; }
+
     .buehne-bild { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
     .buehne-bild[data-aktiv="ja"] { opacity: 1; }
     .buehne-bild video { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -386,8 +424,8 @@
     /* Platzhalter, solange keine Aufnahme hinterlegt ist. Verschwindet von
        selbst, sobald das Video echte Daten liefert. */
     .platzhalter {
-      position: absolute; inset: 0; display: grid; place-content: center; gap: .6rem;
-      text-align: center; padding: 2rem; background: #dcdafa;
+      position: absolute; inset: 0; display: grid; place-content: center; gap: .5rem;
+      text-align: center; padding: 1.5rem; background: #dcdafa;
       background-image:
         linear-gradient(45deg, rgba(255,255,255,.5) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.5) 75%),
         linear-gradient(45deg, rgba(255,255,255,.5) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.5) 75%);
@@ -644,8 +682,8 @@
   <section id="so">
     <div class="bahn">
       <div class="kopfblock">
-        <span class="augen">In drei Schritten</span>
-        <h2>In drei Minuten steht er.</h2>
+        <span class="augen">In fünf Schritten</span>
+        <h2>In rund zehn Minuten steht er.</h2>
         <p class="lead">Keine Wissensdatenbank, keine Dokumentation, keine Agentur.</p>
       </div>
       <div class="ablauf">
@@ -656,20 +694,34 @@
             <li>
               <button class="schritt" type="button" aria-current="true" data-ziel="0">
                 <span class="nr">01</span>
-                <span class="titel">Adresse eingeben</span>
-                <span class="wie">Er liest deine Seite selbst: Unterseiten, Öffnungszeiten, Angebot, Preise, Kontakt. Danach zeigt er dir, was er verstanden hat, bevor irgendetwas live geht.</span>
+                <span class="titel">Plan wählen</span>
+                <span class="wie">Gratis anfangen oder direkt das Abo lösen. Der Preis steht fest, egal wie viele Gespräche zusammenkommen.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="1">
                 <span class="nr">02</span>
-                <span class="titel">Gesicht geben</span>
-                <span class="wie">Name, Rolle, Tonfall. Dann wird eine Figur gezeichnet, die zu deinem Betrieb passt. Du kannst sie ändern, bis sie stimmt.</span>
+                <span class="titel">Webseite scannen lassen</span>
+                <span class="wie">Du gibst deine Adresse ein, den Rest macht er allein: Unterseiten, Öffnungszeiten, Angebot, Preise, Kontakt.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="2">
                 <span class="nr">03</span>
+                <span class="titel">Nachschauen, was er verstanden hat</span>
+                <span class="wie">Er zeigt dir alles, bevor etwas live geht. Du korrigierst, ergänzt was fehlt und hängst Dokumente an, etwa die Speisekarte.</span>
+              </button>
+            </li>
+            <li>
+              <button class="schritt" type="button" aria-current="false" data-ziel="3">
+                <span class="nr">04</span>
+                <span class="titel">Charakter erschaffen</span>
+                <span class="wie">Name, Rolle, Tonfall. Dann wird eine Figur gezeichnet, die zu deinem Betrieb passt. Du kannst sie ändern, bis sie stimmt.</span>
+              </button>
+            </li>
+            <li>
+              <button class="schritt" type="button" aria-current="false" data-ziel="4">
+                <span class="nr">05</span>
                 <span class="titel">Eine Zeile einfügen</span>
                 <span class="wie">Ein kurzer Code-Schnipsel in deine Webseite. Fertig. Er ist sofort auf allen Unterseiten da.</span>
               </button>
@@ -678,35 +730,62 @@
           <a class="knopf knopf-voll" href="onboarding-aura.html">Jetzt einrichten</a>
         </div>
 
-        <!-- Buehne. Jede Aufnahme liegt als eigenes video-Element bereit und
-             wird per Deckkraft eingeblendet. Solange keine Datei hinterlegt
-             ist, bleibt der Platzhalter stehen; das Skript blendet ihn aus,
-             sobald das Video echte Daten liefert.
-             ZUM ERSETZEN: Datei unter public/videos/ ablegen und den Pfad im
-             src eintragen. Format: MP4, ohne Ton, moeglichst 16:10. -->
+        <!-- Buehne in drei Lagen: Hintergrund, schwebendes Fenster, Aufnahme.
+             Jede Aufnahme liegt als eigenes video-Element bereit und wird per
+             Deckkraft eingeblendet. Solange keine Datei hinterlegt ist, bleibt
+             der Platzhalter stehen; das Skript blendet ihn erst aus, wenn das
+             Video wirklich Bilddaten liefert.
+             ZUM ERSETZEN, Aufnahmen: Datei unter public/videos/ ablegen, der
+             src-Pfad stimmt dann schon. Format MP4, ohne Ton, 16:9.
+             ZUM ERSETZEN, Hintergrund: siehe --ablauf-grund ganz oben. -->
         <div class="buehne" id="buehne">
-          <div class="buehne-bild" data-aktiv="ja" data-nr="0">
-            <video muted loop playsinline preload="metadata" src="videos/schritt-1-scan.mp4"></video>
-            <div class="platzhalter">
-              <span class="ph-marke">Platzhalter</span>
-              <span class="ph-nr">01</span>
-              <span class="ph-text">Aufnahme: Adresse eintippen, Scan läuft, Ergebnis erscheint.</span>
+          <div class="buehne-grund"></div>
+          <div class="fenster">
+            <div class="fenster-leiste" aria-hidden="true">
+              <i></i><i></i><i></i>
+              <span class="adresse">aurachat.ch/einrichten</span>
             </div>
-          </div>
-          <div class="buehne-bild" data-aktiv="nein" data-nr="1">
-            <video muted loop playsinline preload="none" src="videos/schritt-2-figur.mp4"></video>
-            <div class="platzhalter">
-              <span class="ph-marke">Platzhalter</span>
-              <span class="ph-nr">02</span>
-              <span class="ph-text">Aufnahme: Name und Ton wählen, Figur entsteht.</span>
-            </div>
-          </div>
-          <div class="buehne-bild" data-aktiv="nein" data-nr="2">
-            <video muted loop playsinline preload="none" src="videos/schritt-3-einbau.mp4"></video>
-            <div class="platzhalter">
-              <span class="ph-marke">Platzhalter</span>
-              <span class="ph-nr">03</span>
-              <span class="ph-text">Aufnahme: Code kopieren, einfügen, Agent erscheint auf der Seite.</span>
+            <div class="fenster-buehne">
+              <div class="buehne-bild" data-aktiv="ja" data-nr="0">
+                <video muted loop playsinline preload="metadata" src="videos/schritt-1-plan.mp4"></video>
+                <div class="platzhalter">
+                  <span class="ph-marke">Platzhalter</span>
+                  <span class="ph-nr">01</span>
+                  <span class="ph-text">Aufnahme: Plan auswählen, gratis oder Abo.</span>
+                </div>
+              </div>
+              <div class="buehne-bild" data-aktiv="nein" data-nr="1">
+                <video muted loop playsinline preload="none" src="videos/schritt-2-scan.mp4"></video>
+                <div class="platzhalter">
+                  <span class="ph-marke">Platzhalter</span>
+                  <span class="ph-nr">02</span>
+                  <span class="ph-text">Aufnahme: Adresse eintippen, Scan läuft durch.</span>
+                </div>
+              </div>
+              <div class="buehne-bild" data-aktiv="nein" data-nr="2">
+                <video muted loop playsinline preload="none" src="videos/schritt-3-pruefen.mp4"></video>
+                <div class="platzhalter">
+                  <span class="ph-marke">Platzhalter</span>
+                  <span class="ph-nr">03</span>
+                  <span class="ph-text">Aufnahme: Gefundene Infos prüfen und ergänzen.</span>
+                </div>
+              </div>
+              <div class="buehne-bild" data-aktiv="nein" data-nr="3">
+                <video muted loop playsinline preload="none" src="videos/schritt-4-charakter.mp4"></video>
+                <div class="platzhalter">
+                  <span class="ph-marke">Platzhalter</span>
+                  <span class="ph-nr">04</span>
+                  <span class="ph-text">Aufnahme: Name und Ton wählen, Figur entsteht.</span>
+                </div>
+              </div>
+              <div class="buehne-bild" data-aktiv="nein" data-nr="4">
+                <video muted loop playsinline preload="none" src="videos/schritt-5-einbau.mp4"></video>
+                <div class="platzhalter">
+                  <span class="ph-marke">Platzhalter</span>
+                  <span class="ph-nr">05</span>
+                  <span class="ph-text">Aufnahme: Code kopieren, einfügen, Agent erscheint.</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -896,7 +975,7 @@
       <div class="faq">
         <details>
           <summary>Wie lange dauert die Einrichtung wirklich?</summary>
-          <p class="antwort">Etwa drei Minuten. Du gibst deine Webseite an, wartest den Scan ab, prüfst was er verstanden hat und gibst ihm ein Gesicht. Danach fügst du eine Zeile in deine Seite ein.</p>
+          <p class="antwort">Rund zehn Minuten. Du wählst einen Plan, gibst deine Webseite an und wartest den Scan ab. Danach prüfst du, was er verstanden hat, und gibst ihm ein Gesicht. Zuletzt fügst du eine Zeile in deine Seite ein.</p>
         </details>
         <details>
           <summary>Muss ich vorher etwas vorbereiten?</summary>
@@ -1006,6 +1085,17 @@
   })();
 
   // Ablauf-Stepper: ein Schritt offen, passende Aufnahme rechts.
+  //
+  // EINE Uhr steuert beides. Der Balken liest dieselbe verstrichene Zeit wie
+  // die Weiterschaltung, deshalb koennen sie nicht auseinanderlaufen. Die
+  // Vorgaengerfassung koppelte den Wechsel an das animationend einer CSS-
+  // Animation; dabei wurden zwei Fehler gemessen:
+  //   1. Ein Klick setzte vonHand=true und schaltete die Automatik dauerhaft
+  //      ab. Nach einem einzigen Klick stand die Sektion fuer immer still.
+  //   2. Das Pausieren beim Rausscrollen wirkte nie, weil die animation-
+  //      Kurzschrift animation-play-state auf running zurueckstellte.
+  // Ausserdem rief der IntersectionObserver zeige() bei jedem Sichtbarwerden
+  // auf und begann den laufenden Schritt dadurch immer wieder von vorn.
   (function () {
     const liste = document.getElementById("schritte");
     const buehne = document.getElementById("buehne");
@@ -1013,65 +1103,92 @@
 
     const knoepfe = [...liste.querySelectorAll(".schritt")];
     const bilder = [...buehne.querySelectorAll(".buehne-bild")];
+    if (!knoepfe.length) return;
+
     const TAKT = 7000;
     const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let aktiv = 0, vonHand = false, sichtbar = false;
 
-    knoepfe.forEach((k) => k.style.setProperty("--takt", TAKT + "ms"));
+    let aktiv = 0;
+    let verstrichen = 0;     // ms auf dem laufenden Schritt
+    let stempel = 0;         // performance.now() des letzten Bildes
+    let sichtbar = false;
+    let laeuft = false;
 
     // Platzhalter verschwindet nur, wenn das Video wirklich Bilddaten hat.
     // Fehlt die Datei, bleibt er stehen, statt eine leere Flaeche zu zeigen.
     bilder.forEach((b) => {
       const v = b.querySelector("video");
       const ph = b.querySelector(".platzhalter");
+      if (!v || !ph) return;
       v.addEventListener("loadeddata", () => { if (v.videoWidth > 0) ph.remove(); });
     });
 
+    const malen = () => {
+      const anteil = ruhig ? 1 : Math.min(verstrichen / TAKT, 1);
+      knoepfe.forEach((k, i) => k.style.setProperty("--fortschritt", i === aktiv ? anteil : 0));
+    };
+
     const zeige = (nr) => {
       aktiv = nr;
-      knoepfe.forEach((k, i) => {
-        const an = i === nr;
-        k.setAttribute("aria-current", an ? "true" : "false");
-        // Attribut kurz entfernen und Layout erzwingen, sonst laeuft die
-        // Animation beim erneuten Setzen nicht wieder von vorn los.
-        k.removeAttribute("data-lauf");
-        k.removeAttribute("data-pause");
-        if (an && !vonHand && !ruhig && sichtbar) { void k.offsetWidth; k.setAttribute("data-lauf", "ja"); }
-      });
+      verstrichen = 0;
+      knoepfe.forEach((k, i) => k.setAttribute("aria-current", i === nr ? "true" : "false"));
       bilder.forEach((b, i) => {
         const an = i === nr;
         b.setAttribute("data-aktiv", an ? "ja" : "nein");
         const v = b.querySelector("video");
+        if (!v) return;
         if (an) { if (v.preload === "none") v.preload = "metadata"; v.play().catch(() => {}); }
         else v.pause();
       });
+      malen();
     };
 
-    // Weitergeschaltet wird am Ende der Fortschrittsspur, nicht per eigenem
-    // Zeitgeber. Damit koennen Balken und Wechsel nicht auseinanderlaufen,
-    // und in Hintergrund-Tabs steht beides zusammen still statt nur eines.
-    knoepfe.forEach((k) => k.addEventListener("animationend", (e) => {
-      if (e.animationName !== "spur") return;
-      if (vonHand || ruhig) return;
-      if (k.getAttribute("aria-current") !== "true") return;
-      zeige((aktiv + 1) % knoepfe.length);
-    }));
+    const bild = (jetzt) => {
+      if (!laeuft) return;
+      // Deckel auf 100 ms: Nach einem Tab-Wechsel liegt der letzte Stempel
+      // sonst Minuten zurueck und es wuerden mehrere Schritte auf einmal
+      // uebersprungen.
+      verstrichen += Math.min(jetzt - stempel, 100);
+      stempel = jetzt;
+      if (verstrichen >= TAKT) zeige((aktiv + 1) % knoepfe.length);
+      else malen();
+      requestAnimationFrame(bild);
+    };
 
+    const starte = () => {
+      if (laeuft || ruhig) return;
+      laeuft = true;
+      stempel = performance.now();
+      requestAnimationFrame(bild);
+    };
+    const halte = () => { laeuft = false; };
+
+    // Klick springt zum Schritt und stellt die Uhr zurueck, schaltet die
+    // Automatik aber NICHT ab. Genau das war der gemeldete Fehler.
     knoepfe.forEach((k) => k.addEventListener("click", () => {
-      // Ab dem ersten eigenen Klick nicht mehr automatisch weiterschalten.
-      vonHand = true;
       zeige(+k.dataset.ziel);
+      if (sichtbar) starte();
     }));
 
-    // Erst laufen lassen, wenn die Sektion im Bild ist. Sonst ist der erste
-    // Schritt schon durch, bevor jemand hinschaut.
+    // Anhalten, solange jemand mit Maus oder Tastatur auf der Liste ist. Ohne
+    // das springt einem der Schritt beim Lesen weg. Betrifft nur die Liste,
+    // nicht die ganze Sektion, damit blosses Scrollen nichts stoppt.
+    liste.addEventListener("pointerenter", halte);
+    liste.addEventListener("focusin", halte);
+    liste.addEventListener("pointerleave", () => { if (sichtbar) starte(); });
+    liste.addEventListener("focusout", () => { if (sichtbar) starte(); });
+
+    // Erst laufen lassen, wenn die Sektion im Bild ist. Anders als frueher
+    // wird dabei nicht neu begonnen, sondern nur die Uhr angehalten und
+    // wieder gestartet.
     new IntersectionObserver((eintraege) => {
       eintraege.forEach((e) => {
         sichtbar = e.isIntersecting;
-        if (sichtbar) zeige(aktiv);
-        else knoepfe.forEach((k) => k.setAttribute("data-pause", "ja"));
+        if (sichtbar) starte(); else halte();
       });
     }, { threshold: 0.35 }).observe(liste);
+
+    zeige(0);
   })();
 
   // FAQ: immer nur eine Antwort offen. Ohne das entsteht beim Durchklicken
