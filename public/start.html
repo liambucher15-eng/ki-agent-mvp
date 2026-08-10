@@ -325,7 +325,7 @@
        Weiterschaltung stoppt dauerhaft, sobald jemand selbst klickt, und
        startet bei prefers-reduced-motion gar nicht erst. */
     .ablauf { display: grid; gap: clamp(2rem, 4vw, 3.5rem); grid-template-columns: 1fr; align-items: start; }
-    @media (min-width: 900px) { .ablauf { grid-template-columns: minmax(0, 3fr) minmax(0, 5fr); } }
+    @media (min-width: 900px) { .ablauf { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
     .schritte { list-style: none; display: grid; gap: 0; margin: 0 0 2rem; }
     .schritt {
@@ -401,7 +401,7 @@
     }
     /* Browser-Fenster, das auf dem Hintergrund schwebt. */
     .fenster {
-      position: relative; z-index: 1; width: 100%; max-width: 44rem;
+      position: relative; z-index: 1; width: 100%; max-width: 26rem;
       border-radius: 12px; overflow: hidden; background: #fff;
       box-shadow: 0 28px 55px -22px rgba(20,20,40,.5), 0 6px 16px -8px rgba(20,20,40,.28);
     }
@@ -415,7 +415,9 @@
       background: #fff; border-radius: 5px; padding: .15rem .6rem;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;
     }
-    .fenster-buehne { position: relative; aspect-ratio: 16 / 9; background: #fff; }
+    /* Hochkant: Die Aufnahmen zeigen einen Bildschirm-Ablauf von oben nach
+       unten, quer waere davon zu wenig zu sehen. */
+    .fenster-buehne { position: relative; aspect-ratio: 4 / 5; background: #fff; }
 
     .buehne-bild { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
     .buehne-bild[data-aktiv="ja"] { opacity: 1; }
@@ -695,35 +697,35 @@
               <button class="schritt" type="button" aria-current="true" data-ziel="0">
                 <span class="nr">01</span>
                 <span class="titel">Plan wählen</span>
-                <span class="wie">Gratis anfangen oder direkt das Abo lösen. Der Preis steht fest, egal wie viele Gespräche zusammenkommen.</span>
+                <span class="wie">Gratis anfangen oder direkt das Abo lösen, der Preis bleibt gleich.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="1">
                 <span class="nr">02</span>
                 <span class="titel">Webseite scannen lassen</span>
-                <span class="wie">Du gibst deine Adresse ein, den Rest macht er allein: Unterseiten, Öffnungszeiten, Angebot, Preise, Kontakt.</span>
+                <span class="wie">Du gibst deine Adresse ein, den Rest liest er allein von deiner Seite.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="2">
                 <span class="nr">03</span>
                 <span class="titel">Nachschauen, was er verstanden hat</span>
-                <span class="wie">Er zeigt dir alles, bevor etwas live geht. Du korrigierst, ergänzt was fehlt und hängst Dokumente an, etwa die Speisekarte.</span>
+                <span class="wie">Er zeigt dir alles, bevor etwas live geht, du korrigierst und ergänzt.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="3">
                 <span class="nr">04</span>
                 <span class="titel">Charakter erschaffen</span>
-                <span class="wie">Name, Rolle, Tonfall. Dann wird eine Figur gezeichnet, die zu deinem Betrieb passt. Du kannst sie ändern, bis sie stimmt.</span>
+                <span class="wie">Name, Ton und Gesicht, so lange geändert bis die Figur zu dir passt.</span>
               </button>
             </li>
             <li>
               <button class="schritt" type="button" aria-current="false" data-ziel="4">
                 <span class="nr">05</span>
                 <span class="titel">Eine Zeile einfügen</span>
-                <span class="wie">Ein kurzer Code-Schnipsel in deine Webseite. Fertig. Er ist sofort auf allen Unterseiten da.</span>
+                <span class="wie">Ein kurzer Code-Schnipsel in deine Webseite, danach ist er auf allen Unterseiten da.</span>
               </button>
             </li>
           </ul>
@@ -736,7 +738,7 @@
              der Platzhalter stehen; das Skript blendet ihn erst aus, wenn das
              Video wirklich Bilddaten liefert.
              ZUM ERSETZEN, Aufnahmen: Datei unter public/videos/ ablegen, der
-             src-Pfad stimmt dann schon. Format MP4, ohne Ton, 16:9.
+             src-Pfad stimmt dann schon. Format MP4, ohne Ton, hochkant 4:5.
              ZUM ERSETZEN, Hintergrund: siehe --ablauf-grund ganz oben. -->
         <div class="buehne" id="buehne">
           <div class="buehne-grund"></div>
@@ -1170,12 +1172,14 @@
       if (sichtbar) starte();
     }));
 
-    // Anhalten, solange jemand mit Maus oder Tastatur auf der Liste ist. Ohne
-    // das springt einem der Schritt beim Lesen weg. Betrifft nur die Liste,
-    // nicht die ganze Sektion, damit blosses Scrollen nichts stoppt.
-    liste.addEventListener("pointerenter", halte);
+    // NUR Tastaturfokus haelt an, bewusst NICHT der Mauszeiger. Eine Pause
+    // bei Hover war schon eingebaut und wurde wieder entfernt: Beim Messen
+    // stand der Balken nach 315 ms fest, weil der Zeiger auf der Liste lag.
+    // Genau so entsteht wieder der Eindruck, die Sektion sei kaputt, nur
+    // dass niemand den Grund sieht. Wer die Liste liest, laesst die Maus oft
+    // genau dort liegen. Beim Tastaturfokus ist die Pause dagegen richtig:
+    // Sonst wandert die Auswahl unter dem Finger weg.
     liste.addEventListener("focusin", halte);
-    liste.addEventListener("pointerleave", () => { if (sichtbar) starte(); });
     liste.addEventListener("focusout", () => { if (sichtbar) starte(); });
 
     // Erst laufen lassen, wenn die Sektion im Bild ist. Anders als frueher
