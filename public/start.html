@@ -541,30 +541,39 @@
          damit nichts am Rand aufpoppt. */
       opacity: var(--klar, 1);
       /* Heller Rand und Schatten trennen die uebereinanderliegenden Karten
-         voneinander, sonst verschwimmen sie zu einer Flaeche. */
-      box-shadow: 0 18px 38px -24px rgba(20, 20, 40, .5),
+         voneinander, sonst verschwimmen sie zu einer Flaeche. Der Schatten
+         ist bewusst knapp gehalten: Er wird bei jedem Bild des Bildlaufs
+         neu gezeichnet, ein weit gestreuter kostet dort spuerbar. */
+      box-shadow: 0 10px 22px -14px rgba(20, 20, 40, .45),
                   0 0 0 4px var(--flaeche);
       cursor: pointer;
+      /* Eigene Ebene, damit Verschieben und Skalieren nicht bei jedem Bild
+         eine Neuberechnung des Umbruchs ausloesen. */
+      will-change: transform;
+      contain: paint;
     }
     /* Unsichtbares darf nicht anklickbar sein. */
     .figur[data-weg="ja"] { pointer-events: none; }
     @media (prefers-reduced-motion: reduce) { .galerie { scroll-behavior: auto; } }
 
-    /* Pfeile. Sie sind die sichtbare Bedienung, weil die Bildlaufleiste
-       ausgeblendet ist. */
+    /* Pfeile UNTER der Galerie statt an den Seiten: Dort lagen sie ueber
+       den Karten, waren schlecht zu sehen und beim Klicken leicht zu
+       verfehlen. Unten stehen sie frei und sind immer erreichbar. */
+    .galerie-steuerung {
+      display: flex; justify-content: center; gap: .8rem;
+      margin-top: clamp(1.1rem, 2.4vw, 1.8rem);
+    }
     .galerie-pfeil {
-      position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
-      width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+      width: 52px; height: 52px; border-radius: 50%; cursor: pointer;
       display: grid; place-items: center;
       background: var(--grund); color: var(--tinte);
       border: 1px solid var(--rand-linie);
       box-shadow: 0 6px 18px -8px rgba(17, 17, 20, .35);
+      transition: background .15s ease, border-color .15s ease;
     }
-    .galerie-pfeil[data-richtung="-1"] { left: clamp(.5rem, 2vw, 1.5rem); }
-    .galerie-pfeil[data-richtung="1"]  { right: clamp(.5rem, 2vw, 1.5rem); }
-    .galerie-pfeil:hover { background: var(--flaeche); }
-    .galerie-pfeil[disabled] { opacity: .35; cursor: default; }
-    .galerie-pfeil svg { width: 20px; height: 20px; }
+    .galerie-pfeil:hover { background: var(--tinte); color: var(--auf-dunkel); border-color: var(--tinte); }
+    .galerie-pfeil:active { transform: scale(.94); }
+    .galerie-pfeil svg { width: 22px; height: 22px; }
     .figur img { width: 100%; height: 100%; object-fit: cover; display: block; }
     /* Der Platzhalter liegt UNTER dem Bild, nicht darueber: Fehlt die
        Datei, bleibt er sichtbar; ist sie da, deckt das Bild ihn zu. Damit
@@ -828,9 +837,6 @@
     <!-- Der Faecher steht ausserhalb der Bahn, damit er ueber die volle
          Fensterbreite laufen kann. Die Bahn deckelt auf 72rem. -->
     <div class="galerie-huelle">
-      <button class="galerie-pfeil" type="button" data-richtung="-1" aria-label="Vorherige Figur">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
       <div class="galerie" id="galerie" tabindex="0" role="region" aria-label="Beispiel-Figuren zum Durchblättern">
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
@@ -873,9 +879,14 @@
           <figcaption class="branche">Autogarage</figcaption>
         </figure>
       </div>
-      <button class="galerie-pfeil" type="button" data-richtung="1" aria-label="Nächste Figur">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
+      <div class="galerie-steuerung">
+        <button class="galerie-pfeil" type="button" data-richtung="-1" aria-label="Vorherige Figur">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="galerie-pfeil" type="button" data-richtung="1" aria-label="Nächste Figur">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -1406,10 +1417,11 @@
     const KLEINSTE = 0.36; // um so viel schrumpft die hinterste Karte
     // Hoechstens drei Karten je Seite plus die mittlere. Alles weiter
     // draussen wird ausgeblendet, sonst stapeln sich am Rand zu viele
-    // Streifen. Der Uebergang laeuft ueber die naechste halbe Kartenbreite,
-    // damit nichts aufpoppt.
+    // Streifen. Der Uebergang laeuft ueber die naechste halbe Kartenbreite.
     const SICHTBAR = 3;
     const UEBERGANG = 0.5;
+    const GRENZE = SICHTBAR + UEBERGANG;
+    const DAUER = 420;     // ms fuer eine Fahrt per Pfeil oder Kartenklick
 
     const klone = (wohin) => echte.map((k) => {
       const c = k.cloneNode(true);
@@ -1423,61 +1435,68 @@
     klone("nach").forEach((c) => bahn.append(c));
     const karten = [...bahn.querySelectorAll(".figur")];
 
-    // Gemessen wird ueber offsetLeft, NICHT ueber getBoundingClientRect:
-    // Letzteres liefert die bereits verschobene und skalierte Lage, die
-    // Rechnung bekaeme ihr eigenes Ergebnis als Eingabe und finge an zu
-    // pendeln. offsetLeft und offsetWidth kommen aus dem Layout und
-    // bleiben von transform unberuehrt.
-    const mitteVon = (k) => k.offsetLeft + k.offsetWidth / 2;
-    const schrittBreite = () => Math.abs(mitteVon(karten[1]) - mitteVon(karten[0])) || 1;
-    const satzBreite = () => Math.abs(mitteVon(karten[ANZAHL]) - mitteVon(karten[0]));
-    const linksVon = (k) => mitteVon(k) - bahn.clientWidth / 2;
+    // Die Layout-Lagen werden EINMAL gemessen und gemerkt, nicht bei jedem
+    // Bild neu. Sie aendern sich nur, wenn sich die Groesse aendert, denn
+    // transform wirkt nicht aufs Layout. Vorher las male() pro Bild
+    // offsetLeft von 24 Karten und rief zusaetzlich schrittBreite() je
+    // Karte auf; jeder dieser Zugriffe zwingt den Browser, das Layout
+    // sofort durchzurechnen. Genau daher kam das Ruckeln.
+    let lagen = [];      // Mitte jeder Karte im Bildlauf-Koordinatensystem
+    let schritt = 1;     // Abstand zwischen zwei Kartenmitten
+    let satz = 0;        // Breite eines vollstaendigen Satzes
+    let breite = 0;      // sichtbare Breite der Bahn
+    const messen = () => {
+      lagen = karten.map((k) => k.offsetLeft + k.offsetWidth / 2);
+      schritt = Math.abs(lagen[1] - lagen[0]) || 1;
+      satz = Math.abs(lagen[ANZAHL] - lagen[0]);
+      breite = bahn.clientWidth;
+    };
+    messen();
 
     // Aufsummierte, immer kleiner werdende Stufen. Bei 0 null, danach
     // strebt die Summe gegen ERSTER/(1-ENGER) und die hintersten Karten
     // liegen fast aufeinander.
-    const bogen = (d) => schrittBreite() * ERSTER * (1 - Math.pow(ENGER, d)) / (1 - ENGER);
+    const bogen = (d) => schritt * ERSTER * (1 - Math.pow(ENGER, d)) / (1 - ENGER);
+    const linksVon = (nr) => lagen[nr] - breite / 2;
 
     const naechsteKarte = () => {
-      const ziel = bahn.scrollLeft + bahn.clientWidth / 2;
+      const ziel = bahn.scrollLeft + breite / 2;
       let nr = 0, beste = Infinity;
-      karten.forEach((k, i) => {
-        const d = Math.abs(mitteVon(k) - ziel);
+      for (let i = 0; i < lagen.length; i++) {
+        const d = Math.abs(lagen[i] - ziel);
         if (d < beste) { beste = d; nr = i; }
-      });
+      }
       return nr;
     };
 
     let geplant = false;
     const male = () => {
       geplant = false;
-      // Vor dem ersten Layout ist die Bahn null breit. Dann nichts setzen,
-      // sonst landen alle Karten auf dem kleinsten Wert und bleiben dort:
-      // Die Nachbesserung haengt an requestAnimationFrame, und das steht
-      // in einem nicht gezeichneten Tab still. Genau so ist es passiert.
-      if (!bahn.clientWidth) return;
-      const ziel = bahn.scrollLeft + bahn.clientWidth / 2;
-      const schritt = schrittBreite();
-      karten.forEach((k) => {
-        // Abstand in KARTENABSTAENDEN, nicht an der Fensterbreite gemessen.
-        // Mit der Fensterbreite brach die Treppe auf dem Handy zusammen:
-        // Bei 375 px lag schon der direkte Nachbar eine halbe Fensterbreite
-        // entfernt und fiel sofort auf den kleinsten Wert.
-        const s = (mitteVon(k) - ziel) / schritt;
-        const d = Math.abs(s);
-        k.style.setProperty("--gross", (1 - Math.min(d, STUFEN) / STUFEN * KLEINSTE).toFixed(4));
-        const klar = Math.max(0, Math.min((SICHTBAR + UEBERGANG - d) / UEBERGANG, 1));
-        k.style.setProperty("--klar", klar.toFixed(3));
-        if (klar <= 0) k.setAttribute("data-weg", "ja");
-        else k.removeAttribute("data-weg");
-        // Die Karte sitzt im Layout bei s * schritt; hin soll sie auf den
-        // Bogen. Die Differenz ist der Schub, und weil er ueber transform
-        // laeuft, aendert er das Layout nicht.
-        const schub = Math.sign(s) * bogen(d) - s * schritt;
-        k.style.setProperty("--schub", schub.toFixed(1) + "px");
-        // Naeher an der Mitte heisst weiter vorn.
-        k.style.zIndex = String(1000 - Math.round(d * 10));
-      });
+      if (!breite) return;
+      const ziel = bahn.scrollLeft + breite / 2;
+      for (let i = 0; i < karten.length; i++) {
+        const k = karten[i];
+        const s = (lagen[i] - ziel) / schritt;
+        const d = s < 0 ? -s : s;
+        // Weit draussen: einmal ausblenden, danach in Ruhe lassen. Von 24
+        // Karten sind hoechstens neun in Reichweite; die uebrigen bei jedem
+        // Bild anzufassen war der groesste Teil der Arbeit.
+        if (d > GRENZE) {
+          if (k.dataset.weg !== "ja") {
+            k.style.setProperty("--klar", "0");
+            k.dataset.weg = "ja";
+          }
+          continue;
+        }
+        if (k.dataset.weg === "ja") delete k.dataset.weg;
+        k.style.setProperty("--gross", (1 - (d < STUFEN ? d : STUFEN) / STUFEN * KLEINSTE).toFixed(3));
+        k.style.setProperty("--schub", ((s < 0 ? -1 : 1) * bogen(d) - s * schritt).toFixed(1) + "px");
+        k.style.setProperty("--klar", (d > SICHTBAR ? (GRENZE - d) / UEBERGANG : 1).toFixed(2));
+        // z-Index aendert sich selten. Nur schreiben, wenn er sich wirklich
+        // aendert, sonst wird jedes Bild neu zusammengesetzt.
+        const lage = String(1000 - Math.round(d * 10));
+        if (k.style.zIndex !== lage) k.style.zIndex = lage;
+      }
     };
     const anstossen = () => {
       if (geplant) return;
@@ -1490,23 +1509,26 @@
     // ganzer Satz als Puffer auf jeder Seite, das reicht bei weitem.
     let ruhe;
     const umlauf = () => {
-      const sb = satzBreite();
-      if (!sb) return;
-      const anfang = linksVon(karten[ANZAHL]);
+      if (!satz) return;
+      const anfang = linksVon(ANZAHL);
       let neu = bahn.scrollLeft;
-      if (neu < anfang - 1) neu += sb;
-      else if (neu > anfang + sb - 1) neu -= sb;
+      if (neu < anfang - 1) neu += satz;
+      else if (neu > anfang + satz - 1) neu -= satz;
       else return;                       // steht schon im mittleren Satz
       // Einrasten fuer den Sprung abschalten. Sonst zieht der Browser das
-      // Ziel auf den naechsten Rastpunkt: gemessen 31 px daneben, und weil
-      // der Sprung dadurch nicht mehr genau eine Satzbreite betraegt,
+      // Ziel auf den naechsten Rastpunkt: gemessen 1213 px daneben, und
+      // weil der Sprung dadurch nicht mehr genau eine Satzbreite betraegt,
       // wandert die Abweichung mit jedem Umlauf weiter und loest gleich
       // den naechsten Sprung aus.
+      ohneEinrasten(() => { bahn.scrollLeft = neu; });
+      male();
+    };
+
+    const ohneEinrasten = (tun) => {
       const vorher = bahn.style.scrollSnapType;
       bahn.style.scrollSnapType = "none";
-      bahn.scrollLeft = neu;
+      tun();
       bahn.style.scrollSnapType = vorher;
-      male();
     };
 
     bahn.addEventListener("scroll", () => {
@@ -1514,10 +1536,7 @@
       clearTimeout(ruhe);
       ruhe = setTimeout(() => { umlauf(); male(); }, 140);
     }, { passive: true });
-    // Alles, was den Grundzustand herstellt, ruft male() direkt auf, damit
-    // es auch stimmt, wenn gerade nicht gezeichnet wird. Nur der laufende
-    // Bildlauf wird ueber requestAnimationFrame gebremst.
-    //
+
     // Ein ResizeObserver statt bloss window.resize: Die Kartenbreite haengt
     // an einem clamp mit vw-Anteil, sie aendert sich also mit dem Fenster,
     // aber auch beim Laden von Schriften oder wenn die Sektion erst spaeter
@@ -1528,36 +1547,58 @@
     // lagen im Bild statt drei.
     let letzteBreite = 0;
     const nachmessen = () => {
-      const breit = bahn.clientWidth;
-      if (breit !== letzteBreite && letzteBreite !== 0) {
+      messen();
+      if (breite !== letzteBreite) {
         // Nach einer Groessenaenderung zeigt scrollLeft auf eine andere
-        // Karte, weil die Kartenbreite mitwaechst. Wieder auf die
-        // naechstgelegene ausrichten, sonst steht der Faecher schief.
-        letzteBreite = breit;
-        zeige(naechsteKarte(), false);
-      } else {
-        letzteBreite = breit;
+        // Karte, weil die Kartenbreite mitwaechst. Wieder ausrichten.
+        const erstesMal = letzteBreite === 0;
+        letzteBreite = breite;
+        if (!erstesMal) springe(naechsteKarte());
       }
       male();
     };
     if (window.ResizeObserver) new ResizeObserver(nachmessen).observe(bahn);
     window.addEventListener("resize", nachmessen);
 
-    const zeige = (nr, sanft) => {
-      const k = karten[Math.max(0, Math.min(karten.length - 1, nr))];
-      bahn.scrollTo({
-        left: linksVon(k),
-        behavior: sanft && !ruhig ? "smooth" : "auto"
-      });
+    const springe = (nr) => {
+      ohneEinrasten(() => { bahn.scrollLeft = linksVon(Math.max(0, Math.min(karten.length - 1, nr))); });
+      male();
     };
-    // Keine Sperre an den Enden mehr: Es gibt keine.
+
+    // Eigene Fahrt statt scrollTo mit behavior smooth. Der eingebaute
+    // sanfte Bildlauf dauert je nach Strecke unterschiedlich lang und
+    // arbeitet gegen das Einrasten, was sich beim Wechseln als Haenger
+    // anfuehlte. Hier ist die Dauer fest, die Kurve laeuft weich aus, und
+    // das Einrasten ist waehrend der Fahrt abgeschaltet.
+    let fahrt = null;
+    const gleite = (nr) => {
+      const zielNr = Math.max(0, Math.min(karten.length - 1, nr));
+      if (ruhig) { springe(zielNr); return; }
+      if (fahrt) cancelAnimationFrame(fahrt);
+      const von = bahn.scrollLeft;
+      const weg = linksVon(zielNr) - von;
+      if (Math.abs(weg) < 1) return;
+      const start = performance.now();
+      const vorher = bahn.style.scrollSnapType;
+      bahn.style.scrollSnapType = "none";
+      const bild = (jetzt) => {
+        const p = Math.min((jetzt - start) / DAUER, 1);
+        bahn.scrollLeft = von + weg * (1 - Math.pow(1 - p, 3));  // weich raus
+        male();
+        if (p < 1) { fahrt = requestAnimationFrame(bild); }
+        else { fahrt = null; bahn.style.scrollSnapType = vorher; umlauf(); }
+      };
+      fahrt = requestAnimationFrame(bild);
+    };
+
+    // Keine Sperre an den Enden: Es gibt keine.
     pfeile.forEach((p) => p.addEventListener("click", () => {
-      zeige(naechsteKarte() + Number(p.dataset.richtung), true);
+      gleite(naechsteKarte() + Number(p.dataset.richtung));
     }));
     // Klick auf eine Karte holt sie in die Mitte. Zusatz, kein Ersatz: Die
     // Pfeile und der normale Bildlauf bleiben der Hauptweg, damit es auch
     // ohne Zeigegeraet bedienbar bleibt.
-    karten.forEach((k, i) => k.addEventListener("click", () => zeige(i, true)));
+    karten.forEach((k, i) => k.addEventListener("click", () => gleite(i)));
 
     // Startpunkt: erste Karte des mittleren, echten Satzes steht mittig.
     // Das muss nach dem Laden WIEDERHOLT werden, nicht nur einmal: Beim
@@ -1571,9 +1612,11 @@
     pfeile.forEach((p) => p.addEventListener("click", () => { angefasst = true; }));
 
     const aufbauen = () => {
-      if (!bahn.clientWidth) return;
-      if (!angefasst) zeige(ANZAHL, false);
-      male();
+      messen();
+      if (!breite) return;
+      letzteBreite = breite;
+      if (!angefasst) springe(ANZAHL);
+      else male();
     };
     aufbauen();
     // Zweiter Anlauf, sobald das Layout wirklich steht. Bilder und
@@ -1591,6 +1634,8 @@
     }));
   })();
 </script>
+
+
 
 
 
