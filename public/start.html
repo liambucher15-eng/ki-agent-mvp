@@ -529,12 +529,17 @@
       position: relative;          /* macht sie zum Bezugspunkt fuer offsetLeft */
       display: flex; gap: clamp(.7rem, 1.6vw, 1.2rem);
       overflow-x: auto; overflow-y: hidden;
-      /* proximity statt mandatory: Bei mandatory zieht der Browser waehrend
-         des Schwungs dauernd zum naechsten Rastpunkt und arbeitet damit
-         gegen die eigene Bewegung. Das fuehlte sich beim Wischen zaeh an.
-         proximity rastet erst ein, wenn man ohnehin in der Naehe zum
-         Stehen kommt. */
-      scroll-snap-type: x proximity;
+      /* KEIN CSS-Einrasten. Zwei Gruende, beide gemessen:
+         Erstens zog mandatory waehrend des Schwungs dauernd zum naechsten
+         Rastpunkt und arbeitete gegen die eigene Bewegung.
+         Zweitens, und das war der Ruecksprung beim langen Scrollen: Fuer
+         den Umlauf muss das Einrasten kurz aus, sonst landet der Sprung
+         daneben. Wird es danach wieder eingeschaltet, MUSS der Browser
+         laut Spezifikation neu einrasten, und genau dieses Nachrasten
+         schob den Inhalt. Gemessen sprang er dabei um 209 px, also fast
+         eine ganze Karte, obwohl er haette stillstehen muessen.
+         Eingerastet wird jetzt im Skript, mit derselben Kurve wie bei den
+         Pfeilen. */
       /* Verhindert, dass ein waagrechtes Wischen die Seite mitzieht oder
          die Zurueck-Geste des Browsers ausloest. */
       overscroll-behavior-x: contain;
@@ -552,7 +557,6 @@
 
     .figur {
       flex: 0 0 var(--karte); width: var(--karte);
-      scroll-snap-align: center;
       position: relative; border-radius: 16px; overflow: hidden;
       background: var(--flaeche); border: 1px solid var(--rand-fein);
       aspect-ratio: 1 / 1;
@@ -1562,32 +1566,57 @@
     // ganzer Satz als Puffer auf jeder Seite, das reicht bei weitem.
     let ruhe;
     const umlauf = () => {
+      // Waehrend der eigenen Fahrt NICHT versetzen: Der Sprung wuerde
+      // mitten in die laufende Bewegung fallen.
+      if (fahrt) return;
+      // Frisch nachmessen. Der Sprung MUSS genau eine Satzbreite betragen,
+      // sonst verschiebt sich der Inhalt sichtbar. Mit gemerkten Werten
+      // reichte eine unbemerkte Layout-Aenderung, damit der Sprung daneben
+      // liegt, und genau so sieht es aus, als ginge es ein paar Bilder
+      // zurueck. Das kostet einmal je Umlauf, nicht je Bild.
+      messen();
       if (!satz) return;
       const anfang = linksVon(ANZAHL);
       let neu = bahn.scrollLeft;
       if (neu < anfang - 1) neu += satz;
       else if (neu > anfang + satz - 1) neu -= satz;
       else return;                       // steht schon im mittleren Satz
-      // Einrasten fuer den Sprung abschalten. Sonst zieht der Browser das
-      // Ziel auf den naechsten Rastpunkt: gemessen 1213 px daneben, und
-      // weil der Sprung dadurch nicht mehr genau eine Satzbreite betraegt,
-      // wandert die Abweichung mit jedem Umlauf weiter und loest gleich
-      // den naechsten Sprung aus.
-      ohneEinrasten(() => { bahn.scrollLeft = neu; });
+      // Ohne CSS-Einrasten landet der Sprung genau dort, wo er soll. Kein
+      // Aus- und Wiedereinschalten mehr noetig, das war die Ursache des
+      // Ruecksprungs.
+      bahn.scrollLeft = neu;
       male();
     };
 
-    const ohneEinrasten = (tun) => {
-      const vorher = bahn.style.scrollSnapType;
-      bahn.style.scrollSnapType = "none";
-      tun();
-      bahn.style.scrollSnapType = vorher;
+    // Versetzt wird erst, wenn der Bildlauf WIRKLICH steht, nicht schon
+    // 140 ms nach dem letzten Ereignis. Beim Ausrollen auf dem Trackpad
+    // kommen die Ereignisse zum Schluss unregelmaessig; faellt eine Luecke
+    // groesser als die Wartezeit aus, sprang der Umlauf mitten in die
+    // laufende Bewegung. Der Browser rechnete danach von seinem eigenen
+    // Ziel weiter, und das sah aus, als ginge es ein paar Bilder zurueck.
+    // Jetzt wird zweimal im Abstand geprueft: Nur wenn die Position
+    // unveraendert ist, gilt der Bildlauf als gestoppt.
+    let letzterStand = -1;
+    const wennGestoppt = () => {
+      if (bahn.scrollLeft !== letzterStand) {
+        letzterStand = bahn.scrollLeft;
+        ruhe = setTimeout(wennGestoppt, 120);
+        return;
+      }
+      umlauf();
+      // Selbst einrasten. Steht die naechstgelegene Karte nicht mittig,
+      // gleiten wir dorthin, mit derselben Kurve wie bei den Pfeilen. Die
+      // Fahrt loest wieder Bildlauf-Ereignisse aus; beim naechsten Halt
+      // liegt die Abweichung dann unter der Schwelle und es ist Schluss.
+      const nr = naechsteKarte();
+      if (Math.abs(bahn.scrollLeft - linksVon(nr)) > 2) gleite(nr);
+      else male();
     };
-
     bahn.addEventListener("scroll", () => {
       anstossen();
       clearTimeout(ruhe);
-      ruhe = setTimeout(() => { umlauf(); male(); }, 140);
+      letzterStand = -1;               // erzwingt mindestens zwei Proben
+      ruhe = setTimeout(wennGestoppt, 120);
     }, { passive: true });
 
     // Ein ResizeObserver statt bloss window.resize: Die Kartenbreite haengt
@@ -1614,7 +1643,7 @@
     window.addEventListener("resize", nachmessen);
 
     const springe = (nr) => {
-      ohneEinrasten(() => { bahn.scrollLeft = linksVon(Math.max(0, Math.min(karten.length - 1, nr))); });
+      bahn.scrollLeft = linksVon(Math.max(0, Math.min(karten.length - 1, nr)));
       male();
     };
 
@@ -1632,14 +1661,19 @@
       const weg = linksVon(zielNr) - von;
       if (Math.abs(weg) < 1) return;
       const start = performance.now();
-      const vorher = bahn.style.scrollSnapType;
-      bahn.style.scrollSnapType = "none";
       const bild = (jetzt) => {
         const p = Math.min((jetzt - start) / DAUER, 1);
         bahn.scrollLeft = von + weg * (1 - Math.pow(1 - p, 3));  // weich raus
         male();
         if (p < 1) { fahrt = requestAnimationFrame(bild); }
-        else { fahrt = null; bahn.style.scrollSnapType = vorher; umlauf(); }
+        else {
+          // Exakt aufs Ziel setzen, damit die Endprüfung beim naechsten
+          // Halt nicht wegen eines Rundungsrests erneut losgleitet.
+          bahn.scrollLeft = linksVon(zielNr);
+          fahrt = null;
+          umlauf();
+          male();
+        }
       };
       fahrt = requestAnimationFrame(bild);
     };
@@ -1711,6 +1745,8 @@
     }));
   })();
 </script>
+
+
 
 
 
