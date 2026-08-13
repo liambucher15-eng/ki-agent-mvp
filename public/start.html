@@ -501,13 +501,43 @@
       max-width: calc(72rem + 2 * var(--rand));
       padding-inline: var(--rand);
     }
+    /* ── Auftritt ───────────────────────────────────────────────────────
+       Bloecke steigen beim ersten Sichtbarwerden leicht auf. Bewusst nur
+       opacity und transform, beides kommt ohne Neuzeichnen aus. Einmalig:
+       Ein Block, der beim Zurueckscrollen erneut auftaucht, wirkt nervoes.
+       Bei prefers-reduced-motion steht alles sofort da.
+       Versteckt wird NUR, wenn das Skript vorher data-da="nein" gesetzt
+       hat. Andersherum waere es gefaehrlich: Bricht das Skript aus
+       irgendeinem Grund vorher ab, bliebe der Inhalt fuer immer
+       unsichtbar. So ist der Ausfall harmlos, dann fehlt nur die
+       Bewegung. */
+    .auftritt[data-da="nein"] { opacity: 0; transform: translateY(20px); will-change: transform, opacity; }
+    .auftritt[data-da="ja"] {
+      opacity: 1; transform: none;
+      transition: opacity .65s ease, transform .65s cubic-bezier(.22, .8, .3, 1);
+      transition-delay: var(--verzug, 0ms);
+      will-change: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .auftritt[data-da="nein"] { opacity: 1; transform: none; }
+      .auftritt[data-da="ja"] { transition: none; }
+    }
+
     .galerie-huelle { position: relative; }
     .galerie {
       --karte: clamp(12rem, 32vw, 23rem);
       position: relative;          /* macht sie zum Bezugspunkt fuer offsetLeft */
       display: flex; gap: clamp(.7rem, 1.6vw, 1.2rem);
       overflow-x: auto; overflow-y: hidden;
-      scroll-snap-type: x mandatory;
+      /* proximity statt mandatory: Bei mandatory zieht der Browser waehrend
+         des Schwungs dauernd zum naechsten Rastpunkt und arbeitet damit
+         gegen die eigene Bewegung. Das fuehlte sich beim Wischen zaeh an.
+         proximity rastet erst ein, wenn man ohnehin in der Naehe zum
+         Stehen kommt. */
+      scroll-snap-type: x proximity;
+      /* Verhindert, dass ein waagrechtes Wischen die Seite mitzieht oder
+         die Zurueck-Geste des Browsers ausloest. */
+      overscroll-behavior-x: contain;
       /* Luft fuer die Schlagschatten, die sonst am Rand abgeschnitten
          wuerden: Sobald eine Achse scrollt, kann die andere nicht mehr
          ueberstehen lassen. */
@@ -529,28 +559,33 @@
       /* Ursprung unten: Beim Verkleinern sinkt die Oberkante, die
          Unterkanten bleiben auf einer Linie. Genau das ergibt die Treppe.
          Weil nie ueber 1 skaliert wird, ragt auch nichts aus dem
-         Bildlauf-Container heraus.
-         --schub zieht die Karte quer zu ihrer Layout-Lage nach innen, so
-         schieben sich die hinteren uebereinander. Erst schieben, dann
-         skalieren: In dieser Reihenfolge bleibt der Schub in ungestauchten
-         Pixeln. */
-      transform: translateX(var(--schub, 0px)) scale(var(--gross, 1));
+         Bildlauf-Container heraus. Das Skript schiebt die Karte zusaetzlich
+         quer nach innen, so schieben sich die hinteren uebereinander;
+         verschoben wird vor dem Skalieren, dann bleibt der Schub in
+         ungestauchten Pixeln.
+         transform und opacity setzt das Skript DIREKT, nicht mehr ueber
+         CSS-Variablen. Eine geaenderte Variable macht die Stilberechnung
+         des ganzen Teilbaums ungueltig, und jede Karte hat Bild,
+         Platzhalter und Beschriftung als Kinder. Direkt gesetzt bleibt die
+         Aenderung auf das Element beschraenkt und kann vom Compositor
+         uebernommen werden. Genau daran hing das zaehe Wischen. */
       transform-origin: center bottom;
-      /* Ab der vierten Karte je Seite wird ausgeblendet, sonst stapeln
-         sich am Rand zu viele Streifen. Das Skript blendet weich ueber,
-         damit nichts am Rand aufpoppt. */
-      opacity: var(--klar, 1);
       /* Heller Rand und Schatten trennen die uebereinanderliegenden Karten
-         voneinander, sonst verschwimmen sie zu einer Flaeche. Der Schatten
-         ist bewusst knapp gehalten: Er wird bei jedem Bild des Bildlaufs
-         neu gezeichnet, ein weit gestreuter kostet dort spuerbar. */
+         voneinander, sonst verschwimmen sie zu einer Flaeche. */
       box-shadow: 0 10px 22px -14px rgba(20, 20, 40, .45),
                   0 0 0 4px var(--flaeche);
       cursor: pointer;
-      /* Eigene Ebene, damit Verschieben und Skalieren nicht bei jedem Bild
-         eine Neuberechnung des Umbruchs ausloesen. */
-      will-change: transform;
+      /* Eigene Ebene, damit Verschieben, Skalieren und Ein-/Ausblenden
+         ohne Neuzeichnen auskommen. */
+      will-change: transform, opacity;
       contain: paint;
+      transition: box-shadow .3s ease;
+    }
+    /* Die Karte in der Mitte tritt etwas hervor. Das Attribut setzt das
+       Skript nur beim Wechsel, nicht bei jedem Bild. */
+    .figur[data-mitte="ja"] {
+      box-shadow: 0 26px 50px -22px rgba(20, 20, 40, .6),
+                  0 0 0 4px var(--flaeche);
     }
     /* Unsichtbares darf nicht anklickbar sein. */
     .figur[data-weg="ja"] { pointer-events: none; }
@@ -828,7 +863,7 @@
        Platzhalter mit der Branche. -->
   <section class="hellflaeche" id="charaktere">
     <div class="bahn">
-      <div class="kopfblock">
+      <div class="kopfblock auftritt">
         <span class="augen">Charaktere</span>
         <h2>Jede Firma bekommt ihr eigenes Wesen.</h2>
         <p class="lead">Alle diese Figuren sind hier entstanden, aus nichts als der Webseite und ein paar Angaben zum Betrieb. Deine sieht anders aus.</p>
@@ -836,7 +871,7 @@
     </div>
     <!-- Der Faecher steht ausserhalb der Bahn, damit er ueber die volle
          Fensterbreite laufen kann. Die Bahn deckelt auf 72rem. -->
-    <div class="galerie-huelle">
+    <div class="galerie-huelle auftritt" style="--verzug: 120ms">
       <div class="galerie" id="galerie" tabindex="0" role="region" aria-label="Beispiel-Figuren zum Durchblättern">
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
@@ -1470,32 +1505,50 @@
     };
 
     let geplant = false;
+    let mitte = -1;
     const male = () => {
       geplant = false;
       if (!breite) return;
       const ziel = bahn.scrollLeft + breite / 2;
+      let naechste = 0, beste = Infinity;
       for (let i = 0; i < karten.length; i++) {
         const k = karten[i];
         const s = (lagen[i] - ziel) / schritt;
         const d = s < 0 ? -s : s;
+        if (d < beste) { beste = d; naechste = i; }
         // Weit draussen: einmal ausblenden, danach in Ruhe lassen. Von 24
         // Karten sind hoechstens neun in Reichweite; die uebrigen bei jedem
         // Bild anzufassen war der groesste Teil der Arbeit.
         if (d > GRENZE) {
           if (k.dataset.weg !== "ja") {
-            k.style.setProperty("--klar", "0");
+            k.style.opacity = "0";
             k.dataset.weg = "ja";
           }
           continue;
         }
         if (k.dataset.weg === "ja") delete k.dataset.weg;
-        k.style.setProperty("--gross", (1 - (d < STUFEN ? d : STUFEN) / STUFEN * KLEINSTE).toFixed(3));
-        k.style.setProperty("--schub", ((s < 0 ? -1 : 1) * bogen(d) - s * schritt).toFixed(1) + "px");
-        k.style.setProperty("--klar", (d > SICHTBAR ? (GRENZE - d) / UEBERGANG : 1).toFixed(2));
+        const gross = 1 - (d < STUFEN ? d : STUFEN) / STUFEN * KLEINSTE;
+        const schub = (s < 0 ? -1 : 1) * bogen(d) - s * schritt;
+        // transform und opacity DIREKT setzen, nicht ueber CSS-Variablen.
+        // Eine geaenderte Variable macht die Stilberechnung des ganzen
+        // Teilbaums ungueltig, und jede Karte hat Bild, Platzhalter und
+        // Beschriftung als Kinder. Direkt gesetzt bleibt die Aenderung auf
+        // das Element beschraenkt. translate3d statt translateX, damit die
+        // Karte sicher eine eigene Ebene bekommt.
+        k.style.transform = "translate3d(" + schub.toFixed(1) + "px,0,0) scale(" + gross.toFixed(3) + ")";
+        k.style.opacity = d > SICHTBAR ? ((GRENZE - d) / UEBERGANG).toFixed(2) : "1";
         // z-Index aendert sich selten. Nur schreiben, wenn er sich wirklich
         // aendert, sonst wird jedes Bild neu zusammengesetzt.
         const lage = String(1000 - Math.round(d * 10));
         if (k.style.zIndex !== lage) k.style.zIndex = lage;
+      }
+      // Die mittlere Karte bekommt einen kraeftigeren Schatten. Das
+      // Attribut wird nur beim Wechsel gesetzt, damit der Uebergang laufen
+      // kann und nicht bei jedem Bild neu angestossen wird.
+      if (mitte !== naechste) {
+        if (karten[mitte]) delete karten[mitte].dataset.mitte;
+        karten[naechste].dataset.mitte = "ja";
+        mitte = naechste;
       }
     };
     const anstossen = () => {
@@ -1625,6 +1678,30 @@
     if (document.fonts) document.fonts.ready.then(aufbauen);
   })();
 
+  // Auftritt: Bloecke mit der Klasse "auftritt" steigen beim ersten
+  // Sichtbarwerden leicht auf. Einmalig, danach wird nicht mehr beobachtet:
+  // Ein Block, der beim Zurueckscrollen erneut auftaucht, wirkt nervoes.
+  (function () {
+    const ziele = [...document.querySelectorAll(".auftritt")];
+    if (!ziele.length) return;
+    // Ohne Beobachter oder bei ausgeschalteter Bewegung gar nicht erst
+    // verstecken.
+    if (!window.IntersectionObserver ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Erst jetzt verstecken. Das Verstecken steht bewusst NICHT im
+    // Stylesheet: Bricht das Skript vorher ab, bleibt der Inhalt sichtbar
+    // und es fehlt nur die Bewegung.
+    ziele.forEach((z) => { z.dataset.da = "nein"; });
+    const beobachter = new IntersectionObserver((eintraege) => {
+      eintraege.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.dataset.da = "ja";
+        beobachter.unobserve(e.target);
+      });
+    }, { threshold: 0.15 });
+    ziele.forEach((z) => beobachter.observe(z));
+  })();
+
   // FAQ: immer nur eine Antwort offen. Ohne das entsteht beim Durchklicken
   // eine sehr lange Liste, in der man die Frage zur Antwort nicht mehr sieht.
   (function () {
@@ -1634,6 +1711,8 @@
     }));
   })();
 </script>
+
+
 
 
 
