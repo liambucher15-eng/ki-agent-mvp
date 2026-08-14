@@ -682,6 +682,123 @@
     .preiskarte .knopf { width: 100%; }
     .preiskarte .klein { margin-top: .8rem; font-size: .85rem; color: var(--tinte-weich); text-align: center; }
 
+    /* ── Preis: drei Plaene nach Liams Vorlage ──────────────────────────
+       Uebernommen ist die Struktur (Umschalter, drei Karten, hervorgehobene
+       Empfehlung, Vergleichstabelle), nicht die Optik: Farben, Schrift,
+       Rundungen, Schatten und Knoepfe kommen unveraendert aus dem
+       bestehenden System. Kein Farbverlauf, das waere hier ein Fremdkoerper. */
+    .preis-schalter { display: flex; justify-content: center; margin-bottom: clamp(2rem, 4vw, 2.8rem); }
+    .schalter {
+      display: inline-flex; gap: .25rem; padding: .3rem;
+      background: var(--flaeche); border: 1px solid var(--rand-fein); border-radius: 999px;
+    }
+    .schalter button {
+      font: inherit; font-size: .93rem; font-weight: 500; border: 0; cursor: pointer;
+      padding: .55rem 1.15rem; border-radius: 999px; background: none; color: var(--tinte-weich);
+      display: inline-flex; align-items: center; gap: .5rem;
+      transition: background .18s ease, color .18s ease;
+    }
+    .schalter button[aria-pressed="true"] {
+      background: var(--grund); color: var(--tinte);
+      box-shadow: 0 2px 8px -3px rgba(17,17,20,.22);
+    }
+    .schalter .spar {
+      font-size: .72rem; font-weight: 600; padding: .12rem .45rem; border-radius: 999px;
+      background: rgba(109,109,228,.14); color: var(--violett-text);
+    }
+
+    /* stretch statt start: Sonst sind die Karten unterschiedlich hoch und die
+       Unterkanten fransen aus. Gemessen waren es 555/555/579 px, also 12 px
+       Versatz an der Unterkante. */
+    .plan-raster { display: grid; gap: clamp(1rem, 2vw, 1.4rem); grid-template-columns: 1fr; align-items: stretch; }
+    /* Untereinander gestapelt wird die Karte gedeckelt und mittig gesetzt.
+       Ohne das war sie auf dem Tablet gemessen 676 px breit; eine Preiskarte
+       mit sechs Zeilen wirkt auf dieser Breite leer. */
+    .plan-raster > .plan { max-width: 30rem; width: 100%; margin-inline: auto; }
+    @media (min-width: 900px) {
+      .plan-raster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .plan-raster > .plan { max-width: none; margin-inline: 0; }
+    }
+    .plan {
+      background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 18px;
+      padding: clamp(1.4rem, 2.4vw, 1.9rem);
+      display: flex; flex-direction: column;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .plan:hover { border-color: var(--rand-linie); }
+    /* Die empfohlene Karte hebt sich ueber Rand und Schatten ab, nicht ueber
+       eine andere Farbe. Angehoben wird sie erst ab drei Spalten, sonst
+       entsteht untereinander eine unmotivierte Stufe. */
+    .plan[data-top="ja"] {
+      border-color: var(--violett); border-width: 1.5px;
+      box-shadow: 0 28px 56px -34px rgba(20, 20, 40, .5);
+    }
+    /* Negativer Aussenabstand statt translateY: Verschieben liess die Karte
+       unten 12 px zu kurz kommen. So ragt sie oben UND unten gleich weit
+       heraus, und alle drei enden wieder auf einer Linie. */
+    @media (min-width: 900px) { .plan[data-top="ja"] { margin-block: -12px; } }
+
+    .plan-kopf { display: flex; align-items: center; gap: .6rem; margin-bottom: .35rem; }
+    .plan-name { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
+    .plan-badge {
+      font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      padding: .2rem .55rem; border-radius: 999px;
+      /* --violett-text, nicht --violett: Weiss auf dem helleren Ton kam
+         gemessen auf nur 4,24:1, noetig sind 4,5. Genau dafuer gibt es die
+         beiden Toene im System. */
+      background: var(--violett-text); color: #fff;
+    }
+    .plan-text { font-size: .92rem; color: var(--tinte-weich); line-height: 1.5; min-height: 2.8em; }
+    .plan-zahl {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 .45rem;
+      margin: 1.1rem 0 .2rem;
+      font-size: clamp(2.1rem, 4.4vw, 2.7rem); font-weight: 600; letter-spacing: -.04em; line-height: 1;
+    }
+    .plan-zahl small { font-size: .95rem; font-weight: 500; color: var(--tinte-weich); letter-spacing: 0; }
+    .plan-takt { font-size: .84rem; color: var(--tinte-hell); min-height: 1.3em; }
+    .plan .knopf { width: 100%; margin: 1.2rem 0 0; }
+    /* Nicht empfohlene Plaene bekommen den ruhigen Knopf, damit die
+       Empfehlung optisch fuehrt. */
+    .plan .knopf-linie {
+      background: var(--grund); color: var(--tinte); border: 1px solid var(--rand-linie);
+    }
+    .plan .knopf-linie:hover { background: var(--flaeche); }
+
+    .plan-titel {
+      margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rand-fein);
+      font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--tinte-hell);
+    }
+    .plan ul { list-style: none; display: grid; gap: .62rem; margin: .9rem 0 0; }
+    .plan li { display: flex; gap: .6rem; font-size: .94rem; line-height: 1.5; align-items: flex-start; }
+    .plan li .hak {
+      flex: none; width: 17px; height: 17px; margin-top: 2px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--violett-text); color: #fff;
+    }
+    .plan li .hak svg { width: 10px; height: 10px; }
+    /* Nicht enthalten: ausgegraut, aber weiterhin lesbar. --tinte-hell haelt
+       auf Weiss 4,9:1 und bleibt damit ueber der Schwelle. */
+    .plan li[data-aus="ja"] { color: var(--tinte-hell); }
+    .plan li[data-aus="ja"] .hak { background: var(--rand-linie); color: var(--tinte-hell); }
+
+    /* Vergleichstabelle. Erste Spalte bleibt beim seitlichen Rollen stehen,
+       sonst weiss man auf dem Handy nicht mehr, welche Zeile man liest. */
+    .vergleich th, .vergleich td { text-align: center; }
+    .vergleich th:first-child, .vergleich td:first-child {
+      text-align: left; position: sticky; left: 0; background: var(--grund); z-index: 1;
+      border-right: 1px solid var(--rand-fein);
+    }
+    .vergleich thead th:first-child { background: var(--flaeche); }
+    .vergleich thead th { text-transform: none; font-size: .95rem; letter-spacing: 0; color: var(--tinte); }
+    .vergleich thead .preis { display: block; font-size: .8rem; font-weight: 500; color: var(--tinte-hell); margin-top: .15rem; }
+    .vergleich tbody th { font-weight: 500; font-size: .93rem; color: var(--tinte); background: var(--grund); }
+    .vergleich .ja, .vergleich .nein { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; }
+    .vergleich .ja { background: var(--violett-text); color: #fff; }
+    .vergleich .nein { background: var(--flaeche); color: var(--tinte-hell); border: 1px solid var(--rand-fein); }
+    .vergleich .ja svg, .vergleich .nein svg { width: 11px; height: 11px; }
+    .vergleich .wert { font-size: .93rem; font-weight: 600; }
+    .vergleich tbody tr:hover td, .vergleich tbody tr:hover th { background: var(--flaeche); }
+
     .tabelle-rahmen { overflow-x: auto; border: 1px solid var(--rand-fein); border-radius: 14px; background: var(--grund); }
     table { border-collapse: collapse; width: 100%; font-size: .93rem; min-width: 28rem; }
     th, td { text-align: left; padding: .8rem .9rem; border-bottom: 1px solid var(--rand-fein); vertical-align: top; }
@@ -690,6 +807,14 @@
     td.andere { color: var(--tinte-hell); }
     td.uns { font-weight: 600; }
     .tabellen-notiz { margin-top: 1rem; font-size: .85rem; color: var(--tinte-hell); max-width: 60ch; }
+
+    /* Nur fuer Vorlesewerkzeuge. Die Tabellen-Beschriftung soll nicht
+       sichtbar sein, aber vorhanden: Ohne sie beginnt die Tabelle beim
+       Vorlesen ohne jede Einordnung. */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+    }
 
     /* ── FAQ ──────────────────────────────────────────────────────────── */
     .faq { max-width: 48rem; margin: 0 auto; display: grid; gap: .6rem; }
@@ -1105,51 +1230,181 @@
   <!-- ══ PREIS ══════════════════════════════════════════════════════════
        Der Vergleich nennt bewusst KEINE Konkurrenznamen, sondern nur
        Abrechnungsmodelle. Sachlich richtig und rechtlich unproblematisch. -->
+  <!-- ══ PREIS ══════════════════════════════════════════════════════════
+       Aufbau nach Liams Vorlage: Umschalter, drei Karten mit hervorgehobener
+       Empfehlung, darunter die Vergleichstabelle.
+       WICHTIG zu den Inhalten: Die Funktionszeilen sind KEINE Erfindung,
+       sie bilden ab, was die App kann (Scan bis 12 Seiten aus
+       webseiteScannen.js, Figur mit fuenf Zustaenden aus
+       charakter-background.js, Posteingang aus dem Lead-Werkzeug in
+       chat.js, proaktiver Hinweis aus seiten-hinweis.js).
+       Serverseitig durchgesetzt ist bisher aber nur EINE Grenze, naemlich
+       die eigene Figur (firma.js: plan !== "plus" -> bilder werden
+       entfernt). Alle uebrigen Unterschiede brauchen noch Code. -->
   <section id="preis">
     <div class="bahn">
-      <div class="kopfblock">
+      <div class="kopfblock auftritt" style="text-align:center">
         <span class="augen">Preis</span>
-        <h2>Eine Zahl. Die gleiche im nächsten Monat.</h2>
-        <p class="lead">Kein Guthaben, das mitten im Betrieb ausgeht. Keine Abrechnung pro Gespräch. Keine automatische Höherstufung.</p>
+        <h2 style="margin-inline:auto">Drei Wege, ihn einzustellen.</h2>
+        <p class="lead" style="margin-inline:auto">Kein Guthaben, das mitten im Betrieb ausgeht. Keine Abrechnung pro Gespräch. Keine automatische Höherstufung.</p>
       </div>
 
-      <div class="preis-raster">
-        <div class="preiskarte">
-          <div class="zahl">CHF 49<small>pro Monat</small></div>
+      <!-- Umschalter. Er tauscht nur die angezeigten Zahlen; die Jahrespreise
+           stehen als data-Attribut an derselben Stelle. -->
+      <div class="preis-schalter auftritt" style="--verzug: 60ms">
+        <div class="schalter" role="group" aria-label="Abrechnungszeitraum">
+          <button type="button" data-takt="monat" aria-pressed="true">Monatlich</button>
+          <button type="button" data-takt="jahr" aria-pressed="false">
+            Jährlich <span class="spar">2 Monate geschenkt</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="plan-raster auftritt" style="--verzug: 120ms">
+
+        <div class="plan">
+          <div class="plan-kopf"><span class="plan-name">Gratis</span></div>
+          <p class="plan-text">Zum Ausprobieren an der eigenen Seite, ohne Zahlungsmittel.</p>
+          <div class="plan-zahl"><span data-monat="CHF 0" data-jahr="CHF 0">CHF 0</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text="fest">dauerhaft gratis, begrenzt</p>
+          <a class="knopf knopf-linie" href="onboarding-aura.html?plan=gratis">Gratis anfangen</a>
+          <p class="plan-titel">Enthalten</p>
           <ul>
-            <li><b aria-hidden="true">✓</b>Eigene Figur mit fünf Zuständen</li>
-            <li><b aria-hidden="true">✓</b>Unbegrenzte Gespräche</li>
-            <li><b aria-hidden="true">✓</b>Auf allen Unterseiten, auch mobil</li>
-            <li><b aria-hidden="true">✓</b>Posteingang für aufgenommene Anfragen</li>
-            <li><b aria-hidden="true">✓</b>Wissen jederzeit selbst anpassen</li>
-            <li><b aria-hidden="true">✓</b>Monatlich kündbar, keine Einrichtungsgebühr</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Agent auf allen Unterseiten, auch mobil</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Wissen aus dem Webseiten-Scan</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>50 Gespräche pro Monat</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene Dokumente anhängen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Posteingang für Anfragen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene gezeichnete Figur</li>
           </ul>
-          <a class="knopf knopf-voll" href="onboarding-aura.html">Gratis Version testen</a>
-          <p class="klein">In Franken, inkl. MwSt.</p>
         </div>
 
-        <div>
-          <h3 style="margin-bottom:1rem;">Warum das ungewöhnlich ist</h3>
-          <div class="tabelle-rahmen">
-            <table>
-              <thead>
-                <tr><th>Wenn …</th><th>Übliche Modelle</th><th>Bei uns</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>ein Gespräch gelöst wird</td><td class="andere">kostet extra, pro Ergebnis</td><td class="uns">im Preis enthalten</td></tr>
-                <tr><td>viel los ist</td><td class="andere">Guthaben leer, Agent schweigt</td><td class="uns">er antwortet weiter</td></tr>
-                <tr><td>das Kontingent fast voll ist</td><td class="andere">automatisch teurerer Tarif</td><td class="uns">passiert nicht</td></tr>
-                <tr><td>du kündigen willst</td><td class="andere">Support kontaktieren</td><td class="uns">ein Klick</td></tr>
-                <tr><td>die Rechnung kommt</td><td class="andere">in US-Dollar, ohne MwSt.</td><td class="uns">in Franken, mit MwSt.</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="tabellen-notiz">„Übliche Modelle" beschreibt die verbreiteten Abrechnungsarten in dieser Kategorie, also Preise pro gelöstem Gespräch, Nachrichten-Guthaben oder mehrere getrennte Zähler. Gemeint ist kein bestimmter Anbieter.</p>
+        <div class="plan">
+          <div class="plan-kopf"><span class="plan-name">Basis</span></div>
+          <p class="plan-text">Für Betriebe, denen eine Farbkugel als Gesicht genügt.</p>
+          <div class="plan-zahl"><span data-monat="CHF 29" data-jahr="CHF 24">CHF 29</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text>monatlich kündbar</p>
+          <a class="knopf knopf-linie" href="onboarding-aura.html?plan=basis">Basis wählen</a>
+          <p class="plan-titel">Alles aus Gratis, dazu</p>
+          <ul>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Unbegrenzte Gespräche</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Eigene Dokumente anhängen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Posteingang für Anfragen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Gesprächsverlauf einsehen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Wissen selbst anpassen, neu scannen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene gezeichnete Figur</li>
+          </ul>
         </div>
+
+        <div class="plan" data-top="ja">
+          <div class="plan-kopf"><span class="plan-name">Plus</span><span class="plan-badge">Empfohlen</span></div>
+          <p class="plan-text">Der vollständige Mitarbeiter mit eigener Figur, die auf deine Besucher reagiert.</p>
+          <div class="plan-zahl"><span data-monat="CHF 49" data-jahr="CHF 41">CHF 49</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text>monatlich kündbar</p>
+          <a class="knopf knopf-voll" href="onboarding-aura.html?plan=plus">Jetzt einrichten</a>
+          <p class="plan-titel">Alles aus Basis, dazu</p>
+          <ul>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Eigene Figur mit fünf Zuständen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Meldet sich auf passenden Unterseiten</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Empfiehlt passende Produkte im Gespräch</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Liest seine Antworten auf Wunsch vor</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Unbegrenzte Gespräche</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Keine Einrichtungsgebühr</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <p class="klein" style="text-align:center;margin-top:1.4rem;font-size:.87rem;color:var(--tinte-weich)">Alle Preise in Franken, inklusive Mehrwertsteuer. Monatlich kündbar.</p>
+    </div>
+  </section>
+
+  <!-- ══ VERGLEICH ══════════════════════════════════════════════════════ -->
+  <section class="hellflaeche" id="vergleich">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Vergleich</span>
+        <h2 style="margin-inline:auto">Was in welchem Plan steckt.</h2>
+        <p class="lead" style="margin-inline:auto">Alles, was der Agent kann, und ab wann er es kann.</p>
+      </div>
+      <div class="tabelle-rahmen auftritt" style="--verzug: 90ms">
+        <table class="vergleich">
+          <caption class="sr-only">Funktionsvergleich der drei Pläne</caption>
+          <thead>
+            <tr>
+              <th scope="col">Funktion</th>
+              <th scope="col">Gratis<span class="preis" data-monat="CHF 0" data-jahr="CHF 0">CHF 0</span></th>
+              <th scope="col">Basis<span class="preis" data-monat="CHF 29" data-jahr="CHF 24">CHF 29</span></th>
+              <th scope="col">Plus<span class="preis" data-monat="CHF 49" data-jahr="CHF 41">CHF 49</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Agent auf allen Unterseiten, auch mobil</th><td data-ja></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Wissen aus dem Webseiten-Scan</th><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td></tr>
+            <tr><th scope="row">Gespräche pro Monat</th><td><span class="wert">50</span></td><td><span class="wert">unbegrenzt</span></td><td><span class="wert">unbegrenzt</span></td></tr>
+            <tr><th scope="row">Eigene Dokumente anhängen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Posteingang für aufgenommene Anfragen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Gesprächsverlauf einsehen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Wissen selbst anpassen und neu scannen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Eigene gezeichnete Figur mit fünf Zuständen</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Meldet sich auf passenden Unterseiten</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Empfiehlt passende Produkte im Gespräch</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Liest seine Antworten vor</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
 
+  <!-- ══ FAQ ════════════════════════════════════════════════════════════ -->
+  <section id="faq">
+    <div class="bahn">
+      <div class="kopfblock" style="text-align:center;">
+        <span class="augen">Fragen</span>
+        <h2 style="margin-inline:auto;">Dein Mitarbeiter hätte auch geantwortet.</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Wie lange dauert die Einrichtung wirklich?</summary>
+          <p class="antwort">Rund zehn Minuten. Du wählst einen Plan, gibst deine Webseite an und wartest den Scan ab. Danach prüfst du, was er verstanden hat, und gibst ihm ein Gesicht. Zuletzt fügst du eine Zeile in deine Seite ein.</p>
+        </details>
+        <details>
+          <summary>Muss ich vorher etwas vorbereiten?</summary>
+          <p class="antwort">Nein. Kein Wissensdokument, keine FAQ-Liste, keine Texte. Er liest deine Seite. Wenn du willst, kannst du danach eine Speisekarte oder ein PDF ergänzen.</p>
+        </details>
+        <details>
+          <summary>Was macht er, wenn er etwas nicht weiss?</summary>
+          <p class="antwort">Er sagt es und gibt deine Kontaktdaten weiter. Auf Wunsch nimmt er die Frage samt Kontakt auf, sie liegt dann in deinem Posteingang. Er rät nicht.</p>
+        </details>
+        <details>
+          <summary>Kann er etwas kaputt machen?</summary>
+          <p class="antwort">Nein. Er kann nichts anklicken, nichts abschicken, nichts bestellen. Er zeigt und erklärt. Mehr lässt das System nicht zu, geprüft wird das an zwei unabhängigen Stellen.</p>
+        </details>
+        <details>
+          <summary>Was passiert bei viel Betrieb?</summary>
+          <p class="antwort">Bei Basis und Plus nichts Besonderes: Es gibt kein Guthaben, das ausgehen kann, keine Abrechnung pro gelöstem Gespräch und keinen Tarif, in den du automatisch rutschst. Nur der Gratis-Plan hat eine feste Obergrenze von 50 Gesprächen im Monat.</p>
+        </details>
+        <details>
+          <summary>Was ist der Unterschied zwischen Basis und Plus?</summary>
+          <p class="antwort">Die Figur. Bei Basis erscheint der Agent als Farbkugel in deinen Farben, bei Plus als eigene gezeichnete Figur mit fünf Zuständen, die auf das Gespräch reagiert. Dazu meldet sich Plus von sich aus auf passenden Unterseiten, empfiehlt passende Produkte und liest seine Antworten auf Wunsch vor.</p>
+        </details>
+        <details>
+          <summary>Kann ich den Plan später wechseln?</summary>
+          <p class="antwort">Ja, in beide Richtungen, im Dashboard. Beim Höherstufen wird der Rest des Monats angerechnet. Dein Wissen, deine Einstellungen und die aufgenommenen Anfragen bleiben dabei erhalten.</p>
+        </details>
+        <details>
+          <summary>Brauche ich für die Gratis-Version eine Karte?</summary>
+          <p class="antwort">Nein. Du legst ein Konto an, gibst deine Webseite ein und der Agent steht. Kein Zahlungsmittel, keine Frist, die abläuft. Die Grenze sind 50 Gespräche im Monat.</p>
+        </details>
+        <details>
+          <summary>Kann ich jederzeit kündigen?</summary>
+          <p class="antwort">Ja, monatlich, im Dashboard. Keine Mindestlaufzeit, keine Einrichtungsgebühr.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ABSCHLUSS ══════════════════════════════════════════════════════ -->
   <!-- ══ GRENZEN ════════════════════════════════════════════════════════
        Dunkel gesetzt wie die Figur-Sektion: Das hier ist das Fundament des
        Vertrauens, kein Kleingedrucktes. -->
@@ -1186,43 +1441,6 @@
     </div>
   </section>
 
-  <!-- ══ FAQ ════════════════════════════════════════════════════════════ -->
-  <section id="faq">
-    <div class="bahn">
-      <div class="kopfblock" style="text-align:center;">
-        <span class="augen">Fragen</span>
-        <h2 style="margin-inline:auto;">Dein Mitarbeiter hätte auch geantwortet.</h2>
-      </div>
-      <div class="faq">
-        <details>
-          <summary>Wie lange dauert die Einrichtung wirklich?</summary>
-          <p class="antwort">Rund zehn Minuten. Du wählst einen Plan, gibst deine Webseite an und wartest den Scan ab. Danach prüfst du, was er verstanden hat, und gibst ihm ein Gesicht. Zuletzt fügst du eine Zeile in deine Seite ein.</p>
-        </details>
-        <details>
-          <summary>Muss ich vorher etwas vorbereiten?</summary>
-          <p class="antwort">Nein. Kein Wissensdokument, keine FAQ-Liste, keine Texte. Er liest deine Seite. Wenn du willst, kannst du danach eine Speisekarte oder ein PDF ergänzen.</p>
-        </details>
-        <details>
-          <summary>Was macht er, wenn er etwas nicht weiss?</summary>
-          <p class="antwort">Er sagt es und gibt deine Kontaktdaten weiter. Auf Wunsch nimmt er die Frage samt Kontakt auf, sie liegt dann in deinem Posteingang. Er rät nicht.</p>
-        </details>
-        <details>
-          <summary>Kann er etwas kaputt machen?</summary>
-          <p class="antwort">Nein. Er kann nichts anklicken, nichts abschicken, nichts bestellen. Er zeigt und erklärt. Mehr lässt das System nicht zu, geprüft wird das an zwei unabhängigen Stellen.</p>
-        </details>
-        <details>
-          <summary>Was passiert bei viel Betrieb?</summary>
-          <p class="antwort">Nichts Besonderes. Es gibt kein Guthaben, das ausgehen kann, und keinen Tarif, in den du automatisch rutschst.</p>
-        </details>
-        <details>
-          <summary>Kann ich jederzeit kündigen?</summary>
-          <p class="antwort">Ja, monatlich, im Dashboard. Keine Mindestlaufzeit, keine Einrichtungsgebühr.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ ABSCHLUSS ══════════════════════════════════════════════════════ -->
   <section class="hellflaeche abschluss">
     <div class="bahn">
       <h2>Schau nach, was er über deine Seite weiss.</h2>
@@ -1712,6 +1930,45 @@
     if (document.fonts) document.fonts.ready.then(aufbauen);
   })();
 
+  // Preis: Umschalter Monat/Jahr und die Zeichen in der Vergleichstabelle.
+  (function () {
+    // Die Haken und Kreuze stehen nicht im Markup, sondern werden hier
+    // gesetzt. Im Markup steht nur data-ja bzw. data-nein, das haelt die
+    // Tabelle lesbar; elfmal dasselbe SVG von Hand waere kaum pflegbar.
+    const zeichen = {
+      ja: '<span class="ja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>',
+      nein: '<span class="nein"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></span>'
+    };
+    document.querySelectorAll(".vergleich td[data-ja]").forEach((z) => {
+      z.innerHTML = zeichen.ja;
+      // Fuer Vorlesewerkzeuge: Das Zeichen allein sagt nichts.
+      z.setAttribute("aria-label", "enthalten");
+    });
+    document.querySelectorAll(".vergleich td[data-nein]").forEach((z) => {
+      z.innerHTML = zeichen.nein;
+      z.setAttribute("aria-label", "nicht enthalten");
+    });
+
+    const knoepfe = [...document.querySelectorAll(".schalter button")];
+    if (!knoepfe.length) return;
+    const felder = [...document.querySelectorAll("[data-monat][data-jahr]")];
+    const takte = [...document.querySelectorAll("[data-takt-text]")];
+
+    const zeige = (takt) => {
+      knoepfe.forEach((k) => k.setAttribute("aria-pressed", String(k.dataset.takt === takt)));
+      felder.forEach((f) => { f.textContent = f.dataset[takt]; });
+      takte.forEach((t) => {
+        // Gratis behaelt seinen Hinweis, dort gibt es nichts zu rechnen.
+        if (t.dataset.taktText === "fest") return;
+        t.textContent = takt === "jahr" ? "jährlich abgerechnet" : "monatlich kündbar";
+      });
+      document.querySelectorAll(".plan-zahl small").forEach((s) => {
+        s.textContent = takt === "jahr" ? "pro Monat, jährlich" : "pro Monat";
+      });
+    };
+    knoepfe.forEach((k) => k.addEventListener("click", () => zeige(k.dataset.takt)));
+  })();
+
   // Auftritt: Bloecke mit der Klasse "auftritt" steigen beim ersten
   // Sichtbarwerden leicht auf. Einmalig, danach wird nicht mehr beobachtet:
   // Ein Block, der beim Zurueckscrollen erneut auftaucht, wirkt nervoes.
@@ -1745,6 +2002,8 @@
     }));
   })();
 </script>
+
+
 
 
 
