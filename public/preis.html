@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Preise — AuraChat</title>
+  <meta name="description" content="Drei Pläne für deinen persönlichen Mitarbeiter: gratis anfangen, Basis ab CHF 29, Plus mit eigener Figur ab CHF 49. Kein Guthaben, keine Abrechnung pro Gespräch, monatlich kündbar." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta property="og:title" content="Preise — AuraChat" />
+  <meta property="og:description" content="Gratis anfangen, Basis ab CHF 29, Plus mit eigener Figur ab CHF 49. Kein Guthaben, keine Abrechnung pro Gespräch." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="preis.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="lib/seite.css" />
+</head>
+<body id="oben">
+
+  <header class="kopf" id="kopf">
+    <a class="logo" href="start.html">
+      <span class="zeichen" aria-hidden="true"></span>AuraChat
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="start.html#so">So funktioniert es</a>
+      <a href="start.html#funktionen">Funktionen</a>
+      <a href="preis.html" aria-current="page">Preis</a>
+      <a href="#faq">Fragen</a>
+    </nav>
+    <div class="kopf-rechts">
+      <a class="anmelden" href="dashboard.html">Anmelden</a>
+    </div>
+  </header>
+
+  <!-- ══ EINSTIEG ═══════════════════════════════════════════════════════
+       Eigene Seite, also braucht sie einen eigenen Einstieg. Bewusst
+       schmal und ruhig: Wer hier landet, sucht Zahlen, keine Geschichte. -->
+  <section class="preis-einstieg">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Preise</span>
+        <h1>Drei Wege, ihn einzustellen.</h1>
+        <p class="lead" style="margin-inline:auto">Kein Guthaben, das mitten im Betrieb ausgeht. Keine Abrechnung pro Gespräch. Keine automatische Höherstufung.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ PREIS ══════════════════════════════════════════════════════════
+       Der Vergleich nennt bewusst KEINE Konkurrenznamen, sondern nur
+       Abrechnungsmodelle. Sachlich richtig und rechtlich unproblematisch. -->
+  <!-- ══ PREIS ══════════════════════════════════════════════════════════
+       Aufbau nach Liams Vorlage: Umschalter, drei Karten mit hervorgehobener
+       Empfehlung, darunter die Vergleichstabelle.
+       WICHTIG zu den Inhalten: Die Funktionszeilen sind KEINE Erfindung,
+       sie bilden ab, was die App kann (Scan bis 12 Seiten aus
+       webseiteScannen.js, Figur mit fuenf Zustaenden aus
+       charakter-background.js, Posteingang aus dem Lead-Werkzeug in
+       chat.js, proaktiver Hinweis aus seiten-hinweis.js).
+       Serverseitig durchgesetzt ist bisher aber nur EINE Grenze, naemlich
+       die eigene Figur (firma.js: plan !== "plus" -> bilder werden
+       entfernt). Alle uebrigen Unterschiede brauchen noch Code. -->
+  <section id="preis">
+    <div class="bahn">
+      <!-- Umschalter. Er tauscht nur die angezeigten Zahlen; die Jahrespreise
+           stehen als data-Attribut an derselben Stelle. -->
+      <div class="preis-schalter auftritt" style="--verzug: 60ms">
+        <div class="schalter" role="group" aria-label="Abrechnungszeitraum">
+          <button type="button" data-takt="monat" aria-pressed="true">Monatlich</button>
+          <button type="button" data-takt="jahr" aria-pressed="false">
+            Jährlich <span class="spar">2 Monate geschenkt</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="plan-raster auftritt" style="--verzug: 120ms">
+
+        <div class="plan">
+          <div class="plan-kopf"><span class="plan-name">Gratis</span></div>
+          <p class="plan-text">Zum Ausprobieren an der eigenen Seite, ohne Zahlungsmittel.</p>
+          <div class="plan-zahl"><span data-monat="CHF 0" data-jahr="CHF 0">CHF 0</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text="fest">dauerhaft gratis, begrenzt</p>
+          <a class="knopf knopf-linie" href="onboarding-aura.html?plan=gratis">Gratis anfangen</a>
+          <p class="plan-titel">Enthalten</p>
+          <ul>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Agent auf allen Unterseiten, auch mobil</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Wissen aus dem Webseiten-Scan</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>50 Gespräche pro Monat</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene Dokumente anhängen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Posteingang für Anfragen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene gezeichnete Figur</li>
+          </ul>
+        </div>
+
+        <div class="plan">
+          <div class="plan-kopf"><span class="plan-name">Basis</span></div>
+          <p class="plan-text">Für Betriebe, denen eine Farbkugel als Gesicht genügt.</p>
+          <div class="plan-zahl"><span data-monat="CHF 29" data-jahr="CHF 24">CHF 29</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text>monatlich kündbar</p>
+          <a class="knopf knopf-linie" href="onboarding-aura.html?plan=basis">Basis wählen</a>
+          <p class="plan-titel">Alles aus Gratis, dazu</p>
+          <ul>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Unbegrenzte Gespräche</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Eigene Dokumente anhängen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Posteingang für Anfragen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Gesprächsverlauf einsehen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Wissen selbst anpassen, neu scannen</li>
+            <li data-aus="ja"><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></span>Eigene gezeichnete Figur</li>
+          </ul>
+        </div>
+
+        <div class="plan" data-top="ja">
+          <div class="plan-kopf"><span class="plan-name">Plus</span><span class="plan-badge">Empfohlen</span></div>
+          <p class="plan-text">Der vollständige Mitarbeiter mit eigener Figur, die auf deine Besucher reagiert.</p>
+          <div class="plan-zahl"><span data-monat="CHF 49" data-jahr="CHF 41">CHF 49</span><small>pro Monat</small></div>
+          <p class="plan-takt" data-takt-text>monatlich kündbar</p>
+          <a class="knopf knopf-voll" href="onboarding-aura.html?plan=plus">Jetzt einrichten</a>
+          <p class="plan-titel">Alles aus Basis, dazu</p>
+          <ul>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Eigene Figur mit fünf Zuständen</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Meldet sich auf passenden Unterseiten</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Empfiehlt passende Produkte im Gespräch</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Liest seine Antworten auf Wunsch vor</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Unbegrenzte Gespräche</li>
+            <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Keine Einrichtungsgebühr</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <p class="klein" style="text-align:center;margin-top:1.4rem;font-size:.87rem;color:var(--tinte-weich)">Alle Preise in Franken, inklusive Mehrwertsteuer. Monatlich kündbar.</p>
+    </div>
+  </section>
+
+  <!-- ══ VERGLEICH ══════════════════════════════════════════════════════ -->
+  <section class="hellflaeche" id="vergleich">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Vergleich</span>
+        <h2 style="margin-inline:auto">Was in welchem Plan steckt.</h2>
+        <p class="lead" style="margin-inline:auto">Alles, was der Agent kann, und ab wann er es kann.</p>
+      </div>
+      <div class="tabelle-rahmen auftritt" style="--verzug: 90ms">
+        <table class="vergleich">
+          <caption class="sr-only">Funktionsvergleich der drei Pläne</caption>
+          <thead>
+            <tr>
+              <th scope="col">Funktion</th>
+              <th scope="col">Gratis<span class="preis" data-monat="CHF 0" data-jahr="CHF 0">CHF 0</span></th>
+              <th scope="col">Basis<span class="preis" data-monat="CHF 29" data-jahr="CHF 24">CHF 29</span></th>
+              <th scope="col">Plus<span class="preis" data-monat="CHF 49" data-jahr="CHF 41">CHF 49</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Agent auf allen Unterseiten, auch mobil</th><td data-ja></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Wissen aus dem Webseiten-Scan</th><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td></tr>
+            <tr><th scope="row">Gespräche pro Monat</th><td><span class="wert">50</span></td><td><span class="wert">unbegrenzt</span></td><td><span class="wert">unbegrenzt</span></td></tr>
+            <tr><th scope="row">Eigene Dokumente anhängen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Posteingang für aufgenommene Anfragen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Gesprächsverlauf einsehen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Wissen selbst anpassen und neu scannen</th><td data-nein></td><td data-ja></td><td data-ja></td></tr>
+            <tr><th scope="row">Eigene gezeichnete Figur mit fünf Zuständen</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Meldet sich auf passenden Unterseiten</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Empfiehlt passende Produkte im Gespräch</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+            <tr><th scope="row">Liest seine Antworten vor</th><td data-nein></td><td data-nein></td><td data-ja></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ FRAGEN ZUM PREIS ══════════════════════════════════════════════
+       Nur die Fragen, die wirklich mit Plänen und Bezahlung zu tun haben.
+       Die allgemeinen Fragen bleiben auf der Startseite. -->
+  <section id="faq">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Fragen</span>
+        <h2 style="margin-inline:auto">Was Betriebe vorher wissen wollen.</h2>
+      </div>
+      <div class="faq auftritt" style="--verzug: 80ms">
+        <details>
+          <summary>Was ist der Unterschied zwischen Basis und Plus?</summary>
+          <p class="antwort">Die Figur. Bei Basis erscheint der Agent als Farbkugel in deinen Farben, bei Plus als eigene gezeichnete Figur mit fünf Zuständen, die auf das Gespräch reagiert. Dazu meldet sich Plus von sich aus auf passenden Unterseiten, empfiehlt passende Produkte und liest seine Antworten auf Wunsch vor.</p>
+        </details>
+        <details>
+          <summary>Brauche ich für die Gratis-Version eine Karte?</summary>
+          <p class="antwort">Nein. Du legst ein Konto an, gibst deine Webseite ein und der Agent steht. Kein Zahlungsmittel, keine Frist, die abläuft. Die Grenze sind 50 Gespräche im Monat.</p>
+        </details>
+        <details>
+          <summary>Was passiert bei viel Betrieb?</summary>
+          <p class="antwort">Bei Basis und Plus nichts Besonderes: Es gibt kein Guthaben, das ausgehen kann, keine Abrechnung pro gelöstem Gespräch und keinen Tarif, in den du automatisch rutschst. Nur der Gratis-Plan hat eine feste Obergrenze.</p>
+        </details>
+        <details>
+          <summary>Kann ich den Plan später wechseln?</summary>
+          <p class="antwort">Ja, in beide Richtungen, im Dashboard. Beim Höherstufen wird der Rest des Monats angerechnet. Dein Wissen, deine Einstellungen und die aufgenommenen Anfragen bleiben dabei erhalten.</p>
+        </details>
+        <details>
+          <summary>Kann ich jederzeit kündigen?</summary>
+          <p class="antwort">Ja, monatlich, im Dashboard. Keine Mindestlaufzeit, keine Einrichtungsgebühr.</p>
+        </details>
+        <details>
+          <summary>Wie lange dauert die Einrichtung?</summary>
+          <p class="antwort">Rund zehn Minuten. Du wählst einen Plan, gibst deine Webseite an und wartest den Scan ab. Danach prüfst du, was er verstanden hat, und gibst ihm ein Gesicht. Zuletzt fügst du eine Zeile in deine Seite ein.</p>
+        </details>
+      </div>
+      <p class="tabellen-notiz" style="margin-inline:auto;text-align:center;max-width:44ch">Noch etwas offen? <a href="start.html#faq">Die übrigen Fragen stehen auf der Startseite.</a></p>
+    </div>
+  </section>
+
+  <!-- ══ ABSCHLUSS ══════════════════════════════════════════════════════ -->
+  <section class="hellflaeche abschluss">
+    <div class="bahn">
+      <h2>Schau nach, was er über deine Seite weiss.</h2>
+      <p class="lead">Adresse eingeben, den Scan abwarten, das Ergebnis ansehen. Danach entscheidest du.</p>
+      <div class="knoepfe mitte">
+        <a class="knopf knopf-voll" href="onboarding-aura.html?plan=gratis">Gratis anfangen</a>
+        <a class="knopf knopf-rand" href="demo-restaurant.html">Demo ansehen</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="bahn">
+      <a class="logo" href="start.html#oben"><span class="zeichen" aria-hidden="true"></span>AuraChat</a>
+      <div class="footer-raster">
+        <div>
+          <h4>Produkt</h4>
+          <ul>
+            <li><a href="start.html#funktionen">Funktionen</a></li>
+            <li><a href="start.html#preis">Preis</a></li>
+            <li><a href="demo-restaurant.html">Demo</a></li>
+          </ul>
+        </div>
+        <!-- "Über uns" und "Kontakt" sind raus: Es gibt weder Seite noch
+             Abschnitt dazu, ein Link darauf waere tot.
+             Impressum, Datenschutz und AGB stehen bewusst als Text statt als
+             Link. Sie sind fuer ein gewerbliches Angebot in der Schweiz und
+             der EU Pflicht und muessen vor dem Livegang existieren, aber ein
+             Link ins Nichts ist schlechter als ein ehrliches "folgt". -->
+        <div>
+          <h4>Rechtliches</h4>
+          <ul>
+            <li><span class="folgt">Impressum <em>folgt</em></span></li>
+            <li><span class="folgt">Datenschutz <em>folgt</em></span></li>
+            <li><span class="folgt">AGB <em>folgt</em></span></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Konto</h4>
+          <ul>
+            <li><a href="dashboard.html">Anmelden</a></li>
+            <li><a href="onboarding-aura.html">Agent einrichten</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-fuss">
+        <span>KI-Agenten für kleine Betriebe</span>
+        <span>© 2026 AuraChat</span>
+      </div>
+    </div>
+  </footer>
+
+<script src="lib/seite.js"></script>
+
+</body>
+</html>

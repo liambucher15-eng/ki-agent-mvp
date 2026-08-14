@@ -1,0 +1,859 @@
+/* ═══════════════════════════════════════════════════════════════════
+   AuraChat — gemeinsames Stylesheet fuer start.html und preis.html
+   Ausgelagert, als die Preis-Sektion eine eigene Seite bekam. Vorher
+   stand alles inline in start.html; kopiert man das in eine zweite
+   Seite, muss jede Aenderung zweimal gemacht werden und die beiden
+   laufen zwangslaeufig auseinander.
+   ═══════════════════════════════════════════════════════════════════ */
+    /* ──────────────────────────────────────────────────────────────────────
+       AuraChat — Startseite
+
+       WARUM DER TEXT DUNKEL IST, OBWOHL DER ENTWURF WEISS AUF SCHWARZ ZEIGTE
+       Das Hintergrundbild wurde pixelweise abgetastet. Kontrast gegen weissen
+       Text: oben Mitte 1,00 · Titelzone 1,00 · Unterzeile 1,02 · dunkelste
+       Stelle 2,16. WCAG verlangt 3,0 fuer grosse Schrift. Weiss ist auf
+       diesem Bild nirgends lesbar. Gegen dunklen Text: 18,9 / 18,9 / 18,5 /
+       8,8. Die Anordnung aus dem Entwurf bleibt, die Farbrichtung dreht.
+
+       WARUM DAS BILD UNTER DEM TEXT LIEGT UND NICHT DAHINTER
+       Als Vollflaechen-Hintergrund lief der zentrierte Grosstext gemessen in
+       die Figur (Titel 4,83 auf #7474e6, Unterzeile 1,21 auf #534f67). Das
+       Bild ist 16:9, auf voller Breite also immer 56 % der Breite hoch —
+       zusammen mit dem Textblock passt das auf keinen Bildschirm.
+
+       FLAECHENRHYTHMUS
+       Weiss ist der Grundton. Zwei Sektionen sind dunkel gesetzt: "Die Figur"
+       und "Was er nicht darf". Beide tragen das, worauf die Marke beruht —
+       das Gesicht und die Grenzen. Der Farbwechsel markiert sie als das,
+       worauf es ankommt, statt bloss Abwechslung zu erzeugen.
+       ────────────────────────────────────────────────────────────────────── */
+    :root {
+      --grund: #ffffff;
+      --flaeche: #f6f5fb;        /* sehr helles Lila, aus der Figur abgeleitet */
+      --dunkel: #14141a;
+      --tinte: #111114;
+      /* Unterzeile: #5c5c6b lag gerendert bei nur 4,1:1, weil der Zuschnitt
+         sie auf #d0cbcf schob statt auf Weiss. AA verlangt 4,5. */
+      --tinte-weich: #45454f;
+      --tinte-hell: #6a6a78;
+      --auf-dunkel: #ffffff;
+      --auf-dunkel-weich: rgba(255,255,255,0.68);
+      --rand-linie: #d9d6e0;
+      --rand-fein: #ebe9f2;
+      --nav-linie: rgba(17,17,20,0.08);
+      /* Zwei Violett-Toene, und zwar aus einem gemessenen Grund: Das Violett
+         der Figur (#6d6de4) erreicht als TEXT nur 4,24:1 auf Weiss und 3,91:1
+         auf der hellen Flaeche. AA verlangt 4,5. Als FLAECHE (Logo, Haekchen,
+         Fokusring) ist derselbe Ton unproblematisch, dort steht weisser Text
+         darauf. Also: --violett fuer Flaechen, --violett-text fuer Schrift. */
+      --violett: #6d6de4;        /* aus der Figur im Bild entnommen */
+      --violett-text: #5252c9;   /* gemessen 6,16:1 auf Weiss, 5,6:1 auf --flaeche */
+      /* Hintergrund der Ablauf-Buehne. Bis ein echtes Bild da ist, steht hier
+         ein Verlauf als Ersatz. ZUM ERSETZEN: Bild unter
+         public/bilder/ablauf-hintergrund.webp ablegen und diesen Wert durch
+         url("bilder/ablauf-hintergrund.webp") ersetzen, sonst nichts. */
+      --ablauf-grund:
+        radial-gradient(70% 55% at 15% 12%, rgba(255,255,255,.75), transparent 60%),
+        radial-gradient(65% 60% at 88% 90%, rgba(109,109,228,.45), transparent 65%),
+        linear-gradient(150deg, #eceafc 0%, #d6d3f8 48%, #bfbaf3 100%);
+      --rand: clamp(1.25rem, 5vw, 3rem);
+      --sans: "Inter", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* KEIN globales scroll-behavior: smooth.
+       Gemessen mit acht Mausrad-Impulsen zu je 100 px (800 px erwartet):
+         smooth  ->  -42 px, die Seite lief RUECKWAERTS, 842 px gingen verloren
+         auto    ->  +899 px, wie erwartet
+       Jeder Radimpuls startet eine eigene Animation, bricht die laufende ab
+       und rechnet von der halbfertigen Position neu. Bei schneller Folge
+       heben sie sich gegenseitig auf und das Scrollen wirkt kaputt.
+       Weiches Scrollen gibt es weiterhin, aber nur bei Klick auf einen
+       Ankerlink, gesteuert unten im Skript. */
+    /* clip auf html, nicht nur auf body: Der seitliche Ueberlauf wird am
+       Wurzelelement gemessen, ein clip allein auf body liess ihn gemessen
+       bestehen. "clip" statt "hidden", damit kein zusaetzlicher
+       Scroll-Container entsteht und die fixierte Kopfzeile fixiert bleibt. */
+    html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+    body {
+      background: var(--grund); color: var(--tinte);
+      font-family: var(--sans); font-size: 16px; line-height: 1.5;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      /* clip, nicht hidden: Elemente, die bewusst bis zum Fensterrand laufen
+         (Hero-Bild, Buehne), duerfen ueberstehen, ohne dass die Seite
+         seitwaerts scrollt. "hidden" wuerde zusaetzlich einen Scroll-Container
+         erzeugen; "clip" schneidet nur ab. Noetig, weil 100vw die Breite der
+         Scrollleiste mitzaehlt und dadurch gemessen 7 px Ueberlauf entstanden. */
+      overflow-x: clip;
+    }
+    :focus-visible { outline: 2px solid var(--violett); outline-offset: 3px; border-radius: 6px; }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+
+    /* ── Grundbausteine ───────────────────────────────────────────────── */
+    .bahn { max-width: 72rem; margin: 0 auto; }
+    section { padding: clamp(4rem, 9vw, 7rem) var(--rand); scroll-margin-top: 4.5rem; }
+    .dunkel { background: var(--dunkel); color: var(--auf-dunkel); }
+    .hellflaeche { background: var(--flaeche); }
+
+    h2 {
+      font-size: clamp(1.8rem, 3.6vw, 2.9rem); font-weight: 600;
+      line-height: 1.06; letter-spacing: -0.03em; text-wrap: balance;
+      margin-bottom: .9rem; max-width: 22ch;
+    }
+    h3 { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: .5rem; }
+    .augen {
+      display: block; font-size: .74rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--violett-text); margin-bottom: .9rem;
+    }
+    .dunkel .augen { color: #a5a5f0; }
+    .lead { font-size: 1.06rem; color: var(--tinte-weich); max-width: 52ch; line-height: 1.6; }
+    .dunkel .lead { color: var(--auf-dunkel-weich); }
+    .kopfblock { margin-bottom: clamp(2.2rem, 4vw, 3.2rem); }
+
+    /* ── Kopfzeile ────────────────────────────────────────────────────── */
+    .kopf {
+      position: fixed; inset: 0 0 auto 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.1rem var(--rand);
+      border-bottom: 1px solid transparent;
+      transition: background-color .25s ease, border-color .25s ease, backdrop-filter .25s ease;
+    }
+    .kopf[data-gescrollt="ja"] {
+      background: rgba(255,255,255,0.82); backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--nav-linie);
+    }
+    .logo {
+      display: inline-flex; align-items: center; gap: .55rem;
+      font-size: 1.02rem; font-weight: 600; letter-spacing: -.02em;
+      color: var(--tinte); text-decoration: none; flex: none;
+    }
+    .logo .zeichen {
+      width: 22px; height: 22px; border-radius: 6px; background: var(--violett);
+      position: relative; flex: none;
+    }
+    .logo .zeichen::after {
+      content: ""; position: absolute; inset: 6px auto auto 6px;
+      width: 5px; height: 5px; border-radius: 50%; background: #fff;
+    }
+    .nav { display: flex; align-items: center; gap: clamp(1.1rem, 2.4vw, 2rem); }
+    .nav a, .anmelden {
+      color: var(--tinte-weich); text-decoration: none;
+      font-size: .93rem; font-weight: 500; transition: color .18s ease;
+    }
+    .nav a:hover, .anmelden:hover { color: var(--tinte); }
+    .kopf-rechts { display: flex; align-items: center; gap: 1rem; flex: none; }
+    @media (max-width: 820px) { .nav { display: none; } }
+
+    /* ── Knoepfe ──────────────────────────────────────────────────────── */
+    .knoepfe { display: flex; flex-wrap: wrap; gap: .7rem; }
+    .knoepfe.mitte { justify-content: center; }
+    .knopf {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: inherit; font-size: 1rem; font-weight: 500;
+      text-decoration: none; white-space: nowrap;
+      padding: .85rem 1.6rem; border-radius: 10px;
+      border: 1px solid transparent;
+      transition: background-color .18s ease, border-color .18s ease, transform .12s ease;
+    }
+    .knopf:active { transform: translateY(1px); }
+    .knopf-voll { background: var(--tinte); color: #fff; }
+    .knopf-voll:hover { background: #2a2a33; }
+    .knopf-rand { background: var(--grund); color: var(--tinte); border-color: var(--rand-linie); }
+    .knopf-rand:hover { border-color: var(--tinte); }
+    .dunkel .knopf-voll { background: #fff; color: var(--dunkel); }
+    .dunkel .knopf-voll:hover { background: #e6e6ee; }
+    .dunkel .knopf-rand { background: transparent; color: #fff; border-color: rgba(255,255,255,0.3); }
+    .dunkel .knopf-rand:hover { border-color: #fff; }
+    .knopf-notiz { margin-top: .95rem; font-size: .86rem; color: var(--tinte-weich); }
+    @media (max-width: 430px) {
+      .knoepfe { flex-direction: column; align-items: stretch; width: min(100%, 20rem); margin-inline: auto; }
+      .knopf { width: 100%; }
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────────────── */
+    .hero {
+      position: relative; min-height: 100dvh;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+      padding: clamp(5rem, 11vh, 6.5rem) var(--rand) 0;
+      overflow: hidden;
+    }
+    .hero h1 {
+      font-size: clamp(2.3rem, 5.4vw, 4.4rem);
+      font-weight: 600; line-height: 0.98; letter-spacing: -0.035em;
+      /* 26ch: Die laengere Zeile ("persönlichen Mitarbeiter.") hat 25 Zeichen.
+         Knapper gesetzt brach sie gemessen auf eine dritte Zeile um. Kein
+         text-wrap: balance, der Umbruch steht per <br>. */
+      max-width: 26ch; margin-bottom: 1rem;
+    }
+    @media (max-width: 700px) { .hero h1 br { display: none; } .hero h1 { max-width: 15ch; } }
+    .hero .unterzeile {
+      color: var(--tinte-weich); font-size: clamp(.97rem, 1.1vw, 1.05rem);
+      line-height: 1.6; max-width: 46ch; margin-bottom: 1.6rem; text-wrap: pretty;
+    }
+    /* Bricht aus dem seitlichen Rand aus, damit das Bild randlos laeuft. */
+    .hero-bild-zone {
+      width: calc(100% + 2 * var(--rand));
+      margin: auto calc(-1 * var(--rand)) 0;
+      position: relative; line-height: 0;
+    }
+    .hero-bild-zone::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 4rem;
+      background: linear-gradient(to bottom, var(--grund), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+    /* Deckel in vw, nicht in rem: Der Beschnitt haengt an der BREITE, weil die
+       Bildhoehe bei voller Breite immer 55,8 % der Breite betraegt. Mit einem
+       rem-Deckel wuchs der Beschnitt bei breiten Fenstern auf gemessene 31,5 %
+       und koepfte die Figur (sie beginnt bei 26 %). 42vw haelt ihn konstant. */
+    .hero-bild {
+      width: 100%; height: auto; display: block; max-height: 42vw;
+      object-fit: cover; object-position: center bottom;
+    }
+    @media (max-width: 860px) { .hero-bild { object-position: 72% bottom; } }
+
+    /* ── Aussage + Kachelraster ───────────────────────────────────────── */
+    /* Ersetzt die frühere schlichte Vertrauensleiste. Gleiche Botschaft,
+       stärker gesetzt: eine grosse zentrierte Aussage mit Zeichen im Text,
+       darunter vier Kacheln in ungleichen Grössen.
+
+       ALLE ZAHLEN SIND ECHT. 3 Minuten, 1 Zeile, 5 Zustände, CHF 49 lassen
+       sich am Produkt nachprüfen. Kundenzahlen, Bewertungen oder Umsatzwerte
+       stehen bewusst nicht da, es gibt sie noch nicht. */
+    .aussage { text-align: center; }
+    .grosse-aussage {
+      font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 600;
+      line-height: 1.16; letter-spacing: -0.03em;
+      max-width: 20ch; margin: 0 auto clamp(2.5rem, 5vw, 4rem);
+    }
+    .grosse-aussage .leise { color: var(--tinte-hell); }
+    /* Zeichen mitten im Satz, Grösse relativ zur Schrift, damit sie beim
+       Skalieren mitwachsen und nie aus der Zeile fallen. */
+    .satzzeichen {
+      display: inline-grid; place-items: center;
+      width: .86em; height: .86em; border-radius: 50%;
+      vertical-align: -0.07em; margin: 0 .1em;
+    }
+    .satzzeichen svg { width: .5em; height: .5em; display: block; }
+    .satzzeichen.voll { background: var(--violett); color: #fff; }
+    .satzzeichen.zart { background: #dcdafa; color: var(--tinte); }
+
+    .bento {
+      display: grid; gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      text-align: left;
+    }
+    .bento > * { border-radius: 18px; padding: clamp(1.2rem, 2.4vw, 1.7rem); min-width: 0; }
+    .kachel-hoch { grid-row: span 2; }
+    @media (max-width: 900px) {
+      .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .kachel-hoch { grid-row: span 1; }
+    }
+    @media (max-width: 600px) { .bento { grid-template-columns: minmax(0, 1fr); } }
+
+    .k-zahl { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -.04em; line-height: 1; }
+    .k-label { font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
+    .k-text { font-size: .95rem; line-height: 1.55; margin-top: .7rem; }
+
+    /* Bildkachel: der Ausschnitt zeigt die Figur, nicht den leeren Verlauf. */
+    .k-bild {
+      padding: 0; overflow: hidden; position: relative;
+      background: var(--flaeche); display: flex; flex-direction: column; min-height: 17rem;
+    }
+    .k-bild img { width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: 78% 45%; display: block; }
+    .k-bild .karte-innen {
+      margin: -3.5rem 1rem 1rem; position: relative; z-index: 1;
+      background: #fff; border-radius: 14px; padding: 1.1rem 1.2rem;
+      box-shadow: 0 16px 34px -22px rgba(17,17,20,.5);
+    }
+    .k-hell { background: var(--flaeche); }
+    .k-violett { background: #dcdafa; }
+    .k-dunkel { background: var(--dunkel); color: #fff; }
+    .k-dunkel .k-label { opacity: .55; }
+    .k-code {
+      margin-top: .9rem; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .78rem; background: rgba(17,17,20,.07); border-radius: 8px;
+      padding: .55rem .7rem; overflow-x: auto; white-space: nowrap;
+    }
+    .aussage .fussnote { margin-top: 1.6rem; font-size: .88rem; color: var(--tinte-hell); }
+
+    /* ── Zweispalter (Problem / Loesung, Grenzen) ─────────────────────── */
+    .zwei { display: grid; gap: clamp(1.5rem, 3vw, 2.5rem); grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
+    .spalte { background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 16px; padding: clamp(1.4rem, 2.6vw, 2rem); }
+    .dunkel .spalte { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+    .spalte h3 { margin-bottom: 1.1rem; }
+    .liste { list-style: none; display: grid; gap: .8rem; }
+    .liste li { display: flex; gap: .7rem; font-size: .98rem; line-height: 1.5; color: var(--tinte-weich); }
+    .dunkel .liste li { color: var(--auf-dunkel-weich); }
+    .zeichen-punkt, .zeichen-ja, .zeichen-nein {
+      flex: none; width: 20px; height: 20px; border-radius: 6px; margin-top: 2px;
+      display: grid; place-items: center; font-size: .78rem; font-weight: 700; line-height: 1;
+    }
+    .zeichen-punkt { background: var(--rand-fein); color: var(--tinte-weich); }
+    .zeichen-ja { background: var(--violett-text); color: #fff; }
+    .zeichen-nein { background: rgba(255,255,255,0.14); color: #fff; }
+
+    /* ── Nummerierte Schritte ─────────────────────────────────────────── */
+    .drei { display: grid; gap: clamp(1.2rem, 2.4vw, 2rem); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+    .karte { background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 16px; padding: clamp(1.4rem, 2.4vw, 1.9rem); }
+    .hellflaeche .karte { background: var(--grund); }
+    .dunkel .karte { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+    .karte .nr {
+      display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: .08em;
+      color: var(--violett-text); margin-bottom: .9rem;
+    }
+    .dunkel .karte .nr { color: #a5a5f0; }
+    .karte p { font-size: .97rem; color: var(--tinte-weich); line-height: 1.58; }
+    .dunkel .karte p { color: var(--auf-dunkel-weich); }
+
+    /* ── Ablauf-Stepper (Schritte links, Bühne rechts) ────────────────── */
+    /* Nur der aktive Schritt zeigt seine Beschreibung, die anderen bleiben
+       auf Nummer und Titel. Rechts läuft die passende Aufnahme. Der Wechsel
+       geschieht per Klick und zusätzlich automatisch; die automatische
+       Weiterschaltung stoppt dauerhaft, sobald jemand selbst klickt, und
+       startet bei prefers-reduced-motion gar nicht erst. */
+    /* Diese Sektion traegt ausnahmsweise KEINEN eigenen Abstand: Die Buehne
+       soll oben, rechts und unten bis an die Sektionskante laufen. Den
+       Abstand uebernimmt die Textspalte. */
+    #so { padding-inline: 0; padding-block: 0; }
+    .ablauf { display: grid; grid-template-columns: 1fr; align-items: stretch; }
+    .ablauf-text { padding: clamp(4rem, 9vw, 7rem) var(--rand); }
+    .ablauf-inhalt { width: 100%; }
+    @media (min-width: 900px) {
+      .ablauf { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      /* Rechtsbuendig an der Spaltenkante, also genau an der Fenstermitte.
+         Ein 36rem breiter Block beginnt damit exakt dort, wo der Inhalt der
+         uebrigen Sektionen beginnt: Die Bahn ist 72rem breit und zentriert,
+         ihre linke Haelfte misst 36rem. Bewusst ueber die Blockbreite
+         geloest statt ueber eine 100vw-Rechnung, denn 100vw zaehlt die
+         Bildlaufleiste mit und laege ein paar Pixel daneben. */
+      .ablauf-text { padding-right: 0; display: flex; justify-content: flex-end; }
+      .ablauf-inhalt { max-width: 36rem; padding-right: clamp(2rem, 4vw, 3.5rem); }
+    }
+
+    .schritte { list-style: none; display: grid; gap: 0; margin: 0 0 2rem; }
+    .schritt {
+      display: grid; grid-template-columns: auto 1fr; gap: 0 .9rem;
+      padding: .95rem 0 .95rem 1.1rem; position: relative; cursor: pointer;
+      border: 0; background: none; font: inherit; color: inherit; text-align: left; width: 100%;
+    }
+    /* Die Leiste links ist die Fortschrittsspur. Sie faerbt sich beim aktiven
+       Schritt und laeuft bei automatischer Weiterschaltung mit. */
+    .schritt::before {
+      content: ""; position: absolute; left: 0; top: .35rem; bottom: .35rem; width: 2px;
+      background: var(--rand-linie); border-radius: 2px;
+    }
+    /* Der Fortschritt ist KEINE CSS-Animation mehr, sondern haengt an der
+       Variable --fortschritt (0 bis 1), die das Skript setzt. Grund: Vorher
+       lief hier eine Keyframe-Animation, und die Weiterschaltung haing an
+       deren animationend. Das ergab zwei gemessene Fehler. Erstens setzte ein
+       Klick vonHand=true und schaltete die Automatik fuer immer ab. Zweitens
+       griff das Pausieren beim Rausscrollen nie, weil die animation-
+       Kurzschrift in der spezifischeren Regel animation-play-state wieder auf
+       running zurueckstellte. Jetzt liest der Balken dieselbe Uhr wie der
+       Wechsel, die beiden koennen nicht mehr auseinanderlaufen. */
+    .schritt::after {
+      content: ""; position: absolute; left: 0; top: .35rem; width: 2px;
+      height: calc(100% - .7rem); background: var(--violett-text); border-radius: 2px;
+      transform: scaleY(var(--fortschritt, 0)); transform-origin: top;
+    }
+
+    .schritt .nr {
+      font-size: .95rem; font-weight: 600; color: var(--tinte-hell);
+      font-variant-numeric: tabular-nums; transition: color .2s ease;
+    }
+    .schritt .titel { font-size: .98rem; font-weight: 500; color: var(--tinte-hell); transition: color .2s ease; }
+    .schritt[aria-current="true"] .nr { color: var(--violett-text); }
+    .schritt[aria-current="true"] .titel { color: var(--tinte); font-weight: 600; }
+    .schritt:hover .titel { color: var(--tinte); }
+
+    /* Beschreibung nur beim aktiven Schritt. Kein display:none, damit die
+       Hoehe weich aufgeht statt zu springen. */
+    .schritt .wie {
+      grid-column: 2; font-size: .93rem; line-height: 1.55; color: var(--tinte-weich);
+      max-width: 40ch; overflow: hidden; max-height: 0; opacity: 0;
+      transition: max-height .3s ease, opacity .2s ease, margin-top .3s ease;
+      margin-top: 0;
+    }
+    .schritt[aria-current="true"] .wie { max-height: 9rem; opacity: 1; margin-top: .45rem; }
+
+    /* Bühne rechts. Bricht auf grossen Schirmen nach rechts aus dem Raster
+       aus, damit sie wie in der Vorlage bis zum Fensterrand laeuft.
+       Aufbau in drei Lagen: Hintergrund, darauf ein schwebendes Browser-
+       Fenster, darin die Aufnahme zum jeweiligen Schritt. Bewusst KEINE feste
+       aspect-ratio: Die Hoehe kommt vom Fenster plus Innenabstand, dann kann
+       das Fenster nie abgeschnitten werden, egal wie breit die Spalte wird. */
+    .buehne {
+      position: relative; overflow: hidden;
+      display: grid; place-items: center;
+      padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem);
+      background: #dcdafa;
+    }
+    .buehne-grund {
+      position: absolute; inset: 0; z-index: 0;
+      background: var(--ablauf-grund) center / cover no-repeat;
+    }
+    /* Kein Ausbruch nach rechts mehr noetig: Die Buehne IST die rechte
+       Rasterspalte der randlosen Sektion und endet damit von sich aus am
+       Fensterrand. Die fruehere negative Randrechnung mit 100vw ist raus,
+       sie hatte die Buehne um die Breite der Bildlaufleiste ueberstehen
+       lassen. */
+    /* Browser-Fenster, das auf dem Hintergrund schwebt. */
+    .fenster {
+      position: relative; z-index: 1; width: 100%; max-width: 26rem;
+      border-radius: 12px; overflow: hidden; background: #fff;
+      box-shadow: 0 28px 55px -22px rgba(20,20,40,.5), 0 6px 16px -8px rgba(20,20,40,.28);
+    }
+    .fenster-leiste {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .5rem .75rem; background: #f2f1f7; border-bottom: 1px solid var(--rand-fein);
+    }
+    .fenster-leiste i { width: 9px; height: 9px; border-radius: 50%; background: #d3d1dc; }
+    .fenster-leiste .adresse {
+      margin-left: .45rem; font-size: .7rem; color: var(--tinte-hell);
+      background: #fff; border-radius: 5px; padding: .15rem .6rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;
+    }
+    /* Hochkant: Die Aufnahmen zeigen einen Bildschirm-Ablauf von oben nach
+       unten, quer waere davon zu wenig zu sehen. */
+    .fenster-buehne { position: relative; aspect-ratio: 4 / 5; background: #fff; }
+
+    .buehne-bild { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; }
+    .buehne-bild[data-aktiv="ja"] { opacity: 1; }
+    .buehne-bild video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* Platzhalter, solange keine Aufnahme hinterlegt ist. Verschwindet von
+       selbst, sobald das Video echte Daten liefert. */
+    .platzhalter {
+      position: absolute; inset: 0; display: grid; place-content: center; gap: .5rem;
+      text-align: center; padding: 1.5rem; background: #dcdafa;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.5) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.5) 75%),
+        linear-gradient(45deg, rgba(255,255,255,.5) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.5) 75%);
+      background-size: 28px 28px; background-position: 0 0, 14px 14px;
+    }
+    .platzhalter .ph-nr {
+      font-size: 2.4rem; font-weight: 600; letter-spacing: -.03em; color: var(--violett-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .platzhalter .ph-text { font-size: .92rem; color: var(--tinte-weich); max-width: 26ch; margin-inline: auto; }
+    /* --tinte-weich statt --tinte-hell: Auf dem hellen Violett des
+       Platzhalters kam der hellere Ton gemessen auf nur 3,92:1. */
+    .platzhalter .ph-marke {
+      font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--tinte-weich);
+    }
+
+    /* ── Vorteile ──────────────────────────────────────────────────────
+       Loest die frueheren Sektionen "Das Problem" und "Der Unterschied"
+       ab. Die beiden standen nacheinander und trugen dasselbe Argument
+       zweimal vor, bevor ueberhaupt etwas zu sehen war. Das dazugehoerige
+       .figur-raster-CSS ist mit ausgebaut, es hatte danach keinen Nutzer
+       mehr. */
+    .vorteile { display: grid; gap: clamp(1.6rem, 3vw, 2.4rem); grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .vorteile { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .vorteil {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: clamp(1.4rem, 2.6vw, 1.9rem);
+    }
+    .vorteil .marke {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2.1rem; height: 2.1rem; border-radius: 9px; margin-bottom: .9rem;
+      background: rgba(165,165,240,0.16); color: #c9c9f7;
+      font-size: .82rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    }
+    .vorteil h3 { color: var(--auf-dunkel); }
+    .vorteil p { font-size: .98rem; color: var(--auf-dunkel-weich); line-height: 1.58; }
+
+    /* ── Charakter-Galerie ──────────────────────────────────────────────
+       Der einzige Beleg fuer die Kernbehauptung, dass jede Firma ein
+       eigenes Wesen bekommt. Solange keine echten Figuren hinterlegt sind,
+       steht in jeder Kachel ein Platzhalter mit der Branche.
+       ZUM ERSETZEN: Bild unter public/bilder/charaktere/<name>.webp
+       ablegen, der src-Pfad in der Kachel stimmt dann schon. Quadratisch,
+       Figur mittig, heller oder freigestellter Hintergrund. */
+    /* Faecher statt Raster: Die mittlere Karte steht gross und vorn, die
+       uebrigen staffeln sich treppenartig kleiner nach hinten.
+       Gescrollt wird mit dem ECHTEN Bildlauf des Browsers, nicht mit einem
+       nachgebauten. Dadurch funktionieren Wischen, Trackpad, Mausrad,
+       Tastatur und Einrasten von selbst; das Skript setzt nur noch die
+       Groesse je Karte aus deren Abstand zur Mitte. */
+    /* Die Sektion gibt ihren seitlichen Abstand ab, damit der Faecher bis
+       an den Fensterrand laufen kann. Der Kopfblock holt ihn ueber die
+       Bahn zurueck. */
+    #charaktere { padding-inline: 0; }
+    /* Der Abstand muss in die Breite eingerechnet werden, sonst schiebt er
+       den Inhalt nach innen: Mit blossem padding-inline stand der Titel
+       gemessen bei 177 statt bei 129 wie in allen uebrigen Sektionen. */
+    #charaktere .bahn {
+      max-width: calc(72rem + 2 * var(--rand));
+      padding-inline: var(--rand);
+    }
+    /* ── Auftritt ───────────────────────────────────────────────────────
+       Bloecke steigen beim ersten Sichtbarwerden leicht auf. Bewusst nur
+       opacity und transform, beides kommt ohne Neuzeichnen aus. Einmalig:
+       Ein Block, der beim Zurueckscrollen erneut auftaucht, wirkt nervoes.
+       Bei prefers-reduced-motion steht alles sofort da.
+       Versteckt wird NUR, wenn das Skript vorher data-da="nein" gesetzt
+       hat. Andersherum waere es gefaehrlich: Bricht das Skript aus
+       irgendeinem Grund vorher ab, bliebe der Inhalt fuer immer
+       unsichtbar. So ist der Ausfall harmlos, dann fehlt nur die
+       Bewegung. */
+    .auftritt[data-da="nein"] { opacity: 0; transform: translateY(20px); will-change: transform, opacity; }
+    .auftritt[data-da="ja"] {
+      opacity: 1; transform: none;
+      transition: opacity .65s ease, transform .65s cubic-bezier(.22, .8, .3, 1);
+      transition-delay: var(--verzug, 0ms);
+      will-change: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .auftritt[data-da="nein"] { opacity: 1; transform: none; }
+      .auftritt[data-da="ja"] { transition: none; }
+    }
+
+    .galerie-huelle { position: relative; }
+    .galerie {
+      --karte: clamp(12rem, 32vw, 23rem);
+      position: relative;          /* macht sie zum Bezugspunkt fuer offsetLeft */
+      display: flex; gap: clamp(.7rem, 1.6vw, 1.2rem);
+      overflow-x: auto; overflow-y: hidden;
+      /* KEIN CSS-Einrasten. Zwei Gruende, beide gemessen:
+         Erstens zog mandatory waehrend des Schwungs dauernd zum naechsten
+         Rastpunkt und arbeitete gegen die eigene Bewegung.
+         Zweitens, und das war der Ruecksprung beim langen Scrollen: Fuer
+         den Umlauf muss das Einrasten kurz aus, sonst landet der Sprung
+         daneben. Wird es danach wieder eingeschaltet, MUSS der Browser
+         laut Spezifikation neu einrasten, und genau dieses Nachrasten
+         schob den Inhalt. Gemessen sprang er dabei um 209 px, also fast
+         eine ganze Karte, obwohl er haette stillstehen muessen.
+         Eingerastet wird jetzt im Skript, mit derselben Kurve wie bei den
+         Pfeilen. */
+      /* Verhindert, dass ein waagrechtes Wischen die Seite mitzieht oder
+         die Zurueck-Geste des Browsers ausloest. */
+      overscroll-behavior-x: contain;
+      /* Luft fuer die Schlagschatten, die sonst am Rand abgeschnitten
+         wuerden: Sobald eine Achse scrollt, kann die andere nicht mehr
+         ueberstehen lassen. */
+      padding-block: clamp(1.2rem, 2.5vw, 2rem);
+      /* Kein riesiger Seitenabstand mehr noetig, um die Randkarten in die
+         Mitte zu bekommen: Das Skript haengt links und rechts je einen
+         vollstaendigen Klon-Satz an, der dient als Anlauf. */
+      padding-inline: var(--rand);
+      scrollbar-width: none;       /* Bedienung laeuft ueber die Pfeile */
+    }
+    .galerie::-webkit-scrollbar { display: none; }
+
+    .figur {
+      flex: 0 0 var(--karte); width: var(--karte);
+      position: relative; border-radius: 16px; overflow: hidden;
+      background: var(--flaeche); border: 1px solid var(--rand-fein);
+      aspect-ratio: 1 / 1;
+      /* Ursprung unten: Beim Verkleinern sinkt die Oberkante, die
+         Unterkanten bleiben auf einer Linie. Genau das ergibt die Treppe.
+         Weil nie ueber 1 skaliert wird, ragt auch nichts aus dem
+         Bildlauf-Container heraus. Das Skript schiebt die Karte zusaetzlich
+         quer nach innen, so schieben sich die hinteren uebereinander;
+         verschoben wird vor dem Skalieren, dann bleibt der Schub in
+         ungestauchten Pixeln.
+         transform und opacity setzt das Skript DIREKT, nicht mehr ueber
+         CSS-Variablen. Eine geaenderte Variable macht die Stilberechnung
+         des ganzen Teilbaums ungueltig, und jede Karte hat Bild,
+         Platzhalter und Beschriftung als Kinder. Direkt gesetzt bleibt die
+         Aenderung auf das Element beschraenkt und kann vom Compositor
+         uebernommen werden. Genau daran hing das zaehe Wischen. */
+      transform-origin: center bottom;
+      /* Heller Rand und Schatten trennen die uebereinanderliegenden Karten
+         voneinander, sonst verschwimmen sie zu einer Flaeche. */
+      box-shadow: 0 10px 22px -14px rgba(20, 20, 40, .45),
+                  0 0 0 4px var(--flaeche);
+      cursor: pointer;
+      /* Eigene Ebene, damit Verschieben, Skalieren und Ein-/Ausblenden
+         ohne Neuzeichnen auskommen. */
+      will-change: transform, opacity;
+      contain: paint;
+      transition: box-shadow .3s ease;
+    }
+    /* Die Karte in der Mitte tritt etwas hervor. Das Attribut setzt das
+       Skript nur beim Wechsel, nicht bei jedem Bild. */
+    .figur[data-mitte="ja"] {
+      box-shadow: 0 26px 50px -22px rgba(20, 20, 40, .6),
+                  0 0 0 4px var(--flaeche);
+    }
+    /* Unsichtbares darf nicht anklickbar sein. */
+    .figur[data-weg="ja"] { pointer-events: none; }
+    @media (prefers-reduced-motion: reduce) { .galerie { scroll-behavior: auto; } }
+
+    /* Pfeile UNTER der Galerie statt an den Seiten: Dort lagen sie ueber
+       den Karten, waren schlecht zu sehen und beim Klicken leicht zu
+       verfehlen. Unten stehen sie frei und sind immer erreichbar. */
+    .galerie-steuerung {
+      display: flex; justify-content: center; gap: .8rem;
+      margin-top: clamp(1.1rem, 2.4vw, 1.8rem);
+    }
+    .galerie-pfeil {
+      width: 52px; height: 52px; border-radius: 50%; cursor: pointer;
+      display: grid; place-items: center;
+      background: var(--grund); color: var(--tinte);
+      border: 1px solid var(--rand-linie);
+      box-shadow: 0 6px 18px -8px rgba(17, 17, 20, .35);
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .galerie-pfeil:hover { background: var(--tinte); color: var(--auf-dunkel); border-color: var(--tinte); }
+    .galerie-pfeil:active { transform: scale(.94); }
+    .galerie-pfeil svg { width: 22px; height: 22px; }
+    .figur img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* Der Platzhalter liegt UNTER dem Bild, nicht darueber: Fehlt die
+       Datei, bleibt er sichtbar; ist sie da, deckt das Bild ihn zu. Damit
+       braucht es kein Skript, das ihn wegnimmt. */
+    .figur-platzhalter {
+      position: absolute; inset: 0; display: grid; place-content: center; gap: .45rem;
+      text-align: center; padding: 1rem;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.55) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.55) 75%),
+        linear-gradient(45deg, rgba(255,255,255,.55) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.55) 75%);
+      background-size: 24px 24px; background-position: 0 0, 12px 12px;
+    }
+    .figur-platzhalter .ph-marke { font-size: .62rem; }
+    .figur img { position: relative; z-index: 1; }
+    .figur .branche {
+      position: absolute; inset: auto 0 0 0; z-index: 2;
+      padding: .55rem .8rem; font-size: .82rem; font-weight: 500; color: var(--tinte);
+      background: rgba(255,255,255,0.9); border-top: 1px solid var(--rand-fein);
+    }
+
+    /* ── Demo ─────────────────────────────────────────────────────────── */
+    .browser {
+      max-width: 46rem; margin: 0 auto; background: var(--grund);
+      border: 1px solid var(--rand-linie); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 30px 60px -40px rgba(17,17,20,0.4);
+    }
+    .browser-leiste {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .7rem .9rem; background: var(--flaeche); border-bottom: 1px solid var(--rand-fein);
+    }
+    .browser-leiste i { width: 9px; height: 9px; border-radius: 50%; background: var(--rand-linie); display: block; }
+    .browser-leiste span { margin-left: .5rem; font-size: .74rem; color: var(--tinte-hell); font-family: ui-monospace, monospace; }
+    .browser-inhalt { padding: 1.4rem clamp(1rem, 3vw, 1.8rem) 1.8rem; display: grid; gap: .7rem; }
+    .blase { max-width: 82%; padding: .7rem 1rem; border-radius: 16px; font-size: .95rem; line-height: 1.5; }
+    .blase.gast { justify-self: end; background: var(--flaeche); border-bottom-right-radius: 5px; }
+    .blase.agent { justify-self: start; background: var(--tinte); color: #fff; border-bottom-left-radius: 5px; }
+    .agent-zeile { display: flex; align-items: center; gap: .6rem; margin-bottom: .3rem; }
+    .agent-punkt {
+      /* --violett-text statt --violett: Der Buchstabe im Avatar ist echter
+         Text und lag auf dem helleren Ton bei nur 4,24:1. */
+      width: 34px; height: 34px; border-radius: 50%; background: var(--violett-text); flex: none;
+      display: grid; place-items: center; color: #fff; font-weight: 600; font-size: .9rem;
+    }
+    .agent-name { font-size: .78rem; color: var(--tinte-hell); }
+    .agent-name b { display: block; color: var(--tinte); font-size: .9rem; font-weight: 600; }
+
+    /* ── Preis ────────────────────────────────────────────────────────── */
+    .preis-raster { display: grid; gap: clamp(1.8rem, 3.5vw, 3rem); grid-template-columns: 1fr; align-items: start; }
+    @media (min-width: 900px) { .preis-raster { grid-template-columns: .9fr 1.1fr; } }
+    .preis-raster > * { min-width: 0; }
+    .preiskarte {
+      background: var(--grund); border: 1px solid var(--rand-linie); border-radius: 20px;
+      padding: clamp(1.6rem, 3vw, 2.2rem);
+      box-shadow: 0 24px 50px -40px rgba(17,17,20,0.45);
+    }
+    /* Umbruchfaehig und in clamp: Auf 375 px lief eine feste Grossschrift
+       gemessen 65 px ueber den Rand und die ganze Seite scrollte seitwaerts. */
+    .preiskarte .zahl {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 .5rem;
+      font-size: clamp(2.4rem, 6vw, 3.2rem); font-weight: 600; letter-spacing: -.04em; line-height: 1;
+    }
+    .preiskarte .zahl small { font-size: 1rem; font-weight: 500; color: var(--tinte-weich); letter-spacing: 0; }
+    .preiskarte ul { list-style: none; display: grid; gap: .6rem; margin: 1.5rem 0; }
+    .preiskarte li { display: flex; gap: .65rem; font-size: .97rem; line-height: 1.5; }
+    .preiskarte li b { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%;
+      background: var(--violett-text); display: grid; place-items: center; color: #fff; font-size: .68rem; }
+    .preiskarte .knopf { width: 100%; }
+    .preiskarte .klein { margin-top: .8rem; font-size: .85rem; color: var(--tinte-weich); text-align: center; }
+
+    /* ── Preis: drei Plaene nach Liams Vorlage ──────────────────────────
+       Uebernommen ist die Struktur (Umschalter, drei Karten, hervorgehobene
+       Empfehlung, Vergleichstabelle), nicht die Optik: Farben, Schrift,
+       Rundungen, Schatten und Knoepfe kommen unveraendert aus dem
+       bestehenden System. Kein Farbverlauf, das waere hier ein Fremdkoerper. */
+    .preis-schalter { display: flex; justify-content: center; margin-bottom: clamp(2rem, 4vw, 2.8rem); }
+    .schalter {
+      display: inline-flex; gap: .25rem; padding: .3rem;
+      background: var(--flaeche); border: 1px solid var(--rand-fein); border-radius: 999px;
+    }
+    .schalter button {
+      font: inherit; font-size: .93rem; font-weight: 500; border: 0; cursor: pointer;
+      padding: .55rem 1.15rem; border-radius: 999px; background: none; color: var(--tinte-weich);
+      display: inline-flex; align-items: center; gap: .5rem;
+      transition: background .18s ease, color .18s ease;
+    }
+    .schalter button[aria-pressed="true"] {
+      background: var(--grund); color: var(--tinte);
+      box-shadow: 0 2px 8px -3px rgba(17,17,20,.22);
+    }
+    .schalter .spar {
+      font-size: .72rem; font-weight: 600; padding: .12rem .45rem; border-radius: 999px;
+      background: rgba(109,109,228,.14); color: var(--violett-text);
+    }
+
+    /* stretch statt start: Sonst sind die Karten unterschiedlich hoch und die
+       Unterkanten fransen aus. Gemessen waren es 555/555/579 px, also 12 px
+       Versatz an der Unterkante. */
+    .plan-raster { display: grid; gap: clamp(1rem, 2vw, 1.4rem); grid-template-columns: 1fr; align-items: stretch; }
+    /* Untereinander gestapelt wird die Karte gedeckelt und mittig gesetzt.
+       Ohne das war sie auf dem Tablet gemessen 676 px breit; eine Preiskarte
+       mit sechs Zeilen wirkt auf dieser Breite leer. */
+    .plan-raster > .plan { max-width: 30rem; width: 100%; margin-inline: auto; }
+    @media (min-width: 900px) {
+      .plan-raster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .plan-raster > .plan { max-width: none; margin-inline: 0; }
+    }
+    .plan {
+      background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 18px;
+      padding: clamp(1.4rem, 2.4vw, 1.9rem);
+      display: flex; flex-direction: column;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .plan:hover { border-color: var(--rand-linie); }
+    /* Die empfohlene Karte hebt sich ueber Rand und Schatten ab, nicht ueber
+       eine andere Farbe. Angehoben wird sie erst ab drei Spalten, sonst
+       entsteht untereinander eine unmotivierte Stufe. */
+    .plan[data-top="ja"] {
+      border-color: var(--violett); border-width: 1.5px;
+      box-shadow: 0 28px 56px -34px rgba(20, 20, 40, .5);
+    }
+    /* Negativer Aussenabstand statt translateY: Verschieben liess die Karte
+       unten 12 px zu kurz kommen. So ragt sie oben UND unten gleich weit
+       heraus, und alle drei enden wieder auf einer Linie. */
+    @media (min-width: 900px) { .plan[data-top="ja"] { margin-block: -12px; } }
+
+    .plan-kopf { display: flex; align-items: center; gap: .6rem; margin-bottom: .35rem; }
+    .plan-name { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
+    .plan-badge {
+      font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      padding: .2rem .55rem; border-radius: 999px;
+      /* --violett-text, nicht --violett: Weiss auf dem helleren Ton kam
+         gemessen auf nur 4,24:1, noetig sind 4,5. Genau dafuer gibt es die
+         beiden Toene im System. */
+      background: var(--violett-text); color: #fff;
+    }
+    .plan-text { font-size: .92rem; color: var(--tinte-weich); line-height: 1.5; min-height: 2.8em; }
+    .plan-zahl {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 .45rem;
+      margin: 1.1rem 0 .2rem;
+      font-size: clamp(2.1rem, 4.4vw, 2.7rem); font-weight: 600; letter-spacing: -.04em; line-height: 1;
+    }
+    .plan-zahl small { font-size: .95rem; font-weight: 500; color: var(--tinte-weich); letter-spacing: 0; }
+    .plan-takt { font-size: .84rem; color: var(--tinte-hell); min-height: 1.3em; }
+    .plan .knopf { width: 100%; margin: 1.2rem 0 0; }
+    /* Nicht empfohlene Plaene bekommen den ruhigen Knopf, damit die
+       Empfehlung optisch fuehrt. */
+    .plan .knopf-linie {
+      background: var(--grund); color: var(--tinte); border: 1px solid var(--rand-linie);
+    }
+    .plan .knopf-linie:hover { background: var(--flaeche); }
+
+    .plan-titel {
+      margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rand-fein);
+      font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--tinte-hell);
+    }
+    .plan ul { list-style: none; display: grid; gap: .62rem; margin: .9rem 0 0; }
+    .plan li { display: flex; gap: .6rem; font-size: .94rem; line-height: 1.5; align-items: flex-start; }
+    .plan li .hak {
+      flex: none; width: 17px; height: 17px; margin-top: 2px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--violett-text); color: #fff;
+    }
+    .plan li .hak svg { width: 10px; height: 10px; }
+    /* Nicht enthalten: ausgegraut, aber weiterhin lesbar. --tinte-hell haelt
+       auf Weiss 4,9:1 und bleibt damit ueber der Schwelle. */
+    .plan li[data-aus="ja"] { color: var(--tinte-hell); }
+    .plan li[data-aus="ja"] .hak { background: var(--rand-linie); color: var(--tinte-hell); }
+
+    /* Vergleichstabelle. Erste Spalte bleibt beim seitlichen Rollen stehen,
+       sonst weiss man auf dem Handy nicht mehr, welche Zeile man liest. */
+    .vergleich th, .vergleich td { text-align: center; }
+    .vergleich th:first-child, .vergleich td:first-child {
+      text-align: left; position: sticky; left: 0; background: var(--grund); z-index: 1;
+      border-right: 1px solid var(--rand-fein);
+    }
+    .vergleich thead th:first-child { background: var(--flaeche); }
+    .vergleich thead th { text-transform: none; font-size: .95rem; letter-spacing: 0; color: var(--tinte); }
+    .vergleich thead .preis { display: block; font-size: .8rem; font-weight: 500; color: var(--tinte-hell); margin-top: .15rem; }
+    .vergleich tbody th { font-weight: 500; font-size: .93rem; color: var(--tinte); background: var(--grund); }
+    .vergleich .ja, .vergleich .nein { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; }
+    .vergleich .ja { background: var(--violett-text); color: #fff; }
+    .vergleich .nein { background: var(--flaeche); color: var(--tinte-hell); border: 1px solid var(--rand-fein); }
+    .vergleich .ja svg, .vergleich .nein svg { width: 11px; height: 11px; }
+    .vergleich .wert { font-size: .93rem; font-weight: 600; }
+    .vergleich tbody tr:hover td, .vergleich tbody tr:hover th { background: var(--flaeche); }
+
+    .tabelle-rahmen { overflow-x: auto; border: 1px solid var(--rand-fein); border-radius: 14px; background: var(--grund); }
+    table { border-collapse: collapse; width: 100%; font-size: .93rem; min-width: 28rem; }
+    th, td { text-align: left; padding: .8rem .9rem; border-bottom: 1px solid var(--rand-fein); vertical-align: top; }
+    thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--tinte-hell); font-weight: 600; background: var(--flaeche); }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.andere { color: var(--tinte-hell); }
+    td.uns { font-weight: 600; }
+    .tabellen-notiz { margin-top: 1rem; font-size: .85rem; color: var(--tinte-hell); max-width: 60ch; }
+
+    /* Nur fuer Vorlesewerkzeuge. Die Tabellen-Beschriftung soll nicht
+       sichtbar sein, aber vorhanden: Ohne sie beginnt die Tabelle beim
+       Vorlesen ohne jede Einordnung. */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+    }
+
+    /* ── FAQ ──────────────────────────────────────────────────────────── */
+    .faq { max-width: 48rem; margin: 0 auto; display: grid; gap: .6rem; }
+    .faq details {
+      background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 12px;
+      overflow: hidden; transition: border-color .18s ease;
+    }
+    .faq details[open] { border-color: var(--rand-linie); }
+    .faq summary {
+      list-style: none; cursor: pointer; padding: 1.05rem 1.3rem;
+      font-size: 1.01rem; font-weight: 500; display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: "+"; flex: none; font-size: 1.3rem; font-weight: 400; color: var(--tinte-hell);
+      line-height: 1; transition: transform .2s ease;
+    }
+    .faq details[open] summary::after { content: "−"; }
+    .faq .antwort { padding: 0 1.3rem 1.15rem; font-size: .97rem; color: var(--tinte-weich); line-height: 1.6; max-width: 62ch; }
+
+    /* ── Abschluss ────────────────────────────────────────────────────── */
+    .abschluss { text-align: center; }
+    .abschluss h2 { margin-inline: auto; max-width: 18ch; }
+    .abschluss .lead { margin: 0 auto 1.8rem; max-width: 42ch; }
+
+    /* ── Footer ───────────────────────────────────────────────────────── */
+    footer { background: var(--dunkel); color: var(--auf-dunkel); padding: clamp(3rem, 6vw, 4.5rem) var(--rand) 2.5rem; }
+    .footer-raster { display: grid; gap: 2.2rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin-bottom: 2.5rem; }
+    .footer-raster h4 { font-size: .76rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: .9rem; }
+    .footer-raster ul { list-style: none; display: grid; gap: .55rem; }
+    .footer-raster a { color: var(--auf-dunkel-weich); text-decoration: none; font-size: .95rem; }
+    .footer-raster a:hover { color: #fff; }
+    .folgt { font-size: .95rem; color: rgba(255,255,255,0.45); }
+    .folgt em { font-style: normal; font-size: .78rem; opacity: .8; }
+    .footer-fuss { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.6rem; font-size: .88rem; color: rgba(255,255,255,0.5); }
+    footer .logo { color: #fff; margin-bottom: 1rem; }
+
+    /* ── Preis-Seite: Einstieg ──────────────────────────────────────────
+       Eigene Seite, also traegt sie ein h1. Der Abstand nach unten ist
+       kleiner als bei den uebrigen Sektionen, weil die Karten direkt
+       darunter folgen und sonst eine Luecke entsteht. */
+    .preis-einstieg { padding-bottom: 0; }
+    .preis-einstieg h1 {
+      font-size: clamp(2.1rem, 4.6vw, 3.2rem); font-weight: 600;
+      line-height: 1.04; letter-spacing: -.035em; text-wrap: balance;
+      margin-bottom: .9rem; max-width: 20ch; margin-inline: auto;
+    }
+    /* Die Preis-Sektion folgt direkt auf den Einstieg und braucht oben
+       keinen zweiten vollen Abstand. */
+    .preis-einstieg + #preis { padding-top: clamp(1.6rem, 3vw, 2.4rem); }
