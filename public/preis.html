@@ -169,6 +169,49 @@
   </section>
 
 
+  <!-- ══ SELBST TESTEN ══════════════════════════════════════════════════
+       Der stärkste Beweis auf einer Preisseite: das Ding selbst benutzen.
+       Hier läuft derselbe Agent, den Kunden auf ihre Seite einbetten, mit
+       dem Datensatz data/aurachat.json.
+
+       Steht bewusst NACH der Vergleichstabelle: Wer bis hierhin gelesen
+       hat, hat konkrete Fragen ("reicht mir Basis?"), und genau die kann
+       er beantworten. Vor der Tabelle wäre es Ablenkung.
+
+       ACHTUNG, offen: data/aurachat.json kennt Stand 2026-08-15 noch die
+       alte Ein-Preis-Geschichte ("CHF 49 pro Monat"). Er widerspricht
+       damit den Karten direkt darüber. Das muss vor dem Livegang in den
+       Datensatz nachgezogen werden, sonst richtet diese Sektion mehr
+       Schaden an als sie nützt. Betrifft auch den Agenten auf start.html. -->
+  <section id="testen" class="hellflaeche">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Selbst testen</span>
+        <h2 style="margin-inline:auto">Frag ihn, bevor du zahlst.</h2>
+        <p class="lead" style="margin-inline:auto">Das hier ist kein Video und kein Mockup. Es ist derselbe Agent, den du nachher auf deine eigene Seite setzt, und er weiss über AuraChat das, was auf dieser Seite steht.</p>
+      </div>
+
+      <div class="testen-buehne auftritt" style="--verzug: 80ms">
+        <div class="fenster">
+          <div class="fenster-leiste" aria-hidden="true">
+            <i></i><i></i><i></i>
+            <span class="adresse">aurachat.ch</span>
+          </div>
+          <div class="testen-rahmen">
+            <!-- loading=lazy: Der Rahmen startet ein Gespräch und kostet
+                 damit einen Aufruf. Er soll erst laden, wenn jemand
+                 wirklich bis hierhin scrollt. -->
+            <iframe src="widget-frame.html?firma=aurachat&amp;pfad=%2Fpreis.html&amp;titel=Preise"
+                    title="AuraChat ausprobieren" loading="lazy"></iframe>
+          </div>
+        </div>
+        <p class="testen-beispiele">
+          Frag ihn zum Beispiel <b>„Reicht mir Basis?"</b>, <b>„Was kann er, was ein Kontaktformular nicht kann?"</b> oder <b>„Was passiert, wenn er etwas nicht weiss?"</b>
+        </p>
+      </div>
+    </div>
+  </section>
+
   <!-- ══ FRAGEN ZUM PREIS ══════════════════════════════════════════════
        Nur die Fragen, die wirklich mit Plänen und Bezahlung zu tun haben.
        Die allgemeinen Fragen bleiben auf der Startseite. -->

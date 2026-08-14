@@ -844,6 +844,33 @@
       border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.6rem; font-size: .88rem; color: rgba(255,255,255,0.5); }
     footer .logo { color: #fff; margin-bottom: 1rem; }
 
+    /* ── Preis-Seite: Selbst testen ─────────────────────────────────────
+       Der echte Agent, eingebettet auf der Preisseite. Bewusst im selben
+       Browserfenster-Rahmen wie die Aufnahmen in der Ablauf-Sektion, damit
+       sofort klar ist: das laeuft wirklich, das ist kein Bild. */
+    .testen-buehne {
+      max-width: 40rem; margin: 0 auto;
+      display: grid; gap: 1.1rem;
+    }
+    .testen-buehne .fenster { max-width: none; }
+    .testen-rahmen {
+      position: relative; background: var(--flaeche);
+      /* Feste Hoehe statt aspect-ratio: Ein Chat braucht Zeilen, keine
+         Proportion. Auf dem Handy etwas flacher, sonst fuellt er den
+         ganzen Schirm und man sieht nicht mehr, wo man ist. */
+      height: clamp(24rem, 62vh, 32rem);
+    }
+    .testen-rahmen iframe {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border: 0; display: block;
+    }
+    .testen-beispiele {
+      font-size: .93rem; color: var(--tinte-weich); line-height: 1.6;
+      text-align: center; max-width: 44ch; margin-inline: auto;
+    }
+    .testen-beispiele b { color: var(--tinte); font-weight: 600; }
+    .testen-beispiele span { white-space: nowrap; }
+
     /* ── Preis-Seite: Einstieg ──────────────────────────────────────────
        Eigene Seite, also traegt sie ein h1. Der Abstand nach unten ist
        kleiner als bei den uebrigen Sektionen, weil die Karten direkt
