@@ -335,7 +335,12 @@ const ziel = $("dazu");
 for (const k of KOMBI[id] || []) {
   const w = WARE[k];
   const a = document.createElement("a");
-  a.className = "stueck"; a.href = "/p/" + k;
+  // Direkte Adresse statt /p/… : Die Weiterleitung in netlify.toml gibt es nur
+  // auf Netlify. Im Vorschau-Server (und in jeder anderen statischen Ablage)
+  // ist /p/eichentisch-nord schlicht keine Datei — jeder Klick lief ins Leere.
+  // Die kurzen /p/-Adressen bleiben für die Vorschläge des Agenten reserviert;
+  // die kommen aus nordform.json und sollen aussehen wie bei einem echten Shop.
+  a.className = "stueck"; a.href = "demo-nordform-produkt.html?p=" + k;
   const kasten = document.createElement("div"); kasten.className = "stueck-bild";
   const bild = document.createElement("img"); bild.src = bildPfad(k); bild.alt = w.name;
   kasten.appendChild(bild);
