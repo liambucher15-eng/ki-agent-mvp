@@ -41,17 +41,14 @@
       richtigen Angebot. Rund um die Uhr, auf jeder Unterseite. Er lernt alles
       selbst von deiner Webseite, du musst nichts vorbereiten.
     </p>
-    <!-- Zwei Wege statt einem: Wer sich schon sicher ist, gibt die eigene
-         Adresse ein. Wer erst sehen will, worum es geht, schaut die
-         Vorführung an. Die Kleinzeile darunter nimmt die Enttäuschung
-         vorweg, dass der Scan nicht sofort losläuft. -->
-    <form class="knoepfe mitte" action="probe.html" method="get">
-      <input class="feld-adresse" type="text" name="url" inputmode="url"
-             placeholder="deine-firma.ch" aria-label="Adresse deiner Webseite" />
-      <button class="knopf knopf-voll" type="submit">Scan deine Webseite</button>
-      <a class="knopf knopf-rand" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
-    </form>
-    <p class="knopf-notiz">Drei Fragen gratis, ohne Konto.</p>
+    <!-- Der Hero bleibt bei den zwei kurzen Knöpfen. Die Probefahrt und die
+         Vorführung stehen weiter unten in „Überzeuge dich selbst" — ein
+         Adressfeld gleich im ersten Bildschirm verlangt eine Entscheidung,
+         bevor jemand weiss, worum es überhaupt geht. -->
+    <div class="knoepfe mitte">
+      <a class="knopf knopf-voll" href="demo-nordform.html">Demo testen</a>
+      <a class="knopf knopf-rand" href="onboarding-aura.html">Gratis Version testen</a>
+    </div>
     <div class="hero-bild-zone">
       <img class="hero-bild" src="bilder/hero-hintergrund.webp" alt="" role="presentation" />
     </div>
@@ -150,6 +147,47 @@
           <p>Wartend, zuhörend, nachdenkend, sprechend. Besucher merken, dass jemand da ist, statt dass ein Feld lädt.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ══ ÜBERZEUGE DICH SELBST ══════════════════════════════════════════
+       Steht mit Absicht VOR der Galerie: Bis hierher hat die Seite nur
+       behauptet. Wer ab hier weiterliest, soll das freiwillig tun, weil er es
+       selbst gesehen hat — nicht, weil wir es noch einmal erzählen.
+
+       Zwei Knöpfe, weil zwei verschiedene Leute hier ankommen. Wer schon weiss,
+       was er will, lässt die eigene Seite lesen. Wer erst verstehen will, worum
+       es geht, schaut sich die Vorführung an.
+
+       BILD ZUM ERSETZEN: Die beiden Bögen links und rechts sind bis dahin
+       CSS-Verläufe (.bogen in lib/seite.css). Wenn Liams Bild da ist, reicht es,
+       dort background-image zu setzen — am Markup ändert sich nichts. -->
+  <section class="beweis-band" id="selbst">
+    <span class="bogen bogen-links" aria-hidden="true"></span>
+    <span class="bogen bogen-rechts" aria-hidden="true"></span>
+    <div class="bahn beweis-innen">
+      <span class="marke">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2.5" />
+        </svg>
+        Überzeuge dich selbst
+      </span>
+      <h2>Glaub mir<br>kein Wort.</h2>
+      <p class="lead">
+        Beides läuft gerade wirklich. Kein Video, keine Aufnahme, keine Folien.
+      </p>
+      <div class="knoepfe mitte">
+        <a class="knopf knopf-voll" href="probe.html">Scan deine Webseite</a>
+        <a class="knopf knopf-rand" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
+      </div>
+      <!-- Eine konkrete Frage statt "schau dich um": Wer nicht weiss, was er
+           fragen soll, fragt nichts. Belegt — data/nordform.json führt fünf
+           Stücke unter 500 Euro. -->
+      <p class="knopf-notiz">
+        Drei Fragen gratis, ohne Konto. In der Vorführung: frag ihn nach einem
+        Tisch unter 500 Euro.
+      </p>
     </div>
   </section>
 
@@ -392,62 +430,6 @@
       <!-- Der Knopf zur Demo stand frueher hier. Er ist einen Abschnitt tiefer
            gewandert, in "Ueberzeuge dich selbst" — zweimal derselbe Knopf
            direkt untereinander liest sich wie ein Versehen. -->
-    </div>
-  </section>
-
-  <!-- ══ ÜBERZEUGE DICH SELBST ══════════════════════════════════════════
-       Der Abschnitt darueber ist eine BEHAUPTUNG: ein nachgestelltes Gespraech,
-       das wir uns selbst ausgedacht haben. Direkt danach muss der Beleg kommen,
-       sonst bleibt der ganze Seitenabschnitt Prospekt.
-
-       Zwei Wege, weil zwei verschiedene Leute hier ankommen: Wer schon weiss,
-       was er will, tippt seine Adresse ein. Wer erst verstehen will, worum es
-       geht, schaut sich die Vorfuehrung an. Einen der beiden zu einem
-       Zweitknopf zu degradieren, haette die Haelfte der Besucher verloren. -->
-  <section id="selbst">
-    <div class="bahn">
-      <div class="kopfblock" style="text-align:center;">
-        <span class="augen">Überzeuge dich selbst</span>
-        <h2 style="margin-inline:auto;">Glaub mir kein Wort.</h2>
-        <p class="lead" style="margin-inline:auto;">
-          Beides läuft gerade wirklich. Kein Video, keine Aufnahme.
-        </p>
-      </div>
-
-      <div class="drei beweis">
-        <div class="karte">
-          <span class="nr">Weg 1</span>
-          <h3>Auf deiner eigenen Seite</h3>
-          <p>
-            Gib deine Adresse ein. Er liest sie, zeigt dir, was er gefunden hat,
-            und sagt ehrlich, was er nicht gefunden hat. Danach beantwortet er
-            drei Fragen dazu.
-          </p>
-          <form class="beweis-tat" action="probe.html" method="get">
-            <input class="feld-adresse" type="text" name="url" inputmode="url"
-                   placeholder="deine-firma.ch" aria-label="Adresse deiner Webseite" />
-            <button class="knopf knopf-voll" type="submit">Scan deine Webseite</button>
-          </form>
-          <p class="beweis-notiz">Ohne Konto. Dauert etwa eine Minute.</p>
-        </div>
-
-        <div class="karte">
-          <span class="nr">Weg 2</span>
-          <h3>Auf einer fremden Seite</h3>
-          <p>
-            Ein Möbelshop mit Startseite, Produkten und Über-uns. Den Shop gibt
-            es nicht, den Agenten unten rechts schon. Er kennt das Sortiment,
-            schlägt Passendes vor und führt dich zur richtigen Seite.
-          </p>
-          <div class="beweis-tat">
-            <a class="knopf knopf-voll" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
-          </div>
-          <!-- Eine konkrete Frage statt "probier mal was aus": Wer nicht weiss,
-               was er fragen soll, fragt nichts. Die Antwort ist belegt —
-               data/nordform.json fuehrt fuenf Stuecke unter 500 Euro. -->
-          <p class="beweis-notiz">Frag ihn dort nach einem Tisch unter 500 Euro.</p>
-        </div>
-      </div>
     </div>
   </section>
 

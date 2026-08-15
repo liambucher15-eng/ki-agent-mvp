@@ -881,23 +881,83 @@
       .feld-adresse { flex: 1 1 100%; }
     }
 
-    /* ── „Überzeuge dich selbst": zwei Wege nebeneinander ───────────────
-       Zwei gleichwertige Karten, deshalb zwei gleich grosse gefüllte Knöpfe.
-       Eine der beiden als Rand-Knopf zu setzen hätte eine Rangfolge behauptet,
-       die es nicht gibt: Welcher Weg der richtige ist, hängt am Besucher. */
-    .beweis .karte { display: flex; flex-direction: column; }
-    .beweis .karte h3 {
-      font-size: 1.18rem; font-weight: 600; letter-spacing: -0.01em;
-      margin: 0 0 .55rem;
+    /* ── „Überzeuge dich selbst" ────────────────────────────────────────
+       Ein ruhiges helles Band vor der Galerie, mit zwei grossen weichen Bögen
+       links und rechts, die über den Rand hinauslaufen. Die Bögen sind reine
+       Dekoration (aria-hidden) und dürfen die Seite nicht breiter machen —
+       dafür sorgt overflow: hidden am Band. */
+    .beweis-band {
+      position: relative; overflow: hidden;
+      background: var(--grund);
+      padding-block: clamp(4rem, 10vw, 7.5rem);
+      text-align: center;
     }
-    /* Schiebt Knopf und Notiz an den unteren Rand, damit sie in beiden Karten
-       auf derselben Höhe sitzen — auch wenn der eine Text länger ist. */
-    .beweis .karte p:not(.beweis-notiz) { flex: 1 0 auto; margin-bottom: 1.3rem; }
-    .beweis-tat { display: flex; flex-wrap: wrap; gap: .55rem; }
-    .beweis-tat .knopf { flex: 1 1 auto; justify-content: center; text-align: center; }
-    .beweis-tat .feld-adresse { flex: 1 1 100%; }
-    .beweis-notiz {
-      margin: .8rem 0 0; font-size: .86rem; color: var(--tinte-hell);
+    .beweis-innen { position: relative; z-index: 1; }
+
+    /* Die Marke oben: Pille mit Symbol, wie in der Vorlage. */
+    .beweis-band .marke {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .4rem .95rem .4rem .75rem; border-radius: 999px;
+      border: 1px solid var(--rand-linie); background: var(--grund);
+      font-size: .82rem; font-weight: 500; color: var(--tinte-weich);
+      margin-bottom: clamp(1.2rem, 2.5vw, 1.8rem);
+    }
+    .beweis-band .marke svg { width: 15px; height: 15px; color: var(--violett-text); }
+
+    .beweis-band h2 {
+      font-size: clamp(2.4rem, 7vw, 4.4rem);
+      line-height: 1.02; letter-spacing: -0.035em; font-weight: 600;
+      margin: 0 0 1.1rem;
+    }
+    .beweis-band .lead {
+      margin: 0 auto clamp(1.8rem, 4vw, 2.6rem); max-width: 46ch;
+    }
+    .beweis-band .knopf-notiz { max-width: 42ch; margin-inline: auto; }
+
+    /* Die zwei Bögen. Der Ring entsteht aus einer Kreisfläche mit conic-gradient
+       (das gibt den Verlauf ENTLANG des Bogens) plus einer radialen Maske, die
+       die Mitte ausstanzt. Der Weichzeichner nimmt der Form die Härte.
+       ZUM ERSETZEN durch Liams Bild: hier background/mask/filter loeschen und
+       stattdessen background-image + background-size: contain setzen. */
+    .bogen {
+      position: absolute; top: 50%; width: clamp(20rem, 34vw, 30rem);
+      aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+      background: conic-gradient(from 210deg,
+        rgba(124, 58, 237, 0) 0deg,
+        rgba(167, 139, 250, .55) 45deg,
+        rgba(109, 109, 228, .95) 105deg,
+        rgba(88, 28, 190, 1) 165deg,
+        rgba(124, 58, 237, 0) 225deg);
+      -webkit-mask: radial-gradient(circle, #0000 56%, #000 62%);
+      mask: radial-gradient(circle, #0000 56%, #000 62%);
+      filter: blur(10px);
+    }
+    .bogen-links  { left: 0; transform: translate(-46%, -50%) rotate(28deg); }
+    .bogen-rechts { right: 0; transform: translate(46%, -50%) rotate(-152deg); }
+
+    /* Zwischen 700 und 860 px werden die Bögen kleiner und blasser, damit sie
+       den engeren Textblock nicht bedrängen. */
+    @media (max-width: 860px) {
+      .bogen { width: 17rem; filter: blur(16px); opacity: .5; }
+      .bogen-links  { transform: translate(-58%, -50%) rotate(28deg); }
+      .bogen-rechts { transform: translate(58%, -50%) rotate(-152deg); }
+    }
+
+    /* Unter 700 px ganz weg. Nicht aus Bequemlichkeit: Der Textblock nimmt dort
+       die volle Breite ein, die Bögen sind vertikal mittig — also genau auf
+       Höhe der Überschrift — und liegen damit unvermeidlich hinter der Schrift.
+       Wie dunkel das an der jeweiligen Stelle wirklich wird, hängt daran, welches
+       Stück des Verlaufs gerade dort landet; das ist nichts, was man abschätzen
+       sollte, wenn Lesbarkeit dranhängt. Auf einem Telefon wären die Bögen
+       ohnehin nur zwei angeschnittene Farbflecken. */
+    @media (max-width: 700px) {
+      .bogen { display: none; }
+    }
+
+    /* Browser ohne mask würden statt eines Rings eine volle Kreisfläche zeigen —
+       ein grosser violetter Klecks hinter dem Text. Dann lieber gar nichts. */
+    @supports not ((mask: radial-gradient(#000, #000)) or (-webkit-mask: radial-gradient(#000, #000))) {
+      .bogen { display: none; }
     }
 
     /* ── Preis-Seite: Selbst testen ─────────────────────────────────────
