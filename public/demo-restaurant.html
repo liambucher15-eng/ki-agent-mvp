@@ -28,8 +28,8 @@
 <body>
   <div class="hinweis">
     🧪 <strong>Test-Seite.</strong> Unten rechts schwebt der KI-Agent. Standardmässig lädt er die Firma
-    <code>firma</code>. Andere Firma testen: <code>?firma=salbei</code> an die URL hängen
-    (Salbei = Plus mit Maskottchen).
+    <code>salbei</code> (Plus, mit Maskottchen). Andere Firma testen: <code>?firma=…</code> an die
+    URL hängen. Die Vorführung für Besucher ist <a href="demo-nordform.html">demo-nordform.html</a>.
   </div>
 
   <header>
@@ -164,11 +164,15 @@
     Familie Bernasconi seit 1998
   </footer>
 
-  <!-- KI-Agent-Widget einbetten. Die Firma kommt aus ?firma=… (Standard: "firma").
+  <!-- KI-Agent-Widget einbetten. Die Firma kommt aus ?firma=… Der Standard muss
+       eine ID sein, die die Registry in netlify/functions/lib/firmen.js kennt.
+       Vorher stand hier "firma": die kennt niemand, firma.js antwortete 404, und
+       das Widget lief ohne Namen, ohne Persona und ohne Figur an. Diese Seite ist
+       von mehreren Stellen verlinkt — der Fehler war überall sichtbar.
        Genau so würde ein echter Kunde die eine Zeile in seine Seite einbauen. -->
   <script>
     (function () {
-      var firma = new URLSearchParams(location.search).get("firma") || "firma";
+      var firma = new URLSearchParams(location.search).get("firma") || "salbei";
       var s = document.createElement("script");
       s.src = "/widget.js";
       s.setAttribute("data-firma", firma);

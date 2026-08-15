@@ -844,6 +844,27 @@
       border-top: 1px solid rgba(255,255,255,0.12); padding-top: 1.6rem; font-size: .88rem; color: rgba(255,255,255,0.5); }
     footer .logo { color: #fff; margin-bottom: 1rem; }
 
+    /* ── Hero: Adressfeld neben den Knöpfen ─────────────────────────────
+       Der Besucher soll seine Adresse eintippen können, bevor er irgendwo
+       hinklickt. Wer schon etwas eingegeben hat, bricht seltener ab. */
+    .feld-adresse {
+      font: inherit; font-size: 1rem; color: var(--tinte);
+      padding: .85rem 1.15rem; border-radius: 999px;
+      border: 1px solid var(--rand-linie); background: var(--grund);
+      min-width: min(16rem, 100%); flex: 0 1 18rem;
+    }
+    .feld-adresse::placeholder { color: var(--tinte-hell); }
+    .feld-adresse:focus-visible {
+      outline: 2px solid var(--violett-text); outline-offset: 2px; border-color: transparent;
+    }
+    .knopf-notiz {
+      margin: .9rem 0 0; text-align: center;
+      font-size: .88rem; color: var(--tinte-weich);
+    }
+    @media (max-width: 640px) {
+      .feld-adresse { flex: 1 1 100%; }
+    }
+
     /* ── Preis-Seite: Selbst testen ─────────────────────────────────────
        Der echte Agent, eingebettet auf der Preisseite. Bewusst im selben
        Browserfenster-Rahmen wie die Aufnahmen in der Ablauf-Sektion, damit

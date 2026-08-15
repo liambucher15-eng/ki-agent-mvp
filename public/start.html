@@ -41,10 +41,17 @@
       richtigen Angebot. Rund um die Uhr, auf jeder Unterseite. Er lernt alles
       selbst von deiner Webseite, du musst nichts vorbereiten.
     </p>
-    <div class="knoepfe mitte">
-      <a class="knopf knopf-voll" href="demo-restaurant.html">Demo testen</a>
-      <a class="knopf knopf-rand" href="onboarding-aura.html">Gratis Version testen</a>
-    </div>
+    <!-- Zwei Wege statt einem: Wer sich schon sicher ist, gibt die eigene
+         Adresse ein. Wer erst sehen will, worum es geht, schaut die
+         Vorführung an. Die Kleinzeile darunter nimmt die Enttäuschung
+         vorweg, dass der Scan nicht sofort losläuft. -->
+    <form class="knoepfe mitte" action="probe.html" method="get">
+      <input class="feld-adresse" type="text" name="url" inputmode="url"
+             placeholder="deine-firma.ch" aria-label="Adresse deiner Webseite" />
+      <button class="knopf knopf-voll" type="submit">Scan deine Webseite</button>
+      <a class="knopf knopf-rand" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
+    </form>
+    <p class="knopf-notiz">Drei Fragen gratis, ohne Konto.</p>
     <div class="hero-bild-zone">
       <img class="hero-bild" src="bilder/hero-hintergrund.webp" alt="" role="presentation" />
     </div>
@@ -383,7 +390,7 @@
         </div>
       </div>
       <div class="knoepfe mitte" style="margin-top:2rem;">
-        <a class="knopf knopf-voll" href="demo-restaurant.html">Demo testen</a>
+        <a class="knopf knopf-voll" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
       </div>
     </div>
   </section>
@@ -485,9 +492,9 @@
       <h2>Schau nach, was er über deine Seite weiss.</h2>
       <p class="lead">Adresse eingeben, Scan abwarten, Ergebnis ansehen. Bis dahin kostet es nichts.</p>
       <div class="knoepfe mitte">
-        <a class="knopf knopf-voll" href="demo-restaurant.html">Demo testen</a>
-        <a class="knopf knopf-rand" href="onboarding-aura.html">Gratis Version testen</a>
-      </div>
+          <a class="knopf knopf-voll" href="probe.html">Scan deine Webseite</a>
+          <a class="knopf knopf-rand" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
+        </div>
     </div>
   </section>
 
@@ -501,7 +508,7 @@
           <ul>
             <li><a href="#funktionen">Funktionen</a></li>
             <li><a href="#preis">Preis</a></li>
-            <li><a href="demo-restaurant.html">Demo</a></li>
+            <li><a href="demo-nordform.html">Demo</a></li>
           </ul>
         </div>
         <!-- "Über uns" und "Kontakt" sind raus: Es gibt weder Seite noch
@@ -957,6 +964,19 @@
 
 
 
+
+<!-- ══ DER AGENT AUF DER EIGENEN SEITE ═══════════════════════════════════
+     Das Produkt führt sich selbst vor: dasselbe Script, das Kunden einbetten,
+     läuft hier. data-stil="leiste" ist die ruhende Eingabeleiste unten mittig
+     — mit der Figur darin, damit sofort erkennbar ist, dass hier jemand
+     antwortet und nicht bloss ein Suchfeld steht.
+     data-firma="aurachat" -> data/aurachat.json. Sein Wissen ist genau das,
+     was auf DIESER Seite steht; was es noch nicht gibt (Impressum, Referenzen,
+     Kontaktadresse), ist dort ausdrücklich als fehlend vermerkt, damit er es
+     nicht erfindet. -->
+<script src="widget.js" data-firma="aurachat" data-stil="leiste"
+        data-farbe="#6d6de4" data-farbe2="#5252c9"
+        data-leiste-text="Frag mich etwas über AuraChat…"></script>
 
 </body>
 </html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Probefahrt — AuraChat</title>
+  <meta name="description" content="Lass den Agenten deine eigene Webseite lesen und stelle ihm drei Fragen. Ohne Konto." />
+  <meta name="theme-color" content="#ffffff" />
+  <!-- Kein Suchmaschinen-Eintrag: Die Seite löst pro Aufruf einen Scan aus.
+       Sie soll über den Knopf auf der Startseite erreicht werden, nicht über
+       eine Suche. -->
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="lib/seite.css" />
+  <link rel="stylesheet" href="lib/probe.css" />
+</head>
+<body>
+
+  <header class="kopf" id="kopf">
+    <a class="logo" href="start.html">
+      <span class="zeichen" aria-hidden="true"></span>AuraChat
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="start.html">Start</a>
+      <a href="preis.html">Preis</a>
+      <a href="demo-nordform.html">Demo</a>
+    </nav>
+    <div class="kopf-rechts">
+      <a class="anmelden" href="dashboard.html">Anmelden</a>
+    </div>
+  </header>
+
+  <main class="probe" id="oben">
+
+    <!-- ══ 1) Adresse ══════════════════════════════════════════════════ -->
+    <section class="probe-block" id="stufeAdresse">
+      <h1>Lass ihn deine Webseite lesen.</h1>
+      <p class="unterzeile">
+        Er liest deine Startseite und zwei Unterseiten, und danach beantwortet er
+        drei Fragen dazu. Kein Konto, keine Karte.
+      </p>
+      <form class="probe-form" id="formular">
+        <input class="feld-adresse" id="adresse" type="text" name="url" inputmode="url"
+               autocomplete="url" placeholder="deine-firma.ch"
+               aria-label="Adresse deiner Webseite" required />
+        <button class="knopf knopf-voll" type="submit" id="losKnopf">Seite lesen</button>
+      </form>
+      <p class="knopf-notiz" id="adresseFehler" role="alert"></p>
+    </section>
+
+    <!-- ══ 2) Warten ═══════════════════════════════════════════════════
+         Warten mit Inhalt statt mit einem Kreisel: Wer sieht, WELCHE Seite
+         gerade gelesen wird, wartet nicht auf eine Animation, sondern schaut
+         der Arbeit zu. Die Liste kommt aus dem echten Scan-Fortschritt. -->
+    <section class="probe-block" id="stufeWarten" hidden>
+      <h2>Er liest gerade <span id="wartenAdresse"></span></h2>
+      <ul class="schritte" id="schritteListe">
+        <li data-schritt="laden"><span class="punkt" aria-hidden="true"></span>Startseite abrufen</li>
+        <li data-schritt="unterseiten"><span class="punkt" aria-hidden="true"></span>Unterseiten suchen</li>
+        <li data-schritt="lesen"><span class="punkt" aria-hidden="true"></span>Texte lesen</li>
+        <li data-schritt="ordnen"><span class="punkt" aria-hidden="true"></span>Angaben ordnen</li>
+      </ul>
+      <p class="knopf-notiz">Das dauert meistens zwanzig bis vierzig Sekunden.</p>
+    </section>
+
+    <!-- ══ 3) Fehler ═══════════════════════════════════════════════════ -->
+    <section class="probe-block" id="stufeFehler" hidden>
+      <h2>Das hat nicht geklappt.</h2>
+      <p class="unterzeile" id="fehlerText"></p>
+      <div class="knoepfe">
+        <button class="knopf knopf-voll" type="button" id="nochmalKnopf">Andere Adresse versuchen</button>
+        <a class="knopf knopf-rand" href="demo-nordform.html">Stattdessen die Demo ansehen</a>
+      </div>
+    </section>
+
+    <!-- ══ 4) Ergebnis + drei Fragen ═══════════════════════════════════ -->
+    <section class="probe-block weit" id="stufeErgebnis" hidden>
+      <h2>Das habe ich über dich gefunden.</h2>
+      <p class="gefunden-name" id="ergebnisName" hidden></p>
+      <p class="unterzeile" id="ergebnisQuelle"></p>
+
+      <div class="befund" id="befund"></div>
+
+      <!-- Ehrlichkeit ist hier das Verkaufsargument: Was NICHT gefunden wurde,
+           steht genauso da wie der Rest. Wer sieht, dass eine Angabe fehlt,
+           versteht sofort, wofür das Onboarding gut ist. -->
+      <div class="luecken" id="luecken" hidden>
+        <h3>Das habe ich nicht gefunden</h3>
+        <ul id="lueckenListe"></ul>
+        <p class="knopf-notiz">Im Onboarding trägst du das in zwei Minuten nach.</p>
+      </div>
+
+      <div class="gespraech">
+        <div class="gespraech-kopf">
+          <h3>Frag ihn etwas über deine Seite</h3>
+          <span class="zaehler" id="zaehler">3 Fragen offen</span>
+        </div>
+        <div class="verlauf" id="verlauf" aria-live="polite"></div>
+        <form class="frage-form" id="frageForm">
+          <input class="feld-adresse" id="frage" type="text" autocomplete="off"
+                 placeholder="Was bietet ihr an?" aria-label="Deine Frage" required />
+          <button class="knopf knopf-voll" type="submit" id="frageKnopf">Fragen</button>
+        </form>
+        <p class="knopf-notiz" id="frageHinweis"></p>
+      </div>
+
+      <div class="weiter" id="weiter" hidden>
+        <h3>So weit kommt er, ohne dass du etwas eingetragen hast.</h3>
+        <p class="unterzeile">
+          Im Onboarding sagst du ihm, was er sonst noch wissen muss, gibst ihm
+          einen Namen und ein Gesicht, und dann kann er das auf deiner Seite.
+        </p>
+        <div class="knoepfe">
+          <a class="knopf knopf-voll" id="weiterKnopf" href="onboarding-aura.html">Agent einrichten</a>
+          <a class="knopf knopf-rand" href="preis.html">Preise ansehen</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="bahn">
+      <a class="logo" href="start.html"><span class="zeichen" aria-hidden="true"></span>AuraChat</a>
+      <div class="footer-fuss">
+        <span>KI-Agenten für kleine Betriebe</span>
+        <span>© 2026 AuraChat</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="probe.js"></script>
+</body>
+</html>

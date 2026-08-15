@@ -6,7 +6,7 @@
 // Der Dateiname MUSS auf "-background" enden — nur dann läuft die Function
 // asynchron (Netlify-Konvention).
 
-const { scanneWebseite } = require("./lib/webseiteScannen");
+const { scanneWebseite, MAX_UNTERSEITEN, PROBE_UNTERSEITEN } = require("./lib/webseiteScannen");
 const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
 const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
@@ -16,15 +16,23 @@ exports.handler = async (event) => {
   // Rate-Limit: 5 Scans pro Minute und IP (ein Scan ist teuer)
   if (!(await rateOk("scan:" + holeIp(event), 5, 60))) return { statusCode: 429 };
 
-  let url, jobId;
-  try { ({ url, jobId } = JSON.parse(event.body || "{}")); } catch {}
+  let url, jobId, probe;
+  try { ({ url, jobId, probe } = JSON.parse(event.body || "{}")); } catch {}
   if (!url || !jobId) return { statusCode: 400 };
   if (typeof url !== "string" || url.length > 2000 ||
       typeof jobId !== "string" || jobId.length > 100) return { statusCode: 400 };
 
+  // Probefahrt von public/probe.html: sparsam scannen. Der Aufrufer gibt hier nur
+  // ein Ja/Nein, keine Seitenzahl — sonst könnte er sich selbst ein grösseres
+  // Budget bestellen.
+  const istProbe = probe === true;
+  const maxUnterseiten = istProbe ? PROBE_UNTERSEITEN : MAX_UNTERSEITEN;
+
   // Sofort einen "läuft"-Eintrag anlegen, damit die Status-Abfrage etwas findet.
+  // istProbe wird mitgespeichert, weil chat.js später daran erkennt, ob dieser
+  // Job überhaupt als Gesprächsgrundlage dienen darf.
   try {
-    await setzeJob(jobId, { status: "running", ergebnis: null, fehler: null });
+    await setzeJob(jobId, { status: "running", ergebnis: null, fehler: null, probe: istProbe, fragen: 0 });
   } catch (e) {
     // Wenn nicht mal das Anlegen klappt, ist der Speicher nicht erreichbar — abbrechen.
     console.error("scan-background: Job konnte nicht angelegt werden:", e.message);
@@ -35,7 +43,7 @@ exports.handler = async (event) => {
   await raeumeAlteJobs();
 
   try {
-    const ergebnis = await scanneWebseite(url);
+    const ergebnis = await scanneWebseite(url, maxUnterseiten);
     await setzeJob(jobId, { status: "done", ergebnis, fehler: null });
   } catch (e) {
     await setzeJob(jobId, { status: "error", ergebnis: null, fehler: e.message })

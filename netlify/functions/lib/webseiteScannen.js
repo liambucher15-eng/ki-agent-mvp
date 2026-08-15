@@ -45,6 +45,15 @@ const MAX_UNTERSEITEN = 11; // + Hauptseite = 12 Seiten
 const MAX_TEXT_PRO_SEITE = 6000;
 const MAX_TEXT_GESAMT = 48000;
 
+// Sparsames Budget für die öffentliche Probefahrt (public/probe.html).
+//
+// Das Onboarding scannt für einen zahlenden Kunden — da lohnen sich 12 Seiten.
+// Die Probefahrt kann jeder Fremde beliebig oft auslösen, und jeder Aufruf kostet
+// Abrufe plus einen Claude-Aufruf über den gesammelten Text. Zwei Unterseiten
+// reichen, um zu zeigen, dass der Agent die Seite wirklich gelesen hat; mehr wäre
+// nur teurer, nicht überzeugender.
+const PROBE_UNTERSEITEN = 2; // + Hauptseite = 3 Seiten
+
 // Dateien, die kein Firmenwissen tragen. .webmanifest kam dazu, weil an einer
 // handgebauten Seite /assets/favicons/site.webmanifest einen der elf Scan-
 // Plaetze belegte — eine Datei mit Icon-Groessen statt Text ueber die Firma.
@@ -510,9 +519,15 @@ async function claudeExtrakt(url, text) {
 
 // Führt den gesamten Scan aus und gibt das fertige Ergebnis-Objekt zurück.
 // Wirft bei harten Fehlern (Seite nicht erreichbar, kein Text, Claude-Fehler).
-async function scanneWebseite(rohUrl) {
+//
+// maxUnterseiten begrenzt, wie viele Unterseiten zusätzlich zur Startseite
+// gelesen werden. Der Standard ist das volle Onboarding-Budget; die öffentliche
+// Probefahrt übergibt PROBE_UNTERSEITEN. Der Wert wird hier hart gedeckelt,
+// damit ein Aufrufer das Budget nicht nach oben aufreissen kann.
+async function scanneWebseite(rohUrl, maxUnterseiten = MAX_UNTERSEITEN) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY fehlt (.env)");
   const url = normalisiere(rohUrl);
+  const maxUnter = Math.max(0, Math.min(MAX_UNTERSEITEN, Number(maxUnterseiten) || 0));
 
   // Grosse Seiten (z.B. Wix ~1 MB) brauchen länger — grosszügiges Timeout und ein
   // zweiter Versuch, damit ein einmaliger Netz-/Timeout-Aussetzer den Scan nicht kippt.
@@ -525,9 +540,12 @@ async function scanneWebseite(rohUrl) {
 
   // Unterseiten aus ZWEI Quellen: Links der Hauptseite + Sitemap (findet auch
   // Seiten, die nicht im Menü verlinkt sind). Wichtige zuerst, dann auffüllen.
-  const ausLinks = findeUnterseiten(hauptHtml, url, MAX_UNTERSEITEN);
-  const ausSitemap = await findeSitemapSeiten(url).catch(() => []);
-  const unterseiten = sortiereWichtige([...new Set([...ausLinks, ...ausSitemap])]).slice(0, MAX_UNTERSEITEN);
+  const ausLinks = findeUnterseiten(hauptHtml, url, maxUnter);
+  // Die Sitemap nur beim vollen Scan abfragen: Bei einem Budget von zwei Seiten
+  // liefern schon die Links der Startseite genug, und der Sitemap-Abruf wäre ein
+  // zusätzlicher Netzaufruf für nichts.
+  const ausSitemap = maxUnter >= 4 ? await findeSitemapSeiten(url).catch(() => []) : [];
+  const unterseiten = sortiereWichtige([...new Set([...ausLinks, ...ausSitemap])]).slice(0, maxUnter);
 
   const [css, ...unterResultate] = await Promise.all([
     sammleCss(hauptHtml, url),
@@ -608,6 +626,7 @@ async function scanneWebseite(rohUrl) {
 
 module.exports = {
   scanneWebseite,
+  MAX_UNTERSEITEN, PROBE_UNTERSEITEN,
   // einzelne Helfer exportiert für Unit-Tests
   normalisiere, htmlZuText, findeUnterseiten, parseFarbe, istNeutral, ermittleFarben,
   parseSitemapLocs, findeSitemapSeiten, extrahiereJsonLd, strukturierteDaten, ogMeta,

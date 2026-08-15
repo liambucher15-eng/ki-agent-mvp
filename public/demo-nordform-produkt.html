@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Eichentisch Nord — Nordform</title>
+<meta name="description" content="Eichentisch Nord, 899 €. Europäische Eiche, geölt, 200 × 95 cm. Lieferung in 2 bis 3 Wochen, 5 Jahre Garantie." />
+<meta property="og:type" content="product" />
+<meta property="og:title" content="Eichentisch Nord — Nordform" />
+<meta property="product:price:amount" content="899" />
+<meta property="product:price:currency" content="EUR" />
+<meta property="product:availability" content="in stock" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="lib/demo-nordform.css" />
+<script type="application/ld+json" id="ld">
+{"@context":"https://schema.org","@type":"Product","name":"Eichentisch Nord","sku":"eichentisch-nord",
+"image":"/bilder/produkte/eichentisch-nord.svg",
+"description":"Europäische Eiche, geölt, 200 × 95 cm.",
+"brand":{"@type":"Brand","name":"Nordform"},
+"offers":{"@type":"Offer","price":"899","priceCurrency":"EUR","availability":"https://schema.org/InStock"}}
+</script>
+</head>
+<body>
+
+<div class="vorfuehrung">
+  <div class="bahn">
+    <span><b>Vorführung.</b> Nordform gibt es nicht. Der Agent unten rechts ist echt.</span>
+    <span class="fragen">Frag ihn: <i>„Passt der Stuhl Lund dazu?"</i> · <i>„Wie viele Stühle für sechs Plätze?"</i> · <i>„Arbeitet Massivholz?"</i></span>
+    <a class="raus" href="start.html">Zurück zu AuraChat</a>
+  </div>
+</div>
+
+<header class="kopf">
+  <div class="bahn">
+    <nav class="kopf-nav" aria-label="Hauptnavigation">
+      <a href="demo-nordform.html#sortiment">Sortiment</a>
+      <a href="demo-nordform.html#kollektion">Kollektion</a>
+      <a href="demo-nordform-ueber-uns.html">Über uns</a>
+      <a href="demo-nordform.html#kontakt">Kontakt</a>
+    </nav>
+    <a class="wortmarke" href="demo-nordform.html">— Nordform —</a>
+    <div class="kopf-icons" aria-hidden="true">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>
+    </div>
+  </div>
+</header>
+
+<main class="bahn produkt">
+  <div class="produkt-bild"><img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" /></div>
+  <div>
+    <p class="spalten-titel" id="gruppe">Tische</p>
+    <h1 id="name">Eichentisch Nord</h1>
+    <p class="produkt-preis" id="preis">899 €</p>
+    <p class="produkt-text" id="text">Europäische Eiche, geölt, 200 × 95 cm.</p>
+    <p class="stueck-lager" id="lager">Auf Lager, Lieferung in 2–3 Wochen</p>
+
+    <div class="produkt-knoepfe">
+      <a class="knopf" href="#">In den Warenkorb <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+      <a class="knopf knopf-hell" href="demo-nordform.html#kontakt">Musterstück bestellen <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+    </div>
+
+    <div class="daten">
+      <dl>
+        <dt>Lieferzeit</dt><dd>2–3 Wochen</dd>
+        <dt>Versand</dt><dd>kostenlos ab 500 €</dd>
+        <dt>Rückgabe</dt><dd>30 Tage, kostenlos</dd>
+        <dt>Garantie</dt><dd>5 Jahre</dd>
+        <dt>Werkstatt</dt><dd>Berlin-Weissensee</dd>
+      </dl>
+    </div>
+  </div>
+</main>
+
+<section class="bahn">
+  <div class="abschnitt-kopf"><h2>Passt dazu</h2></div>
+  <div class="ware" id="dazu"></div>
+</section>
+
+<footer class="fuss">
+  <div class="bahn">
+    <p class="fuss-schluss">Erfundene Firma zu Vorführungszwecken. <a href="start.html">AuraChat</a></p>
+  </div>
+</footer>
+
+<script>
+// Ein Datensatz für alle sieben Stücke, damit jeder /p/…-Link des Agenten
+// auf einer echten Seite landet. Die Werte stimmen zeichengenau mit
+// data/nordform.json überein — weicht die Seite ab, widerspricht der Agent
+// der Seite, auf der er sitzt.
+const WARE = {
+  "eichentisch-nord":  { name: "Eichentisch Nord",  preis: 899,  gruppe: "Tische",             text: "Europäische Eiche, geölt, 200 × 95 cm.",        lager: true },
+  "esstisch-sund":     { name: "Esstisch Sund",     preis: 1290, gruppe: "Tische",             text: "Amerikanischer Nussbaum, 220 × 100 cm.",        lager: true },
+  "beistelltisch-vik": { name: "Beistelltisch Vik", preis: 329,  gruppe: "Tische",             text: "Eiche, 55 cm Durchmesser.",                     lager: false },
+  "stuhl-lund":        { name: "Stuhl Lund",        preis: 249,  gruppe: "Stühle",             text: "Eiche mit Filzsitz, stapelbar.",                lager: true },
+  "armlehnstuhl-aare": { name: "Armlehnstuhl Åre",  preis: 389,  gruppe: "Stühle",             text: "Eiche mit Lederbezug.",                         lager: true },
+  "leuchte-sund":      { name: "Leuchte Sund",      preis: 179,  gruppe: "Leuchten und Textil", text: "Messing mit Opalglas.",                        lager: true },
+  "teppich-fjord":     { name: "Teppich Fjord",     preis: 449,  gruppe: "Leuchten und Textil", text: "Wolle, 200 × 300 cm.",                         lager: true },
+};
+
+const schluessel = (new URLSearchParams(location.search).get("p") || "eichentisch-nord");
+const id = Object.prototype.hasOwnProperty.call(WARE, schluessel) ? schluessel : "eichentisch-nord";
+const p = WARE[id];
+const bildPfad = (k) => "bilder/produkte/" + k + ".svg";
+
+document.getElementById("name").textContent = p.name;
+document.getElementById("preis").textContent = p.preis + " €";
+document.getElementById("text").textContent = p.text;
+document.getElementById("gruppe").textContent = p.gruppe;
+document.getElementById("bild").src = bildPfad(id);
+document.getElementById("bild").alt = p.name;
+document.getElementById("lager").textContent = p.lager
+  ? "Auf Lager, Lieferung in 2–3 Wochen"
+  : "Derzeit ausverkauft, wieder ab etwa 6 Wochen";
+document.title = p.name + " — Nordform";
+
+// Die strukturierten Daten müssen zum angezeigten Stück passen, sonst liest
+// widget.js einen anderen Preis aus, als auf der Seite steht.
+document.getElementById("ld").textContent = JSON.stringify({
+  "@context": "https://schema.org", "@type": "Product",
+  name: p.name, sku: id, image: "/" + bildPfad(id), description: p.text,
+  brand: { "@type": "Brand", name: "Nordform" },
+  offers: { "@type": "Offer", price: String(p.preis), priceCurrency: "EUR",
+    availability: p.lager ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" },
+});
+document.querySelector('meta[property="product:price:amount"]').setAttribute("content", String(p.preis));
+document.querySelector('meta[property="product:availability"]').setAttribute("content", p.lager ? "in stock" : "out of stock");
+
+// „Passt dazu": die Kombinationen aus nordform.json, nie das Stück selbst.
+const KOMBI = {
+  "eichentisch-nord": ["stuhl-lund", "leuchte-sund", "teppich-fjord"],
+  "esstisch-sund": ["armlehnstuhl-aare", "leuchte-sund", "teppich-fjord"],
+  "beistelltisch-vik": ["leuchte-sund", "stuhl-lund", "teppich-fjord"],
+  "stuhl-lund": ["eichentisch-nord", "teppich-fjord", "leuchte-sund"],
+  "armlehnstuhl-aare": ["esstisch-sund", "teppich-fjord", "leuchte-sund"],
+  "leuchte-sund": ["eichentisch-nord", "stuhl-lund", "teppich-fjord"],
+  "teppich-fjord": ["eichentisch-nord", "stuhl-lund", "armlehnstuhl-aare"],
+};
+const ziel = document.getElementById("dazu");
+(KOMBI[id] || []).forEach((k) => {
+  const w = WARE[k];
+  const a = document.createElement("a");
+  a.className = "stueck"; a.href = "/p/" + k;
+  const kasten = document.createElement("div"); kasten.className = "stueck-bild";
+  const bild = document.createElement("img"); bild.src = bildPfad(k); bild.alt = w.name;
+  kasten.appendChild(bild);
+  const zeile = document.createElement("div"); zeile.className = "stueck-zeile";
+  const nm = document.createElement("span"); nm.className = "stueck-name"; nm.textContent = w.name;
+  const pr = document.createElement("span"); pr.className = "stueck-preis"; pr.textContent = w.preis + " €";
+  zeile.append(nm, pr);
+  const info = document.createElement("p"); info.className = "stueck-info"; info.textContent = w.text;
+  a.append(kasten, zeile, info);
+  ziel.appendChild(a);
+});
+</script>
+
+<script src="/widget.js" data-firma="nordform" data-farbe="#1f2937"></script>
+
+</body>
+</html>

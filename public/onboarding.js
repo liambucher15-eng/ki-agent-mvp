@@ -30,6 +30,36 @@
     const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
     let aktuell = 0;
 
+    // Übergabe aus der Startseite und der Preisseite.
+    //
+    // Beide verlinken seit je mit Parametern hierher — preis.html mit ?plan=…,
+    // die Probefahrt mit ?webseite=… — und beide wurden bisher von niemandem
+    // gelesen. Wer auf der Preisseite "Basis wählen" klickte, landete trotzdem
+    // im Plus-Zweig, und wer seine Adresse schon eingetippt hatte, musste sie
+    // ein zweites Mal eintippen.
+    (function uebernehmeParameter() {
+      const p = new URLSearchParams(location.search);
+
+      // Der Plan ist eine Vorauswahl, keine Berechtigung: Was ein Konto
+      // tatsächlich darf, entscheidet allein die Server-Spalte firmen.plan
+      // (siehe netlify/functions/firma.js). Deshalb genügt hier eine Weissliste
+      // gegen Unsinn in der URL; ein manipulierter Wert schaltet nichts frei.
+      // "gratis" von der Preisseite hat serverseitig keine Entsprechung und
+      // wird auf "basis" abgebildet, den Standard aus firmaLaden.js.
+      const planRoh = (p.get("plan") || "").toLowerCase();
+      if (planRoh === "basis" || planRoh === "gratis") daten.plan = "basis";
+      else if (planRoh === "plus") daten.plan = "plus";
+
+      // Adresse aus der Probefahrt. Nur ins Feld schreiben, nicht scannen: Der
+      // Besucher soll sehen, was übernommen wurde, und es korrigieren können.
+      const webseite = (p.get("webseite") || "").trim().slice(0, 200);
+      if (webseite) {
+        daten.webseite = webseite;
+        const feld = document.getElementById("webseite");
+        if (feld && !feld.value.trim()) feld.value = webseite;
+      }
+    })();
+
     // Schlägt einen freundlichen ASSISTENTEN-Namen vor (kein Firmenname!). Aus einer
     // kuratierten Liste, deterministisch aus dem Firmennamen abgeleitet, damit der
     // Vorschlag beim erneuten Öffnen stabil bleibt.

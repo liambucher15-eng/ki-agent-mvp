@@ -37,10 +37,11 @@ async function setzeJob(id, felder) {
   }
 }
 
-// Job lesen — gibt { status, ergebnis, fehler } zurück oder null, wenn (noch) nicht vorhanden.
+// Job lesen — gibt { status, ergebnis, fehler, probe, fragen } zurück oder null,
+// wenn (noch) nicht vorhanden. probe/fragen stammen aus migration-probe.sql.
 async function leseJob(id) {
   if (!konfiguriert()) throw new Error("SUPABASE_URL/SUPABASE_ANON_KEY fehlen (.env)");
-  const url = URL_BASIS + "/rest/v1/scan_jobs?id=eq." + encodeURIComponent(id) + "&select=status,ergebnis,fehler";
+  const url = URL_BASIS + "/rest/v1/scan_jobs?id=eq." + encodeURIComponent(id) + "&select=status,ergebnis,fehler,probe,fragen";
   const res = await fetch(url, { headers: kopf() });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
@@ -64,4 +65,34 @@ async function raeumeAlteJobs() {
   } catch { /* beim nächsten Mal */ }
 }
 
-module.exports = { setzeJob, leseJob, konfiguriert, raeumeAlteJobs };
+// Zählt EINE Frage für einen Probefahrt-Job und sagt, ob sie gewährt wird.
+//
+// Warum das eine Datenbank-Function ist und kein leseJob/setzeJob-Paar: Der
+// Zähler ist der eigentliche Kostendeckel der öffentlichen Probefahrt. Läse man
+// erst den Stand und schriebe ihn dann zurück, kämen drei gleichzeitig
+// abgeschickte Fragen alle durch — alle drei sähen dieselbe 0. probe_frage_zaehlen
+// erhöht und prüft in einer einzigen UPDATE-Anweisung (migration-probe.sql).
+//
+// Gibt { ok, stand, uebrig } zurück. ok=false heisst: Job unbekannt, keine
+// Probefahrt, noch nicht fertig gescannt, oder Kontingent aufgebraucht. Welcher
+// Fall es war, verrät die Function bewusst nicht — der Aufrufer soll fremde
+// jobIds nicht durchprobieren können.
+async function zaehleProbeFrage(id, grenze) {
+  if (!konfiguriert()) throw new Error("SUPABASE_URL/SUPABASE_SERVICE_KEY fehlen (.env)");
+  const res = await fetch(URL_BASIS + "/rest/v1/rpc/probe_frage_zaehlen", {
+    method: "POST",
+    headers: kopf(),
+    body: JSON.stringify({ job_id: id, grenze }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error("Fragen-Zähler fehlgeschlagen (" + res.status + "): " + t.slice(0, 200));
+  }
+  const stand = Number(await res.json());
+  // Ein fehlgeschlagener Zählversuch darf NIE als Erlaubnis durchgehen: Alles,
+  // was nicht eindeutig eine gültige Zahl im erlaubten Bereich ist, ist ein Nein.
+  if (!Number.isFinite(stand) || stand < 1 || stand > grenze) return { ok: false, stand: grenze, uebrig: 0 };
+  return { ok: true, stand, uebrig: grenze - stand };
+}
+
+module.exports = { setzeJob, leseJob, konfiguriert, raeumeAlteJobs, zaehleProbeFrage };

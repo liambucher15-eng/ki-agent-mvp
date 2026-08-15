@@ -5,3 +5,12 @@
 # Sorgt dafür, dass die Firmen-Daten beim Deploy mit der Funktion hochgeladen werden.
 [functions]
   included_files = ["data/**"]
+
+# Produktlinks der Nordform-Demo. In data/nordform.json stehen Links der Form
+# /p/eichentisch-nord — genau so, wie ein echter Shop sie hätte. Ohne diese
+# Weiterleitung führt jeder Produktvorschlag des Agenten ins Leere, und die
+# Vorführung bricht an ihrer wichtigsten Stelle.
+[[redirects]]
+  from = "/p/*"
+  to = "/demo-nordform-produkt.html?p=:splat"
+  status = 200

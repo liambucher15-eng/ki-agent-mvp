@@ -15,6 +15,7 @@ const { baueTools } = require("./lib/faehigkeiten");
 const { saubereVorschlaege } = require("./lib/vorschlaege");
 const { saubereAktion, zielStehtAufSeite } = require("./lib/seiten-aktion");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
+const { leseJob, zaehleProbeFrage } = require("./lib/jobSpeicher");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
   beurteile: beurteileVerhalten,
@@ -30,6 +31,77 @@ const MAX_NACHRICHTEN = 40;
 const MAX_ZEICHEN_EINZELN = 4000;
 const MAX_ZEICHEN_GESAMT = 12000;
 
+// Wie viele Fragen die öffentliche Probefahrt gratis erlaubt. Diese Zahl steht
+// auch auf der Startseite ("Drei Fragen gratis, ohne Konto") — beim Ändern dort
+// mitziehen, sonst verspricht die Seite etwas, das der Server nicht einhält.
+const PROBE_FRAGEN = 3;
+
+// Baut aus einem abgeschlossenen Probefahrt-Scan eine Firma für den Prompt und
+// zieht dabei eine Frage vom Kontingent ab.
+//
+// Reihenfolge mit Absicht: erst zählen, dann Claude rufen. Wäre es umgekehrt,
+// könnte jemand mit abgebrochenen Anfragen beliebig viele Claude-Aufrufe
+// auslösen, ohne dass je ein Zähler hochginge.
+async function ladeProbe(probeId) {
+  const nein = (code, text) => ({ ok: false, antwort: json(code, { error: text }) });
+
+  if (typeof probeId !== "string" || probeId.length > 100) {
+    return nein(400, "Ungültige probeId");
+  }
+
+  let zaehler;
+  try {
+    zaehler = await zaehleProbeFrage(probeId, PROBE_FRAGEN);
+  } catch (e) {
+    // Anders als beim Rate-Limit in schutz.js wird hier NICHT durchgewunken.
+    // Dieser Zähler ist der Kostendeckel der einzigen Funktion, die jeder Fremde
+    // ohne Konto auslösen kann; ein Speicherausfall darf ihn nicht öffnen.
+    console.error("chat: Fragen-Zähler nicht erreichbar:", e.message);
+    return nein(503, "Die Probefahrt ist gerade nicht verfügbar. Bitte später nochmal.");
+  }
+  if (!zaehler.ok) {
+    return nein(429, `Die ${PROBE_FRAGEN} Gratis-Fragen sind aufgebraucht. ` +
+      `Mit einem Konto geht es unbegrenzt weiter.`);
+  }
+
+  const job = await leseJob(probeId).catch(() => null);
+  const scan = job && job.ergebnis;
+  if (!scan) return nein(404, "Zu dieser Probefahrt gibt es kein Ergebnis.");
+
+  // Der Agent der Probefahrt ist bewusst schmal: Er kann NICHTS ausser antworten.
+  // Keine faehigkeiten, also auch kein kontakt_hinterlassen — es gibt hier keine
+  // Firma, in deren Posteingang ein Lead landen könnte, und keinen Besitzer, der
+  // ihn je zu sehen bekäme. Und keine id, damit das Gespräch nicht unter einer
+  // erfundenen Firma protokolliert wird.
+  const firma = {
+    name: scan.name || "deine Firma",
+    faehigkeiten: [],
+    persona: {
+      name: "Probe-Agent",
+      rolle: "Assistent",
+      ansprache: "du",
+      ton: "warm, freundlich und hilfsbereit; geduldig und zugänglich",
+      sprache: "Deutsch",
+    },
+    wissensquellen: [{
+      id: "probe",
+      typ: "scan",
+      titel: "Webseite " + (scan.gescannt?.[0] || ""),
+      quelle: scan.gescannt?.[0] || "",
+      stand: new Date().toISOString().slice(0, 10),
+      text: scan.wissen || "",
+    }],
+    faq: Array.isArray(scan.faq) ? scan.faq.slice(0, 20) : [],
+    fakten: {
+      ...(scan.oeffnungszeiten ? { Öffnungszeiten: scan.oeffnungszeiten } : {}),
+      ...(scan.adresse ? { Adresse: scan.adresse } : {}),
+      ...(scan.kontakt ? { Kontakt: scan.kontakt } : {}),
+    },
+  };
+
+  return { ok: true, firma, uebrig: zaehler.uebrig };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
   if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
@@ -40,9 +112,9 @@ exports.handler = async (event) => {
     return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
   }
 
-  let messages, firmaId, firmaConfig, seiteInfo;
+  let messages, firmaId, firmaConfig, seiteInfo, probeId;
   try {
-    ({ messages, firmaId, firmaConfig, seiteInfo } = JSON.parse(event.body || "{}"));
+    ({ messages, firmaId, firmaConfig, seiteInfo, probeId } = JSON.parse(event.body || "{}"));
   } catch {
     return json(400, { error: "Ungültiges JSON" });
   }
@@ -63,7 +135,20 @@ exports.handler = async (event) => {
   // Firma bestimmen — vertrauenswürdig vom Server.
   // Nur in dev darf eine firmaConfig aus dem Browser als Vorschau genutzt werden.
   let firma = null;
-  if (IST_DEV && firmaConfig) {
+  let probeUebrig;
+  if (probeId) {
+    // Probefahrt (public/probe.html): Der Besucher hat gerade seine EIGENE Seite
+    // scannen lassen und darf dem Agenten drei Fragen stellen.
+    //
+    // Die Sicherheitsgrenze bleibt dieselbe wie beim normalen Pfad: Der Browser
+    // schickt nur eine ID, nie Daten. Die Firmen-Angaben werden hier aus dem
+    // serverseitig geschriebenen Scan-Job gelesen — der Besucher kann also weder
+    // Persona noch Wissen des Agenten bestimmen.
+    const ergebnis = await ladeProbe(probeId);
+    if (!ergebnis.ok) return ergebnis.antwort;
+    firma = ergebnis.firma;
+    probeUebrig = ergebnis.uebrig;
+  } else if (IST_DEV && firmaConfig) {
     firma = firmaConfig;
   } else {
     if (!firmaId) return json(400, { error: "firmaId fehlt" });
@@ -221,6 +306,9 @@ exports.handler = async (event) => {
       aktion: toolErgebnis || undefined,
       produkte: vorschlaege.length ? vorschlaege : undefined,
       seitenAktion: seitenAktion || undefined,
+      // Nur bei der Probefahrt gesetzt. Die Oberfläche zeigt damit an, wie viele
+      // Fragen noch offen sind — die Zahl kommt vom Server, nicht aus dem Browser.
+      probeUebrig,
     });
   } catch (err) {
     return json(500, { error: err.message });

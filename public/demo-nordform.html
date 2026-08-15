@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nordform — Massivholzmöbel aus Berlin</title>
+<meta name="description" content="Tische, Stühle, Regale aus europäischer Eiche und amerikanischem Nussbaum. Gefertigt in Berlin-Weissensee. 5 Jahre Garantie, Lieferung in 2 bis 3 Wochen." />
+<meta property="og:title" content="Nordform — Massivholzmöbel aus Berlin" />
+<meta property="og:description" content="Massivholzmöbel aus eigener Werkstatt in Berlin-Weissensee." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="lib/demo-nordform.css" />
+
+<!-- Strukturierte Daten wie bei einem echten Shop. Genau das sammelt
+     widget.js in strukturDaten() ein, damit der Agent weiss, worauf der
+     Besucher gerade schaut. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"ItemList","name":"Nordform Bestseller","itemListElement":[
+ {"@type":"ListItem","position":1,"item":{"@type":"Product","name":"Eichentisch Nord","url":"/p/eichentisch-nord","image":"/bilder/produkte/eichentisch-nord.svg","offers":{"@type":"Offer","price":"899","priceCurrency":"EUR","availability":"https://schema.org/InStock"}}},
+ {"@type":"ListItem","position":2,"item":{"@type":"Product","name":"Stuhl Lund","url":"/p/stuhl-lund","image":"/bilder/produkte/stuhl-lund.svg","offers":{"@type":"Offer","price":"249","priceCurrency":"EUR","availability":"https://schema.org/InStock"}}},
+ {"@type":"ListItem","position":3,"item":{"@type":"Product","name":"Leuchte Sund","url":"/p/leuchte-sund","image":"/bilder/produkte/leuchte-sund.svg","offers":{"@type":"Offer","price":"179","priceCurrency":"EUR","availability":"https://schema.org/InStock"}}},
+ {"@type":"ListItem","position":4,"item":{"@type":"Product","name":"Beistelltisch Vik","url":"/p/beistelltisch-vik","image":"/bilder/produkte/beistelltisch-vik.svg","offers":{"@type":"Offer","price":"329","priceCurrency":"EUR","availability":"https://schema.org/OutOfStock"}}}
+]}
+</script>
+</head>
+<body>
+
+<!-- ══ VORFÜHRUNGS-LEISTE ═══════════════════════════════════════════════
+     Sitzt ÜBER der Firmenseite, nicht darin. So ist erkennbar, dass sie
+     ein Rahmen ist und kein Aufkleber auf einer echten Seite. Die
+     Beispielfragen sind Text und nicht anklickbar: widget.js hat keine
+     Schnittstelle zum Einsetzen einer Frage. -->
+<div class="vorfuehrung">
+  <div class="bahn">
+    <span><b>Vorführung.</b> Nordform gibt es nicht. Der Agent unten rechts ist echt.</span>
+    <span class="fragen">Frag ihn: <i>„Ich suche einen Tisch für sechs Personen."</i> · <i>„Was passt zum Eichentisch?"</i> · <i>„Wie lange dauert die Lieferung?"</i></span>
+    <a class="raus" href="start.html">Zurück zu AuraChat</a>
+  </div>
+</div>
+
+<header class="kopf">
+  <div class="bahn">
+    <nav class="kopf-nav" aria-label="Hauptnavigation">
+      <a href="#sortiment" aria-current="page">Sortiment</a>
+      <a href="#kollektion">Kollektion</a>
+      <a href="demo-nordform-ueber-uns.html">Über uns</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+    <a class="wortmarke" href="demo-nordform.html">— Nordform —</a>
+    <div class="kopf-icons" aria-hidden="true">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg></span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>
+    </div>
+  </div>
+</header>
+
+<!-- Der Kniff der Referenz: Das Möbel liegt ÜBER der Überschrift und
+     verdeckt sie teilweise. Umgesetzt als Raster-Überlagerung, damit die
+     Höhe mitwächst statt zu überlappen. -->
+<section class="buehne">
+  <div class="bahn">
+    <div class="buehne-stapel">
+      <h1 class="riese">Eichentisch</h1>
+      <div class="buehne-bild"><img src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord, massive Eiche, geölt" /></div>
+    </div>
+    <div class="buehne-fuss">
+      <div class="zaehler"><b>01</b><span>/ 04</span>
+        <svg width="26" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+      </div>
+      <div class="pillen">
+        <span class="pille">Tisch</span>
+        <span class="pille">Eiche</span>
+        <span class="pille" data-an="ja">Massivholz</span>
+        <span class="pille">Handarbeit</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bahn zwei-spalten" id="kollektion">
+  <div>
+    <p class="spalten-titel">Über uns</p>
+    <b>Was wir machen</b>
+  </div>
+  <div>
+    <p class="aussage">Jedes Stück entsteht in unserer Werkstatt in Berlin-Weissensee, aus europäischer Eiche und amerikanischem Nussbaum. Kein Furnier, keine Spanplatte.</p>
+    <p style="margin-top:1.4rem"><a class="knopf" href="demo-nordform-ueber-uns.html">Mehr erfahren <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a></p>
+  </div>
+</section>
+
+<section class="bahn karten">
+  <article class="karte">
+    <div class="karte-grund"><img src="bilder/produkte/eichentisch-nord.svg" alt="" /></div>
+    <div class="karte-kopf"><span class="karte-nr">/01</span><span class="karte-marke">Material</span></div>
+    <h3>Eiche. Geölt.<br />Nachbesserbar.</h3>
+    <p>Geölte Oberflächen lassen sich nachölen. Ein Kratzer ist damit kein Fall für den Sperrmüll, sondern für zehn Minuten Arbeit.</p>
+    <span class="rund-knopf" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+  </article>
+  <article class="karte">
+    <div class="karte-grund"><img src="bilder/produkte/stuhl-lund.svg" alt="" /></div>
+    <div class="karte-kopf"><span class="karte-nr">/02</span><span class="karte-marke">Werkstatt</span></div>
+    <h3>Gefertigt.<br />Nicht bestellt.</h3>
+    <p>Wir bauen in Berlin-Weissensee. Besichtigung nach Absprache, auch bevor du etwas kaufst.</p>
+    <span class="rund-knopf" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+  </article>
+  <article class="karte">
+    <div class="karte-grund"><img src="bilder/produkte/teppich-fjord.svg" alt="" /></div>
+    <div class="karte-kopf"><span class="karte-nr">/03</span><span class="karte-marke">Garantie</span></div>
+    <h3>Fünf Jahre.<br />Ohne Kleingedrucktes.</h3>
+    <p>Fünf Jahre auf alle Massivholzmöbel. Rückgabe innerhalb von 30 Tagen, Rücksendung kostenlos.</p>
+    <span class="rund-knopf" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+  </article>
+</section>
+
+<!-- Preise, Masse und Verfügbarkeit stimmen zeichengenau mit
+     data/nordform.json überein. Weicht die Seite ab, widerspricht der
+     Agent der Seite, auf der er sitzt. -->
+<section class="bahn" id="sortiment">
+  <div class="abschnitt-kopf">
+    <h2>Ausgewählte Stücke</h2>
+    <a class="knopf knopf-hell" href="#kontakt">Beratung <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+  </div>
+  <div class="ware">
+    <a class="stueck" href="/p/eichentisch-nord">
+      <div class="stueck-bild"><img src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Eichentisch Nord</span><span class="stueck-preis">899 €</span></div>
+      <p class="stueck-info">Europäische Eiche, geölt, 200 × 95 cm</p>
+    </a>
+    <a class="stueck" href="/p/esstisch-sund">
+      <div class="stueck-bild"><img src="bilder/produkte/esstisch-sund.svg" alt="Esstisch Sund" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Esstisch Sund</span><span class="stueck-preis">1290 €</span></div>
+      <p class="stueck-info">Amerikanischer Nussbaum, 220 × 100 cm</p>
+    </a>
+    <a class="stueck" href="/p/stuhl-lund">
+      <div class="stueck-bild"><img src="bilder/produkte/stuhl-lund.svg" alt="Stuhl Lund" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Stuhl Lund</span><span class="stueck-preis">249 €</span></div>
+      <p class="stueck-info">Eiche mit Filzsitz, stapelbar</p>
+    </a>
+    <a class="stueck" href="/p/armlehnstuhl-aare">
+      <div class="stueck-bild"><img src="bilder/produkte/armlehnstuhl-aare.svg" alt="Armlehnstuhl Åre" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Armlehnstuhl Åre</span><span class="stueck-preis">389 €</span></div>
+      <p class="stueck-info">Eiche mit Lederbezug</p>
+    </a>
+    <a class="stueck" href="/p/beistelltisch-vik">
+      <div class="stueck-bild"><img src="bilder/produkte/beistelltisch-vik.svg" alt="Beistelltisch Vik" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Beistelltisch Vik</span><span class="stueck-preis">329 €</span></div>
+      <p class="stueck-info">Eiche, 55 cm Durchmesser <span class="stueck-lager">· derzeit ausverkauft</span></p>
+    </a>
+    <a class="stueck" href="/p/leuchte-sund">
+      <div class="stueck-bild"><img src="bilder/produkte/leuchte-sund.svg" alt="Leuchte Sund" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Leuchte Sund</span><span class="stueck-preis">179 €</span></div>
+      <p class="stueck-info">Messing mit Opalglas</p>
+    </a>
+    <a class="stueck" href="/p/teppich-fjord">
+      <div class="stueck-bild"><img src="bilder/produkte/teppich-fjord.svg" alt="Teppich Fjord" /></div>
+      <div class="stueck-zeile"><span class="stueck-name">Teppich Fjord</span><span class="stueck-preis">449 €</span></div>
+      <p class="stueck-info">Wolle, 200 × 300 cm</p>
+    </a>
+  </div>
+</section>
+
+<footer class="fuss" id="kontakt">
+  <div class="bahn">
+    <div class="fuss-raster">
+      <div>
+        <h4>Nordform</h4>
+        <p>Massivholzmöbel aus eigener Werkstatt.</p>
+        <p>Berlin-Weissensee</p>
+      </div>
+      <div>
+        <h4>Lieferung</h4>
+        <ul>
+          <li>2–3 Wochen, Spedition bis in die Wohnung</li>
+          <li>Kostenlos ab 500 €, darunter 39 €</li>
+          <li>30 Tage Rückgabe, Rücksendung kostenlos</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Zahlung</h4>
+        <ul>
+          <li>Kreditkarte, PayPal, Rechnung</li>
+          <li>Ratenzahlung ab 300 €</li>
+          <li>5 Jahre Garantie auf Massivholz</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kontakt</h4>
+        <ul>
+          <li><a href="mailto:hallo@nordform.example">hallo@nordform.example</a></li>
+          <li>030 1234567</li>
+          <li>Werkstatt: Besichtigung nach Absprache</li>
+        </ul>
+      </div>
+    </div>
+    <p class="fuss-schluss">Erfundene Firma zu Vorführungszwecken. <a href="start.html">AuraChat</a></p>
+  </div>
+</footer>
+
+<!-- Die eine Zeile, die ein echter Kunde einbaut. -->
+<script src="/widget.js" data-firma="nordform" data-farbe="#1f2937"></script>
+
+</body>
+</html>
