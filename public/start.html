@@ -389,8 +389,64 @@
           <div class="blase agent">Mache ich. Ich brauche nur noch deinen Namen und eine Nummer, dann liegt es ab 8 Uhr bereit.</div>
         </div>
       </div>
-      <div class="knoepfe mitte" style="margin-top:2rem;">
-        <a class="knopf knopf-voll" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
+      <!-- Der Knopf zur Demo stand frueher hier. Er ist einen Abschnitt tiefer
+           gewandert, in "Ueberzeuge dich selbst" — zweimal derselbe Knopf
+           direkt untereinander liest sich wie ein Versehen. -->
+    </div>
+  </section>
+
+  <!-- ══ ÜBERZEUGE DICH SELBST ══════════════════════════════════════════
+       Der Abschnitt darueber ist eine BEHAUPTUNG: ein nachgestelltes Gespraech,
+       das wir uns selbst ausgedacht haben. Direkt danach muss der Beleg kommen,
+       sonst bleibt der ganze Seitenabschnitt Prospekt.
+
+       Zwei Wege, weil zwei verschiedene Leute hier ankommen: Wer schon weiss,
+       was er will, tippt seine Adresse ein. Wer erst verstehen will, worum es
+       geht, schaut sich die Vorfuehrung an. Einen der beiden zu einem
+       Zweitknopf zu degradieren, haette die Haelfte der Besucher verloren. -->
+  <section id="selbst">
+    <div class="bahn">
+      <div class="kopfblock" style="text-align:center;">
+        <span class="augen">Überzeuge dich selbst</span>
+        <h2 style="margin-inline:auto;">Glaub mir kein Wort.</h2>
+        <p class="lead" style="margin-inline:auto;">
+          Beides läuft gerade wirklich. Kein Video, keine Aufnahme.
+        </p>
+      </div>
+
+      <div class="drei beweis">
+        <div class="karte">
+          <span class="nr">Weg 1</span>
+          <h3>Auf deiner eigenen Seite</h3>
+          <p>
+            Gib deine Adresse ein. Er liest sie, zeigt dir, was er gefunden hat,
+            und sagt ehrlich, was er nicht gefunden hat. Danach beantwortet er
+            drei Fragen dazu.
+          </p>
+          <form class="beweis-tat" action="probe.html" method="get">
+            <input class="feld-adresse" type="text" name="url" inputmode="url"
+                   placeholder="deine-firma.ch" aria-label="Adresse deiner Webseite" />
+            <button class="knopf knopf-voll" type="submit">Scan deine Webseite</button>
+          </form>
+          <p class="beweis-notiz">Ohne Konto. Dauert etwa eine Minute.</p>
+        </div>
+
+        <div class="karte">
+          <span class="nr">Weg 2</span>
+          <h3>Auf einer fremden Seite</h3>
+          <p>
+            Ein Möbelshop mit Startseite, Produkten und Über-uns. Den Shop gibt
+            es nicht, den Agenten unten rechts schon. Er kennt das Sortiment,
+            schlägt Passendes vor und führt dich zur richtigen Seite.
+          </p>
+          <div class="beweis-tat">
+            <a class="knopf knopf-voll" href="demo-nordform.html">So funktioniert er auf einer Webseite</a>
+          </div>
+          <!-- Eine konkrete Frage statt "probier mal was aus": Wer nicht weiss,
+               was er fragen soll, fragt nichts. Die Antwort ist belegt —
+               data/nordform.json fuehrt fuenf Stuecke unter 500 Euro. -->
+          <p class="beweis-notiz">Frag ihn dort nach einem Tisch unter 500 Euro.</p>
+        </div>
       </div>
     </div>
   </section>

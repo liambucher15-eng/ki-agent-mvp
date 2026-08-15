@@ -152,6 +152,12 @@
     .knopf {
       display: inline-flex; align-items: center; justify-content: center;
       font-family: inherit; font-size: 1rem; font-weight: 500;
+      /* Ausdrücklich gesetzt, nicht geerbt: <button> nimmt vom body KEINE
+         line-height an, <a> schon. Gemessen wurden dadurch 48 px gegen 53 px
+         bei zwei Knöpfen nebeneinander — im Hero, in „Überzeuge dich selbst"
+         und auf probe.html überall dort, wo ein Formular-Knopf neben einem
+         Link steht. */
+      line-height: 1.5;
       text-decoration: none; white-space: nowrap;
       padding: .85rem 1.6rem; border-radius: 10px;
       border: 1px solid transparent;
@@ -167,6 +173,16 @@
     .dunkel .knopf-rand { background: transparent; color: #fff; border-color: rgba(255,255,255,0.3); }
     .dunkel .knopf-rand:hover { border-color: #fff; }
     .knopf-notiz { margin-top: .95rem; font-size: .86rem; color: var(--tinte-weich); }
+    /* Auf schmalen Schirmen darf die Beschriftung umbrechen.
+       nowrap ist auf dem Desktop richtig — dort stehen Knöpfe nebeneinander in
+       einer Reihe, und ein zweizeiliger dazwischen sieht kaputt aus. Auf dem
+       Handy stehen sie untereinander in voller Breite, und dort richtet nowrap
+       Schaden an: „So funktioniert er auf einer Webseite" braucht 277 px, hat
+       bei 375 px Bildschirmbreite aber nur 238 px Platz und lief links und
+       rechts aus dem Knopf heraus. Betraf drei Knöpfe auf der Startseite. */
+    @media (max-width: 560px) {
+      .knopf { white-space: normal; }
+    }
     @media (max-width: 430px) {
       .knoepfe { flex-direction: column; align-items: stretch; width: min(100%, 20rem); margin-inline: auto; }
       .knopf { width: 100%; }
@@ -863,6 +879,25 @@
     }
     @media (max-width: 640px) {
       .feld-adresse { flex: 1 1 100%; }
+    }
+
+    /* ── „Überzeuge dich selbst": zwei Wege nebeneinander ───────────────
+       Zwei gleichwertige Karten, deshalb zwei gleich grosse gefüllte Knöpfe.
+       Eine der beiden als Rand-Knopf zu setzen hätte eine Rangfolge behauptet,
+       die es nicht gibt: Welcher Weg der richtige ist, hängt am Besucher. */
+    .beweis .karte { display: flex; flex-direction: column; }
+    .beweis .karte h3 {
+      font-size: 1.18rem; font-weight: 600; letter-spacing: -0.01em;
+      margin: 0 0 .55rem;
+    }
+    /* Schiebt Knopf und Notiz an den unteren Rand, damit sie in beiden Karten
+       auf derselben Höhe sitzen — auch wenn der eine Text länger ist. */
+    .beweis .karte p:not(.beweis-notiz) { flex: 1 0 auto; margin-bottom: 1.3rem; }
+    .beweis-tat { display: flex; flex-wrap: wrap; gap: .55rem; }
+    .beweis-tat .knopf { flex: 1 1 auto; justify-content: center; text-align: center; }
+    .beweis-tat .feld-adresse { flex: 1 1 100%; }
+    .beweis-notiz {
+      margin: .8rem 0 0; font-size: .86rem; color: var(--tinte-hell);
     }
 
     /* ── Preis-Seite: Selbst testen ─────────────────────────────────────
