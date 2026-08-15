@@ -76,19 +76,45 @@ a { color: inherit; }
 .vorfuehrung .raus:hover { background: #e2e8f0; }
 
 /* ── Kopfzeile ─────────────────────────────────────────────────────────
-   Nach der Referenz: Navigation links untereinander, Wortmarke mittig,
-   Symbole rechts. Auf schmalen Schirmen wird daraus eine Zeile. */
+   Navigation links in einer Zeile, Wortmarke mittig, Symbole rechts.
+   Die Zeile bleibt beim Scrollen oben stehen.
+
+   sticky statt fixed: Die Vorführungs-Leiste darüber soll wegscrollen dürfen,
+   der Kopf erst danach kleben bleiben. Mit fixed müsste der Seiteninhalt
+   ausserdem um die Kopfhöhe nach unten geschoben werden — eine Zahl, die bei
+   jeder Textänderung wieder falsch wird. */
 .kopf {
-  padding-block: clamp(1.4rem, 3vw, 2.4rem);
+  position: sticky; top: 0; z-index: 30;
+  padding-block: clamp(.9rem, 2vw, 1.3rem);
+  /* Deckend, sonst scrollt der Seiteninhalt sichtbar durch die Zeile. */
+  background: var(--papier);
+  border-bottom: 1px solid var(--linie);
 }
 .kopf .bahn {
-  display: grid; gap: 1.2rem;
-  grid-template-columns: 1fr auto 1fr; align-items: start;
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
 }
-.kopf-nav { display: grid; gap: .3rem; font-size: .93rem; }
+/* Die Wortmarke wird aus dem Fluss genommen und exakt mittig gesetzt.
+   Der naheliegende Weg wäre, Navigation und Symbolen je „flex: 1 1 0" zu geben
+   — dann sind beide Aussenspalten gleich breit und die Marke sitzt zwangsläufig
+   in der Mitte. Gemessen war das aber genau der Grund, warum die Navigation bei
+   940 und 1000 px zweizeilig wurde: Die Symbole brauchen rund 120 px, bekamen
+   aber denselben Anteil wie die Navigation mit 327 px, und die fehlenden knapp
+   200 px lagen ungenutzt rechts. So nimmt jede Seite, was sie braucht, und die
+   Marke sitzt trotzdem mittig. */
+.wortmarke {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  text-align: center;
+  font-size: .86rem; letter-spacing: .18em; text-transform: uppercase;
+  font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.kopf-nav {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: .4rem 1.5rem; font-size: .93rem;
+}
 .kopf-nav a {
   text-decoration: none; color: var(--tinte-weich);
-  width: fit-content; transition: color .15s ease;
+  white-space: nowrap; transition: color .15s ease;
 }
 .kopf-nav a:hover { color: var(--tinte); }
 .kopf-nav a[aria-current="page"] {
@@ -99,23 +125,33 @@ a { color: inherit; }
   content: ""; width: 22px; height: 22px; border-radius: 50%;
   background: var(--tinte) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / 12px no-repeat;
 }
-.wortmarke {
-  grid-column: 2; justify-self: center; text-align: center;
-  font-size: .86rem; letter-spacing: .18em; text-transform: uppercase;
-  font-weight: 500; text-decoration: none; white-space: nowrap;
-}
-.kopf-icons { grid-column: 3; justify-self: end; display: grid; gap: .55rem; }
+.kopf-icons { display: flex; justify-content: flex-end; gap: .9rem; flex: 0 0 auto; }
 .kopf-icons span {
   width: 26px; height: 26px; display: grid; place-items: center;
   color: var(--tinte-weich);
 }
 .kopf-icons svg { width: 18px; height: 18px; }
 
-@media (max-width: 760px) {
-  .kopf .bahn { grid-template-columns: 1fr auto; align-items: center; }
-  .kopf-nav { grid-row: 2; grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; gap: 1.1rem; }
-  .wortmarke { grid-column: 1; justify-self: start; }
-  .kopf-icons { grid-column: 2; grid-auto-flow: column; gap: .9rem; }
+/* Sprungziele müssen unter der stehenden Kopfzeile hervorkommen. Ohne das
+   landet jeder Klick auf „Sortiment" so, dass die Überschrift hinter der
+   Kopfzeile steckt. Grosszügig gerechnet, damit auch die zweizeilige
+   Navigation auf schmalen Schirmen noch passt. */
+[id="sortiment"], [id="kollektion"], [id="kontakt"] { scroll-margin-top: 7rem; }
+
+/* Darunter passen Navigation, Marke und Symbole nicht mehr in eine Reihe.
+   Gemessen: Die mittig gesetzte Marke stiess bei 940 px um 4 px in die
+   Navigation, bei 901 px um 22 px; erst ab etwa 1000 px bleibt Luft dazwischen.
+   Unterhalb der Schwelle bekommt die Navigation deshalb eine eigene Zeile, und
+   die Marke wandert zurück in den Fluss — links, nicht mehr absolut zentriert,
+   weil es zwischen zwei Elementen nichts zu zentrieren gibt. */
+@media (max-width: 980px) {
+  .kopf .bahn { flex-wrap: wrap; gap: .7rem 1rem; }
+  .wortmarke {
+    position: static; transform: none;
+    order: 1; flex: 1 1 auto; text-align: left;
+  }
+  .kopf-icons { order: 2; flex: 0 0 auto; }
+  .kopf-nav { order: 3; flex: 1 1 100%; gap: .3rem 1.1rem; }
 }
 
 /* ── Bühne mit Durchbruch ──────────────────────────────────────────────
