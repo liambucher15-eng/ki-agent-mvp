@@ -261,29 +261,137 @@ a { color: inherit; }
 .fuss a { color: var(--tinte-weich); }
 .fuss-schluss { margin-top: 2rem; font-size: .85rem; color: var(--tinte-hell); }
 
-/* ── Produktseite ──────────────────────────────────────────────────────── */
+/* ── Produktseite ──────────────────────────────────────────────────────────
+   Aufbau nach Liams Vorlage, in drei Blöcken:
+     1) Bildfläche links, alle Angaben rechts (Name/Preis, Auswahl, Knöpfe,
+        Aufklapper)
+     2) breites Band: Detailaufnahme links, Datenblatt rechts
+     3) „Passt dazu" als Kartenreihe
+
+   Ruhiger als der Rest der Demo: keine Rundungen über 4 px, dünne Linien statt
+   Kästen. Auf einer Produktseite entscheidet sich ein Kauf; alles, was vom
+   Stück ablenkt, ist hier im Weg. */
 .produkt {
-  display: grid; gap: clamp(1.5rem, 4vw, 3rem);
+  display: grid; gap: clamp(1.5rem, 4vw, 3.5rem);
   grid-template-columns: 1fr; align-items: start;
   padding-block: clamp(1rem, 3vw, 2rem) clamp(2.5rem, 6vw, 4rem);
 }
-@media (min-width: 860px) { .produkt { grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); } }
-.produkt-bild {
-  border-radius: 24px; background: #f5f2ed; aspect-ratio: 1 / 1;
-  display: grid; place-items: center;
+@media (min-width: 900px) { .produkt { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); } }
+
+/* Bildflächen. Alle Produktbilder sind Platzhalter, bis Liams Aufnahmen da
+   sind — der Dateiname steht in der Fläche, damit beim Austauschen niemand
+   raten muss. */
+.bildflaeche {
+  position: relative; background: var(--papier-tief);
+  display: grid; place-items: center; overflow: hidden;
 }
-.produkt-bild img { width: 58%; }
+.bildflaeche img { width: 58%; height: auto; }
+.produkt-bild { aspect-ratio: 4 / 5; }
+.platzhalter-marke {
+  position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
+  font-size: .72rem; letter-spacing: .04em; color: var(--tinte-hell);
+  background: var(--papier); padding: .25rem .6rem; border-radius: 3px;
+  white-space: nowrap; pointer-events: none;
+}
+
+/* Kopfzeile der Angaben: Name links, Preis rechts auf gleicher Grundlinie. */
+.produkt-kopf {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1.5rem; flex-wrap: wrap;
+}
 .produkt h1 {
-  margin: .3rem 0 .5rem; font-size: clamp(2.2rem, 6vw, 4rem);
-  font-weight: 500; letter-spacing: -.04em; line-height: 1;
+  margin: 0; font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  font-weight: 400; letter-spacing: -.02em; line-height: 1.1;
 }
-.produkt-preis { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 500; letter-spacing: -.02em; }
-.produkt-text { color: var(--tinte-weich); max-width: 46ch; }
-.produkt-knoepfe { display: flex; flex-wrap: wrap; gap: .7rem; margin: 1.4rem 0; }
-.daten { border-top: 1px solid var(--linie); margin-top: 1.4rem; padding-top: 1.2rem; }
-.daten dl { display: grid; grid-template-columns: auto 1fr; gap: .55rem 1.5rem; margin: 0; font-size: .93rem; }
-.daten dt { color: var(--tinte-hell); }
-.daten dd { margin: 0; text-align: right; }
+.produkt-preis {
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem); font-weight: 400;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.produkt-kurz { margin: .35rem 0 0; font-size: .88rem; color: var(--tinte-hell); }
+.produkt-text { color: var(--tinte-weich); max-width: 48ch; margin: 1.6rem 0 0; font-size: .95rem; }
+
+/* Längenauswahl. Nur bei den beiden Esstischen — data/nordform.json nennt
+   Sondermasse ausdrücklich nur dort („Längen zwischen 140 und 280 cm ohne
+   Aufpreis"). Bei einem Stuhl wäre die Auswahl erfunden, und der Agent würde
+   der Seite widersprechen. */
+.wahl { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.6rem; }
+.wahl label { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .9rem; }
+.wahl input { accent-color: var(--tinte); width: 15px; height: 15px; }
+.wahl-notiz { margin: .8rem 0 0; font-size: .85rem; color: var(--holz-text); min-height: 1.2em; }
+
+.produkt-knoepfe { display: grid; gap: .8rem; margin-top: 1.8rem; }
+@media (min-width: 520px) { .produkt-knoepfe { grid-template-columns: 1fr 1fr; } }
+/* Auf der Produktseite sind die Knöpfe breite Rechtecke wie in der Vorlage,
+   nicht die runden Pillen des restlichen Shops. */
+.produkt-knoepfe .knopf {
+  justify-content: center; border-radius: 3px; padding: 1.05rem 1.2rem;
+  font-size: .82rem; letter-spacing: .09em; text-transform: uppercase;
+}
+.produkt-knoepfe .knopf[aria-disabled="true"] {
+  background: var(--papier-tief);
+  /* --tinte-weich, nicht --tinte-hell: der hellere Ton ist gegen --papier
+     gemessen und kommt auf der dunkleren Fläche nur auf 4,34:1. Und dieser
+     Knopf ist kein blosser abgeschalteter Schalter — er trägt die Auskunft,
+     dass das Stück ausverkauft ist. Die muss lesbar sein. */
+  color: var(--tinte-weich);
+  border: 1px solid var(--linie); cursor: not-allowed;
+}
+
+/* Aufklapper. <details>/<summary> statt eigenem JavaScript: funktioniert
+   ohne Skript, ist von Haus aus mit der Tastatur bedienbar und meldet
+   Vorlesegeräten den Zustand selbst. */
+.klapper { margin-top: 2.2rem; border-top: 1px solid var(--linie); }
+.klapper details { border-bottom: 1px solid var(--linie); }
+.klapper summary {
+  list-style: none; cursor: pointer; padding: 1.15rem 2rem 1.15rem 0;
+  position: relative; font-size: .8rem; letter-spacing: .09em;
+  text-transform: uppercase; font-weight: 500;
+}
+.klapper summary::-webkit-details-marker { display: none; }
+.klapper summary:focus-visible { outline: 2px solid var(--tinte); outline-offset: 3px; }
+/* Das Plus wird zum Minus: der waagerechte Strich bleibt, der senkrechte
+   dreht sich weg. */
+.klapper summary::before,
+.klapper summary::after {
+  content: ""; position: absolute; right: .2rem; top: 50%;
+  width: 13px; height: 1.5px; background: var(--tinte);
+  transition: transform .2s ease;
+}
+.klapper summary::after { transform: rotate(90deg); }
+.klapper details[open] summary::after { transform: rotate(0deg); }
+.klapper .inhalt { padding: 0 0 1.3rem; font-size: .93rem; color: var(--tinte-weich); }
+.klapper .inhalt p { margin: 0 0 .6rem; }
+.klapper .inhalt p:last-child { margin-bottom: 0; }
+
+/* ── Band mit Detailaufnahme und Datenblatt ───────────────────────────── */
+.detail-band {
+  background: var(--papier-tief);
+  display: grid; grid-template-columns: 1fr; align-items: center;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  margin-bottom: clamp(3rem, 8vw, 6rem);
+}
+@media (min-width: 900px) { .detail-band { grid-template-columns: 1.1fr 1fr; } }
+.detail-bild { aspect-ratio: 1 / 1; background: transparent; }
+.detail-bild img { width: 52%; }
+.datenblatt {
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 3.5rem);
+  max-width: 34rem;
+}
+.datenblatt dl { margin: 0; }
+.datenblatt .zeile {
+  display: grid; grid-template-columns: 1fr; gap: .35rem;
+  padding: 1rem 0; border-bottom: 1px solid var(--linie);
+}
+@media (min-width: 560px) { .datenblatt .zeile { grid-template-columns: 10rem 1fr; gap: 1.5rem; } }
+.datenblatt .zeile:first-child { padding-top: 0; }
+.datenblatt .zeile:last-child { border-bottom: 0; }
+.datenblatt dt {
+  font-size: .78rem; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--tinte-weich); font-weight: 500;
+}
+.datenblatt dd { margin: 0; font-size: .92rem; color: var(--tinte-weich); }
+.datenblatt dd ul { list-style: none; margin: 0; padding: 0; }
+.datenblatt dd li { margin-bottom: .2rem; }
 
 /* ── Über uns ──────────────────────────────────────────────────────────── */
 .fliess { max-width: 42rem; }

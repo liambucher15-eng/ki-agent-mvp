@@ -27,7 +27,7 @@
 <div class="vorfuehrung">
   <div class="bahn">
     <span><b>Vorführung.</b> Nordform gibt es nicht. Der Agent unten rechts ist echt.</span>
-    <span class="fragen">Frag ihn: <i>„Passt der Stuhl Lund dazu?"</i> · <i>„Wie viele Stühle für sechs Plätze?"</i> · <i>„Arbeitet Massivholz?"</i></span>
+    <span class="fragen">Frag ihn: <i>„Passt der Stuhl Lund dazu?"</i> · <i>„Gibt es den in 240 cm?"</i> · <i>„Arbeitet Massivholz?"</i></span>
     <a class="raus" href="start.html">Zurück zu AuraChat</a>
   </div>
 </div>
@@ -49,32 +49,74 @@
   </div>
 </header>
 
+<!-- ══ 1) Stück und Angaben ══════════════════════════════════════════════ -->
 <main class="bahn produkt">
-  <div class="produkt-bild"><img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" /></div>
-  <div>
-    <p class="spalten-titel" id="gruppe">Tische</p>
-    <h1 id="name">Eichentisch Nord</h1>
-    <p class="produkt-preis" id="preis">899 €</p>
-    <p class="produkt-text" id="text">Europäische Eiche, geölt, 200 × 95 cm.</p>
-    <p class="stueck-lager" id="lager">Auf Lager, Lieferung in 2–3 Wochen</p>
+  <!-- BILD ZUM ERSETZEN: bilder/produkte/<schluessel>.svg durch Liams
+       Aufnahme tauschen. Der Dateiname steht sichtbar in der Fläche. -->
+  <div class="bildflaeche produkt-bild">
+    <img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" />
+    <span class="platzhalter-marke" id="bildMarke">Platzhalter</span>
+  </div>
 
-    <div class="produkt-knoepfe">
-      <a class="knopf" href="#">In den Warenkorb <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
-      <a class="knopf knopf-hell" href="demo-nordform.html#kontakt">Musterstück bestellen <span class="rund"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+  <div>
+    <div class="produkt-kopf">
+      <h1 id="name">Eichentisch Nord</h1>
+      <span class="produkt-preis" id="preis">899 €</span>
+    </div>
+    <p class="produkt-kurz" id="kurz">200 × 95 cm · Europäische Eiche</p>
+    <p class="produkt-text" id="text">Europäische Eiche, massiv und geölt.</p>
+
+    <!-- Längenauswahl, nur bei den Esstischen. Kein Aufpreis und die längere
+         Lieferzeit stehen so in den Firmendaten — deshalb darf die Seite es
+         behaupten und der Agent bestätigt es. -->
+    <div id="wahlBlock" hidden>
+      <div class="wahl" id="wahl" role="radiogroup" aria-label="Tischlänge"></div>
+      <p class="wahl-notiz" id="wahlNotiz" aria-live="polite"></p>
     </div>
 
-    <div class="daten">
-      <dl>
-        <dt>Lieferzeit</dt><dd>2–3 Wochen</dd>
-        <dt>Versand</dt><dd>kostenlos ab 500 €</dd>
-        <dt>Rückgabe</dt><dd>30 Tage, kostenlos</dd>
-        <dt>Garantie</dt><dd>5 Jahre</dd>
-        <dt>Werkstatt</dt><dd>Berlin-Weissensee</dd>
-      </dl>
+    <div class="produkt-knoepfe">
+      <a class="knopf" id="kaufen" href="#">In den Warenkorb</a>
+      <a class="knopf knopf-hell" href="demo-nordform.html#kontakt">Auf die Merkliste</a>
+    </div>
+
+    <div class="klapper">
+      <details open>
+        <summary>Material und Machart</summary>
+        <div class="inhalt"><p id="kMaterial"></p></div>
+      </details>
+      <details>
+        <summary>Masse</summary>
+        <div class="inhalt"><p id="kMasse"></p></div>
+      </details>
+      <details>
+        <summary>Lieferung und Rückgabe</summary>
+        <div class="inhalt">
+          <p>Lieferzeit 2–3 Wochen, Speditionslieferung bis in die Wohnung.</p>
+          <p>Versand kostenlos ab 500 €, darunter 39 €. Nach Österreich 59 €, in die Schweiz derzeit nicht.</p>
+          <p>30 Tage Rückgabe, Rücksendung kostenlos. 5 Jahre Garantie auf alle Massivholzmöbel.</p>
+          <p>Zahlung per Kreditkarte, PayPal, Rechnung oder Ratenzahlung ab 300 €.</p>
+        </div>
+      </details>
     </div>
   </div>
 </main>
 
+<!-- ══ 2) Detailaufnahme und Datenblatt ══════════════════════════════════ -->
+<section class="bahn">
+  <div class="detail-band">
+    <!-- BILD ZUM ERSETZEN: Nahaufnahme der Oberfläche (Maserung, Kante).
+         Bis dahin steht hier dasselbe Produktbild als Platzhalter. -->
+    <div class="bildflaeche detail-bild">
+      <img id="detailBild" src="bilder/produkte/eichentisch-nord.svg" alt="" role="presentation" />
+      <span class="platzhalter-marke" id="detailMarke">Platzhalter</span>
+    </div>
+    <div class="datenblatt">
+      <dl id="datenblatt"></dl>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3) Passt dazu ═════════════════════════════════════════════════════ -->
 <section class="bahn">
   <div class="abschnitt-kopf"><h2>Passt dazu</h2></div>
   <div class="ware" id="dazu"></div>
@@ -87,49 +129,199 @@
 </footer>
 
 <script>
-// Ein Datensatz für alle sieben Stücke, damit jeder /p/…-Link des Agenten
-// auf einer echten Seite landet. Die Werte stimmen zeichengenau mit
-// data/nordform.json überein — weicht die Seite ab, widerspricht der Agent
-// der Seite, auf der er sitzt.
+// Ein Datensatz für alle sieben Stücke, damit jeder /p/…-Link des Agenten auf
+// einer echten Seite landet.
+//
+// JEDE Angabe hier steht so in data/nordform.json. Das ist keine Pedanterie:
+// Jonna antwortet aus den Firmendaten, nicht aus dem Seitentext. Steht auf der
+// Seite etwas anderes, widerspricht der Agent der Seite, auf der er sitzt —
+// und zwar vor Publikum. Wo die Daten schweigen (etwa zur Oberfläche des
+// Nussbaumtisches), schweigt auch die Seite, statt etwas Plausibles zu raten.
 const WARE = {
-  "eichentisch-nord":  { name: "Eichentisch Nord",  preis: 899,  gruppe: "Tische",             text: "Europäische Eiche, geölt, 200 × 95 cm.",        lager: true },
-  "esstisch-sund":     { name: "Esstisch Sund",     preis: 1290, gruppe: "Tische",             text: "Amerikanischer Nussbaum, 220 × 100 cm.",        lager: true },
-  "beistelltisch-vik": { name: "Beistelltisch Vik", preis: 329,  gruppe: "Tische",             text: "Eiche, 55 cm Durchmesser.",                     lager: false },
-  "stuhl-lund":        { name: "Stuhl Lund",        preis: 249,  gruppe: "Stühle",             text: "Eiche mit Filzsitz, stapelbar.",                lager: true },
-  "armlehnstuhl-aare": { name: "Armlehnstuhl Åre",  preis: 389,  gruppe: "Stühle",             text: "Eiche mit Lederbezug.",                         lager: true },
-  "leuchte-sund":      { name: "Leuchte Sund",      preis: 179,  gruppe: "Leuchten und Textil", text: "Messing mit Opalglas.",                        lager: true },
-  "teppich-fjord":     { name: "Teppich Fjord",     preis: 449,  gruppe: "Leuchten und Textil", text: "Wolle, 200 × 300 cm.",                         lager: true },
+  "eichentisch-nord": {
+    name: "Eichentisch Nord", preis: 899, lager: true,
+    kurz: "200 × 95 cm · Europäische Eiche",
+    text: "Europäische Eiche, massiv und geölt, mit geradem Gestell. An einem 200-cm-Tisch sitzen sechs Personen bequem, acht wenn es eng sein darf.",
+    material: "Europäische Eiche, massiv. Geölt statt lackiert: Kratzer lassen sich nachölen, statt dass die ganze Platte neu lackiert werden muss.",
+    masse: "200 × 95 cm. Sondermass zwischen 140 und 280 cm ohne Aufpreis, andere Breiten auf Anfrage.",
+    laengen: [140, 180, 200, 240, 280], standard: 200,
+    daten: [
+      ["Material", ["Europäische Eiche, massiv"]],
+      ["Oberfläche", ["Geölt"]],
+      ["Masse", ["200 × 95 cm"]],
+      ["Gestell", ["Gerade"]],
+      ["Plätze", ["Sechs bequem, acht eng"]],
+    ],
+  },
+  "esstisch-sund": {
+    name: "Esstisch Sund", preis: 1290, lager: true,
+    kurz: "220 × 100 cm · Amerikanischer Nussbaum",
+    text: "Amerikanischer Nussbaum mit konischen Beinen. Nussbaum ist dunkler und weicher als Eiche, Eiche dafür robuster im Alltag.",
+    material: "Amerikanischer Nussbaum, massiv, mit konischen Beinen.",
+    masse: "220 × 100 cm. Sondermass zwischen 140 und 280 cm ohne Aufpreis, andere Breiten auf Anfrage.",
+    laengen: [140, 180, 220, 240, 280], standard: 220,
+    daten: [
+      ["Material", ["Amerikanischer Nussbaum, massiv"]],
+      ["Masse", ["220 × 100 cm"]],
+      ["Gestell", ["Konische Beine"]],
+    ],
+  },
+  "beistelltisch-vik": {
+    name: "Beistelltisch Vik", preis: 329, lager: false,
+    kurz: "55 cm Durchmesser · Eiche",
+    text: "Eiche mit 55 cm Durchmesser. Derzeit ausverkauft, wieder ab etwa sechs Wochen.",
+    material: "Eiche, massiv.",
+    masse: "55 cm Durchmesser.",
+    daten: [
+      ["Material", ["Eiche, massiv"]],
+      ["Masse", ["55 cm Durchmesser"]],
+      ["Verfügbar", ["Wieder ab etwa sechs Wochen"]],
+    ],
+  },
+  "stuhl-lund": {
+    name: "Stuhl Lund", preis: 249, lager: true,
+    kurz: "Eiche mit Filzsitz · stapelbar",
+    text: "Eiche mit Filzsitz, stapelbar. Dieselbe Eiche wie beim Eichentisch Nord.",
+    material: "Eiche, massiv, mit Sitzfläche aus Filz.",
+    masse: "Stapelbar.",
+    daten: [
+      ["Material", ["Eiche, massiv"]],
+      ["Sitzfläche", ["Filz"]],
+      ["Besonderheit", ["Stapelbar"]],
+    ],
+  },
+  "armlehnstuhl-aare": {
+    name: "Armlehnstuhl Åre", preis: 389, lager: true,
+    kurz: "Eiche mit Lederbezug",
+    text: "Eiche mit Lederbezug und Armlehnen.",
+    material: "Eiche, massiv, mit Lederbezug.",
+    masse: "Mit Armlehnen.",
+    daten: [
+      ["Material", ["Eiche, massiv"]],
+      ["Bezug", ["Leder"]],
+    ],
+  },
+  "leuchte-sund": {
+    name: "Leuchte Sund", preis: 179, lager: true,
+    kurz: "Messing mit Opalglas",
+    text: "Messing mit Opalglas.",
+    material: "Messing mit Schirm aus Opalglas.",
+    masse: "Auf Anfrage.",
+    daten: [
+      ["Material", ["Messing"]],
+      ["Schirm", ["Opalglas"]],
+    ],
+  },
+  "teppich-fjord": {
+    name: "Teppich Fjord", preis: 449, lager: true,
+    kurz: "200 × 300 cm · Wolle",
+    text: "Wolle, 200 × 300 cm. Unter einem 200-cm-Tisch liegt er so, dass die Stühle beim Zurückschieben darauf bleiben.",
+    material: "Wolle.",
+    masse: "200 × 300 cm.",
+    daten: [
+      ["Material", ["Wolle"]],
+      ["Masse", ["200 × 300 cm"]],
+    ],
+  },
 };
 
-const schluessel = (new URLSearchParams(location.search).get("p") || "eichentisch-nord");
+// Gilt für alle Massivholzstücke, wörtlich aus der FAQ in nordform.json.
+const PFLEGE_HOLZ = "Feucht abwischen, keine Scheuermittel. Ein- bis zweimal " +
+  "im Jahr mit Pflegeöl nachölen. Wasserränder lassen sich mit feinem " +
+  "Schleifpapier und etwas Öl wegnehmen.";
+const AUS_HOLZ = ["eichentisch-nord", "esstisch-sund", "beistelltisch-vik", "stuhl-lund", "armlehnstuhl-aare"];
+
+const schluessel = new URLSearchParams(location.search).get("p") || "eichentisch-nord";
 const id = Object.prototype.hasOwnProperty.call(WARE, schluessel) ? schluessel : "eichentisch-nord";
 const p = WARE[id];
 const bildPfad = (k) => "bilder/produkte/" + k + ".svg";
+const $ = (n) => document.getElementById(n);
 
-document.getElementById("name").textContent = p.name;
-document.getElementById("preis").textContent = p.preis + " €";
-document.getElementById("text").textContent = p.text;
-document.getElementById("gruppe").textContent = p.gruppe;
-document.getElementById("bild").src = bildPfad(id);
-document.getElementById("bild").alt = p.name;
-document.getElementById("lager").textContent = p.lager
-  ? "Auf Lager, Lieferung in 2–3 Wochen"
-  : "Derzeit ausverkauft, wieder ab etwa 6 Wochen";
+// ── Kopf, Bilder, Text ──────────────────────────────────────────────────
+$("name").textContent = p.name;
+$("preis").textContent = p.preis + " €";
+$("kurz").textContent = p.kurz;
+$("text").textContent = p.text;
+$("kMaterial").textContent = p.material;
+$("kMasse").textContent = p.masse;
 document.title = p.name + " — Nordform";
 
-// Die strukturierten Daten müssen zum angezeigten Stück passen, sonst liest
-// widget.js einen anderen Preis aus, als auf der Seite steht.
-document.getElementById("ld").textContent = JSON.stringify({
+for (const [bild, marke] of [[$("bild"), $("bildMarke")], [$("detailBild"), $("detailMarke")]]) {
+  bild.src = bildPfad(id);
+  marke.textContent = "Platzhalter · " + bildPfad(id);
+}
+$("bild").alt = p.name;
+
+// Ausverkauftes lässt sich nicht kaufen. Ein Knopf, der trotzdem einladend
+// aussieht, wäre genau die Sorte Unehrlichkeit, die diese Demo widerlegen soll.
+if (!p.lager) {
+  const k = $("kaufen");
+  k.textContent = "Derzeit ausverkauft";
+  k.setAttribute("aria-disabled", "true");
+  k.removeAttribute("href");
+}
+
+// ── Längenauswahl ───────────────────────────────────────────────────────
+if (Array.isArray(p.laengen)) {
+  $("wahlBlock").hidden = false;
+  const gruppe = $("wahl");
+  for (const cm of p.laengen) {
+    const label = document.createElement("label");
+    const feld = document.createElement("input");
+    feld.type = "radio"; feld.name = "laenge"; feld.value = String(cm);
+    feld.checked = cm === p.standard;
+    const txt = document.createElement("span");
+    txt.textContent = cm + " cm";
+    label.append(feld, txt);
+    feld.addEventListener("change", () => {
+      $("wahlNotiz").textContent = cm === p.standard
+        ? ""
+        : "Sondermass, ohne Aufpreis. Die Lieferzeit verlängert sich dann auf 4–5 Wochen.";
+    });
+    gruppe.appendChild(label);
+  }
+}
+
+// ── Datenblatt ──────────────────────────────────────────────────────────
+// Nur Zeilen, für die es eine Angabe gibt. Eine leere Zeile „Oberfläche —"
+// wäre eine Lücke, die nach einem Fehler aussieht.
+const zeilen = p.daten.slice();
+if (AUS_HOLZ.includes(id)) zeilen.push(["Pflege", [PFLEGE_HOLZ]]);
+zeilen.push(["Werkstatt", ["Berlin-Weissensee, Besichtigung nach Absprache"]]);
+
+const blatt = $("datenblatt");
+for (const [titel, werte] of zeilen) {
+  const zeile = document.createElement("div"); zeile.className = "zeile";
+  const dt = document.createElement("dt"); dt.textContent = titel;
+  const dd = document.createElement("dd");
+  if (werte.length === 1) {
+    dd.textContent = werte[0];
+  } else {
+    const liste = document.createElement("ul");
+    for (const w of werte) { const li = document.createElement("li"); li.textContent = w; liste.appendChild(li); }
+    dd.appendChild(liste);
+  }
+  zeile.append(dt, dd);
+  blatt.appendChild(zeile);
+}
+
+// ── Strukturierte Daten ─────────────────────────────────────────────────
+// Müssen zum angezeigten Stück passen, sonst liest widget.js einen anderen
+// Preis aus, als auf der Seite steht.
+$("ld").textContent = JSON.stringify({
   "@context": "https://schema.org", "@type": "Product",
-  name: p.name, sku: id, image: "/" + bildPfad(id), description: p.text,
+  name: p.name, sku: id, image: "/" + bildPfad(id), description: p.kurz,
   brand: { "@type": "Brand", name: "Nordform" },
   offers: { "@type": "Offer", price: String(p.preis), priceCurrency: "EUR",
     availability: p.lager ? "https://schema.org/InStock" : "https://schema.org/OutOfStock" },
 });
+document.querySelector('meta[property="og:title"]').setAttribute("content", p.name + " — Nordform");
 document.querySelector('meta[property="product:price:amount"]').setAttribute("content", String(p.preis));
 document.querySelector('meta[property="product:availability"]').setAttribute("content", p.lager ? "in stock" : "out of stock");
+document.querySelector('meta[name="description"]').setAttribute("content", p.name + ", " + p.preis + " €. " + p.kurz + ".");
 
-// „Passt dazu": die Kombinationen aus nordform.json, nie das Stück selbst.
+// ── „Passt dazu" ────────────────────────────────────────────────────────
+// Die Kombinationen aus nordform.json, nie das Stück selbst.
 const KOMBI = {
   "eichentisch-nord": ["stuhl-lund", "leuchte-sund", "teppich-fjord"],
   "esstisch-sund": ["armlehnstuhl-aare", "leuchte-sund", "teppich-fjord"],
@@ -139,8 +331,8 @@ const KOMBI = {
   "leuchte-sund": ["eichentisch-nord", "stuhl-lund", "teppich-fjord"],
   "teppich-fjord": ["eichentisch-nord", "stuhl-lund", "armlehnstuhl-aare"],
 };
-const ziel = document.getElementById("dazu");
-(KOMBI[id] || []).forEach((k) => {
+const ziel = $("dazu");
+for (const k of KOMBI[id] || []) {
   const w = WARE[k];
   const a = document.createElement("a");
   a.className = "stueck"; a.href = "/p/" + k;
@@ -151,10 +343,10 @@ const ziel = document.getElementById("dazu");
   const nm = document.createElement("span"); nm.className = "stueck-name"; nm.textContent = w.name;
   const pr = document.createElement("span"); pr.className = "stueck-preis"; pr.textContent = w.preis + " €";
   zeile.append(nm, pr);
-  const info = document.createElement("p"); info.className = "stueck-info"; info.textContent = w.text;
+  const info = document.createElement("p"); info.className = "stueck-info"; info.textContent = w.kurz;
   a.append(kasten, zeile, info);
   ziel.appendChild(a);
-});
+}
 </script>
 
 <script src="/widget.js" data-firma="nordform" data-farbe="#1f2937"></script>
