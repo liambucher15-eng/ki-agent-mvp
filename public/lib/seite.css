@@ -114,7 +114,15 @@
 
     /* ── Kopfzeile ────────────────────────────────────────────────────── */
     .kopf {
-      position: fixed; inset: 0 0 auto 0; z-index: 50;
+      /* z-index 900, nicht 50. Die Galerie staffelt ihre Karten bis 1000
+         (start.html, Zeile ~887); mit 50 verschwand die Navigation hinter den
+         Karten. Die Galerie ist mit isolation: isolate zwar abgeschlossen, aber
+         zwei Sicherungen sind hier richtig: Die eine haelt die Staffelung lokal,
+         die andere sorgt dafuer, dass die Kopfzeile auch dann oben bleibt, wenn
+         irgendwann ein anderer Abschnitt eine hohe Zahl einfuehrt.
+         900 mit Absicht unter dem Widget-Starter (widget.js nutzt 2147483000) —
+         der schwebende Agent soll ueber der Kopfzeile bleiben. */
+      position: fixed; inset: 0 0 auto 0; z-index: 900;
       display: flex; align-items: center; justify-content: space-between;
       gap: 1rem; padding: 1.1rem var(--rand);
       border-bottom: 1px solid transparent;
