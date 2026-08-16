@@ -6,11 +6,26 @@
    ═══════════════════════════════════════════════════════════════════ */
   // Kopfzeile bekommt ab 24 px Scrollhoehe einen Grund, damit die Links beim
   // Durchscrollen nicht auf dem Bild verschwinden.
+  //
+  // Die Pruefung haengt NICHT nur am scroll-Ereignis. Wer die Seite bereits
+  // gescrollt betritt, loest keines aus:
+  //   - Aufruf mit Anker (start.html#charaktere) springt ohne scroll-Ereignis
+  //   - Neu laden stellt die alte Scrollposition wieder her, meist NACH dem
+  //     ersten Skriptlauf
+  //   - Zurueck-Taste holt die Seite aus dem bfcache, ganz ohne load
+  // In all diesen Faellen blieb data-gescrollt auf "nein", die Kopfzeile also
+  // durchsichtig — und der Seiteninhalt lief sichtbar durch die Navigation.
+  // Gemeldet an der Charakter-Galerie, wo eine Karte quer durch die Links lief.
   (function () {
     const kopf = document.getElementById("kopf");
+    if (!kopf) return;
     const pruefe = () => kopf.setAttribute("data-gescrollt", window.scrollY > 24 ? "ja" : "nein");
     pruefe();
     window.addEventListener("scroll", pruefe, { passive: true });
+    // load: nach der Wiederherstellung der Scrollposition.
+    window.addEventListener("load", pruefe);
+    // pageshow: deckt zusaetzlich den bfcache ab, wo load nicht noch einmal kommt.
+    window.addEventListener("pageshow", pruefe);
   })();
 
   // Weiches Scrollen NUR bei Klick auf einen Ankerlink, nicht global per CSS.
