@@ -577,7 +577,19 @@
       .auftritt[data-da="ja"] { transition: none; }
     }
 
-    .galerie-huelle { position: relative; }
+    /* isolation: isolate schliesst die Galerie zu einem eigenen Stapelkontext ab.
+       Ohne das lief eine Karte quer durch die Navigation: Das Galerie-Skript
+       staffelt die Karten mit z-index (start.html, Zeile ~887), die vorderste
+       bekommt 1000. Die Kopfzeile hat 50 — und beide lagen im selben
+       Stapelkontext, naemlich dem der Seite. 1000 gewinnt, also wurde die Karte
+       ueber der Zeile gezeichnet. Gemessen bei scrollY 3855: elementFromPoint an
+       der Kopf-Unterkante traf .figur-platzhalter statt .kopf.
+
+       Die Kopfzeile hochzuzaehlen waere der schlechtere Weg gewesen: Dann
+       muesste ihre Zahl jedes Mal mitwachsen, wenn die Galerie ihre Staffelung
+       aendert. So bleiben die 1000 INNERHALB der Galerie und die ganze Galerie
+       steht als Block auf Ebene 0, also unter der Zeile. */
+    .galerie-huelle { position: relative; isolation: isolate; }
     .galerie {
       --karte: clamp(12rem, 32vw, 23rem);
       position: relative;          /* macht sie zum Bezugspunkt fuer offsetLeft */
