@@ -123,8 +123,18 @@ function baueSystemPrompt(firma) {
     ? `\n- Beachte diese zusätzlichen Grenzen: ${p.grenzen.trim()}`
     : "";
 
+  // „warm und knapp" stand hier früher fest hinter dem gewählten Ton — und hat
+  // ihn damit weitgehend aufgehoben. Wer „sachlich, ohne Ausschmückungen" oder
+  // „gehoben, elegant und exklusiv" gewählt hatte, bekam im selben Atemzug
+  // „warm" befohlen; das Modell folgt der unbedingten Anweisung und nicht der
+  // Beschreibung davor. Nachgemessen: Vier verschiedene Töne lieferten auf
+  // dieselbe Frage praktisch dieselbe Antwort, „professionell" und „humorvoll"
+  // begannen beide mit „Hey!".
+  //
+  // „knapp" war ausserdem doppelt — die Antwortlänge steht unten als eigene
+  // Regel (laengeRegel) und ist dort vom Kunden einstellbar.
   return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
-Ton: ${p.ton}. Sprich ${spr}, warm und knapp. ${anredeRegel}${aussehenRegel}
+Ton: ${p.ton}. Sprich ${spr}. ${anredeRegel}${aussehenRegel}
 
 So verhältst du dich:
 - BEGRÜSSE neue Besucher proaktiv und biete Wege an.
