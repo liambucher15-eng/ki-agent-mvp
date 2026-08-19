@@ -102,16 +102,75 @@ test("freistellen: einheitliche Hintergrundfarbe wird komplett transparent", () 
   );
 });
 
-test("freistellen: bricht ab, wenn die vier Ecken keinen einheitlichen Hintergrund zeigen", () => {
-  // Vier grundverschiedene 3x3-Eckregionen -> kein Freistellen möglich, kein stiller Murks.
-  const base64 = baueRgbPng(8, 8, (x, y) => {
-    if (x < 3 && y < 3) return [255, 0, 0];
-    if (x >= 5 && y < 3) return [0, 255, 0];
-    if (x < 3 && y >= 5) return [0, 0, 255];
-    if (x >= 5 && y >= 5) return [255, 255, 0];
-    return [255, 255, 255];
+test("freistellen: kein erkennbarer Hintergrund -> Bild kommt unverändert zurück, kein Absturz", () => {
+  // Fünf grundverschiedene Farben, gleichmässig über den GANZEN Bildrand verteilt
+  // (nicht nur die 4 Ecken) -> keine stellt auch nur annähernd eine Mehrheit,
+  // MIN_ANTEIL (25%) wird von keiner erreicht. Anders als die Vorgängerfassung
+  // bricht das jetzt nicht mit einem Fehler ab, den charakter-background.js
+  // auffangen musste, sondern liefert das Bild einfach unverändert zurück.
+  //
+  // (Ein früherer Versuch mit vier Eckregionen + weissem Kreuz in der Mitte
+  // scheiterte an genau der Robustheit, die dieser Umbau bringen soll: das
+  // Kreuz lief über den GANZEN Rand und stellte dort selbst die Mehrheit —
+  // kein Fehler im Code, nur ein Testbild, das den Rand nicht wirklich uneinig
+  // machte.)
+  const FARBEN = [[230, 20, 20], [20, 230, 20], [20, 20, 230], [230, 230, 20], [230, 20, 230]];
+  const base64 = baueRgbPng(15, 15, (x, y) => FARBEN[(x + y) % FARBEN.length]);
+  assert.doesNotThrow(() => freistellen(base64));
+  const vorher = dekodierePng(base64);
+  const nachher = dekodierePng(freistellen(base64));
+  assert.deepEqual(Array.from(nachher.pixel), Array.from(vorher.pixel), "Bild muss byte-identisch bleiben, inkl. Alpha=255 überall");
+});
+
+test("freistellen: eine Ecke, die die Figur berührt, hindert das Freistellen nicht mehr", () => {
+  // Genau der Fall, der die alte Vier-Ecken-Prüfung kippte: EIN Eckpixel gehört
+  // zur Figur, nicht zum Hintergrund. Der Rest der Randfläche ist sauberer
+  // Hintergrund und muss trotzdem vollständig freigestellt werden.
+  const bg = [219, 41, 133];
+  const fig = [30, 120, 90];
+  const base64 = baueRgbPng(20, 20, (x, y) => {
+    // Figur: ein Block, der bis in die obere linke Ecke hineinreicht (inkl. des
+    // frueher exakt bei (2,2) abgetasteten Punkts) UND ein zentraler Kernblock,
+    // damit "unveraendert bei Nicht-Erreichen" ueberhaupt pruefbar ist.
+    if (x < 5 && y < 5) return fig;
+    if (x >= 8 && x <= 11 && y >= 8 && y <= 11) return fig;
+    return bg;
   });
-  assert.throws(() => freistellen(base64), /kein einheitlicher hintergrund/i);
+  const info = dekodierePng(freistellen(base64));
+  const idx = (x, y) => (y * info.width + x) * 4;
+
+  // Hintergrund fernab der kontaminierten Ecke: vollstaendig transparent.
+  for (const [x, y] of [[19, 0], [0, 19], [19, 19], [15, 2]]) {
+    assert.equal(info.pixel[idx(x, y) + 3], 0, `(${x},${y}) sollte transparent sein`);
+  }
+  // Der zentrale Figur-Kern bleibt unangetastet: undurchsichtig, Farbe unveraendert.
+  assert.equal(info.pixel[idx(9, 9) + 3], 255);
+  assert.deepEqual([info.pixel[idx(9, 9)], info.pixel[idx(9, 9) + 1], info.pixel[idx(9, 9) + 2]], fig);
+});
+
+test("freistellen: ein sanfter Verlauf im Hintergrund wird trotzdem vollständig freigestellt", () => {
+  // Hintergrund driftet über die Bildbreite spuerbar (Endpunkte weiter auseinander
+  // als die alte starre Schwelle erlaubt hätte), aber jeder einzelne Schritt
+  // zwischen Nachbarpixeln bleibt klein — genau das Muster eines echten,
+  // sanften Schattens/Verlaufs. Ein 6x6-Block in der Mitte ist die Figur.
+  const start = 100, ende = 220, breite = 24;
+  const farbeBeiX = (x) => Math.round(start + ((ende - start) * x) / (breite - 1));
+  const fig = [10, 200, 10];
+  const base64 = baueRgbPng(breite, breite, (x, y) => {
+    if (x >= 9 && x <= 14 && y >= 9 && y <= 14) return fig;
+    const v = farbeBeiX(x);
+    return [v, 40, 130];
+  });
+  const info = dekodierePng(freistellen(base64));
+  const idx = (x, y) => (y * info.width + x) * 4;
+
+  // Beide Enden des Verlaufs müssen freigestellt sein, obwohl ihr Farbabstand
+  // zueinander weit über der alten starren Schwelle liegt.
+  assert.equal(info.pixel[idx(0, 0) + 3], 0, "helles Ende des Verlaufs sollte transparent sein");
+  assert.equal(info.pixel[idx(breite - 1, breite - 1) + 3], 0, "dunkles Ende des Verlaufs sollte transparent sein");
+  // Die Figur bleibt unangetastet.
+  assert.equal(info.pixel[idx(11, 11) + 3], 255);
+  assert.deepEqual([info.pixel[idx(11, 11)], info.pixel[idx(11, 11) + 1], info.pixel[idx(11, 11) + 2]], fig);
 });
 
 test("freistellen: weicher Übergang nahe der Schwelle (keine harte Treppenstufe)", () => {

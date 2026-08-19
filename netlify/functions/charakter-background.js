@@ -27,9 +27,12 @@ const { freistellen } = require("./lib/freistellen");
 const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
 const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
 
-// Freistellen ist ein Best-Effort-Schritt: schlägt es fehl (z.B. weil Gemini
-// den Hintergrund doch nicht einheitlich gezeichnet hat), liefern wir lieber
-// das Bild MIT Hintergrund aus, statt den ganzen Job scheitern zu lassen.
+// freistellen() selbst bricht seit der Umstellung auf Rand-Mehrheit + Flood-Fill
+// nicht mehr ab, wenn kein einheitlicher Hintergrund erkennbar ist — dann kommt
+// das Bild dort schon unverändert zurück (siehe lib/freistellen.js). Dieser
+// try/catch ist nur noch das Netz für wirklich unerwartete Fälle (z.B. Gemini
+// liefert kein gültiges PNG): auch dann lieber das Bild MIT Hintergrund
+// ausliefern, als den ganzen Job scheitern zu lassen.
 function versucheFreistellen(base64, mimeType) {
   try {
     return { base64: freistellen(base64), mimeType: "image/png" };
