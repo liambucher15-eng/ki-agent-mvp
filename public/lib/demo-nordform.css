@@ -322,7 +322,15 @@ a { color: inherit; }
   display: grid; place-items: center; overflow: hidden;
 }
 .bildflaeche img { width: 58%; height: auto; }
-.produkt-bild { aspect-ratio: 4 / 5; }
+
+/* Zwei quadratische Produktfotos nebeneinander — das Format, in dem die
+   Aufnahmen entstehen (siehe BILDER-NORDFORM.md): freigestelltes Stück links,
+   Nahaufnahme derselben Serie rechts. Auf schmalen Schirmen bleibt es
+   nebeneinander (kein Umbruch): zwei Quadrate zu je ~150 px sind bei 375 px
+   Breite noch gut zu erkennen, und ein Umbruch hätte das Seitenverhältnis der
+   Textspalte gegenüber verschoben. */
+.produkt-galerie { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(.5rem, 1.5vw, .9rem); }
+.produkt-bild { aspect-ratio: 1 / 1; }
 .platzhalter-marke {
   position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%);
   font-size: .72rem; letter-spacing: .04em; color: var(--tinte-hell);
@@ -407,8 +415,12 @@ a { color: inherit; }
   margin-bottom: clamp(3rem, 8vw, 6rem);
 }
 @media (min-width: 900px) { .detail-band { grid-template-columns: 1.1fr 1fr; } }
-.detail-bild { aspect-ratio: 1 / 1; background: transparent; }
-.detail-bild img { width: 52%; }
+/* 16:9 statt 1:1 — hier sitzt die Editorial-Aufnahme mit Modell, kein
+   freigestelltes Produktfoto. Deren Bildsprache (weisses Studio, das Modell
+   im Bild) braucht das breite Format; als Quadrat gepresst hätte es
+   entweder Kopf oder Füsse abgeschnitten. */
+.detail-bild { aspect-ratio: 16 / 9; background: transparent; }
+.detail-bild img { width: 62%; }
 .datenblatt {
   padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 3.5rem);
   max-width: 34rem;

@@ -52,10 +52,20 @@
 <!-- ══ 1) Stück und Angaben ══════════════════════════════════════════════ -->
 <main class="bahn produkt">
   <!-- BILD ZUM ERSETZEN: bilder/produkte/<schluessel>.svg durch Liams
-       Aufnahme tauschen. Der Dateiname steht sichtbar in der Fläche. -->
-  <div class="bildflaeche produkt-bild">
-    <img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" />
-    <span class="platzhalter-marke" id="bildMarke">Platzhalter</span>
+       Aufnahmen tauschen. Der Zieldateiname steht sichtbar in der Fläche.
+
+       Zwei Quadrate nebeneinander, beide 1:1 — genau das Format, in dem Liam
+       die Produktfotos erzeugt: links die freigestellte Aufnahme, rechts die
+       Nahaufnahme derselben Kamera-Serie (Fasenkante, Zinkung, o.ä.). -->
+  <div class="produkt-galerie">
+    <div class="bildflaeche produkt-bild">
+      <img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" />
+      <span class="platzhalter-marke" id="bildMarke">Platzhalter</span>
+    </div>
+    <div class="bildflaeche produkt-bild">
+      <img id="makroBild" src="bilder/produkte/eichentisch-nord.svg" alt="" role="presentation" />
+      <span class="platzhalter-marke" id="makroMarke">Platzhalter</span>
+    </div>
   </div>
 
   <div>
@@ -104,8 +114,8 @@
 <!-- ══ 2) Detailaufnahme und Datenblatt ══════════════════════════════════ -->
 <section class="bahn">
   <div class="detail-band">
-    <!-- BILD ZUM ERSETZEN: Nahaufnahme der Oberfläche (Maserung, Kante).
-         Bis dahin steht hier dasselbe Produktbild als Platzhalter. -->
+    <!-- BILD ZUM ERSETZEN: die Editorial-Aufnahme mit Modell, 16:9 — das
+         Kampagnenbild, nicht das freigestellte Produktfoto. -->
     <div class="bildflaeche detail-bild">
       <img id="detailBild" src="bilder/produkte/eichentisch-nord.svg" alt="" role="presentation" />
       <span class="platzhalter-marke" id="detailMarke">Platzhalter</span>
@@ -203,13 +213,17 @@ const WARE = {
   },
   "leuchte-sund": {
     name: "Leuchte Sund", preis: 179, lager: true,
-    kurz: "Messing mit Opalglas",
-    text: "Messing mit Opalglas.",
-    material: "Messing mit Schirm aus Opalglas.",
+    // Nachttischlampe statt Deckenleuchte — Bildsprache in BILDER-NORDFORM.md
+    // Abschnitt 6 entsprechend geändert. "Messing mit Opalglas" allein liess
+    // beides offen; die Ergänzung nimmt Fragen wie "hängt die?" vorweg.
+    kurz: "Nachttischlampe · Messing mit Opalglas",
+    text: "Messing mit Opalglas, als Nachttischlampe mit rundem Standfuss.",
+    material: "Messing mit rundem Standfuss und Schirm aus Opalglas. Kein Deckenanschluss, steht frei auf dem Tisch.",
     masse: "Auf Anfrage.",
     daten: [
       ["Material", ["Messing"]],
       ["Schirm", ["Opalglas"]],
+      ["Bauart", ["Nachttischlampe mit Standfuss"]],
     ],
   },
   "teppich-fjord": {
@@ -235,6 +249,12 @@ const schluessel = new URLSearchParams(location.search).get("p") || "eichentisch
 const id = Object.prototype.hasOwnProperty.call(WARE, schluessel) ? schluessel : "eichentisch-nord";
 const p = WARE[id];
 const bildPfad = (k) => "bilder/produkte/" + k + ".svg";
+// Zeigt in der Platzhalter-Beschriftung den Dateinamen, den die ECHTE Aufnahme
+// tragen sollte — nicht den Platzhalter-svg-Pfad. teil unterscheidet die drei
+// Aufnahmen desselben Stücks: das Produktfoto hat keinen Zusatz, "makro" ist
+// die Nahaufnahme (beide 1:1, siehe BILDER-NORDFORM.md), "modell" ist die
+// Editorial-Aufnahme mit Person (16:9).
+const bildZielName = (k, teil) => "bilder/produkte/" + k + (teil ? "-" + teil : "") + ".jpg";
 const $ = (n) => document.getElementById(n);
 
 // ── Kopf, Bilder, Text ──────────────────────────────────────────────────
@@ -246,9 +266,13 @@ $("kMaterial").textContent = p.material;
 $("kMasse").textContent = p.masse;
 document.title = p.name + " — Nordform";
 
-for (const [bild, marke] of [[$("bild"), $("bildMarke")], [$("detailBild"), $("detailMarke")]]) {
-  bild.src = bildPfad(id);
-  marke.textContent = "Platzhalter · " + bildPfad(id);
+for (const [bild, marke, teil] of [
+  [$("bild"), $("bildMarke"), null],
+  [$("makroBild"), $("makroMarke"), "makro"],
+  [$("detailBild"), $("detailMarke"), "modell"],
+]) {
+  bild.src = bildPfad(id); // bis echte Fotos da sind, alle drei mit demselben Platzhalter
+  marke.textContent = "Platzhalter · " + bildZielName(id, teil);
 }
 $("bild").alt = p.name;
 
