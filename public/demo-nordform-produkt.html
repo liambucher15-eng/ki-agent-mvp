@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="lib/demo-nordform.css" />
 <script type="application/ld+json" id="ld">
 {"@context":"https://schema.org","@type":"Product","name":"Eichentisch Nord","sku":"eichentisch-nord",
-"image":"/bilder/produkte/eichentisch-nord.svg",
+"image":"/bilder/produkte/eichentisch-nord.webp",
 "description":"Europäische Eiche, geölt, 200 × 95 cm.",
 "brand":{"@type":"Brand","name":"Nordform"},
 "offers":{"@type":"Offer","price":"899","priceCurrency":"EUR","availability":"https://schema.org/InStock"}}
@@ -51,20 +51,22 @@
 
 <!-- ══ 1) Stück und Angaben ══════════════════════════════════════════════ -->
 <main class="bahn produkt">
-  <!-- BILD ZUM ERSETZEN: bilder/produkte/<schluessel>.svg durch Liams
-       Aufnahmen tauschen. Der Zieldateiname steht sichtbar in der Fläche.
+  <!-- Zwei Quadrate nebeneinander, beide 1:1 — das Format, in dem die Aufnahmen
+       vorliegen: links das freigestellte Stück, rechts die Nahaufnahme
+       derselben Serie (Fasenkante, Zinkung, Gewebe).
 
-       Zwei Quadrate nebeneinander, beide 1:1 — genau das Format, in dem Liam
-       die Produktfotos erzeugt: links die freigestellte Aufnahme, rechts die
-       Nahaufnahme derselben Kamera-Serie (Fasenkante, Zinkung, o.ä.). -->
+       width/height stehen ausdrücklich am <img>, obwohl die Fläche schon per
+       aspect-ratio steht: So kennt der Browser das Seitenverhältnis, bevor das
+       Bild geladen ist, und der Text darunter springt beim Laden nicht.
+       Das erste Bild lädt eifrig (es steht ganz oben), das zweite faul. -->
   <div class="produkt-galerie">
     <div class="bildflaeche produkt-bild">
-      <img id="bild" src="bilder/produkte/eichentisch-nord.svg" alt="Eichentisch Nord" />
-      <span class="platzhalter-marke" id="bildMarke">Platzhalter</span>
+      <img id="bild" src="bilder/produkte/eichentisch-nord.webp" alt="Eichentisch Nord"
+           width="800" height="800" decoding="async" fetchpriority="high" />
     </div>
     <div class="bildflaeche produkt-bild">
-      <img id="makroBild" src="bilder/produkte/eichentisch-nord.svg" alt="" role="presentation" />
-      <span class="platzhalter-marke" id="makroMarke">Platzhalter</span>
+      <img id="makroBild" src="bilder/produkte/eichentisch-nord-makro.webp" alt="" role="presentation"
+           width="800" height="800" loading="lazy" decoding="async" />
     </div>
   </div>
 
@@ -114,11 +116,11 @@
 <!-- ══ 2) Detailaufnahme und Datenblatt ══════════════════════════════════ -->
 <section class="bahn">
   <div class="detail-band">
-    <!-- BILD ZUM ERSETZEN: die Editorial-Aufnahme mit Modell, 16:9 — das
-         Kampagnenbild, nicht das freigestellte Produktfoto. -->
+    <!-- Die Editorial-Aufnahme mit Modell, 16:9 — das Kampagnenbild, nicht das
+         freigestellte Produktfoto. Steht weit unten, lädt deshalb faul. -->
     <div class="bildflaeche detail-bild">
-      <img id="detailBild" src="bilder/produkte/eichentisch-nord.svg" alt="" role="presentation" />
-      <span class="platzhalter-marke" id="detailMarke">Platzhalter</span>
+      <img id="detailBild" src="bilder/produkte/eichentisch-nord-modell.webp" alt="" role="presentation"
+           width="1400" height="781" loading="lazy" decoding="async" />
     </div>
     <div class="datenblatt">
       <dl id="datenblatt"></dl>
@@ -248,13 +250,11 @@ const AUS_HOLZ = ["eichentisch-nord", "esstisch-sund", "beistelltisch-vik", "stu
 const schluessel = new URLSearchParams(location.search).get("p") || "eichentisch-nord";
 const id = Object.prototype.hasOwnProperty.call(WARE, schluessel) ? schluessel : "eichentisch-nord";
 const p = WARE[id];
-const bildPfad = (k) => "bilder/produkte/" + k + ".svg";
-// Zeigt in der Platzhalter-Beschriftung den Dateinamen, den die ECHTE Aufnahme
-// tragen sollte — nicht den Platzhalter-svg-Pfad. teil unterscheidet die drei
-// Aufnahmen desselben Stücks: das Produktfoto hat keinen Zusatz, "makro" ist
-// die Nahaufnahme (beide 1:1, siehe BILDER-NORDFORM.md), "modell" ist die
-// Editorial-Aufnahme mit Person (16:9).
-const bildZielName = (k, teil) => "bilder/produkte/" + k + (teil ? "-" + teil : "") + ".jpg";
+// Drei Aufnahmen pro Stück, unterschieden durch den Namenszusatz: das
+// Produktfoto ohne Zusatz, "-makro" die Nahaufnahme (beide 1:1), "-modell" die
+// Editorial-Aufnahme mit Person (16:9). Alle als WebP, aus den Originalen auf
+// die gemessene Anzeigegrösse heruntergerechnet (siehe BILDER-NORDFORM.md).
+const bildPfad = (k, teil) => "bilder/produkte/" + k + (teil ? "-" + teil : "") + ".webp";
 const $ = (n) => document.getElementById(n);
 
 // ── Kopf, Bilder, Text ──────────────────────────────────────────────────
@@ -266,13 +266,12 @@ $("kMaterial").textContent = p.material;
 $("kMasse").textContent = p.masse;
 document.title = p.name + " — Nordform";
 
-for (const [bild, marke, teil] of [
-  [$("bild"), $("bildMarke"), null],
-  [$("makroBild"), $("makroMarke"), "makro"],
-  [$("detailBild"), $("detailMarke"), "modell"],
+for (const [bild, teil] of [
+  [$("bild"), null],
+  [$("makroBild"), "makro"],
+  [$("detailBild"), "modell"],
 ]) {
-  bild.src = bildPfad(id); // bis echte Fotos da sind, alle drei mit demselben Platzhalter
-  marke.textContent = "Platzhalter · " + bildZielName(id, teil);
+  bild.src = bildPfad(id, teil);
 }
 $("bild").alt = p.name;
 
@@ -366,7 +365,10 @@ for (const k of KOMBI[id] || []) {
   // die kommen aus nordform.json und sollen aussehen wie bei einem echten Shop.
   a.className = "stueck"; a.href = "demo-nordform-produkt.html?p=" + k;
   const kasten = document.createElement("div"); kasten.className = "stueck-bild";
-  const bild = document.createElement("img"); bild.src = bildPfad(k); bild.alt = w.name;
+  const bild = document.createElement("img");
+  bild.src = bildPfad(k); bild.alt = w.name;
+  bild.width = 800; bild.height = 800;   // Seitenverhältnis vorab, gegen Springen beim Laden
+  bild.loading = "lazy"; bild.decoding = "async";
   kasten.appendChild(bild);
   const zeile = document.createElement("div"); zeile.className = "stueck-zeile";
   const nm = document.createElement("span"); nm.className = "stueck-name"; nm.textContent = w.name;

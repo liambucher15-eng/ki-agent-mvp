@@ -274,10 +274,14 @@ a { color: inherit; }
 .stueck { text-decoration: none; display: grid; gap: .8rem; }
 .stueck-bild {
   border-radius: 18px; overflow: hidden; background: #f5f2ed;
-  aspect-ratio: 4 / 3; display: grid; place-items: center;
+  /* 1:1 statt 4:3, seit hier echte Fotos statt der alten SVG-Platzhalter
+     liegen. Die Aufnahmen sind quadratisch (2048x2048); in einem 4:3-Rahmen
+     mit object-fit: cover haette der Beschnitt oben und unten je 12,5%
+     weggenommen — bei einem Stuhl genau die Beine. */
+  aspect-ratio: 1 / 1; display: grid; place-items: center;
   transition: transform .25s ease;
 }
-.stueck-bild img { width: 62%; height: auto; }
+.stueck-bild img { width: 100%; height: 100%; object-fit: cover; }
 .stueck:hover .stueck-bild { transform: translateY(-4px); }
 .stueck-zeile { display: flex; align-items: baseline; justify-content: space-between; gap: .8rem; }
 .stueck-name { font-weight: 500; }
@@ -321,7 +325,11 @@ a { color: inherit; }
   position: relative; background: var(--papier-tief);
   display: grid; place-items: center; overflow: hidden;
 }
-.bildflaeche img { width: 58%; height: auto; }
+/* Die Fotos fuellen ihre Flaeche ganz aus (frueher 58% — das war fuer die
+   kleinen SVG-Platzhalter gedacht, die als Icon in der Mitte schwebten).
+   object-fit: cover schneidet hier nichts ab: Quelle und Rahmen haben dasselbe
+   Seitenverhaeltnis (Quadrate 1:1, Band 16:9). */
+.bildflaeche img { width: 100%; height: 100%; object-fit: cover; }
 
 /* Zwei quadratische Produktfotos nebeneinander — das Format, in dem die
    Aufnahmen entstehen (siehe BILDER-NORDFORM.md): freigestelltes Stück links,
@@ -420,7 +428,7 @@ a { color: inherit; }
    im Bild) braucht das breite Format; als Quadrat gepresst hätte es
    entweder Kopf oder Füsse abgeschnitten. */
 .detail-bild { aspect-ratio: 16 / 9; background: transparent; }
-.detail-bild img { width: 62%; }
+.detail-bild img { width: 100%; height: 100%; object-fit: cover; }
 .datenblatt {
   padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 3.5rem);
   max-width: 34rem;
