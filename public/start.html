@@ -229,42 +229,42 @@
       <div class="galerie" id="galerie" tabindex="0" role="region" aria-label="Beispiel-Figuren zum Durchblättern">
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/restaurant.webp" alt="Agenten-Figur für ein Restaurant" loading="lazy" />
+          <img src="bilder/charaktere/restaurant.webp" alt="Agenten-Figur für ein Restaurant" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Restaurant</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/zahnarztpraxis.webp" alt="Agenten-Figur für eine Zahnarztpraxis" loading="lazy" />
+          <img src="bilder/charaktere/zahnarztpraxis.webp" alt="Agenten-Figur für eine Zahnarztpraxis" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Zahnarztpraxis</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/velowerkstatt.webp" alt="Agenten-Figur für eine Velowerkstatt" loading="lazy" />
+          <img src="bilder/charaktere/velowerkstatt.webp" alt="Agenten-Figur für eine Velowerkstatt" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Velowerkstatt</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/coiffeursalon.webp" alt="Agenten-Figur für einen Coiffeursalon" loading="lazy" />
+          <img src="bilder/charaktere/coiffeursalon.webp" alt="Agenten-Figur für einen Coiffeursalon" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Coiffeursalon</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/treuhandbuero.webp" alt="Agenten-Figur für ein Treuhandbüro" loading="lazy" />
+          <img src="bilder/charaktere/treuhandbuero.webp" alt="Agenten-Figur für ein Treuhandbüro" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Treuhandbüro</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/fitnessstudio.webp" alt="Agenten-Figur für ein Fitnessstudio" loading="lazy" />
+          <img src="bilder/charaktere/fitnessstudio.webp" alt="Agenten-Figur für ein Fitnessstudio" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Fitnessstudio</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/blumenladen.webp" alt="Agenten-Figur für einen Blumenladen" loading="lazy" />
+          <img src="bilder/charaktere/blumenladen.webp" alt="Agenten-Figur für einen Blumenladen" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Blumenladen</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/autogarage.webp" alt="Agenten-Figur für eine Autogarage" loading="lazy" />
+          <img src="bilder/charaktere/autogarage.webp" alt="Agenten-Figur für eine Autogarage" loading="lazy" onerror="this.remove()" />
           <figcaption class="branche">Autogarage</figcaption>
         </figure>
       </div>
@@ -754,16 +754,16 @@
     zeige(0);
   })();
 
-  // Charakter-Galerie: Noch fehlende Bilder entfernen, damit der
-  // Platzhalter darunter sichtbar bleibt statt eines Bruchsymbols. Die
-  // zweite Pruefung ist noetig, weil ein Bild schon fehlgeschlagen sein
-  // kann, bevor dieses Skript am Seitenende ueberhaupt laeuft.
-  (function () {
-    document.querySelectorAll(".figur img").forEach((b) => {
-      b.addEventListener("error", () => b.remove());
-      if (b.complete && b.naturalWidth === 0) b.remove();
-    });
-  })();
+  // Fehlende Charakter-Bilder entfernen sich selbst — der Handler steht als
+  // Attribut onerror="this.remove()" direkt am <img> in der Galerie oben.
+  //
+  // Hier stand frueher ein addEventListener("error", ...) ueber alle
+  // ".figur img". Das konnte nicht funktionieren: Die Faecher-Galerie
+  // direkt darunter haengt fuer den Endlos-Umlauf links und rechts je einen
+  // Klon-Satz an, und cloneNode kopiert zwar Attribute, aber KEINE per
+  // addEventListener registrierten Handler. Von 24 Karten trugen also nur
+  // die 8 echten einen Handler; die 16 Klone zeigten das Bruchsymbol.
+  // Als Attribut wandert der Handler beim Klonen mit.
 
   // Faecher-Galerie: Die Karte in der Mitte steht gross und vorn, die
   // uebrigen ruecken treppenartig kleiner nach hinten und schieben sich
