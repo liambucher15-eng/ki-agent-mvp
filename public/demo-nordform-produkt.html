@@ -51,23 +51,44 @@
 
 <!-- ══ 1) Stück und Angaben ══════════════════════════════════════════════ -->
 <main class="bahn produkt">
-  <!-- Zwei Quadrate nebeneinander, beide 1:1 — das Format, in dem die Aufnahmen
-       vorliegen: links das freigestellte Stück, rechts die Nahaufnahme
-       derselben Serie (Fasenkante, Zinkung, Gewebe).
+  <!-- EINE grosse Bühne statt zweier kleiner Quadrate nebeneinander. Auf einer
+       Produktseite ist das Stück selbst das Argument; zwei Kacheln zu je 290 px
+       zeigten es kleiner, als jeder Besucher es sehen will. Jetzt liegt das
+       Produktfoto zuerst gross da, danach die Nahaufnahme derselben Serie
+       (Fasenkante, Zinkung, Gewebe).
+
+       Die Bühne ist 1:1, weil beide Aufnahmen quadratisch vorliegen (2048×2048).
+       So füllt das Foto sie exakt aus — kein Beschnitt, keine Ränder.
 
        width/height stehen ausdrücklich am <img>, obwohl die Fläche schon per
        aspect-ratio steht: So kennt der Browser das Seitenverhältnis, bevor das
        Bild geladen ist, und der Text darunter springt beim Laden nicht.
-       Das erste Bild lädt eifrig (es steht ganz oben), das zweite faul. -->
-  <div class="produkt-galerie">
-    <div class="bildflaeche produkt-bild">
+
+       Beide Aufnahmen laden eifrig — sie stehen ganz oben, und die zweite ist
+       nur einen Wechsel entfernt. Sie bekommt aber niedrige Priorität, damit
+       sie dem ersten Bild keine Bandbreite wegnimmt. -->
+  <div class="galerie" id="galerie"
+       role="group" aria-roledescription="Bildergalerie" aria-label="Aufnahmen des Stücks">
+    <div class="galerie-folie" data-an="ja">
       <img id="bild" src="bilder/produkte/eichentisch-nord.webp" alt="Eichentisch Nord"
            width="800" height="800" decoding="async" fetchpriority="high" />
     </div>
-    <div class="bildflaeche produkt-bild">
-      <img id="makroBild" src="bilder/produkte/eichentisch-nord-makro.webp" alt="" role="presentation"
-           width="800" height="800" loading="lazy" decoding="async" />
+    <div class="galerie-folie">
+      <img id="makroBild" src="bilder/produkte/eichentisch-nord-makro.webp" alt=""
+           width="800" height="800" decoding="async" fetchpriority="low" />
     </div>
+
+    <button class="galerie-pfeil zurueck" type="button" aria-label="Vorherige Aufnahme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button class="galerie-pfeil vor" type="button" aria-label="Nächste Aufnahme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+
+    <!-- Punkte entstehen im Skript, damit ihre Zahl den Folien folgt. -->
+    <div class="galerie-punkte" id="galeriePunkte"></div>
   </div>
 
   <div>
@@ -114,17 +135,30 @@
 </main>
 
 <!-- ══ 2) Detailaufnahme und Datenblatt ══════════════════════════════════ -->
-<section class="bahn">
-  <div class="detail-band">
-    <!-- Die Editorial-Aufnahme mit Modell, 16:9 — das Kampagnenbild, nicht das
-         freigestellte Produktfoto. Steht weit unten, lädt deshalb faul. -->
-    <div class="bildflaeche detail-bild">
-      <img id="detailBild" src="bilder/produkte/eichentisch-nord-modell.webp" alt="" role="presentation"
-           width="1400" height="781" loading="lazy" decoding="async" />
-    </div>
-    <div class="datenblatt">
-      <dl id="datenblatt"></dl>
-    </div>
+<!-- Ohne .bahn: Das Band läuft von Bildschirmkante zu Bildschirmkante, die
+     Aufnahme nimmt also die volle Breite ein. Der naheliegende Weg wäre
+     gewesen, es per „margin-left: calc(50% - 50vw)" aus der Bahn
+     auszubrechen — gemessen ergab das 8 px seitlichen Überlauf, weil die
+     Einheit vw die Scrollleiste mitzählt, die verfügbare Breite aber nicht.
+     Ohne Umhüllende gibt es nichts auszubrechen und nichts zu verrechnen. -->
+<section class="detail-band">
+  <!-- Die Editorial-Aufnahme mit Modell, 16:9 — das Kampagnenbild, nicht das
+       freigestellte Produktfoto. Steht weit unten, lädt deshalb faul.
+
+       Das Datenblatt steht DARUNTER, nicht daneben: Nebeneinander bräuchte
+       jedes Produkt ein anderes Bildformat, damit beide gleich hoch sind
+       (gemessen 1,03 bis 2,33 — von quadratisch bis ultrabreit). -->
+  <div class="bildflaeche detail-bild">
+    <img id="detailBild" src="bilder/produkte/eichentisch-nord-modell.webp"
+         srcset="bilder/produkte/eichentisch-nord-modell-1200.webp 1200w,
+                 bilder/produkte/eichentisch-nord-modell.webp 2000w,
+                 bilder/produkte/eichentisch-nord-modell-2752.webp 2752w"
+         sizes="100vw"
+         alt="" role="presentation"
+         width="2000" height="1116" loading="lazy" decoding="async" />
+  </div>
+  <div class="datenblatt">
+    <dl id="datenblatt"></dl>
   </div>
 </section>
 
@@ -273,7 +307,77 @@ for (const [bild, teil] of [
 ]) {
   bild.src = bildPfad(id, teil);
 }
+
+// Die Editorial-Aufnahme laeuft ueber die volle Bildschirmbreite und wird
+// deshalb zwischen rund 375 px (Handy) und ueber 2500 px (grosser Schirm)
+// angezeigt. Eine einzige Datei kann das nicht bedienen: Die 2000er waere auf
+// dem Handy fuenffache Verschwendung und auf dem grossen Schirm zu wenig.
+// Die beiden Produktfotos brauchen das nicht — sie sind hoechstens 640 px
+// breit, da liegt zwischen den Faellen zu wenig, als dass sich die zweite
+// Datei lohnen wuerde.
+$("detailBild").srcset = [1200, 2000, 2752]
+  .map((b) => "bilder/produkte/" + id + "-modell" + (b === 2000 ? "" : "-" + b) + ".webp " + b + "w")
+  .join(", ");
 $("bild").alt = p.name;
+
+// Die Nahaufnahme war früher blosse Zier neben dem Hauptbild und deshalb
+// alt="" — jetzt ist sie eine eigene Folie, die man ansteuern kann, und
+// braucht eine Beschreibung.
+$("makroBild").alt = p.name + ", Nahaufnahme der Verarbeitung";
+
+// ── Bildbühne: wechselt von selbst, lässt sich jederzeit übernehmen ──────
+// Der automatische Wechsel ist eine Einladung, kein Selbstzweck. Er hält an,
+// sobald jemand selbst blättert (dann endgültig — wer steuert, will nicht
+// weitergeschoben werden), solange der Zeiger oder die Tastatur in der Bühne
+// steht, und wenn das Blatt im Hintergrund liegt. Wer im System „weniger
+// Bewegung" eingestellt hat, bekommt gar keinen automatischen Wechsel.
+(() => {
+  const buehne = $("galerie");
+  const folien = [...buehne.querySelectorAll(".galerie-folie")];
+  if (folien.length < 2) return;
+
+  const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let jetzt = 0, uhr = null, uebernommen = false;
+
+  const punkte = folien.map((_, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", "Aufnahme " + (i + 1) + " von " + folien.length);
+    b.addEventListener("click", () => uebernimm(() => zeige(i)));
+    $("galeriePunkte").appendChild(b);
+    return b;
+  });
+
+  function zeige(i) {
+    jetzt = (i + folien.length) % folien.length;
+    folien.forEach((f, n) => {
+      if (n === jetzt) f.setAttribute("data-an", "ja");
+      else f.removeAttribute("data-an");
+    });
+    punkte.forEach((b, n) => {
+      if (n === jetzt) b.setAttribute("aria-current", "true");
+      else b.removeAttribute("aria-current");
+    });
+  }
+
+  function halt() { clearInterval(uhr); uhr = null; }
+  function lauf() {
+    if (uhr || uebernommen || ruhig.matches) return;
+    uhr = setInterval(() => zeige(jetzt + 1), 5000);
+  }
+  function uebernimm(tun) { uebernommen = true; halt(); tun(); }
+
+  buehne.querySelector(".zurueck").addEventListener("click", () => uebernimm(() => zeige(jetzt - 1)));
+  buehne.querySelector(".vor").addEventListener("click", () => uebernimm(() => zeige(jetzt + 1)));
+  buehne.addEventListener("mouseenter", halt);
+  buehne.addEventListener("mouseleave", lauf);
+  buehne.addEventListener("focusin", halt);
+  buehne.addEventListener("focusout", lauf);
+  document.addEventListener("visibilitychange", () => (document.hidden ? halt() : lauf()));
+
+  zeige(0);
+  lauf();
+})();
 
 // Ausverkauftes lässt sich nicht kaufen. Ein Knopf, der trotzdem einladend
 // aussieht, wäre genau die Sorte Unehrlichkeit, die diese Demo widerlegen soll.
