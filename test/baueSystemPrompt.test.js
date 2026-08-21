@@ -245,3 +245,26 @@ test("probefahrt: nennt die eine gescannte Seite als einzige Quelle", () => {
   const p = baueSystemPrompt({ ...firma, nurBelegt: true, probefahrt: true });
   assert.match(p, /EINEM Scan der Webseite/);
 });
+
+test("Kundenagent: der KONTEXT-Block ist eine erlaubte Quelle, kein Widerspruch", () => {
+  // Der Prompt widersprach sich: Die Grundregel verbot jede Zahl, die nicht in
+  // den INFORMATIONEN steht — waehrend die Verhaltensregel weiter unten
+  // ausdruecklich verlangt, Preis und Verfuegbarkeit des gerade angesehenen
+  // Produkts zu nennen. Genau die stehen aber im KONTEXT-Block, den chat.js
+  // NACH den Informationen anhaengt.
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+  assert.match(p, /Dazu kann weiter unten ein KONTEXT-Block stehen/);
+  assert.match(p, /erlaubte Quelle/);
+  // Die Verhaltensregel, die sonst dagegen stuende, ist weiterhin da.
+  assert.match(p, /Nenne Preis und Verfügbarkeit/);
+  // Und die Zahlen-Regel schliesst den Kontext nicht mehr aus.
+  assert.doesNotMatch(p, /keine Telefonnummer, die unten nicht steht/);
+});
+
+test("Probefahrt: kein KONTEXT-Block, die Regel bleibt eng", () => {
+  // Dort haengt chat.js keinen solchen Block an — eine zweite erlaubte Quelle
+  // zu nennen, wuerde die Regel nur unnoetig aufweichen.
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true, probefahrt: true });
+  assert.doesNotMatch(p, /Dazu kann weiter unten ein KONTEXT-Block stehen/);
+  assert.match(p, /keine Telefonnummer, die unten nicht steht/);
+});

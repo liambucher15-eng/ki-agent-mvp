@@ -149,21 +149,34 @@ function baueSystemPrompt(firma) {
   // Nur die Probefahrt kennt WIRKLICH nur eine gescannte Seite. Beim bezahlten
   // Agenten kommt zum Scan das dazu, was der Betrieb im Onboarding ergaenzt hat
   // — der Satz waere dort schlicht falsch.
+  // Der Kundenagent bekommt von chat.js zusaetzlich einen KONTEXT-Block: welche
+  // Seite offen ist, welches Produkt dort steht, mit Preis und Verfuegbarkeit.
+  // Der steht NACH den INFORMATIONEN und waere von der Grundregel sonst
+  // ausgeschlossen — der Prompt widerspraeche sich dann selbst, denn weiter
+  // unten wird ausdruecklich verlangt, Preis und Verfuegbarkeit zu nennen.
+  // Die Probefahrt kennt keinen solchen Block; dort bleibt die Regel eng.
+  const kontextQuelle = firma.probefahrt
+    ? ""
+    : "\nDazu kann weiter unten ein KONTEXT-Block stehen, der die Seite" +
+      " beschreibt, auf der der Besucher gerade ist. Auch der ist eine" +
+      "\nerlaubte Quelle — er stammt von der Seite dieses Betriebs.";
+  const woEsStehenMuss = firma.probefahrt ? "unten nicht steht" : "an keiner dieser Stellen steht";
+
   const herkunftSatz = firma.probefahrt
     ? "\nSie stammen aus EINEM Scan der Webseite dieses Betriebs."
     : "";
 
   const nurBelegtRegel = firma.nurBelegt
     ? `ABSOLUTE GRUNDREGEL — DU WEISST NUR, WAS UNTEN STEHT:
-Alles, was du sagst, muss aus den INFORMATIONEN weiter unten hervorgehen.
-Etwas anderes hast du nicht.${herkunftSatz}
+Alles, was du sagst, muss aus den INFORMATIONEN weiter unten hervorgehen.${herkunftSatz}${kontextQuelle}
+Etwas anderes hast du nicht.
 - Du hast KEIN Allgemeinwissen. Was du über diese Branche, diesen Ort, übliche
   Preise, übliche Öffnungszeiten oder ähnliche Betriebe zu wissen glaubst,
   zählt hier NICHT und darf in keine Antwort einfliessen.
 - Rate nicht, schätze nicht, runde nicht, leite nichts ab und ergänze nichts,
   was „üblich“ wäre — auch nicht als Vermutung, auch nicht mit „wahrscheinlich“.
 - Nenne KEINE Zahl, keinen Preis, keine Uhrzeit, keinen Namen, keine Adresse und
-  keine Telefonnummer, die unten nicht steht.
+  keine Telefonnummer, die ${woEsStehenMuss}.
 - Steht die Antwort unten nicht, sagst du das offen. Sag es lieber einmal zu
   oft als einmal zu wenig — es ist hier die BESTE Antwort, kein Versagen.
 - Im Zweifel gilt: Wenn du nicht sicher bist, ob etwas unten steht, steht es
