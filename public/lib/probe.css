@@ -2,56 +2,126 @@
    Probefahrt (public/probe.html) — Ergänzung zu lib/seite.css.
 
    Bewusst NUR das, was seite.css nicht schon hergibt: Kopf, Fuss, Knöpfe,
-   Farben und Schrift kommen von dort. Diese Datei beschreibt drei Dinge, die
-   es sonst nirgends gibt: die Warteliste, den Befund und das Gespräch.
+   Farben und Schrift kommen von dort.
+
+   Aufbau: eine Karte mit zwei Hälften — links der Schritt, rechts ein Film.
+   Dem Onboarding nachempfunden, aber eigenständig: Diese Seite führt nicht
+   dorthin, sie endet beim Abo.
    ═══════════════════════════════════════════════════════════════════════ */
 
-.probe {
-  max-width: 46rem;
-  margin: 0 auto;
-  padding: clamp(2.5rem, 7vw, 5rem) var(--rand) clamp(3rem, 8vw, 6rem);
+/* Die Kopfzeile ist position: fixed (lib/seite.css) und liegt damit AUSSERHALB
+   des Flusses — die Karte muss ihre Hoehe selbst freihalten. Gemessen 60 px bei
+   375 wie bei 1265 px Fensterbreite; probe.js korrigiert den Wert beim Laden und
+   bei jeder Groessenaenderung, damit er nicht veraltet, wenn die Kopfzeile
+   irgendwann anders aussieht. */
+:root { --kopf-hoehe: 60px; }
+
+.probe-buehne { padding-top: var(--kopf-hoehe); }
+
+/* Randlos ueber den ganzen Schirm: Kopfzeile oben, darunter die Karte bis zur
+   Unterkante des Fensters. Die Fusszeile beginnt damit exakt am Falz — sie ist
+   noch da, aber erst nach dem Scrollen zu sehen.
+
+   Feste Hoehe statt mitwachsend: Der Verlauf im Gespraech soll INNEN scrollen.
+   Waechst stattdessen die Karte, springt die Seite bei jeder Antwort, und der
+   Film daneben wandert aus dem Bild. */
+.probe-karte {
+  width: 100%;
+  height: calc(100dvh - var(--kopf-hoehe));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--grund);
+  overflow: hidden;
 }
-.probe h1 {
-  font-size: clamp(2rem, 5.5vw, 3.2rem);
-  line-height: 1.06;
-  letter-spacing: -0.03em;
-  margin: 0 0 .9rem;
-  text-wrap: balance;
+
+/* Keine eigene Polsterung: Die Stufen liegen absolut mit inset: 0 darin und
+   decken damit ohnehin die ganze Polsterbox ab — sie braeuchte hier nur
+   doppelt gezahlt zu werden. Den Abstand setzt .stufe. */
+.probe-links { position: relative; overflow: hidden; }
+
+/* Alle Stufen liegen übereinander im selben Kasten. Sonst müsste die Karte
+   für jede Stufe eine andere Höhe haben — und genau das soll sie nicht. */
+.stufe {
+  position: absolute; inset: 0;
+  padding: clamp(1.4rem, 3.2vw, 2.4rem);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
 }
-.probe h2 {
-  font-size: clamp(1.5rem, 3.6vw, 2.1rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0 0 .9rem;
-  text-wrap: balance;
+.stufe[hidden] { display: none; }
+/* Schiebt den Inhalt in die Mitte, ohne ihn bei Überlänge oben abzuschneiden
+   (das täte justify-content: center). */
+.dehner { flex: 1 1 0; min-height: 0; }
+
+.marke-klein {
+  margin: 0 0 .5rem;
+  font-size: .78rem; font-weight: 600; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--violett-text);
 }
-.probe h3 { font-size: 1.05rem; font-weight: 600; margin: 0 0 .6rem; }
-.probe .unterzeile { margin: 0 0 1.6rem; color: var(--tinte-weich); font-size: 1.02rem; }
+
+.stufe h1 {
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  line-height: 1.08; letter-spacing: -0.03em;
+  margin: 0 0 .8rem; text-wrap: balance;
+}
+.stufe h2 {
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  line-height: 1.15; letter-spacing: -0.02em;
+  margin: 0 0 .9rem; text-wrap: balance;
+}
+.stufe h3 {
+  font-size: clamp(1.1rem, 2.2vw, 1.45rem); font-weight: 600;
+  line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 .6rem;
+}
+.stufe .unterzeile { margin: 0 0 1.4rem; color: var(--tinte-weich); font-size: 1rem; }
+
+/* Die gelesene Adresse ist der Beleg, dass es die EIGENE Seite ist — sie darf
+   umbrechen statt die Karte aufzuziehen. */
+.gelesene-adresse { overflow-wrap: anywhere; }
 
 /* .knopf-notiz steht in seite.css mittig, weil sie dort unter den zentrierten
-   Hero-Knöpfen sitzt. Diese Seite ist durchgehend linksbündig; mittig gesetzte
-   Zeilen springen darin heraus. */
-.probe .knopf-notiz { text-align: left; }
-
-/* Der gefundene Firmenname ist der stärkste Beleg dafür, dass wirklich gelesen
-   wurde — er gehört über den Befund, nicht als eine Kachel unter viele. */
-.gefunden-name {
-  font-size: clamp(1.2rem, 2.6vw, 1.55rem); font-weight: 600;
-  letter-spacing: -0.015em; margin: 0 0 .25rem;
-}
-
-/* Die Ergebnis-Stufe trägt mehr Inhalt als die schmalen Stufen davor. */
-.probe-block.weit { max-width: none; }
+   Hero-Knöpfen sitzt. Diese Seite ist durchgehend linksbündig. */
+.probe .knopf-notiz, .stufe .knopf-notiz { text-align: left; }
 
 .probe-form, .frage-form { display: flex; flex-wrap: wrap; gap: .6rem; }
-.probe-form .feld-adresse, .frage-form .feld-adresse { flex: 1 1 16rem; }
+/* display: flex aus der Zeile darueber schlaegt das display: none, das der
+   Browser fuer [hidden] mitbringt — ohne diese Zeile blieb das Eingabefeld nach
+   der dritten Frage sichtbar STEHEN, obwohl das Skript es versteckt hatte, und
+   drueckte den Verlauf zusammen. Genau der gemeldete Fehler. */
+.probe-form[hidden], .frage-form[hidden] { display: none; }
+.probe-form .feld-adresse, .frage-form .feld-adresse { flex: 1 1 12rem; min-width: 0; }
 
-.knoepfe { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.4rem; }
+.knoepfe { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.2rem; }
+
+/* ── Filmhälfte ────────────────────────────────────────────────────────── */
+.probe-rechts { position: relative; background: var(--flaeche); overflow: hidden; }
+
+/* Zurueck-Knopf, in jeder Stufe sichtbar.
+   Deckende weisse Flaeche statt halbdurchsichtig: Was darunter liegt, ist ein
+   laufendes Video — die Schrift haette dort keinen berechenbaren Kontrast,
+   sondern einen, der sich 25 Mal pro Sekunde aendert. So sind es feste
+   16,1:1 gegen --tinte. */
+.zurueck-knopf {
+  position: absolute; z-index: 2;
+  top: clamp(.8rem, 1.6vw, 1.2rem); right: clamp(.8rem, 1.6vw, 1.2rem);
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .55rem 1rem .55rem .8rem; border-radius: 999px;
+  background: var(--grund); color: var(--tinte);
+  font-size: .88rem; font-weight: 500; text-decoration: none;
+  border: 1px solid var(--rand-linie);
+  box-shadow: 0 2px 10px rgba(17, 17, 20, 0.1);
+  transition: background-color .15s ease;
+}
+.zurueck-knopf:hover { background: var(--flaeche); }
+.zurueck-knopf:focus-visible { outline: 2px solid var(--violett); outline-offset: 2px; }
+.zurueck-knopf svg { width: 16px; height: 16px; }
+.film { position: absolute; inset: 0; }
+.film[hidden] { display: none; }
+.film video { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* ── Warteliste ────────────────────────────────────────────────────────
    Vier Zeilen, die nacheinander abgehakt werden. Der Punkt links hat drei
    Zustände: offen (Ring), läuft (pulsierend), fertig (Häkchen). */
-.schritte { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.schritte { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: .75rem; }
 .schritte li {
   display: flex; align-items: center; gap: .75rem;
   color: var(--tinte-hell); font-size: 1rem;
@@ -80,68 +150,107 @@
   .schritte li[data-stand="laeuft"] .punkt { animation: none; }
 }
 
-/* ── Befund ───────────────────────────────────────────────────────────── */
-.befund {
-  display: grid; gap: .9rem;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  margin-bottom: 1.6rem;
+/* ── Gespräch ──────────────────────────────────────────────────────────
+   Die Chat-Stufe teilt sich anders auf als die übrigen: Kopf und Eingabe
+   stehen fest, nur der Verlauf dazwischen scrollt. */
+.stufe-chat { overflow: hidden; }
+.chat-kopf {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: .8rem; flex: none; margin-bottom: .9rem;
 }
-.befund-feld {
-  border: 1px solid var(--rand-fein); border-radius: 14px;
-  padding: 1rem 1.1rem; background: var(--grund);
-}
-.befund-feld dt {
-  font-size: .8rem; text-transform: uppercase; letter-spacing: .07em;
-  color: var(--tinte-hell); margin-bottom: .3rem;
-}
-.befund-feld dd { margin: 0; font-size: .98rem; line-height: 1.5; white-space: pre-line; }
-/* Das Angebot ist meistens der längste Text und der einzige, der wirklich
-   zeigt, dass die Seite verstanden wurde — der bekommt die ganze Breite. */
-.befund-feld.breit { grid-column: 1 / -1; }
-
-.luecken {
-  border: 1px dashed var(--rand-linie); border-radius: 14px;
-  padding: 1.1rem 1.2rem; margin-bottom: 1.8rem; background: var(--flaeche);
-}
-.luecken ul { margin: 0 0 .7rem; padding-left: 1.1rem; }
-.luecken li { margin-bottom: .25rem; color: var(--tinte-weich); }
-.luecken .knopf-notiz { margin: 0; }
-
-/* ── Gespräch ─────────────────────────────────────────────────────────── */
-.gespraech {
-  border: 1px solid var(--rand-linie); border-radius: 18px;
-  padding: clamp(1.1rem, 3vw, 1.6rem); background: var(--grund);
-}
-.gespraech-kopf {
-  display: flex; align-items: baseline; justify-content: space-between;
-  flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem;
-}
-.gespraech-kopf h3 { margin: 0; }
+.chat-kopf .marke-klein { margin-bottom: .15rem; }
+.chat-titel { margin: 0; }
 .zaehler {
-  font-size: .85rem; font-weight: 600;
+  flex: none; font-size: .82rem; font-weight: 600; white-space: nowrap;
   /* --violett-text, nicht --violett: als Schrift erreicht der hellere Ton
      nur 4,24:1 auf Weiss (siehe Begründung in seite.css). */
   color: var(--violett-text);
-  padding: .25rem .7rem; border-radius: 999px; background: var(--flaeche);
+  padding: .3rem .75rem; border-radius: 999px; background: var(--flaeche);
 }
 .zaehler[data-leer="ja"] { color: var(--tinte-weich); }
 
-.verlauf { display: grid; gap: .8rem; margin-bottom: 1rem; }
-.verlauf:empty { margin-bottom: 0; }
-.blase {
-  padding: .8rem 1rem; border-radius: 14px; font-size: .98rem; line-height: 1.55;
-  max-width: 42rem; white-space: pre-wrap; overflow-wrap: anywhere;
+.verlauf {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  display: flex; flex-direction: column; gap: .7rem;
+  padding-right: .3rem; margin-bottom: .9rem;
 }
-.blase-du { background: var(--tinte); color: #fff; justify-self: end; border-bottom-right-radius: 5px; }
-.blase-er { background: var(--flaeche); color: var(--tinte); justify-self: start; border-bottom-left-radius: 5px; }
-.blase-fehler { background: #fdf0f0; color: #8a1f1f; justify-self: start; }
+.verlauf::-webkit-scrollbar { width: 5px; }
+.verlauf::-webkit-scrollbar-thumb { background: var(--rand-linie); border-radius: 999px; }
+
+.blase {
+  padding: .75rem 1rem; border-radius: 14px; font-size: .96rem; line-height: 1.55;
+  max-width: 90%; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.blase-du { background: var(--tinte); color: #fff; align-self: flex-end; border-bottom-right-radius: 5px; }
+.blase-er { background: var(--flaeche); color: var(--tinte); align-self: flex-start; border-bottom-left-radius: 5px; }
+.blase-fehler { background: #fdf0f0; color: #8a1f1f; align-self: flex-start; }
 .blase-denkt { color: var(--tinte-hell); }
 
-.weiter {
-  margin-top: 2rem; padding-top: 1.8rem; border-top: 1px solid var(--rand-fein);
+.vorschlaege { flex: none; display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .7rem; }
+.vorschlaege[hidden] { display: none; }
+.vorschlag {
+  border: 1px solid var(--rand-linie); background: var(--grund); color: var(--tinte-weich);
+  border-radius: 999px; padding: .35rem .8rem; font-size: .85rem;
+  cursor: pointer; font-family: inherit;
+  transition: border-color .15s, color .15s;
 }
-.weiter .unterzeile { margin-bottom: 0; }
+.vorschlag:hover { border-color: var(--violett); color: var(--tinte); }
+.vorschlag:focus-visible { outline: 2px solid var(--violett); outline-offset: 2px; }
 
+.frage-form { flex: none; }
+.stufe-chat .knopf-notiz { flex: none; margin: .6rem 0 0; }
+/* Solange nichts drinsteht, nimmt die Zeile trotzdem ihren Abstand mit —
+   gemessen 10 px tote Luft unter der Eingabe. */
+.stufe-chat .knopf-notiz:empty { display: none; }
+
+/* ── Abschluss ─────────────────────────────────────────────────────────
+   Ersetzt die Eingabe, sobald die dritte Frage beantwortet ist. Steht INNEN
+   in der Chat-Stufe, damit der Verlauf darüber sichtbar bleibt — er ist das
+   Verkaufsargument, nicht der Text hier. */
+.probe-abschluss {
+  flex: none; margin-top: .9rem; padding-top: 1.1rem;
+  border-top: 1px solid var(--rand-fein);
+}
+.probe-abschluss[hidden] { display: none; }
+.probe-abschluss .unterzeile { margin-bottom: 0; font-size: .95rem; }
+.probe-abschluss .knoepfe { margin-top: 1rem; }
+
+/* ── Niedrige Fenster ──────────────────────────────────────────────────
+   Auf einem 640 px hohen Fenster blieben dem Verlauf gemessen nur 169 px,
+   weil Abschluss und Kopf denselben Platz beanspruchen wie auf einem grossen
+   Schirm. Der Abschluss wird deshalb kompakter — der Verlauf ist das, was
+   ueberzeugt, nicht der Text darunter. */
+@media (max-height: 780px) and (min-width: 861px) {
+  .probe-abschluss { margin-top: .5rem; padding-top: .8rem; }
+  .probe-abschluss h3 { font-size: 1.15rem; margin-bottom: .35rem; }
+  .probe-abschluss .unterzeile { font-size: .88rem; line-height: 1.45; }
+  .probe-abschluss .knoepfe { margin-top: .75rem; }
+  .chat-kopf { margin-bottom: .6rem; }
+  .stufe { padding: clamp(1rem, 2.4vw, 1.6rem); }
+}
+
+/* ── Schmale Schirme ───────────────────────────────────────────────────
+   Untereinander statt nebeneinander, und die Karte wächst wieder mit dem
+   Inhalt: Auf 375 px wäre eine feste Höhe mit Film daneben unbrauchbar.
+   Der Film wandert nach oben und behält 16:9 — genug, um ihn zu erkennen,
+   wenig genug, dass der Schritt darunter noch ins Bild passt. */
+@media (max-width: 860px) {
+  .probe-karte {
+    height: auto;
+    min-height: calc(100dvh - var(--kopf-hoehe));
+    grid-template-columns: 1fr;
+  }
+  .probe-rechts { order: -1; aspect-ratio: 16 / 9; }
+
+  /* Die Stufen zurueck in den Fluss. Absolut gesetzt fuellen sie den Kasten,
+     und die Karte kann nicht mitwachsen — gemessen quetschte das den Verlauf
+     auf 0 px zusammen, sobald der Abschluss dazukam. Ausgerechnet das
+     Gespraech waere dann weg, und das ist hier das Verkaufsargument.
+     Im Fluss waechst die Karte, und gescrollt wird die Seite. */
+  .stufe { position: static; overflow: visible; min-height: 22rem; }
+  .stufe-chat { overflow: visible; }
+  .verlauf { flex: none; overflow-y: visible; min-height: 0; }
+}
 @media (max-width: 560px) {
   .probe-form .knopf, .frage-form .knopf { width: 100%; }
 }

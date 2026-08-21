@@ -1,30 +1,55 @@
 // Probefahrt: eigene Webseite scannen lassen und drei Fragen stellen.
 //
-// Der Ablauf in vier Stufen: Adresse -> Warten -> Ergebnis -> drei Fragen.
+// Ablauf: Adresse -> Scan -> Gespräch -> Abo. Kein Onboarding dazwischen und
+// keines danach: Wer hier ankommt, will nicht eingerichtet werden, er will
+// sehen, ob das Ding taugt.
 //
-// Was hier bewusst NICHT passiert: mitzählen, wie viele Fragen noch offen sind.
-// Der Zähler unten in der Ecke ist Anzeige, nicht Schranke — die Grenze zieht
-// der Server (netlify/functions/chat.js, PROBE_FRAGEN, atomar in der Datenbank).
+// Was hier bewusst NICHT passiert: mitzählen, wie viele Fragen noch offen
+// sind. Der Zähler oben ist Anzeige, nicht Schranke — die Grenze zieht der
+// Server (netlify/functions/chat.js, PROBE_FRAGEN, atomar in der Datenbank).
 // Ein Zähler im Browser wäre in zwei Sekunden umgangen.
 
 (function () {
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const stufen = {
-    adresse: $("stufeAdresse"),
-    warten: $("stufeWarten"),
-    fehler: $("stufeFehler"),
-    ergebnis: $("stufeErgebnis"),
-  };
+
+  // Die Kopfzeile ist fixed und damit aus dem Fluss; die Karte rechnet ihre
+  // Hoehe davon ab (--kopf-hoehe in lib/probe.css). Der Vorgabewert dort ist
+  // gemessen, aber er veraltet, sobald die Kopfzeile sich aendert oder auf
+  // einem schmalen Schirm umbricht. Darum hier nachmessen.
+  function misseKopf() {
+    const k = $("kopf");
+    if (!k) return;
+    const h = Math.round(k.getBoundingClientRect().height);
+    if (h > 0) document.documentElement.style.setProperty("--kopf-hoehe", h + "px");
+  }
+  misseKopf();
+  addEventListener("resize", misseKopf);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(misseKopf);
 
   let probeId = null;   // die jobId des Scans, zugleich der Schlüssel zum Gespräch
   let verlauf = [];     // Gesprächsverlauf für chat.js
   let laeuft = false;   // verhindert doppelte Absendung
   let fertig = false;   // Kontingent aufgebraucht — nicht mehr absenden
 
+  // ── Stufen und Filme ──────────────────────────────────────────────────
+  // Beide werden zusammen umgeschaltet, damit der Film nie zu einem Schritt
+  // steht, der gar nicht mehr sichtbar ist.
   function zeige(name) {
-    for (const [schluessel, el] of Object.entries(stufen)) el.hidden = schluessel !== name;
+    for (const el of document.querySelectorAll(".stufe")) {
+      el.hidden = el.dataset.stufe !== name;
+    }
+    for (const film of document.querySelectorAll(".film")) {
+      const dran = film.dataset.fuer === name;
+      film.hidden = !dran;
+      const v = film.querySelector("video");
+      if (!v) continue;
+      // Verdeckte Filme anhalten: Sie kosten sonst weiter Rechenzeit, und auf
+      // dem Handy heisst das Akku für ein Bild, das niemand sieht.
+      if (dran) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+      else v.pause();
+    }
   }
 
   // ── Stufe 1: Adresse ──────────────────────────────────────────────────
@@ -54,6 +79,12 @@
     $("adresse").focus();
   });
 
+  // "Andere Seite testen" nach dem Abschluss: Die Seite wird frisch geladen.
+  // Ein Zurücksetzen von Hand müsste Verlauf, Zähler, Sperren und probeId
+  // gleichzeitig treffen — ein vergessenes Stück davon wäre ein Gespräch, das
+  // zur falschen Firma gehört.
+  $("andereSeite").addEventListener("click", () => { location.href = "probe.html"; });
+
   // ── Stufe 2: Scan ─────────────────────────────────────────────────────
 
   const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -63,10 +94,10 @@
     if (el) el.dataset.stand = stand;
   }
 
-  // Die vier Zeilen der Warteliste laufen mit einer Zeitschätzung mit, weil der
-  // Server keinen Fortschritt meldet — scan-status kennt nur running/done/error.
-  // Ehrlich bleibt es trotzdem: Die letzte Zeile bleibt auf "läuft" stehen, bis
-  // das echte Ergebnis da ist. Keine Zeile wird abgehakt, die noch offen ist.
+  // Die vier Zeilen laufen mit einer Zeitschätzung mit, weil der Server keinen
+  // Fortschritt meldet — scan-status kennt nur running/done/error. Ehrlich
+  // bleibt es trotzdem: Die letzte Zeile bleibt auf "läuft" stehen, bis das
+  // echte Ergebnis da ist. Keine Zeile wird abgehakt, die noch offen ist.
   function starteWarteanzeige() {
     const folge = ["laden", "unterseiten", "lesen", "ordnen"];
     folge.forEach((n) => setzeSchritt(n, "offen"));
@@ -80,7 +111,7 @@
   }
 
   async function starte(adresse) {
-    zeige("warten");
+    zeige("scan");
     $("wartenAdresse").textContent = adresse;
     const takt = starteWarteanzeige();
 
@@ -122,7 +153,7 @@
       clearInterval(takt);
       ["laden", "unterseiten", "lesen", "ordnen"].forEach((n) => setzeSchritt(n, "fertig"));
       probeId = jobId;
-      zeigeErgebnis(ergebnis, adresse);
+      oeffneGespraech(ergebnis, adresse);
     } catch (e) {
       clearInterval(takt);
       $("fehlerText").textContent = e.message || "Unbekannter Fehler.";
@@ -130,85 +161,75 @@
     }
   }
 
-  // ── Stufe 3: Ergebnis ─────────────────────────────────────────────────
+  // ── Stufe 3: Gespräch ─────────────────────────────────────────────────
 
-  // DOM statt innerHTML: Der ganze Befund stammt von einer FREMDEN Seite. Ein
-  // Firmenname mit einem <script>-Tag darin wäre sonst genau das, wonach er
-  // aussieht.
-  function feld(titel, wert, breit) {
-    const box = document.createElement("dl");
-    box.className = "befund-feld" + (breit ? " breit" : "");
-    const dt = document.createElement("dt");
-    dt.textContent = titel;
-    const dd = document.createElement("dd");
-    dd.textContent = wert;
-    box.append(dt, dd);
-    return box;
+  // Ans Ende des Verlaufs. Steht als eigene Funktion da, weil sie an zwei
+  // Stellen gebraucht wird: bei jeder neuen Blase und nach dem Abschluss.
+  function ansEnde() {
+    const v = $("verlauf");
+    v.scrollTop = v.scrollHeight;
   }
-
-  function zeigeErgebnis(d, adresse) {
-    const seiten = Array.isArray(d.gescannt) ? d.gescannt.length : 1;
-    $("ergebnisQuelle").textContent =
-      seiten === 1 ? "Gelesen: die Startseite von " + adresse
-                   : "Gelesen: " + seiten + " Seiten von " + adresse;
-
-    // Der Firmenname steht über dem Raster statt darin: Als Kachel liess er die
-    // halbe Zeile leer, und er ist ohnehin der Befund, der als erstes überzeugt.
-    const nameEl = $("ergebnisName");
-    nameEl.textContent = d.name || "";
-    nameEl.hidden = !d.name;
-
-    const befund = $("befund");
-    befund.textContent = "";
-    if (d.angebot) befund.append(feld("Angebot", d.angebot, true));
-    if (d.oeffnungszeiten) befund.append(feld("Öffnungszeiten", d.oeffnungszeiten));
-    if (d.adresse) befund.append(feld("Adresse", d.adresse));
-    if (d.kontakt) befund.append(feld("Kontakt", d.kontakt));
-    if (Array.isArray(d.leistungen) && d.leistungen.length) {
-      befund.append(feld("Leistungen", d.leistungen.slice(0, 8).join("\n"), true));
-    }
-    if (d.preise) befund.append(feld("Preise", d.preise));
-    if (!befund.children.length) {
-      befund.append(feld("Gefunden", "Auf dieser Seite stand kaum Text, den ich einordnen konnte.", true));
-    }
-
-    // Fehlendes benennen statt verschweigen. Das ist der ehrlichste Teil der
-    // Seite — und zugleich der beste Grund, weiterzumachen.
-    const fehlt = [
-      !d.oeffnungszeiten && "Öffnungszeiten",
-      !d.adresse && "Adresse",
-      !d.kontakt && "Kontaktweg (Telefon oder E-Mail)",
-      !d.preise && "Preise",
-      !(Array.isArray(d.faq) && d.faq.length) && "häufige Fragen",
-    ].filter(Boolean);
-    if (fehlt.length) {
-      const liste = $("lueckenListe");
-      liste.textContent = "";
-      for (const f of fehlt) {
-        const li = document.createElement("li");
-        li.textContent = f;
-        liste.append(li);
-      }
-      $("luecken").hidden = false;
-    }
-
-    // Die Adresse an das Onboarding weiterreichen, damit sie dort nicht noch
-    // einmal getippt werden muss (onboarding.js liest ?webseite= aus).
-    $("weiterKnopf").href = "onboarding-aura.html?webseite=" + encodeURIComponent(adresse);
-
-    zeige("ergebnis");
-    $("frage").focus();
-  }
-
-  // ── Stufe 4: drei Fragen ──────────────────────────────────────────────
 
   function blase(klasse, text) {
     const el = document.createElement("div");
     el.className = "blase " + klasse;
+    // textContent, nicht innerHTML: Der Firmenname stammt von einer FREMDEN
+    // Seite. Einer mit einem <script>-Tag darin wäre sonst genau das, wonach
+    // er aussieht.
     el.textContent = text;
     $("verlauf").append(el);
-    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    ansEnde();
     return el;
+  }
+
+  // Drei Vorschläge, die zur gescannten Seite passen. Nur was auch gefunden
+  // wurde: Eine Frage nach Öffnungszeiten an eine Seite ohne Öffnungszeiten
+  // führt zu einer Fehlanzeige als erster Antwort — der denkbar schlechteste
+  // erste Eindruck.
+  function baueVorschlaege(d) {
+    const liste = [];
+    if (d.angebot || (Array.isArray(d.leistungen) && d.leistungen.length)) liste.push("Was bietet ihr genau an?");
+    if (d.oeffnungszeiten) liste.push("Wann habt ihr offen?");
+    if (d.kontakt) liste.push("Wie erreiche ich euch am schnellsten?");
+    if (d.preise) liste.push("Was kostet das ungefähr?");
+    if (d.adresse) liste.push("Wo seid ihr?");
+    if (!liste.length) liste.push("Was macht ihr?");
+
+    const kasten = $("vorschlaege");
+    kasten.textContent = "";
+    for (const text of liste.slice(0, 3)) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "vorschlag";
+      b.textContent = text;
+      b.addEventListener("click", () => {
+        if (fertig) return;
+        $("frage").value = text;
+        $("frage").focus();
+      });
+      kasten.append(b);
+    }
+    kasten.hidden = false;
+  }
+
+  // Kein Befund-Raster mehr: Dass die Seite gelesen wurde, belegt seine erste
+  // Zeile besser als eine Tabelle. Sie nennt die Firma beim Namen — etwas,
+  // das nur dort stehen kann, wenn wirklich gelesen wurde.
+  function oeffneGespraech(d, adresse) {
+    const seiten = Array.isArray(d.gescannt) ? d.gescannt.length : 1;
+    $("chatTitel").textContent = d.name ? d.name : "Deine Seite";
+
+    const gelesen = seiten === 1 ? "deine Startseite" : seiten + " Seiten";
+    blase(
+      "blase-er",
+      d.name
+        ? "Ich habe " + gelesen + " von " + d.name + " gelesen. Frag mich etwas darüber — du hast drei Fragen."
+        : "Ich habe " + gelesen + " von " + adresse + " gelesen. Frag mich etwas darüber — du hast drei Fragen."
+    );
+
+    baueVorschlaege(d);
+    zeige("chat");
+    $("frage").focus();
   }
 
   function setzeZaehler(uebrig) {
@@ -222,18 +243,32 @@
     }
   }
 
-  const AUFGEBRAUCHT = "Das waren die drei Fragen. Mit einem Konto geht es unbegrenzt weiter.";
-
   function beendeGespraech() {
     fertig = true;
-    // Auch leeren: Ein gesperrtes Feld mit stehengebliebenem Text sieht aus wie
-    // eine Eingabe, die noch abgeschickt werden könnte.
+    // Eingabe ganz weg statt nur gesperrt: Ein gesperrtes Feld mit Knopf
+    // daneben sieht aus wie etwas, das gleich wieder aufgeht. Hier geht
+    // nichts mehr auf — an seine Stelle tritt der Abschluss.
     $("frage").value = "";
-    $("frage").disabled = true;
-    $("frageKnopf").disabled = true;
-    $("frageHinweis").textContent = AUFGEBRAUCHT;
-    $("weiter").hidden = false;
-    $("weiter").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    $("frageForm").hidden = true;
+    $("vorschlaege").hidden = true;
+    $("frageHinweis").textContent = "";
+    $("probe-abschluss").hidden = false;
+    // Ans Ende scrollen, NACHDEM der Abschluss Platz genommen hat.
+    //
+    // Am echten Durchlauf nachgemessen: Der Verlauf stand bei scrollTop 505
+    // statt 665. Er war ans Ende der ALTEN Aufteilung gescrollt — Verlauf noch
+    // 611 px hoch, Eingabe noch da — bevor der Abschluss seinen Platz genommen
+    // und den Verlauf auf 451 px verkuerzt hatte. Die letzte Antwort ragte
+    // dadurch 160 px unter den sichtbaren Bereich: ausgerechnet die Antwort,
+    // die ueberzeugen soll.
+    //
+    // setTimeout statt requestAnimationFrame: rAF laeuft NICHT, solange das
+    // Blatt nicht gezeichnet wird (Hintergrund-Tab, minimiertes Fenster). Genau
+    // dann bliebe die Korrektur aus und der Besucher faende beim Zurueckkommen
+    // eine halb abgeschnittene Antwort vor. setTimeout feuert unabhaengig davon.
+    // Der erste Aufruf greift sofort, der zweite in der dann gueltigen Geometrie.
+    ansEnde();
+    setTimeout(ansEnde, 0);
   }
 
   $("frageForm").addEventListener("submit", async (e) => {
@@ -248,6 +283,7 @@
     laeuft = true;
     $("frage").value = "";
     $("frageKnopf").disabled = true;
+    $("vorschlaege").hidden = true;
     const meine = blase("blase-du", text);
     verlauf.push({ role: "user", content: text });
     const denkt = blase("blase-er blase-denkt", "denkt nach …");

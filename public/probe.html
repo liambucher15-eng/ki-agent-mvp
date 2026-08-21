@@ -32,104 +32,154 @@
     </div>
   </header>
 
-  <main class="probe" id="oben">
+  <!-- ══════════════════════════════════════════════════════════════════
+       Eine Karte, zwei Hälften: links der Schritt, rechts ein Film.
 
-    <!-- ══ 1) Adresse ══════════════════════════════════════════════════ -->
-    <section class="probe-block" id="stufeAdresse">
-      <h1>Lass ihn deine Webseite lesen.</h1>
-      <p class="unterzeile">
-        Er liest deine Startseite und zwei Unterseiten, und danach beantwortet er
-        drei Fragen dazu. Kein Konto, keine Karte.
-      </p>
-      <form class="probe-form" id="formular">
-        <input class="feld-adresse" id="adresse" type="text" name="url" inputmode="url"
-               autocomplete="url" placeholder="deine-firma.ch"
-               aria-label="Adresse deiner Webseite" required />
-        <button class="knopf knopf-voll" type="submit" id="losKnopf">Seite lesen</button>
-      </form>
-      <p class="knopf-notiz" id="adresseFehler" role="alert"></p>
-    </section>
+       Der Aufbau ist dem Onboarding nachempfunden, aber diese Seite steht
+       für sich: Sie führt NICHT ins Onboarding. Wer hier ankommt, will
+       nicht eingerichtet werden, er will sehen, ob das Ding taugt. Am Ende
+       steht deshalb das Abo, nicht der nächste Einrichtungsschritt.
+       ══════════════════════════════════════════════════════════════════ -->
+  <main class="probe-buehne">
+    <div class="probe-karte" id="probe-karte">
 
-    <!-- ══ 2) Warten ═══════════════════════════════════════════════════
-         Warten mit Inhalt statt mit einem Kreisel: Wer sieht, WELCHE Seite
-         gerade gelesen wird, wartet nicht auf eine Animation, sondern schaut
-         der Arbeit zu. Die Liste kommt aus dem echten Scan-Fortschritt. -->
-    <section class="probe-block" id="stufeWarten" hidden>
-      <h2>Er liest gerade <span id="wartenAdresse"></span></h2>
-      <ul class="schritte" id="schritteListe">
-        <li data-schritt="laden"><span class="punkt" aria-hidden="true"></span>Startseite abrufen</li>
-        <li data-schritt="unterseiten"><span class="punkt" aria-hidden="true"></span>Unterseiten suchen</li>
-        <li data-schritt="lesen"><span class="punkt" aria-hidden="true"></span>Texte lesen</li>
-        <li data-schritt="ordnen"><span class="punkt" aria-hidden="true"></span>Angaben ordnen</li>
-      </ul>
-      <p class="knopf-notiz">Das dauert meistens zwanzig bis vierzig Sekunden.</p>
-    </section>
+      <div class="probe-links">
 
-    <!-- ══ 3) Fehler ═══════════════════════════════════════════════════ -->
-    <section class="probe-block" id="stufeFehler" hidden>
-      <h2>Das hat nicht geklappt.</h2>
-      <p class="unterzeile" id="fehlerText"></p>
-      <div class="knoepfe">
-        <button class="knopf knopf-voll" type="button" id="nochmalKnopf">Andere Adresse versuchen</button>
-        <a class="knopf knopf-rand" href="demo-nordform.html">Stattdessen die Demo ansehen</a>
+        <!-- ── 1) Adresse ──────────────────────────────────────────── -->
+        <section class="stufe" data-stufe="adresse">
+          <div class="dehner"></div>
+          <p class="marke-klein">Probefahrt</p>
+          <h1>Lass ihn deine<br>Webseite lesen.</h1>
+          <p class="unterzeile">
+            Er liest deine Startseite und zwei Unterseiten. Danach stellst du
+            ihm drei Fragen dazu. Kein Konto, keine Karte.
+          </p>
+          <form class="probe-form" id="formular">
+            <input class="feld-adresse" id="adresse" type="text" name="url" inputmode="url"
+                   autocomplete="url" placeholder="deine-firma.ch"
+                   aria-label="Adresse deiner Webseite" required />
+            <button class="knopf knopf-voll" type="submit" id="losKnopf">Seite lesen</button>
+          </form>
+          <p class="knopf-notiz" id="adresseFehler" role="alert"></p>
+          <div class="dehner"></div>
+        </section>
+
+        <!-- ── 2) Warten ───────────────────────────────────────────────
+             Warten mit Inhalt statt mit einem Kreisel: Wer sieht, WELCHE
+             Seite gerade gelesen wird, wartet nicht auf eine Animation,
+             sondern schaut der Arbeit zu. -->
+        <section class="stufe" data-stufe="scan" hidden>
+          <div class="dehner"></div>
+          <p class="marke-klein">Er liest gerade</p>
+          <h2 class="gelesene-adresse" id="wartenAdresse"></h2>
+          <ul class="schritte" id="schritteListe">
+            <li data-schritt="laden"><span class="punkt" aria-hidden="true"></span>Startseite abrufen</li>
+            <li data-schritt="unterseiten"><span class="punkt" aria-hidden="true"></span>Unterseiten suchen</li>
+            <li data-schritt="lesen"><span class="punkt" aria-hidden="true"></span>Texte lesen</li>
+            <li data-schritt="ordnen"><span class="punkt" aria-hidden="true"></span>Angaben ordnen</li>
+          </ul>
+          <p class="knopf-notiz">Das dauert meistens zwanzig bis vierzig Sekunden.</p>
+          <div class="dehner"></div>
+        </section>
+
+        <!-- ── 3) Fehler ───────────────────────────────────────────── -->
+        <section class="stufe" data-stufe="fehler" hidden>
+          <div class="dehner"></div>
+          <h2>Das hat nicht geklappt.</h2>
+          <p class="unterzeile" id="fehlerText"></p>
+          <div class="knoepfe">
+            <button class="knopf knopf-voll" type="button" id="nochmalKnopf">Andere Adresse versuchen</button>
+            <a class="knopf knopf-rand" href="demo-nordform.html">Stattdessen die Demo ansehen</a>
+          </div>
+          <div class="dehner"></div>
+        </section>
+
+        <!-- ── 4) Gespräch ─────────────────────────────────────────────
+             Kein Befund-Raster mehr. Früher stand hier eine Tabelle mit
+             allem, was gefunden wurde — das las niemand, und es beweist
+             auch nichts: Eine Tabelle kann jede Software füllen. Dass er
+             die Seite VERSTANDEN hat, zeigt sich erst, wenn er darüber
+             Auskunft gibt. Also direkt ins Gespräch, und der Beleg ist
+             seine erste Zeile: Er nennt die Firma beim Namen. -->
+        <section class="stufe stufe-chat" data-stufe="chat" hidden>
+          <div class="chat-kopf">
+            <div>
+              <p class="marke-klein">Dein Agent</p>
+              <h2 class="chat-titel" id="chatTitel">Frag ihn etwas</h2>
+            </div>
+            <span class="zaehler" id="zaehler">3 Fragen offen</span>
+          </div>
+
+          <div class="verlauf" id="verlauf" aria-live="polite"></div>
+
+          <!-- Wer nicht weiss, was er fragen soll, fragt nichts. Die drei
+               Vorschläge füllen nur das Feld, abgeschickt wird von Hand. -->
+          <div class="vorschlaege" id="vorschlaege" hidden></div>
+
+          <form class="frage-form" id="frageForm">
+            <input class="feld-adresse" id="frage" type="text" autocomplete="off"
+                   placeholder="Was bietet ihr an?" aria-label="Deine Frage" required />
+            <button class="knopf knopf-voll" type="submit" id="frageKnopf">Fragen</button>
+          </form>
+          <p class="knopf-notiz" id="frageHinweis"></p>
+
+          <!-- Der Abschluss. Er ersetzt das Eingabefeld, sobald die dritte
+               Frage beantwortet ist — der Verlauf darüber bleibt stehen,
+               denn genau der ist das Verkaufsargument. -->
+          <div class="probe-abschluss" id="probe-abschluss" hidden>
+            <h3>Drei Fragen waren deine.<br>Deine Besucher haben mehr.</h3>
+            <p class="unterzeile">
+              Er hat deine Seite in unter einer Minute gelernt — ohne dass du
+              ein einziges Feld ausgefüllt hast. Ab jetzt beantwortet er sie
+              für alle, rund um die Uhr, auf jeder Unterseite.
+            </p>
+            <div class="knoepfe">
+              <a class="knopf knopf-voll" href="preis.html">Abo abschliessen</a>
+              <button class="knopf knopf-rand" type="button" id="andereSeite">Andere Seite testen</button>
+            </div>
+          </div>
+        </section>
+
       </div>
-    </section>
 
-    <!-- ══ 4) Ergebnis + drei Fragen ═══════════════════════════════════ -->
-    <section class="probe-block weit" id="stufeErgebnis" hidden>
-      <h2>Das habe ich über dich gefunden.</h2>
-      <p class="gefunden-name" id="ergebnisName" hidden></p>
-      <p class="unterzeile" id="ergebnisQuelle"></p>
-
-      <div class="befund" id="befund"></div>
-
-      <!-- Ehrlichkeit ist hier das Verkaufsargument: Was NICHT gefunden wurde,
-           steht genauso da wie der Rest. Wer sieht, dass eine Angabe fehlt,
-           versteht sofort, wofür das Onboarding gut ist. -->
-      <div class="luecken" id="luecken" hidden>
-        <h3>Das habe ich nicht gefunden</h3>
-        <ul id="lueckenListe"></ul>
-        <p class="knopf-notiz">Im Onboarding trägst du das in zwei Minuten nach.</p>
-      </div>
-
-      <div class="gespraech">
-        <div class="gespraech-kopf">
-          <h3>Frag ihn etwas über deine Seite</h3>
-          <span class="zaehler" id="zaehler">3 Fragen offen</span>
+      <!-- Rechte Hälfte: je Stufe ein eigener Film. Alle stumm und in der
+           Schleife — sie sind Kulisse, nicht Inhalt, und dürfen deshalb
+           weder Ton machen noch Bedienelemente zeigen. -->
+      <div class="probe-rechts">
+        <!-- Immer erreichbar, in JEDER Stufe: Wer mitten im Scan merkt, dass er
+             die falsche Adresse getippt hat, soll nicht die Zurueck-Taste des
+             Browsers suchen muessen. Er sitzt auf dem Film statt in der linken
+             Haelfte, weil er dort mit keinem Inhalt kollidiert — die Chat-Stufe
+             hat oben links schon ihren eigenen Kopf. -->
+        <a class="zurueck-knopf" href="start.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Zurück
+        </a>
+        <div class="film" data-fuer="adresse" aria-hidden="true">
+          <video src="videos/szene2.mp4" muted loop playsinline autoplay preload="auto"></video>
         </div>
-        <div class="verlauf" id="verlauf" aria-live="polite"></div>
-        <form class="frage-form" id="frageForm">
-          <input class="feld-adresse" id="frage" type="text" autocomplete="off"
-                 placeholder="Was bietet ihr an?" aria-label="Deine Frage" required />
-          <button class="knopf knopf-voll" type="submit" id="frageKnopf">Fragen</button>
-        </form>
-        <p class="knopf-notiz" id="frageHinweis"></p>
-      </div>
-
-      <div class="weiter" id="weiter" hidden>
-        <h3>So weit kommt er, ohne dass du etwas eingetragen hast.</h3>
-        <p class="unterzeile">
-          Im Onboarding sagst du ihm, was er sonst noch wissen muss, gibst ihm
-          einen Namen und ein Gesicht, und dann kann er das auf deiner Seite.
-        </p>
-        <div class="knoepfe">
-          <a class="knopf knopf-voll" id="weiterKnopf" href="onboarding-aura.html">Agent einrichten</a>
-          <a class="knopf knopf-rand" href="preis.html">Preise ansehen</a>
+        <div class="film" data-fuer="scan" hidden aria-hidden="true">
+          <!-- Dasselbe Video wie im Onboarding-Scan (onboarding-aura.html,
+               data-step=2): die Figur, die eine Webseite mit der Lupe absucht.
+               Hier lief vorher szene8 — thematisch daneben. -->
+          <video src="videos/szene3.mp4" muted loop playsinline preload="auto"></video>
+        </div>
+        <div class="film" data-fuer="fehler" hidden aria-hidden="true">
+          <video src="videos/szene2.mp4" muted loop playsinline preload="metadata"></video>
+        </div>
+        <div class="film" data-fuer="chat" hidden aria-hidden="true">
+          <video src="videos/szene5.mp4" muted loop playsinline preload="metadata"></video>
         </div>
       </div>
-    </section>
 
+    </div>
   </main>
 
-  <footer>
-    <div class="bahn">
-      <a class="logo" href="start.html"><span class="zeichen" aria-hidden="true"></span>AuraChat</a>
-      <div class="footer-fuss">
-        <span>KI-Agenten für kleine Betriebe</span>
-        <span>© 2026 AuraChat</span>
-      </div>
-    </div>
-  </footer>
+  <!-- Keine Fusszeile. Diese Seite ist ein Werkzeug, kein Dokument: Wer hier
+       ist, scannt seine Seite und stellt drei Fragen. Impressum, Sitemap und
+       Marken-Nachklang haetten hier nur eine Bildschirmhoehe Leerlauf unter der
+       Karte erzeugt. Der Weg zurueck liegt oben rechts in der Karte. -->
 
   <script src="probe.js"></script>
 </body>
