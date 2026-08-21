@@ -146,10 +146,17 @@ function baueSystemPrompt(firma) {
   //
   // Die Regel steht deshalb ABSOLUT, ohne Auslegungsspielraum, und GANZ OBEN
   // statt unten: Was zuerst im Prompt steht, bindet staerker.
+  // Nur die Probefahrt kennt WIRKLICH nur eine gescannte Seite. Beim bezahlten
+  // Agenten kommt zum Scan das dazu, was der Betrieb im Onboarding ergaenzt hat
+  // — der Satz waere dort schlicht falsch.
+  const herkunftSatz = firma.probefahrt
+    ? "\nSie stammen aus EINEM Scan der Webseite dieses Betriebs."
+    : "";
+
   const nurBelegtRegel = firma.nurBelegt
-    ? `ABSOLUTE GRUNDREGEL — DU KENNST NUR DIESE EINE WEBSEITE:
-Alles, was du sagst, muss aus den INFORMATIONEN weiter unten hervorgehen. Sie
-stammen aus EINEM Scan der Webseite dieses Betriebs; etwas anderes hast du nicht.
+    ? `ABSOLUTE GRUNDREGEL — DU WEISST NUR, WAS UNTEN STEHT:
+Alles, was du sagst, muss aus den INFORMATIONEN weiter unten hervorgehen.
+Etwas anderes hast du nicht.${herkunftSatz}
 - Du hast KEIN Allgemeinwissen. Was du über diese Branche, diesen Ort, übliche
   Preise, übliche Öffnungszeiten oder ähnliche Betriebe zu wissen glaubst,
   zählt hier NICHT und darf in keine Antwort einfliessen.
@@ -157,27 +164,34 @@ stammen aus EINEM Scan der Webseite dieses Betriebs; etwas anderes hast du nicht
   was „üblich“ wäre — auch nicht als Vermutung, auch nicht mit „wahrscheinlich“.
 - Nenne KEINE Zahl, keinen Preis, keine Uhrzeit, keinen Namen, keine Adresse und
   keine Telefonnummer, die unten nicht steht.
-- Steht die Antwort unten nicht, sagst du sinngemäss: „Das steht nicht auf der
-  Seite, die ich gelesen habe.“ Sag das lieber einmal zu oft als einmal zu
-  wenig — es ist hier die BESTE Antwort, kein Versagen.
+- Steht die Antwort unten nicht, sagst du das offen. Sag es lieber einmal zu
+  oft als einmal zu wenig — es ist hier die BESTE Antwort, kein Versagen.
 - Im Zweifel gilt: Wenn du nicht sicher bist, ob etwas unten steht, steht es
   nicht unten.
 
 `
     : "";
 
-  // Im Nur-Belegt-Modus faellt die proaktive Begruessung weg: Der Besucher hat
+  // Bei der PROBEFAHRT faellt die proaktive Begruessung weg: Der Besucher hat
   // gerade selbst einen Scan ausgeloest und hat drei GEZAEHLTE Fragen. Ein
   // "Wie kann ich helfen?" waere eine davon.
-  const verhaltenKopf = firma.nurBelegt
+  //
+  // Beim bezahlten Agenten ist die Begruessung dagegen erwuenscht — deshalb
+  // haengt sie an firma.probefahrt und NICHT an firma.nurBelegt. Die beiden
+  // Dinge waren erst gekoppelt und mussten getrennt werden, als die
+  // Ehrlichkeitsregel auch fuer den Kundenagenten gelten sollte: Sonst haette
+  // dieser mit der Regel zugleich seine Begruessung und die Uebergabe ans Team
+  // verloren, also zwei Faehigkeiten, fuer die der Kunde bezahlt.
+  const verhaltenKopf = firma.probefahrt
     ? "- ANTWORTE ausschliesslich aus den Informationen unten."
     : `- BEGRÜSSE neue Besucher proaktiv und biete Wege an.
 - FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
 - ANTWORTE nur aus den Informationen unten.`;
 
   // Der Schlusssatz ebenfalls: "biete an, das Team zu fragen" geht bei der
-  // Probefahrt ins Leere - es gibt kein Team, das erreichbar waere.
-  const schlussRegel = firma.nurBelegt
+  // Probefahrt ins Leere - es gibt kein Team, das erreichbar waere. Beim
+  // Kundenagenten gibt es eins.
+  const schlussRegel = firma.probefahrt
     ? "WICHTIG: Erfinde nichts. Was unten nicht steht, weisst du nicht. Sag das offen."
     : `WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
 dass du es nicht weisst, und biete an, das Team zu fragen.`;

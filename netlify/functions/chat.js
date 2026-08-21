@@ -84,6 +84,11 @@ async function ladeProbe(probeId) {
     // ist hier die gefaehrlichste Antwort: Der Besucher prueft gerade seine
     // EIGENE Seite und merkt sofort, dass etwas erfunden ist.
     nurBelegt: true,
+    // Zuschnitt, der NUR hier gilt: keine proaktive Begruessung (sie kostete
+    // eine der drei gezaehlten Fragen) und kein Verweis aufs Team (es gibt
+    // keins). Getrennt von nurBelegt, weil der bezahlte Agent die
+    // Ehrlichkeitsregel bekommt, aber Begruessung und Uebergabe behaelt.
+    probefahrt: true,
     persona: {
       name: "Probe-Agent",
       rolle: "Assistent",
@@ -163,6 +168,16 @@ exports.handler = async (event) => {
     firma = await ladeFirmaServer(firmaId);
     if (!firma) return json(404, { error: `Unbekannte Firma: ${firmaId}` });
   }
+
+  // Die Ehrlichkeitsregel gilt fuer JEDEN Agenten, nicht nur fuer die
+  // Probefahrt. Sie stand zuerst nur dort, weil sie dort am dringendsten war;
+  // beim Kunden ist der Schaden aber groesser, nicht kleiner: Erfindet der
+  // Agent auf einer echten Firmenseite eine Oeffnungszeit oder einen Preis,
+  // steht der Betrieb dafuer gerade, nicht wir.
+  //
+  // Hier gesetzt statt in den Firmendaten, damit es niemand pro Firma
+  // abschalten kann. Es ist keine Einstellung, sondern eine Zusage.
+  if (firma) firma.nurBelegt = true;
 
   let SYSTEM_PROMPT = baueSystemPrompt(firma);
 

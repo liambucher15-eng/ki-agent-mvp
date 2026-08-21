@@ -196,8 +196,7 @@ test("nurBelegt: die absolute Grundregel steht drin und steht GANZ OBEN", () => 
   assert.match(p, /Rate nicht, schätze nicht/);
   // Der Satz laeuft im Prompt ueber einen Zeilenumbruch — deshalb in zwei
   // Stuecken geprueft, die den Umbruch nicht kreuzen.
-  assert.match(p, /Das steht nicht auf der/);
-  assert.match(p, /Seite, die ich gelesen habe/);
+  assert.match(p, /Steht die Antwort unten nicht, sagst du das offen/);
   // Der Zweifelsfall muss ausdruecklich geregelt sein, sonst entscheidet ihn
   // das Modell zu seinen Gunsten.
   assert.match(p, /Im Zweifel/);
@@ -208,14 +207,14 @@ test("nurBelegt: keine Zahlen, Preise, Zeiten oder Namen erfinden", () => {
   assert.match(p, /Nenne KEINE Zahl, keinen Preis, keine Uhrzeit/);
 });
 
-test("nurBelegt: keine proaktive Begruessung — die drei Fragen sind gezaehlt", () => {
-  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+test("probefahrt: keine proaktive Begruessung — die drei Fragen sind gezaehlt", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true, probefahrt: true });
   assert.doesNotMatch(p, /BEGRÜSSE neue Besucher proaktiv/);
   assert.match(p, /ANTWORTE ausschliesslich aus den Informationen unten/);
 });
 
-test("nurBelegt: verweist nicht auf ein Team, das es nicht gibt", () => {
-  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+test("probefahrt: verweist nicht auf ein Team, das es nicht gibt", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true, probefahrt: true });
   assert.doesNotMatch(p, /biete an, das Team zu fragen/);
   assert.match(p, /Was unten nicht steht, weisst du nicht/);
 });
@@ -227,4 +226,22 @@ test("ohne nurBelegt bleibt der normale Agent unveraendert", () => {
   // Der bezahlte Agent begruesst weiterhin und darf ans Team uebergeben.
   assert.match(p, /BEGRÜSSE neue Besucher proaktiv/);
   assert.match(p, /biete an, das Team zu fragen/);
+});
+
+test("nurBelegt OHNE probefahrt: Ehrlichkeitsregel ja, Begruessung und Team bleiben", () => {
+  // Genau der Fall des bezahlten Kundenagenten. Die Regel darf ihm nicht
+  // zugleich zwei Faehigkeiten wegnehmen, fuer die er bezahlt wird.
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true, faehigkeiten: ["kontakt"] });
+  assert.match(p, /ABSOLUTE GRUNDREGEL/);
+  assert.match(p, /KEIN Allgemeinwissen/);
+  assert.match(p, /BEGRÜSSE neue Besucher proaktiv/);
+  assert.match(p, /biete an, das Team zu fragen/);
+  // Der Satz ueber die Herkunft gilt nur der Probefahrt — beim Kunden kommt
+  // zum Scan das dazu, was er im Onboarding ergaenzt hat.
+  assert.doesNotMatch(p, /EINEM Scan der Webseite/);
+});
+
+test("probefahrt: nennt die eine gescannte Seite als einzige Quelle", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true, probefahrt: true });
+  assert.match(p, /EINEM Scan der Webseite/);
 });
