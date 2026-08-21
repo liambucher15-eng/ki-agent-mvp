@@ -178,3 +178,53 @@ test("Seiten-Regel: nur bei der Fähigkeit 'seite', mit ausdruecklicher Grenze",
   assert.match(mit, /NICHTS anklicken/);
   assert.match(mit, /entscheidet der Besucher selbst/);
 });
+
+// ── Nur-Belegt-Modus (Probefahrt) ────────────────────────────────────────
+// Diese Regel traegt das Versprechen des Produkts: Der Agent spricht ueber die
+// EIGENE Seite des Besuchers. Erfindet er dort etwas, ist die Vorfuehrung nicht
+// nur wertlos, sondern schaedlich. Darum ist sie hier festgenagelt.
+
+test("nurBelegt: die absolute Grundregel steht drin und steht GANZ OBEN", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+  assert.match(p, /ABSOLUTE GRUNDREGEL/);
+  // Ganz oben, nicht irgendwo: Was zuerst im Prompt steht, bindet staerker.
+  assert.ok(
+    p.indexOf("ABSOLUTE GRUNDREGEL") < p.indexOf("Du bist"),
+    "Die Grundregel muss vor der Rollenbeschreibung stehen"
+  );
+  assert.match(p, /KEIN Allgemeinwissen/);
+  assert.match(p, /Rate nicht, schätze nicht/);
+  // Der Satz laeuft im Prompt ueber einen Zeilenumbruch — deshalb in zwei
+  // Stuecken geprueft, die den Umbruch nicht kreuzen.
+  assert.match(p, /Das steht nicht auf der/);
+  assert.match(p, /Seite, die ich gelesen habe/);
+  // Der Zweifelsfall muss ausdruecklich geregelt sein, sonst entscheidet ihn
+  // das Modell zu seinen Gunsten.
+  assert.match(p, /Im Zweifel/);
+});
+
+test("nurBelegt: keine Zahlen, Preise, Zeiten oder Namen erfinden", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+  assert.match(p, /Nenne KEINE Zahl, keinen Preis, keine Uhrzeit/);
+});
+
+test("nurBelegt: keine proaktive Begruessung — die drei Fragen sind gezaehlt", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+  assert.doesNotMatch(p, /BEGRÜSSE neue Besucher proaktiv/);
+  assert.match(p, /ANTWORTE ausschliesslich aus den Informationen unten/);
+});
+
+test("nurBelegt: verweist nicht auf ein Team, das es nicht gibt", () => {
+  const p = baueSystemPrompt({ ...firma, nurBelegt: true });
+  assert.doesNotMatch(p, /biete an, das Team zu fragen/);
+  assert.match(p, /Was unten nicht steht, weisst du nicht/);
+});
+
+test("ohne nurBelegt bleibt der normale Agent unveraendert", () => {
+  const p = baueSystemPrompt(firma);
+  assert.doesNotMatch(p, /ABSOLUTE GRUNDREGEL/);
+  assert.doesNotMatch(p, /KEIN Allgemeinwissen/);
+  // Der bezahlte Agent begruesst weiterhin und darf ans Team uebergeben.
+  assert.match(p, /BEGRÜSSE neue Besucher proaktiv/);
+  assert.match(p, /biete an, das Team zu fragen/);
+});

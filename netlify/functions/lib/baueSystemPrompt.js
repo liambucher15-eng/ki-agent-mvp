@@ -133,13 +133,60 @@ function baueSystemPrompt(firma) {
   //
   // „knapp" war ausserdem doppelt — die Antwortlänge steht unten als eigene
   // Regel (laengeRegel) und ist dort vom Kunden einstellbar.
-  return `Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
+  // NUR-BELEGT-MODUS (firma.nurBelegt).
+  //
+  // Gesetzt fuer die oeffentliche Probefahrt (public/probe.html): Dort hat der
+  // Agent NICHTS ausser einer frisch gescannten fremden Webseite. Die normalen
+  // Regeln reichen dafuer nicht - "Erfinde nichts" laesst dem Modell die Tuer
+  // offen, aus seinem Weltwissen zu antworten. Bei einem Zahnarzt, einem
+  // Restaurant oder einem Treuhandbuero WEISS das Modell viel Branchenuebliches,
+  // und genau das wuerde es einsetzen: "Eine Dentalhygiene kostet ueblicherweise
+  // 150 Franken". Auf der eigenen Seite des Kunden gelesen ist so ein Satz eine
+  // Erfindung im Gewand einer Auskunft - und sie entwertet das ganze Produkt.
+  //
+  // Die Regel steht deshalb ABSOLUT, ohne Auslegungsspielraum, und GANZ OBEN
+  // statt unten: Was zuerst im Prompt steht, bindet staerker.
+  const nurBelegtRegel = firma.nurBelegt
+    ? `ABSOLUTE GRUNDREGEL — DU KENNST NUR DIESE EINE WEBSEITE:
+Alles, was du sagst, muss aus den INFORMATIONEN weiter unten hervorgehen. Sie
+stammen aus EINEM Scan der Webseite dieses Betriebs; etwas anderes hast du nicht.
+- Du hast KEIN Allgemeinwissen. Was du über diese Branche, diesen Ort, übliche
+  Preise, übliche Öffnungszeiten oder ähnliche Betriebe zu wissen glaubst,
+  zählt hier NICHT und darf in keine Antwort einfliessen.
+- Rate nicht, schätze nicht, runde nicht, leite nichts ab und ergänze nichts,
+  was „üblich“ wäre — auch nicht als Vermutung, auch nicht mit „wahrscheinlich“.
+- Nenne KEINE Zahl, keinen Preis, keine Uhrzeit, keinen Namen, keine Adresse und
+  keine Telefonnummer, die unten nicht steht.
+- Steht die Antwort unten nicht, sagst du sinngemäss: „Das steht nicht auf der
+  Seite, die ich gelesen habe.“ Sag das lieber einmal zu oft als einmal zu
+  wenig — es ist hier die BESTE Antwort, kein Versagen.
+- Im Zweifel gilt: Wenn du nicht sicher bist, ob etwas unten steht, steht es
+  nicht unten.
+
+`
+    : "";
+
+  // Im Nur-Belegt-Modus faellt die proaktive Begruessung weg: Der Besucher hat
+  // gerade selbst einen Scan ausgeloest und hat drei GEZAEHLTE Fragen. Ein
+  // "Wie kann ich helfen?" waere eine davon.
+  const verhaltenKopf = firma.nurBelegt
+    ? "- ANTWORTE ausschliesslich aus den Informationen unten."
+    : `- BEGRÜSSE neue Besucher proaktiv und biete Wege an.
+- FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
+- ANTWORTE nur aus den Informationen unten.`;
+
+  // Der Schlusssatz ebenfalls: "biete an, das Team zu fragen" geht bei der
+  // Probefahrt ins Leere - es gibt kein Team, das erreichbar waere.
+  const schlussRegel = firma.nurBelegt
+    ? "WICHTIG: Erfinde nichts. Was unten nicht steht, weisst du nicht. Sag das offen."
+    : `WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
+dass du es nicht weisst, und biete an, das Team zu fragen.`;
+
+  return `${nurBelegtRegel}Du bist „${p.name}", ${p.rolle} auf der Webseite von ${firma.name}.
 Ton: ${p.ton}. Sprich ${spr}. ${anredeRegel}${aussehenRegel}
 
 So verhältst du dich:
-- BEGRÜSSE neue Besucher proaktiv und biete Wege an.
-- FÜHRE die Besucher zum passenden Thema (wie ein Concierge).
-- ANTWORTE nur aus den Informationen unten.${produktRegel}${seiteRegel}${kontaktRegel}${fallbackRegel}
+${verhaltenKopf}${produktRegel}${seiteRegel}${kontaktRegel}${fallbackRegel}
 - RICHTE DICH NACH DER LAGE: Unten kann ein KONTEXT-Block stehen — welche Seite
   der Besucher gerade offen hat, welches Produkt dort steht (mit Preis und
   Verfügbarkeit) und wie er sich verhält. Nutze das aktiv:
@@ -157,8 +204,7 @@ So verhältst du dich:
 - ${emojiRegel}
 - ${formatRegel}${grenzenRegel}
 
-WICHTIG: Erfinde nichts. Wenn etwas nicht in den Informationen steht, sag ehrlich,
-dass du es nicht weisst, und biete an, das Team zu fragen.
+${schlussRegel}
 
 INFORMATIONEN über ${firma.name}:
 ${faktenListe || "(keine Stichpunkte)"}${wissen ? `\n\nWEITERE INFOS:\n${wissen}` : ""}${faqListe ? `\n\nHÄUFIGE FRAGEN:\n${faqListe}` : ""}`;

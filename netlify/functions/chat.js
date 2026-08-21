@@ -76,6 +76,14 @@ async function ladeProbe(probeId) {
   const firma = {
     name: scan.name || "deine Firma",
     faehigkeiten: [],
+    // Der Agent darf hier AUSSCHLIESSLICH aus dem Scan sprechen. Ohne dieses
+    // Flag greift nur die allgemeine Regel "Erfinde nichts" — und die reicht
+    // nachweislich nicht: Ueber einen Zahnarzt, ein Restaurant oder ein
+    // Treuhandbuero weiss das Modell genug Branchenuebliches, um eine
+    // plausible Antwort zu bauen, die auf der Seite nirgends steht. Genau das
+    // ist hier die gefaehrlichste Antwort: Der Besucher prueft gerade seine
+    // EIGENE Seite und merkt sofort, dass etwas erfunden ist.
+    nurBelegt: true,
     persona: {
       name: "Probe-Agent",
       rolle: "Assistent",
