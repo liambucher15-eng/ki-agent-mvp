@@ -395,29 +395,123 @@
       </div>
   </section>
 
-  <!-- ══ WAS ER KANN ════════════════════════════════════════════════════ -->
+  <!-- ══ WAS ER KANN ════════════════════════════════════════════════════
+       Sechs Punkte im Zickzack: Bild und Text wechseln die Seite, damit das
+       Auge beim Scrollen einen Rhythmus bekommt statt sechs gleicher Kaesten.
+       Nach Liams Vorlage.
+
+       Reihenfolge mit Absicht — sie erzaehlt einen Bogen: was es IST (01),
+       was es dich KOSTET (02), wie klug es ist (03, 04), wie sehr es dir
+       gehoert (05), worauf du dich verlassen kannst (06). Ehrlichkeit steht
+       zuletzt, weil der letzte Punkt der ist, den man mitnimmt. -->
   <section id="funktionen">
     <div class="bahn">
       <div class="kopfblock">
         <span class="augen">Funktionen</span>
-        <h2>Drei Dinge. Die richtig.</h2>
+        <h2>Sechs Dinge. Alle nachprüfbar.</h2>
       </div>
-      <div class="drei">
-        <div class="karte">
-          <span class="nr">Antworten</span>
-          <h3>Antworten, die stimmen</h3>
-          <p>Nur aus deinen echten Angaben. Er erfindet nichts. Weiss er etwas nicht, gibt er deine Kontaktdaten weiter und nimmt die Anfrage auf.</p>
-        </div>
-        <div class="karte">
-          <span class="nr">Führen</span>
-          <h3>Zum richtigen Angebot führen</h3>
-          <p>Er erkennt, wonach jemand sucht, zeigt passende Produkte als Karte mit Bild und Preis und führt zur richtigen Seite.</p>
-        </div>
-        <div class="karte">
-          <span class="nr">Timing</span>
-          <h3>Im richtigen Moment da sein</h3>
-          <p>Er meldet sich nicht bei jedem Klick, sondern wenn jemand wirklich sucht. Höchstens zweimal pro Besuch, mit Ruhe dazwischen. Aufdringlichkeit vertreibt Kunden.</p>
-        </div>
+      <div class="vorteile">
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">01 · Die Figur im Chat, in mehreren Zuständen nebeneinander</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/01-mitarbeiter.webp" alt="Die Figur im Chat, in mehreren Zuständen nebeneinander"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">01</span>
+            <h3>Dein eigener Mitarbeiter.</h3>
+            <p>Ein Gesicht bleibt im Kopf, ein Chatfenster nicht: Deiner hat einen Namen und fünf Zustände — wartend, zuhörend, nachdenkend, sprechend, verlegen —, damit Besucher sehen, dass da jemand zuhört.</p>
+          </div>
+        </article>
+
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">02 · Eine Webseite, aus der Inhalte zur Figur fliessen</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/02-lernt.webp" alt="Eine Webseite, aus der Inhalte zur Figur fliessen"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">02</span>
+            <h3>Er lernt deine Seite.<br>Nicht du.</h3>
+            <p>Adresse eingeben, Scan abwarten, Gesicht geben — nach drei Minuten kennt er dein Angebot, ohne dass du ein einziges Wissensdokument geschrieben hast.</p>
+          </div>
+        </article>
+
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">03 · Die Figur neben einer geöffneten Produktseite</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/03-kontext.webp" alt="Die Figur neben einer geöffneten Produktseite"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">03</span>
+            <h3>Er weiss, wo der<br>Besucher gerade steht.</h3>
+            <p>Welche Seite offen ist, welches Produkt dort liegt, was es kostet und ob es da ist — er spricht über genau dieses eine, statt allgemein zu bleiben.</p>
+          </div>
+        </article>
+
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">04 · Produktkarten, die aus dem Gespräch auftauchen</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/04-fuehren.webp" alt="Produktkarten, die aus dem Gespräch auftauchen"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">04</span>
+            <h3>Er führt zum Angebot,<br>statt nur zu antworten.</h3>
+            <p>Passende Produkte kommen als Karte mit Bild, Preis und Knopf, und zu einer Stelle auf der Seite scrollt er hin, statt sie zu beschreiben.</p>
+          </div>
+        </article>
+
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">05 · Einstellungen im Dashboard, daneben die Figur</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/05-anpassbar.webp" alt="Einstellungen im Dashboard, daneben die Figur"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">05</span>
+            <h3>Voll anpassungsfähig.</h3>
+            <p>Ton, Du oder Sie, Antwortlänge, Emojis, Grenzen und Übergabe stellst du selbst ein — bis er klingt wie dein Betrieb und nicht wie eine KI.</p>
+          </div>
+        </article>
+
+        <article class="vorteil">
+          <div class="vorteil-bild">
+            <span class="vorteil-marke">06 · Die Figur, die ehrlich abwinkt statt zu raten</span>
+            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
+                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
+                 per addEventListener: Nur so ueberlebt der Handler ein
+                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <img src="bilder/vorteile/06-ehrlichkeit.webp" alt="Die Figur, die ehrlich abwinkt statt zu raten"
+                 loading="lazy" decoding="async" onerror="this.remove()" />
+          </div>
+          <div class="vorteil-text">
+            <span class="vorteil-nr">06</span>
+            <h3>Ehrlichkeit.</h3>
+            <p>Was nicht auf deiner Seite steht, sagt er auch nicht: Lieber antwortet er „das steht dort nicht“, als eine Zahl zu nennen, die niemand geprüft hat.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>

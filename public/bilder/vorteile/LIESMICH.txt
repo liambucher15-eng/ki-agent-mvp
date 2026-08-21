@@ -1,0 +1,22 @@
+Bilder der Vorteile-Sektion (start.html, Abschnitt "Funktionen")
+
+Solange eine Datei fehlt, zeigt der Kasten einen Platzhalter mit der
+Bildbeschreibung; das onerror-Attribut am <img> entfernt das kaputte Bild,
+damit kein Bruchsymbol erscheint. Sobald die Datei da ist, deckt sie den
+Platzhalter zu. Es muss nichts am Code geaendert werden.
+
+Erwartete Dateien:
+  01-mitarbeiter.webp   Die Figur im Chat, in mehreren Zustaenden nebeneinander
+  02-lernt.webp         Eine Webseite, aus der Inhalte zur Figur fliessen
+  03-kontext.webp       Die Figur neben einer geoeffneten Produktseite
+  04-fuehren.webp       Produktkarten, die aus dem Gespraech auftauchen
+  05-anpassbar.webp     Einstellungen im Dashboard, daneben die Figur
+  06-ehrlichkeit.webp   Die Figur, die ehrlich abwinkt statt zu raten
+
+Format: querformat 16:9, heller Hintergrund passend zur Seite (--flaeche
+ist #f6f5fb). Die Kachel ist auf dem Schirm rund 600 px breit, auf dem Handy
+rund 335 px; 1400x788 reicht also auch fuer Retina.
+
+Die Bildsprache der Vorlage: ruhiges Off-White, weiche Schatten, die Figur
+gross und mittig, ein einzelner Gegenstand daneben. Kein Text im Bild — die
+Ueberschrift steht daneben.
