@@ -86,6 +86,54 @@
       });
     }
 
+    // ── Notnagel, falls GSAP fehlt ────────────────────────────────────────
+    //
+    // GSAP wird zwar lokal geladen (lib/gsap.min.js), aber die Datei kann aus
+    // hundert Gruenden ausbleiben: ein Werbeblocker mit aggressiver Liste, ein
+    // abgebrochener Download, ein Tippfehler beim naechsten Umbau. Bisher war
+    // das toedlich, und zwar STILL: Die Aufrufe unten stehen auf oberster Ebene,
+    // also VOR der Stelle, an der die Knopf-Listener haengen (weiter unten,
+    // "[data-next]"). Ein fehlendes gsap warf dort eine TypeError, das Skript
+    // brach ab, und danach war jeder Knopf im Onboarding tot — ohne
+    // Fehlermeldung, ohne sichtbaren Grund. Der Kunde sitzt vor einer Seite,
+    // auf der nichts passiert.
+    //
+    // Der Ersatz animiert nicht, er SETZT die Endwerte sofort und ruft
+    // onComplete synchron auf. Das Onboarding sieht dann nuechterner aus,
+    // funktioniert aber vollstaendig. Genau drei Funktionen werden gebraucht
+    // (to, set, fromTo) — nachgezaehlt, nicht geraten.
+    if (typeof window.gsap === "undefined") {
+      console.warn("GSAP fehlt — Onboarding laeuft ohne Animationen weiter.");
+      const alsListe = (ziel) =>
+        typeof ziel === "string" ? [...document.querySelectorAll(ziel)]
+        : Array.isArray(ziel) ? ziel.filter(Boolean) : ziel ? [ziel] : [];
+      // Nur die Eigenschaften, die hier wirklich vorkommen.
+      const setze = (el, v) => {
+        if (!el || !el.style) return;
+        if (v.autoAlpha != null) {
+          el.style.opacity = String(v.autoAlpha);
+          el.style.visibility = v.autoAlpha > 0 ? "visible" : "hidden";
+        }
+        if (v.opacity != null) el.style.opacity = String(v.opacity);
+        const teile = [];
+        if (v.x != null || v.y != null) teile.push("translate(" + (v.x || 0) + "px," + (v.y || 0) + "px)");
+        if (v.scale != null) teile.push("scale(" + v.scale + ")");
+        if (v.rotation != null) teile.push("rotate(" + v.rotation + "deg)");
+        if (teile.length) el.style.transform = teile.join(" ");
+      };
+      const sofort = (ziel, v) => {
+        alsListe(ziel).forEach((el) => setze(el, v || {}));
+        // onComplete MUSS laufen: Daran haengt im Schrittwechsel das Aufdecken
+        // des naechsten Schritts und das Zuruecksetzen von istUebergang.
+        if (v && typeof v.onComplete === "function") { try { v.onComplete(); } catch (e) { console.error(e); } }
+      };
+      window.gsap = {
+        to: sofort,
+        set: sofort,
+        fromTo: (ziel, von, nach) => sofort(ziel, nach),
+      };
+    }
+
     gsap.to("#glow", { rotation: 360, duration: 34, ease: "none", repeat: -1, transformOrigin: "50% 50%" });
     gsap.to(".w1", { x: 26, y: 36, scale: 1.15, duration: 9, ease: "sine.inOut", repeat: -1, yoyo: true });
     gsap.to(".w2", { x: -34, y: 26, scale: 1.2, duration: 11, ease: "sine.inOut", repeat: -1, yoyo: true });
