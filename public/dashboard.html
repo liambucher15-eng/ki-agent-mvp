@@ -1558,7 +1558,12 @@
     //
     // Der Banner ist nur ANZEIGE. Was wirklich passiert, entscheidet der Server
     // — eine falsche Zahl hier waere unschoen, aber nie eine Luecke.
-    const VB_GRENZEN = { basis: 3000, plus: 12000, enterprise: 50000 };
+    const VB_GRENZEN = {
+      free: 150, start: 3000, grow: 12000, scale: 50000,
+      // Altnamen aus der Zeit vor Free/Start/Grow/Scale — stehen noch in der
+      // Datenbank. Ohne sie faende der Banner keine Grenze und rechnete falsch.
+      basis: 3000, plus: 12000, enterprise: 50000,
+    };
 
     async function zeigeVerbrauch() {
       const banner = $("verbrauchBanner");
@@ -1569,7 +1574,7 @@
       if (stand === null) { banner.hidden = true; return; }
 
       const plan = (await aktuellerPlan()) || "basis";
-      const grenze = VB_GRENZEN[plan] || VB_GRENZEN.basis;
+      const grenze = VB_GRENZEN[plan] || VB_GRENZEN.start;
       const anteil = stand / grenze;
       if (anteil < 0.75) { banner.hidden = true; return; }
 
@@ -1603,7 +1608,8 @@
 
       // Der Knopf nur, wenn Hochstufen ueberhaupt etwas bringt.
       const knopf = $("vbKnopf");
-      knopf.hidden = plan !== "basis";
+      // Knopf ueberall ausser im groessten Plan — dort brachte Hochstufen nichts.
+      knopf.hidden = plan === "scale" || plan === "enterprise";
       knopf.onclick = () => starteCheckout(knopf);
     }
 

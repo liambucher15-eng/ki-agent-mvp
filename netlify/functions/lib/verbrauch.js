@@ -27,14 +27,30 @@
 // 250 bis 750 Antworten — also bei unter einem Zehntel von "basis".
 //
 // Beim Aendern mitrechnen: Grenze x 0,0036 = ungefaehre Monatskosten in CHF.
-//   basis  3.000 -> rund CHF 11 bei CHF 29 Abo
-//   plus  12.000 -> rund CHF 43 bei CHF 49 Abo   (knapp — bewusst hoch gesetzt,
-//                                                 lieber nachziehen als Kunden
-//                                                 aergern)
+//   free      150 -> rund CHF 0.54 bei CHF 0    (Akquisekosten, bewusst)
+//   start   3.000 -> rund CHF 11   bei CHF 29
+//   grow   12.000 -> rund CHF 43   bei CHF 79
+//   scale  50.000 -> rund CHF 180  bei CHF 149  (RECHNERISCH IM MINUS —
+//                                                Scale ist als Anfrage-Plan
+//                                                gedacht, bei dem einzeln
+//                                                verhandelt wird)
 const GRENZEN = {
-  basis: 3000,
-  plus: 12000,
-  enterprise: 50000,
+  // Die vier Plaene der Preisseite. Die Zahlen stehen dort woertlich in der
+  // Vergleichstabelle ("Antworten pro Monat") — beim Aendern BEIDE Stellen.
+  free: 150,
+  start: 3000,
+  grow: 12000,
+  scale: 50000,
+
+  // Alte Schluessel aus der Zeit vor Free/Start/Grow/Scale. Sie stehen noch in
+  // der Datenbank (schema.sql: check (plan in ('basis','plus','enterprise')))
+  // und in bestehenden Zeilen. Wuerden sie hier fehlen, fiele jede solche Firma
+  // stillschweigend auf die KLEINSTE Grenze zurueck — ein zahlender Kunde
+  // landete also ohne Zutun im Nachrichtendienst. Darum bleiben sie, bis die
+  // Datenbank umgestellt ist.
+  basis: 3000,        // = start
+  plus: 12000,        // = grow
+  enterprise: 50000,  // = scale
 };
 
 // Ab wann gewarnt wird, und ab wann der Agent sich einschraenkt.
@@ -66,7 +82,9 @@ const NACHRICHT_AB = 1.0;    // 100 % — Kontingent aufgebraucht, nur noch Nach
  *            nurNachricht: boolean, hinweis: boolean}}
  */
 function stufeFuer(stand, plan) {
-  const grenze = GRENZEN[plan] || GRENZEN.basis;
+  // Unbekannter Plan -> kleinster BEZAHLTER Plan, nicht free. Ein Tippfehler im
+  // Plan-Namen darf einen zahlenden Kunden nicht auf 150 Antworten werfen.
+  const grenze = GRENZEN[plan] || GRENZEN.start;
 
   // Unbekannter Stand (Zaehler nicht erreichbar): so tun, als sei alles gut.
   // Ein ausgefallener Zaehler darf keinen Agenten drosseln — das waere ein

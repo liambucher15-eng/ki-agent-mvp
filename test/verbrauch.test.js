@@ -116,3 +116,39 @@ test("promptZusatz ohne Kontakt-Werkzeug verweist nicht darauf", () => {
   assert.doesNotMatch(z, /kontakt_hinterlassen/);
   assert.match(z, /spaeter noch einmal/);
 });
+
+// ── Die vier Plaene der Preisseite ───────────────────────────────────────
+
+test("alle vier Plaene der Preisseite haben eine Grenze", () => {
+  for (const plan of ["free", "start", "grow", "scale"]) {
+    assert.ok(Number.isFinite(GRENZEN[plan]), "Plan " + plan + " fehlt");
+  }
+  // Aufsteigend — sonst waere ein teurerer Plan schlechter als ein guenstiger.
+  assert.ok(GRENZEN.free < GRENZEN.start);
+  assert.ok(GRENZEN.start < GRENZEN.grow);
+  assert.ok(GRENZEN.grow < GRENZEN.scale);
+});
+
+test("die Altnamen zeigen auf dieselben Grenzen wie die neuen", () => {
+  // In der Datenbank stehen noch basis/plus/enterprise (schema.sql). Fehlten
+  // sie hier, fiele jede solche Firma auf den Rueckfallwert — ein zahlender
+  // Kunde landete also ohne Zutun mit der falschen Grenze da.
+  assert.equal(GRENZEN.basis, GRENZEN.start);
+  assert.equal(GRENZEN.plus, GRENZEN.grow);
+  assert.equal(GRENZEN.enterprise, GRENZEN.scale);
+});
+
+test("unbekannter Plan faellt auf den kleinsten BEZAHLTEN Plan zurueck, nicht auf free", () => {
+  // Ein Tippfehler im Plan-Namen darf einen zahlenden Kunden nicht auf 150
+  // Antworten werfen — das waere ein Ausfall wegen eines Fehlers bei uns.
+  assert.equal(stufeFuer(0, "tippfehler").grenze, GRENZEN.start);
+  assert.notEqual(stufeFuer(0, "tippfehler").grenze, GRENZEN.free);
+});
+
+test("free ist klein genug, dass es niemand als Ersatz fuer ein Abo nutzt", () => {
+  // 150 Antworten sind grob 30 Gespraeche im Monat. Genug, um den Agenten auf
+  // der eigenen Seite wirklich zu erleben, zu wenig fuer einen Betrieb mit
+  // Kundenverkehr.
+  assert.ok(GRENZEN.free <= 200);
+  assert.ok(GRENZEN.free >= 100);
+});
