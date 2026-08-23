@@ -115,6 +115,28 @@ const Store = (function () {
       }
       return Object.values(_alleLokal());
     },
+
+    // Wie viele Antworten hat der Agent diesen Monat gegeben?
+    //
+    // Geht ueber die Datenbank-Function antworten_stand_lesen, die IN SICH
+    // prueft, ob die Firma dem Anrufer gehoert (migration-verbrauch.sql) —
+    // sonst koennte ein Angemeldeter den Verbrauch fremder Firmen abfragen.
+    //
+    // Gibt null zurueck, wenn es nicht geht (kein Supabase, Migration noch
+    // nicht gelaufen, Netzfehler). Der Aufrufer blendet den Hinweis dann
+    // einfach aus — eine fehlende Verbrauchsanzeige ist kein Grund, das
+    // Dashboard kaputt aussehen zu lassen.
+    async verbrauch(firmaId) {
+      if (!sb || !firmaId) return null;
+      try {
+        const { data, error } = await sb.rpc("antworten_stand_lesen", { firma_id: firmaId });
+        if (error) return null;
+        const stand = Number(data);
+        return Number.isFinite(stand) && stand >= 0 ? stand : null;
+      } catch {
+        return null;
+      }
+    },
   };
 })();
 

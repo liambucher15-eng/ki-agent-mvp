@@ -471,6 +471,18 @@
 
       <!-- ===== Ansicht: Übersicht ===== -->
       <section class="ansicht" id="view-uebersicht" hidden>
+        <!-- Verbrauchs-Banner. Erscheint erst ab 80 % des Monatskontingents
+             und ist der EINZIGE Ort, an dem die Grenze sichtbar wird — die
+             Besucher der Kundenseite merken davon nichts.
+             Der Knopf fuehrt direkt in den Stripe-Checkout: Hochstufen ohne
+             Anruf, ohne Mail, ohne uns. -->
+        <div class="verbrauch-banner" id="verbrauchBanner" hidden>
+          <div class="vb-text">
+            <strong id="vbTitel">—</strong>
+            <span id="vbZeile">—</span>
+          </div>
+          <button class="vb-knopf" id="vbKnopf" hidden>Jetzt hochstufen</button>
+        </div>
         <div class="karte hero">
           <div class="figur" id="heroFigur"><span class="initial" id="heroInitial">A</span><img id="heroBild" alt="" hidden /></div>
           <div class="inhalt">
@@ -782,6 +794,34 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0"></script>
   <script src="lib/supabase-config.js"></script>
+  <style>
+    /* Verbrauchs-Banner. Drei Staerken: Hinweis (ruhig), Erreicht (deutlich),
+       Sparmodus/Nachricht (dringend). Bewusst KEIN Rot bei den ersten beiden —
+       "dein Agent laeuft gut" ist eine gute Nachricht, keine Fehlermeldung. */
+    .verbrauch-banner {
+      /* Die Uebersicht ist ein 12-Spalten-Raster. Ohne diese Zeile sass der
+         Banner in EINER Spalte — gemessen 62 px breit und auf 211 px
+         Zeilenhoehe gestreckt, mit Text, der sich auf 125 px umbrach. */
+      grid-column: 1 / -1;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .9rem;
+      padding: .95rem 1.15rem; border-radius: 14px; margin-bottom: 1rem;
+      border: 1px solid #d9d6e0; background: #f6f5fb;
+    }
+    .verbrauch-banner[data-stufe="erreicht"]  { border-color: #e6c98a; background: #fdf6e7; }
+    .verbrauch-banner[data-stufe="sparmodus"],
+    .verbrauch-banner[data-stufe="nachricht"] { border-color: #e2a9a9; background: #fdf0f0; }
+    .verbrauch-banner .vb-text { display: grid; gap: .15rem; min-width: 0; }
+    .verbrauch-banner strong { font-size: .98rem; }
+    .verbrauch-banner span { font-size: .88rem; color: #45454f; }
+    .vb-knopf {
+      flex: none; border: 0; cursor: pointer; font: inherit; font-weight: 600;
+      padding: .6rem 1.1rem; border-radius: 999px;
+      background: #111114; color: #fff;
+    }
+    .vb-knopf:hover { background: #33323b; }
+    .vb-knopf:disabled { opacity: .6; cursor: default; }
+  </style>
   <script src="lib/clerk-config.js"></script>
   <script src="lib/clerk-de.js"></script>
   <script src="lib/auth.js"></script>
@@ -1505,6 +1545,61 @@
       $("planName").textContent = aktiv ? "Plus" : "Basis";
       $("planAnzeigen").hidden = false;
     }
+    // ---------- Verbrauchs-Banner ----------
+    // Dieselben Schwellen wie im Server (netlify/functions/lib/verbrauch.js).
+    // Sie stehen hier ein zweites Mal, weil der Browser den Server-Code nicht
+    // laden kann; beim Aendern BEIDE Stellen anfassen.
+    const VB_GRENZEN = { basis: 3000, plus: 12000, enterprise: 50000 };
+
+    async function zeigeVerbrauch() {
+      const banner = $("verbrauchBanner");
+      if (!banner) return;
+      const stand = await Store.verbrauch(firma.id);
+      // Kein Wert (kein Supabase, Migration fehlt, Netzfehler): nichts zeigen.
+      // Eine fehlende Anzeige ist besser als eine falsche Zahl.
+      if (stand === null) { banner.hidden = true; return; }
+
+      const plan = (await aktuellerPlan()) || "basis";
+      const grenze = VB_GRENZEN[plan] || VB_GRENZEN.basis;
+      const anteil = stand / grenze;
+      if (anteil < 0.8) { banner.hidden = true; return; }
+
+      const stufe = anteil >= 5 ? "nachricht" : anteil >= 1.5 ? "sparmodus" : anteil >= 1 ? "erreicht" : "hinweis";
+      const zahl = (n) => n.toLocaleString("de-CH");
+      const texte = {
+        hinweis: [
+          "Dein Agent laeuft gut.",
+          zahl(stand) + " von " + zahl(grenze) + " Antworten diesen Monat. Ab " +
+          zahl(grenze) + " fasst er sich kuerzer.",
+        ],
+        erreicht: [
+          "Kontingent erreicht.",
+          zahl(stand) + " Antworten diesen Monat. Dein Agent laeuft noch voll weiter — " +
+          "ab " + zahl(Math.round(grenze * 1.5)) + " fasst er sich kuerzer.",
+        ],
+        sparmodus: [
+          "Dein Agent fasst sich gerade kuerzer.",
+          zahl(stand) + " Antworten diesen Monat, weit ueber deinem Plan. Die Antworten " +
+          "sind knapper als sonst.",
+        ],
+        nachricht: [
+          "Dein Agent nimmt gerade nur Nachrichten auf.",
+          zahl(stand) + " Antworten diesen Monat. Er beantwortet keine Fragen mehr " +
+          "inhaltlich, sondern nimmt sie fuer dich auf.",
+        ],
+      };
+      const [titel, zeile] = texte[stufe];
+      $("vbTitel").textContent = titel;
+      $("vbZeile").textContent = zeile;
+      banner.dataset.stufe = stufe;
+      banner.hidden = false;
+
+      // Der Knopf nur, wenn Hochstufen ueberhaupt etwas bringt.
+      const knopf = $("vbKnopf");
+      knopf.hidden = plan !== "basis";
+      knopf.onclick = () => starteCheckout(knopf);
+    }
+
     $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
     $("agentBearbeiten").addEventListener("click", () => zeigeAnsicht("persona"));
     async function starteCheckout(btn) {
@@ -1613,7 +1708,7 @@
       $("nutzerSub").textContent = (firma.webseite || "").replace(/^https?:\/\//, "") || firma.email || firma.id;
       $("nutzerAvatar").textContent = (firma.name || firma.id || "A").slice(0, 1).toUpperCase();
       ladeFelder();
-      zeigePlan();
+      zeigePlan(); zeigeVerbrauch();
       ladeLeads();
       ladeGespraeche();
       zeigeAnsicht("uebersicht");

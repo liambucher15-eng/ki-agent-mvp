@@ -82,4 +82,33 @@ async function firmaZuStripeKunde(stripeKunde) {
   }
 }
 
-module.exports = { ladeFirmaServer, setzePlanServer, firmaZuStripeKunde };
+// Zaehlt EINE Antwort fuer diese Firma und gibt den neuen Monatsstand zurueck.
+//
+// Gibt -1 zurueck, wenn nicht gezaehlt werden konnte — bei Seed-Firmen (die
+// stehen in data/*.json und haben keine Zeile in der Tabelle), bei fehlender
+// Konfiguration oder bei einem Fehler. Der Aufrufer behandelt -1 als
+// "unbekannt" und drosselt dann NICHT: Ein ausgefallener Zaehler ist ein
+// Problem auf UNSERER Seite und darf keinen zahlenden Kunden ausbremsen.
+//
+// Absichtlich ohne throw: Der Chat soll nie an der Buchhaltung scheitern.
+async function zaehleAntwort(firmaId) {
+  if (!firmaId || !URL_BASIS || !KEY) return -1;
+  try {
+    const res = await fetch(URL_BASIS + "/rest/v1/rpc/antwort_zaehlen", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: KEY,
+        authorization: "Bearer " + KEY,
+      },
+      body: JSON.stringify({ firma_id: firmaId }),
+    });
+    if (!res.ok) return -1;
+    const stand = Number(await res.json());
+    return Number.isFinite(stand) ? stand : -1;
+  } catch {
+    return -1;
+  }
+}
+
+module.exports = { ladeFirmaServer, setzePlanServer, firmaZuStripeKunde, zaehleAntwort };

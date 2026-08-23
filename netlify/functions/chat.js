@@ -16,6 +16,8 @@ const { saubereVorschlaege } = require("./lib/vorschlaege");
 const { saubereAktion, zielStehtAufSeite } = require("./lib/seiten-aktion");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { leseJob, zaehleProbeFrage } = require("./lib/jobSpeicher");
+const { zaehleAntwort } = require("./lib/firmaLaden");
+const { stufeFuer, kuerzeVerlauf, promptZusatz, SPAR_MAX_TOKENS } = require("./lib/verbrauch");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
   beurteile: beurteileVerhalten,
@@ -228,12 +230,38 @@ exports.handler = async (event) => {
 
   // Fähigkeiten (Tools) dieser Firma — z.B. "kontakt_hinterlassen". Ohne
   // Fähigkeiten bleibt der Agent ein reiner Antwort-Bot (kein Tool-Loop).
+  // ── Verbrauchsstufe ───────────────────────────────────────────────────
+  // Gezaehlt wird NUR beim bezahlten Agenten. Die Probefahrt hat ihren eigenen
+  // Deckel (drei Fragen, PROBE_FRAGEN) und gehoert keiner Firma, deren Monat
+  // man belasten koennte.
+  //
+  // Reihenfolge mit Absicht: erst zaehlen, dann Claude rufen. Umgekehrt
+  // koennte jemand mit abgebrochenen Anfragen beliebig viele Aufrufe
+  // ausloesen, ohne dass je ein Zaehler hochginge — derselbe Grund wie bei
+  // der Probefahrt weiter oben.
+  let lage = { stufe: "unbekannt", sparmodus: false, nurNachricht: false, grenze: 0, anteil: 0, hinweis: false };
+  if (!probeId) {
+    const stand = await zaehleAntwort(firma.id || firmaId);
+    lage = stufeFuer(stand, firma.plan || "basis");
+  }
+
   const tools = baueTools(firma);
   // Bei Fähigkeiten mehr Ausgabe-Budget: Tool-Aufruf + finale Antwort in einem Turn.
-  const maxTokens = tools.length ? 900 : 600;
+  // Im Sparmodus deutlich kuerzere Antworten. Das ist der groesste einzelne
+  // Hebel auf die Kosten und der einzige, den der Besucher ueberhaupt bemerkt
+  // — und er bemerkt ihn als "knapp", nicht als "kaputt".
+  const maxTokens = lage.sparmodus ? SPAR_MAX_TOKENS : (tools.length ? 900 : 600);
 
   // Verlauf, den wir während des Tool-Loops erweitern (Kopie — Original bleibt).
-  const verlauf = messages.slice();
+  // Im Nachrichtendienst und im Sparmodus bekommt der Agent eine zusaetzliche
+  // Lage-Anweisung. Sie steht GANZ am Ende des Prompts, damit sie die
+  // uebrigen Regeln ueberstimmt.
+  SYSTEM_PROMPT += promptZusatz(
+    lage,
+    Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt")
+  );
+
+  const verlauf = kuerzeVerlauf(messages.slice(), lage.sparmodus);
   const letzteFrage = [...messages].reverse().find((m) => m && m.role === "user");
 
   try {
