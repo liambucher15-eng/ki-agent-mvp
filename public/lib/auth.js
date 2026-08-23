@@ -32,7 +32,11 @@ const Auth = (function () {
     if (bereitP) return bereitP;
     bereitP = new Promise((fertig) => {
       function start() {
-        window.Clerk.load({}).then(() => { clerk = window.Clerk; fertig(clerk); })
+        // Deutsche Oberflaeche. window.CLERK_DE kommt aus lib/clerk-de.js;
+        // fehlt die Datei, bleibt das Objekt leer und Clerk laeuft auf Englisch
+        // weiter — die Anmeldung faellt also nie ganz aus, nur die Uebersetzung.
+        const sprache = window.CLERK_DE ? { localization: window.CLERK_DE } : {};
+        window.Clerk.load(sprache).then(() => { clerk = window.Clerk; fertig(clerk); })
           .catch(() => { clerk = null; fertig(null); });
       }
       if (window.Clerk && typeof window.Clerk.load === "function") return start();
