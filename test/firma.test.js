@@ -70,17 +70,36 @@ test("Abo aktiv (plan=plus): Charakterbilder werden ausgeliefert", async () => {
   assert.equal(body.charakter.bilder.idle, "https://x/idle.png");
 });
 
-test("Stripe eingerichtet + kein Abo (plan=basis): Bilder werden entfernt", async () => {
-  const { body } = await hole(baueFirma("basis"), { stripeAn: true });
-  assert.equal(body.plan, "basis");
-  assert.equal(body.charakter.bilder, undefined, "ohne Abo dürfen keine Bilder raus");
-  // Farben bleiben — das Widget zeigt das Initial in Markenfarbe.
-  assert.equal(body.charakter.farbe, "#4F46E5");
+// Bis zum Umbau der Preisseite stand hier das Gegenteil: "Stripe eingerichtet
+// + kein Abo -> Bilder werden entfernt". Das passte zur alten Ordnung, in der
+// die Figur das Unterscheidungsmerkmal des teuersten Plans war.
+//
+// Diese Ordnung gibt es nicht mehr. Die Preisseite nennt die Figur in JEDEM
+// Plan, auch im kostenlosen. Waere das Gate geblieben, haette nach
+// migration-plaene.sql sogar ein ZAHLENDER grow-Kunde sein Gesicht verloren,
+// weil "grow" nicht "plus" ist.
+test("Die Figur kommt in JEDEM Plan durch — auch gratis, auch mit Stripe", async () => {
+  for (const plan of ["free", "start", "grow", "scale"]) {
+    const { body } = await hole(baueFirma(plan), { stripeAn: true });
+    assert.equal(body.plan, plan);
+    assert.ok(body.charakter.bilder, "Plan " + plan + ": Figur muss durchkommen");
+    assert.equal(body.charakter.bilder.idle, "https://x/idle.png");
+    assert.equal(body.charakter.farbe, "#4F46E5");
+  }
 });
 
-test("Ohne Stripe: Gate greift NICHT, sonst wäre der Charakter nie sichtbar", async () => {
-  const { body } = await hole(baueFirma("basis"), { stripeAn: false });
-  assert.ok(body.charakter.bilder, "ohne Bezahlmöglichkeit muss der Charakter durchkommen");
+test("Auch die alten Plan-Namen verlieren die Figur nicht", async () => {
+  // basis/plus stehen noch in lib/stripe.js und im Webhook. Solange das so
+  // ist, koennen sie auch wieder in der Spalte landen.
+  for (const plan of ["basis", "plus", "enterprise"]) {
+    const { body } = await hole(baueFirma(plan), { stripeAn: true });
+    assert.ok(body.charakter.bilder, "Plan " + plan + ": Figur muss durchkommen");
+  }
+});
+
+test("Ohne Stripe kommt die Figur ebenfalls durch", async () => {
+  const { body } = await hole(baueFirma("free"), { stripeAn: false });
+  assert.ok(body.charakter.bilder, "ohne Bezahlmoeglichkeit muss der Charakter durchkommen");
   assert.equal(body.charakter.bilder.idle, "https://x/idle.png");
 });
 

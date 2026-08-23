@@ -9,7 +9,6 @@
 // Laedt Seed-Firmen UND per Onboarding angelegte Firmen (Supabase).
 
 const { ladeFirmaServer } = require("./lib/firmaLaden");
-const { konfiguriert: stripeKonfiguriert } = require("./lib/stripe");
 
 exports.handler = async (event) => {
   const json = (statusCode, obj) => ({
@@ -34,22 +33,26 @@ exports.handler = async (event) => {
   const firma = await ladeFirmaServer(id);
   if (!firma) return json(404, { error: `Unbekannte Firma: ${id}` });
 
-  // ABO-GATE (Milestone 5): Es gibt nur EINE Variante (den KI-Charakter). Der
-  // Charakter (charakter.bilder) wird nur bei aktivem Abo live ausgeliefert.
-  // Der Status kommt aus der SERVER-Spalte firmen.plan ("plus" = Abo aktiv,
-  // gesetzt vom Stripe-Webhook), NICHT aus vom Client geschriebenen Daten. Ohne
-  // aktives Abo werden die Bilder entfernt -> das Widget zeigt das Initial in
-  // Markenfarbe. Das ist die ECHTE Durchsetzung, nicht die Onboarding-Vorschau.
+  // KEIN ABO-GATE MEHR AUF DER FIGUR.
   //
-  // ABER: Das Gate greift nur, wenn ein Abo ueberhaupt abschliessbar IST (Stripe
-  // eingerichtet). Ohne Stripe kann niemand auf "plus" kommen — dann waere der
-  // im Onboarding erstellte Charakter dauerhaft unsichtbar und die Kette
-  // Onboarding -> Dashboard -> Chat waere gar nicht lauffaehig (Entwicklung,
-  // Demo, Selbst-Hosting). Sobald STRIPE_SECRET_KEY + ein Preis gesetzt sind,
-  // ist das Gate unveraendert streng.
-  const plan = firma.plan || "basis";
+  // Hier stand bis zum Umbau der Preisseite: bilder loeschen, sobald der Plan
+  // nicht "plus" ist. Das passte zur alten Ordnung, in der die Figur das
+  // Unterscheidungsmerkmal des teuersten Plans war ("Fuer Betriebe, denen eine
+  // Farbkugel als Gesicht genuegt.").
+  //
+  // Diese Ordnung gibt es nicht mehr. Die Preisseite nennt "Eigene Figur mit
+  // fuenf Zustaenden" jetzt in JEDEM Plan, auch im kostenlosen — sie ist das
+  // Markenzeichen und gehoert nicht hinter eine Schranke. Getrennt wird
+  // stattdessen ueber das, was der Agent TUT (Posteingang, Produktvorschlaege,
+  // proaktive Hinweise) und ueber die Zahl der Antworten je Monat
+  // (lib/verbrauch.js).
+  //
+  // Waere die Zeile stehen geblieben, haette nach migration-plaene.sql sogar
+  // ein ZAHLENDER grow-Kunde sein Gesicht verloren — denn "grow" ist nicht
+  // "plus". Genau der Fall, in dem die Seite etwas verspricht, das der Server
+  // wegnimmt.
+  const plan = firma.plan || "free";
   const charakter = { ...(firma.charakter || {}) };
-  if (plan !== "plus" && stripeKonfiguriert()) delete charakter.bilder;
   // Die Charakter-Beschreibung ist interne Prompt-Information (sie steckt im
   // System-Prompt, den der Server baut) und hat im oeffentlichen Ergebnis
   // nichts verloren — das Widget braucht nur Farben, Schrift und Bilder.
