@@ -30,10 +30,11 @@
 //   free      150 -> rund CHF 0.54 bei CHF 0    (Akquisekosten, bewusst)
 //   start   3.000 -> rund CHF 11   bei CHF 29
 //   grow   12.000 -> rund CHF 43   bei CHF 79
-//   scale  50.000 -> rund CHF 180  bei CHF 149  (RECHNERISCH IM MINUS —
-//                                                Scale ist als Anfrage-Plan
-//                                                gedacht, bei dem einzeln
-//                                                verhandelt wird)
+//   scale  50.000 -> rund CHF 180  bei CHF 199  (knapp, aber positiv —
+//                                                 der Preis wurde von 149 auf
+//                                                 199 gehoben, weil 50.000
+//                                                 Antworten rechnerisch schon
+//                                                 rund CHF 180 kosten)
 const GRENZEN = {
   // Die vier Plaene der Preisseite. Die Zahlen stehen dort woertlich in der
   // Vergleichstabelle ("Antworten pro Monat") — beim Aendern BEIDE Stellen.
