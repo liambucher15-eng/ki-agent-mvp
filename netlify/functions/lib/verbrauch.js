@@ -38,9 +38,24 @@ const GRENZEN = {
 };
 
 // Ab wann gewarnt wird, und ab wann der Agent sich einschraenkt.
-const HINWEIS_AB = 0.8;      // 80 % — Banner im Dashboard, Besucher merkt nichts
-const SPARMODUS_AB = 1.5;    // 150 % — knappere Antworten, keine Werkzeuge
-const NACHRICHT_AB = 5.0;    // 500 % — Agent nimmt nur noch Nachrichten auf
+//
+// Die erste Fassung sparte erst bei 150 % und stoppte bei 500 %. Das war ein
+// Denkfehler: Bei 150 % ist das Abo bereits anderthalbfach ueberzogen — der
+// Deckel griff also erst, nachdem das Geld laengst ausgegeben war. Ein
+// Kostenschutz, der erst NACH dem Schaden einsetzt, ist keiner.
+//
+// Jetzt liegt alles innerhalb des bezahlten Kontingents:
+//   75 %  Banner im Dashboard. Fuer den Besucher aendert sich NICHTS.
+//         Das ist das Zeitfenster, in dem der Kunde selbst hochstufen kann,
+//         bevor irgendjemand etwas merkt.
+//   90 %  Sparmodus: knappere Antworten. Der Besucher merkt "knapp", nicht
+//         "kaputt". Die restlichen 10 % reichen dadurch deutlich weiter.
+//  100 %  Kontingent aufgebraucht. Der Agent beantwortet nichts mehr
+//         inhaltlich, sondern nimmt Nachrichten auf — der Kunde bekommt also
+//         weiterhin seine Leads, nur ohne weitere Modellkosten.
+const HINWEIS_AB = 0.75;     // 75 % — Banner im Dashboard, Besucher merkt nichts
+const SPARMODUS_AB = 0.9;    // 90 % — knappere Antworten
+const NACHRICHT_AB = 1.0;    // 100 % — Kontingent aufgebraucht, nur noch Nachrichten
 
 /**
  * Welche Stufe gilt bei diesem Stand?
@@ -72,9 +87,10 @@ function stufeFuer(stand, plan) {
   if (anteil >= SPARMODUS_AB) {
     return { stufe: "sparmodus", grenze, anteil, sparmodus: true, nurNachricht: false, hinweis: true };
   }
-  if (anteil >= 1) {
-    return { stufe: "erreicht", grenze, anteil, sparmodus: false, nurNachricht: false, hinweis: true };
-  }
+  // Die fruehere Stufe "erreicht" (genau 100 %, Agent laeuft noch voll) gibt es
+  // nicht mehr: Dort beginnt jetzt der Nachrichtendienst. Bei 100 % ist das
+  // bezahlte Kontingent aufgebraucht — weiter voll zu antworten hiesse, ab da
+  // draufzuzahlen.
   if (anteil >= HINWEIS_AB) {
     return { stufe: "hinweis", grenze, anteil, sparmodus: false, nurNachricht: false, hinweis: true };
   }

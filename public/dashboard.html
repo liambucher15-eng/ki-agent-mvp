@@ -808,8 +808,13 @@
       padding: .95rem 1.15rem; border-radius: 14px; margin-bottom: 1rem;
       border: 1px solid #d9d6e0; background: #f6f5fb;
     }
-    .verbrauch-banner[data-stufe="erreicht"]  { border-color: #e6c98a; background: #fdf6e7; }
-    .verbrauch-banner[data-stufe="sparmodus"],
+    /* Drei Staerken, passend zur Lage:
+       hinweis   — ruhig. "Dein Agent laeuft gut" ist eine gute Nachricht.
+       sparmodus — gelb. Noch INNERHALB des Abos, aber es wird eng.
+       nachricht — rot. Kontingent aufgebraucht, hier ist etwas zu tun.
+       (Die frueher hier gefuehrte Stufe "erreicht" gibt es nicht mehr — sie
+       lag bei genau 100 %, wo jetzt "nachricht" beginnt.) */
+    .verbrauch-banner[data-stufe="sparmodus"] { border-color: #e6c98a; background: #fdf6e7; }
     .verbrauch-banner[data-stufe="nachricht"] { border-color: #e2a9a9; background: #fdf0f0; }
     .verbrauch-banner .vb-text { display: grid; gap: .15rem; min-width: 0; }
     .verbrauch-banner strong { font-size: .98rem; }
@@ -1546,9 +1551,13 @@
       $("planAnzeigen").hidden = false;
     }
     // ---------- Verbrauchs-Banner ----------
-    // Dieselben Schwellen wie im Server (netlify/functions/lib/verbrauch.js).
-    // Sie stehen hier ein zweites Mal, weil der Browser den Server-Code nicht
-    // laden kann; beim Aendern BEIDE Stellen anfassen.
+    // Dieselben Schwellen wie im Server (netlify/functions/lib/verbrauch.js):
+    // 75 % Hinweis, 90 % Sparmodus, 100 % nur noch Nachrichten. Sie stehen hier
+    // ein zweites Mal, weil der Browser den Server-Code nicht laden kann; beim
+    // Aendern BEIDE Stellen anfassen.
+    //
+    // Der Banner ist nur ANZEIGE. Was wirklich passiert, entscheidet der Server
+    // — eine falsche Zahl hier waere unschoen, aber nie eine Luecke.
     const VB_GRENZEN = { basis: 3000, plus: 12000, enterprise: 50000 };
 
     async function zeigeVerbrauch() {
@@ -1562,30 +1571,28 @@
       const plan = (await aktuellerPlan()) || "basis";
       const grenze = VB_GRENZEN[plan] || VB_GRENZEN.basis;
       const anteil = stand / grenze;
-      if (anteil < 0.8) { banner.hidden = true; return; }
+      if (anteil < 0.75) { banner.hidden = true; return; }
 
-      const stufe = anteil >= 5 ? "nachricht" : anteil >= 1.5 ? "sparmodus" : anteil >= 1 ? "erreicht" : "hinweis";
+      const stufe = anteil >= 1 ? "nachricht" : anteil >= 0.9 ? "sparmodus" : "hinweis";
       const zahl = (n) => n.toLocaleString("de-CH");
       const texte = {
         hinweis: [
           "Dein Agent laeuft gut.",
           zahl(stand) + " von " + zahl(grenze) + " Antworten diesen Monat. Ab " +
-          zahl(grenze) + " fasst er sich kuerzer.",
-        ],
-        erreicht: [
-          "Kontingent erreicht.",
-          zahl(stand) + " Antworten diesen Monat. Dein Agent laeuft noch voll weiter — " +
-          "ab " + zahl(Math.round(grenze * 1.5)) + " fasst er sich kuerzer.",
+          zahl(Math.round(grenze * 0.9)) + " fasst er sich kuerzer, ab " + zahl(grenze) +
+          " nimmt er nur noch Nachrichten auf.",
         ],
         sparmodus: [
           "Dein Agent fasst sich gerade kuerzer.",
-          zahl(stand) + " Antworten diesen Monat, weit ueber deinem Plan. Die Antworten " +
-          "sind knapper als sonst.",
+          zahl(stand) + " von " + zahl(grenze) + " Antworten diesen Monat. Damit dein " +
+          "Kontingent reicht, antwortet er knapper — ab " + zahl(grenze) + " nimmt er nur " +
+          "noch Nachrichten auf.",
         ],
         nachricht: [
-          "Dein Agent nimmt gerade nur Nachrichten auf.",
-          zahl(stand) + " Antworten diesen Monat. Er beantwortet keine Fragen mehr " +
-          "inhaltlich, sondern nimmt sie fuer dich auf.",
+          "Kontingent aufgebraucht.",
+          zahl(stand) + " von " + zahl(grenze) + " Antworten diesen Monat. Dein Agent " +
+          "beantwortet keine Fragen mehr inhaltlich, nimmt sie aber weiter fuer dich auf — " +
+          "du verlierst also keine Anfrage.",
         ],
       };
       const [titel, zeile] = texte[stufe];
