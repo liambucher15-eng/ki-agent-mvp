@@ -772,10 +772,12 @@
           <div class="konto-zeile"><span class="klabel">Abo</span>
             <div class="zeile">
               <span class="badge basis" id="aboBadge"></span>
-              <!-- Preis gehört auf den Knopf, nicht auf eine Seite dahinter.
-                   Vorher stand hier nur "Abo abschliessen" — der Kunde erfuhr
-                   den Preis erst auf der Stripe-Seite. -->
-              <button class="btn klein" id="aboCheckout" hidden>Für CHF 49/Monat freischalten</button>
+              <!-- Vier Pläne, ein Ort der Wahl: Der Knopf führt auf die
+                   Preisseite. Frueher stand hier "Für CHF 49/Monat freischalten"
+                   und startete sofort einen Checkout — beides falsch, seit es
+                   Free/Start/Grow/Scale gibt: CHF 49 ist kein Preis mehr, und
+                   welchen Plan der Kunde will, entscheidet er, nicht wir. -->
+              <a class="btn klein" id="aboCheckout" href="preis.html">Plan wählen</a>
             </div>
           </div>
         </article>
@@ -1528,28 +1530,48 @@
     }
 
     // ---------- Abo + Einbett-Code ----------
+    // Die vier Pläne der Preisseite. "free" ist KEIN "kein Abo", sondern ein
+    // vollwertiger Plan mit kleinerem Kontingent — inklusive eigener Figur.
+    const PLAN_NAME = { free: "Free", start: "Start", grow: "Grow", scale: "Scale" };
+    // Altnamen aus der Zeit davor. Sie koennen noch in Datenbankzeilen stehen,
+    // die nie neu gespeichert wurden.
+    const PLAN_ALT = { basis: "start", plus: "grow", enterprise: "scale", gratis: "free" };
+    function planSchluessel(roh) {
+      if (PLAN_NAME[roh]) return roh;
+      return PLAN_ALT[roh] || "free";
+    }
+
     async function aktuellerPlan() {
       try {
         const f = await (await fetch("/.netlify/functions/firma?id=" + encodeURIComponent(firma.id) + "&t=" + Date.now())).json();
-        return f.plan || "basis";
-      } catch { return firma.plan || "basis"; }
+        return f.plan || "free";
+      } catch { return firma.plan || "free"; }
     }
     async function zeigePlan() {
-      const aktiv = (await aktuellerPlan()) === "plus";
+      const plan = planSchluessel(await aktuellerPlan());
+      const name = PLAN_NAME[plan];
+      const bezahlt = plan !== "free";
+
       const badge = $("planBadge");
       badge.hidden = false;
-      badge.className = "badge " + (aktiv ? "plus" : "basis");
-      badge.textContent = aktiv ? "Abo aktiv" : "Abo nicht aktiv";
+      // Die CSS-Klassen heissen weiterhin plus/basis — das sind Stilnamen,
+      // keine Plannamen, und sie stehen so im Stylesheet.
+      badge.className = "badge " + (bezahlt ? "plus" : "basis");
+      badge.textContent = bezahlt ? name + "-Abo aktiv" : "Kostenloser Plan";
       const abo = $("aboBadge");
       abo.className = badge.className; abo.textContent = badge.textContent;
-      $("aboCheckout").hidden = aktiv;
-      // Plan-Box in der Sidebar: es gibt nur EIN Angebot (verschiedene Laufzeiten,
-      // keine Stufen) — darum kein separater "Upgrade"-Knopf hier. "Plan anzeigen"
-      // fuehrt immer zu Einstellungen, dort steht der eigentliche Abo-Abschluss.
+
+      // Der Knopf bleibt IMMER sichtbar und heisst je nach Lage anders. Frueher
+      // verschwand er, sobald ein Abo lief — wer wechseln oder kuendigen
+      // wollte, fand von hier aus keinen Weg mehr.
+      const knopf = $("aboCheckout");
+      if (knopf) knopf.textContent = bezahlt ? "Plan ändern" : "Plan wählen";
+
       $("planBox").hidden = false;
-      $("planName").textContent = aktiv ? "Plus" : "Basis";
+      $("planName").textContent = name;
       $("planAnzeigen").hidden = false;
     }
+
     // ---------- Verbrauchs-Banner ----------
     // Dieselben Schwellen wie im Server (netlify/functions/lib/verbrauch.js):
     // 75 % Hinweis, 90 % Sparmodus, 100 % nur noch Nachrichten. Sie stehen hier
@@ -1610,29 +1632,39 @@
       const knopf = $("vbKnopf");
       // Knopf ueberall ausser im groessten Plan — dort brachte Hochstufen nichts.
       knopf.hidden = plan === "scale" || plan === "enterprise";
-      knopf.onclick = () => starteCheckout(knopf);
+      // Zur Planwahl, nicht direkt in einen Kauf: Wer bei 90 Prozent steht,
+      // soll selbst entscheiden, welcher Plan zu ihm passt.
+      knopf.onclick = () => { location.href = "preis.html"; };
     }
 
     $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
     $("agentBearbeiten").addEventListener("click", () => zeigeAnsicht("persona"));
-    async function starteCheckout(btn) {
-      btn.disabled = true;
+    // Bezahlen. Wird NUR aus dem ?kaufen=-Zweig unten gerufen, also von der
+    // Preisseite aus — dort und nur dort waehlt der Kunde seinen Plan.
+    //
+    // Was sich geaendert hat und warum:
+    //  Frueher schickte diese Funktion firma.id und fest den Plan "plus". Das
+    //  setzte voraus, dass der Agent schon existiert, wenn bezahlt wird. Der
+    //  gewuenschte Weg ist aber umgekehrt: Preisseite — Konto — bezahlen —
+    //  Onboarding. Deshalb geht jetzt die NUTZER-ID mit; das Abo haengt am
+    //  Konto, und ein Trigger uebertraegt den Plan auf jede Firma, die dieser
+    //  Nutzer anlegt (migration-abo.sql).
+    async function starteCheckout(plan) {
+      const nutzer = window.Auth ? await window.Auth.nutzer() : null;
+      if (!nutzer) { alert("Bitte zuerst anmelden."); return; }
       try {
         const res = await fetch("/.netlify/functions/abo-checkout", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: firma.id, plan: "plus", basis: location.origin }),
+          body: JSON.stringify({ nutzer: nutzer.id, plan, basis: location.origin }),
         });
-        const d = await res.json();
+        const d = await res.json().catch(() => ({}));
         if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); return; }
         if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
         location.href = d.url;
       } catch (e) {
         alert("Abo konnte nicht gestartet werden: " + e.message);
-      } finally {
-        btn.disabled = false;
       }
     }
-    $("aboCheckout").addEventListener("click", (e) => starteCheckout(e.target));
 
     function zeigeEmbed() {
       $("embedText").textContent = '<script src="' + location.origin + '/widget.js" data-firma="' + firma.id +
@@ -1748,6 +1780,26 @@
       if (window.Auth && window.Auth.konfiguriert) {
         const eingeloggt = await window.Auth.hatKonto();
         if (!eingeloggt) { zeigeLogin(); return; }
+      }
+
+      // Kaufabsicht von der Preisseite: dashboard.html?kaufen=grow
+      //
+      // Diese Seite ist der Ort, an dem das Login-Gate steht — deshalb fuehrt
+      // der Weg von der Preisseite hierher und nicht direkt zu Stripe. Wer
+      // noch kein Konto hat, legt oben eines an; nach der Anmeldung laedt die
+      // Seite neu, der Parameter bleibt erhalten, und es geht sofort weiter.
+      //
+      // Der Zweig steht VOR dem Laden der Firmen: Wer gerade erst bezahlen
+      // will, hat in aller Regel noch gar keinen Agenten, und die leere
+      // Ansicht darunter waere ein Sackgassenbildschirm statt einer Kasse.
+      const kaufen = new URLSearchParams(location.search).get("kaufen");
+      if (kaufen) {
+        // Welche Plaene kaufbar sind, entscheidet am Ende der Server
+        // (abo-checkout.js). Hier nur so viel Pruefung, dass ein Unsinnswert in
+        // der URL nicht zu einem Netzaufruf fuehrt.
+        if (["start", "grow", "scale"].includes(kaufen)) { await starteCheckout(kaufen); return; }
+        // free ist nichts zu kaufen — direkt einrichten.
+        if (kaufen === "free") { location.href = "onboarding-aura.html?plan=free"; return; }
       }
       firmen = await Store.meineFirmen();
       if (!firmen.length) {

@@ -4,31 +4,43 @@
 //
 // Benötigte Env-Variablen (Netlify / .env), alle GEHEIM:
 //   STRIPE_SECRET_KEY      – sk_live_... / sk_test_...
-//   STRIPE_PREIS_BASIS     – price_... (das Basis-Abo, Orb)
-//   STRIPE_PREIS_PLUS      – price_... (das Plus-Abo, eigene Figur)
+//   STRIPE_PREIS_START     – price_... (Start,  CHF 29)
+//   STRIPE_PREIS_GROW      – price_... (Grow,   CHF 79)
+//   STRIPE_PREIS_SCALE     – price_... (Scale,  CHF 199)
 //   STRIPE_WEBHOOK_SECRET  – whsec_... (aus dem Webhook-Endpoint)
-// STRIPE_PREIS_ID (alt, Milestone 5) bleibt als Fallback für STRIPE_PREIS_PLUS
-// gültig, damit bereits konfigurierte Deployments nicht brechen.
+//
+// Die alten Namen bleiben als Rückfall gültig, damit ein bereits eingerichtetes
+// Deployment nicht beim nächsten Deploy stumm die Bezahlung verliert. Die
+// Zuordnung ist dieselbe wie in migration-plaene.sql:
+//   STRIPE_PREIS_BASIS -> start      STRIPE_PREIS_PLUS (bzw. _ID) -> grow
 
 const crypto = require("crypto");
 
 const SECRET = process.env.STRIPE_SECRET_KEY || "";
-const PREIS_PLUS = process.env.STRIPE_PREIS_PLUS || process.env.STRIPE_PREIS_ID || "";
-const PREIS_BASIS = process.env.STRIPE_PREIS_BASIS || "";
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
+// Free steht bewusst NICHT hier: Für einen kostenlosen Plan gibt es nichts zu
+// kassieren, und eine Checkout-Session über CHF 0 wäre eine Zahlungsaufforderung
+// ohne Betrag — verwirrend für den Kunden und sinnlos für uns.
 function preisFuer(plan) {
-  return plan === "basis" ? PREIS_BASIS : PREIS_PLUS;
+  if (plan === "start") return process.env.STRIPE_PREIS_START || process.env.STRIPE_PREIS_BASIS || "";
+  if (plan === "grow")  return process.env.STRIPE_PREIS_GROW  || process.env.STRIPE_PREIS_PLUS || process.env.STRIPE_PREIS_ID || "";
+  if (plan === "scale") return process.env.STRIPE_PREIS_SCALE || "";
+  return "";
 }
 
-// "Eingerichtet" heisst: mindestens EIN Preis ist konfiguriert (meist zuerst Plus,
-// da Basis historisch kostenlos war). erstelleCheckout prüft den konkret gewählten
-// Preis selbst und wirft einen klaren Fehler, falls DER fehlt.
+// Die Pläne, die man kaufen kann. free fehlt mit Absicht (siehe oben).
+const KAUFBAR = ["start", "grow", "scale"];
+
+// "Eingerichtet" heisst: mindestens EIN Preis ist konfiguriert. erstelleCheckout
+// prüft den konkret gewählten Preis selbst und wirft einen klaren Fehler, falls
+// genau DER fehlt — sonst hiesse es "Bezahlung nicht eingerichtet", obwohl nur
+// ein einzelner Plan fehlt.
 function konfiguriert() {
-  return !!SECRET && (!!PREIS_PLUS || !!PREIS_BASIS);
+  return !!SECRET && KAUFBAR.some((p) => !!preisFuer(p));
 }
 
-// Objekt -> flaches x-www-form-urlencoded (Stripe erwartet metadata[firma_id]=... usw.)
+// Objekt -> flaches x-www-form-urlencoded (Stripe erwartet metadata[nutzer]=... usw.)
 function formCodieren(obj, praefix, ziel) {
   ziel = ziel || new URLSearchParams();
   for (const [k, v] of Object.entries(obj)) {
@@ -39,23 +51,32 @@ function formCodieren(obj, praefix, ziel) {
   return ziel;
 }
 
-// Erzeugt eine Checkout-Session für den gewählten Plan ("basis" oder "plus").
-// firmaId UND plan wandern in die Metadaten — der Webhook setzt firmen.plan
-// exakt auf den bezahlten Plan (nicht hart auf "plus"), erkennbar allein am
-// Event, ohne einen zusätzlichen Stripe-API-Aufruf für die Preis-Zuordnung.
-async function erstelleCheckout({ firmaId, plan, erfolgUrl, abbruchUrl }) {
-  const zielPlan = plan === "basis" ? "basis" : "plus";
-  const preis = preisFuer(zielPlan);
-  if (!preis) throw new Error("Für den Plan '" + zielPlan + "' ist kein Stripe-Preis eingerichtet.");
+// Erzeugt eine Checkout-Session für den gewählten Plan.
+//
+// WICHTIG — in den Metadaten steht der NUTZER, nicht die Firma:
+//  Der Kunde bezahlt, BEVOR er seinen Agenten einrichtet. In diesem Moment gibt
+//  es noch keine Firma, der man einen Plan zuschreiben könnte. Deshalb hängt das
+//  Abo am Clerk-Nutzer (Tabelle "abos"), und ein Trigger überträgt den Plan auf
+//  jede Firma, die dieser Nutzer anlegt (migration-abo.sql).
+//
+//  Vorher verlangte diese Funktion eine firmaId — das setzte die umgekehrte
+//  Reihenfolge voraus (erst einrichten, dann irgendwann aus dem Dashboard heraus
+//  bezahlen) und machte den Weg "Preisseite -> Konto -> bezahlen -> einrichten"
+//  unmöglich.
+async function erstelleCheckout({ nutzer, plan, erfolgUrl, abbruchUrl }) {
+  if (!nutzer) throw new Error("Ohne Nutzer-ID kann kein Abo zugeordnet werden.");
+  if (!KAUFBAR.includes(plan)) throw new Error("Plan '" + plan + "' ist nicht kaufbar.");
+  const preis = preisFuer(plan);
+  if (!preis) throw new Error("Für den Plan '" + plan + "' ist kein Stripe-Preis eingerichtet.");
   const body = formCodieren({
     mode: "subscription",
     "line_items": [{ price: preis, quantity: 1 }],
     success_url: erfolgUrl,
     cancel_url: abbruchUrl,
-    client_reference_id: firmaId,
-    metadata: { firma_id: firmaId, plan: zielPlan },
-    // Firma-ID + Plan auch am Abo hinterlegen -> Kündigungs-Webhook findet sie wieder.
-    subscription_data: { metadata: { firma_id: firmaId, plan: zielPlan } },
+    client_reference_id: nutzer,
+    metadata: { nutzer, plan },
+    // Auch am Abo hinterlegen -> der Kündigungs-Webhook findet den Nutzer wieder.
+    subscription_data: { metadata: { nutzer, plan } },
   });
   const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -71,7 +92,7 @@ async function erstelleCheckout({ firmaId, plan, erfolgUrl, abbruchUrl }) {
 }
 
 // Prüft die Stripe-Webhook-Signatur (Header "stripe-signature": "t=...,v1=...").
-// Verhindert gefälschte Webhook-Aufrufe (jemand könnte sich sonst gratis Plus setzen).
+// Verhindert gefälschte Webhook-Aufrufe (jemand könnte sich sonst gratis Grow setzen).
 // Gibt das geparste Event zurück oder wirft.
 function verifiziereWebhook(rohBody, signaturHeader) {
   if (!WEBHOOK_SECRET) throw new Error("STRIPE_WEBHOOK_SECRET fehlt");
@@ -97,4 +118,4 @@ function verifiziereWebhook(rohBody, signaturHeader) {
   return JSON.parse(rohBody);
 }
 
-module.exports = { konfiguriert, erstelleCheckout, verifiziereWebhook };
+module.exports = { KAUFBAR, konfiguriert, preisFuer, erstelleCheckout, verifiziereWebhook };

@@ -38,45 +38,74 @@ async function ladeFirmaServer(id) {
   }
 }
 
-// Setzt den Plan einer Firma (nur Server, via Service-Key -> umgeht RLS).
-// Wird vom Stripe-Webhook gerufen: bezahlt -> "plus", gekündigt -> "basis".
-// Optional wird die Stripe-Kunden-ID mitgespeichert (für Kündigungs-Webhooks).
-async function setzePlanServer(firmaId, plan, stripeKunde) {
-  if (!firmaId || !URL_BASIS || !KEY) return false;
-  const felder = { plan };
-  if (stripeKunde) felder.stripe_kunde = stripeKunde;
+// Traegt das bezahlte Abo beim NUTZER ein (nur Server, via Service-Key).
+//
+// Warum nicht mehr direkt auf firmen.plan:
+//  Der Kunde bezahlt, bevor er seinen Agenten einrichtet — in diesem Moment gibt
+//  es noch keine Firma. Das Abo haengt deshalb am Clerk-Nutzer (Tabelle abos),
+//  und ein Trigger uebertraegt den Plan auf jede Firma, die dieser Nutzer anlegt
+//  (migration-abo.sql). Ein zweiter Trigger schreibt Aenderungen sofort auf
+//  bestehende Firmen durch, damit eine Kuendigung nicht erst wirkt, wenn der
+//  Kunde zufaellig etwas speichert.
+//
+//  Der frueher hier stehende PATCH auf firmen.plan waere heute WIRKUNGSLOS: Der
+//  Trigger setzt plan bei jedem Schreibvorgang aus abos und haette die Zahlung
+//  im selben Atemzug verworfen.
+//
+// prefer: resolution=merge-duplicates macht daraus ein Upsert — der zweite
+// Kauf desselben Nutzers aktualisiert seine Zeile, statt am Primaerschluessel
+// zu scheitern.
+async function setzeAboServer(nutzer, plan, stripeKunde) {
+  if (!nutzer || !URL_BASIS || !KEY) return false;
+  const zeile = { nutzer, plan, aktualisiert: new Date().toISOString() };
+  if (stripeKunde) zeile.stripe_kunde = stripeKunde;
   try {
-    const res = await fetch(
-      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(firmaId),
-      {
-        method: "PATCH",
-        headers: {
-          "content-type": "application/json",
-          apikey: KEY,
-          authorization: "Bearer " + KEY,
-          prefer: "return=minimal",
-        },
-        body: JSON.stringify(felder),
-      }
-    );
+    const res = await fetch(URL_BASIS + "/rest/v1/abos", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: KEY,
+        authorization: "Bearer " + KEY,
+        prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify(zeile),
+    });
     return res.ok;
   } catch {
     return false;
   }
 }
 
-// Findet eine Firma über die gespeicherte Stripe-Kunden-ID (Kündigungs-Webhook
-// liefert nur die customer-ID, nicht die firma_id).
-async function firmaZuStripeKunde(stripeKunde) {
+// Findet den Nutzer ueber die gespeicherte Stripe-Kunden-ID (der Kuendigungs-
+// Webhook liefert nur die customer-ID, wenn die Metadaten fehlen).
+async function nutzerZuStripeKunde(stripeKunde) {
   if (!stripeKunde || !URL_BASIS || !KEY) return null;
   try {
     const res = await fetch(
-      URL_BASIS + "/rest/v1/firmen?stripe_kunde=eq." + encodeURIComponent(stripeKunde) + "&select=id",
+      URL_BASIS + "/rest/v1/abos?stripe_kunde=eq." + encodeURIComponent(stripeKunde) + "&select=nutzer",
       { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
     );
     if (!res.ok) return null;
     const zeilen = await res.json();
-    return Array.isArray(zeilen) && zeilen.length ? zeilen[0].id : null;
+    return Array.isArray(zeilen) && zeilen.length ? zeilen[0].nutzer : null;
+  } catch {
+    return null;
+  }
+}
+
+// Wem gehoert diese Firma? Nur fuer den Rueckwaertsgang im Webhook: Eine
+// Checkout-Session aus der Zeit VOR dieser Umstellung kennt nur firma_id.
+// Ohne diese Bruecke liefe eine solche Zahlung ins Leere.
+async function besitzerVonFirma(firmaId) {
+  if (!firmaId || !URL_BASIS || !KEY) return null;
+  try {
+    const res = await fetch(
+      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(firmaId) + "&select=besitzer",
+      { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
+    );
+    if (!res.ok) return null;
+    const zeilen = await res.json();
+    return Array.isArray(zeilen) && zeilen.length ? zeilen[0].besitzer : null;
   } catch {
     return null;
   }
@@ -111,4 +140,4 @@ async function zaehleAntwort(firmaId) {
   }
 }
 
-module.exports = { ladeFirmaServer, setzePlanServer, firmaZuStripeKunde, zaehleAntwort };
+module.exports = { ladeFirmaServer, setzeAboServer, nutzerZuStripeKunde, besitzerVonFirma, zaehleAntwort };

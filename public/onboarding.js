@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"plus", charakterBilder:null, charakterBeschreibung:"" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"free", charakterBilder:null, charakterBeschreibung:"" };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -37,6 +37,9 @@
     // gelesen. Wer auf der Preisseite "Basis wählen" klickte, landete trotzdem
     // im Plus-Zweig, und wer seine Adresse schon eingetippt hatte, musste sie
     // ein zweites Mal eintippen.
+    // Kommt der Besucher gerade von der Bezahlseite zurueck? Entscheidet
+    // spaeter, ob die Seite einen Preis nennt oder sich bedankt.
+    let istBezahlt = false;
     (function uebernehmeParameter() {
       const p = new URLSearchParams(location.search);
 
@@ -46,10 +49,36 @@
       // gegen Unsinn in der URL; ein manipulierter Wert schaltet nichts frei.
       // "gratis" von der Preisseite hat serverseitig keine Entsprechung und
       // wird auf "basis" abgebildet, den Standard aus firmaLaden.js.
+      // Es gibt ZWEI Wege hierher, und sie bedeuten Verschiedenes:
+      //
+      //   ?plan=free    Vorauswahl. Der Besucher hat auf der Preisseite auf
+      //                 "Gratis anfangen" geklickt. Nichts ist bezahlt.
+      //   ?bezahlt=grow Rueckkehr von Stripe. Die Zahlung ist durch, der
+      //                 Webhook hat das Abo beim Nutzer eingetragen.
+      //
+      // In BEIDEN Faellen ist der Wert hier nur Kosmetik: Was ein Konto
+      // tatsaechlich darf, entscheidet allein die Server-Spalte firmen.plan,
+      // die ein Trigger aus der Tabelle abos setzt (migration-abo.sql). Ein
+      // manipulierter URL-Parameter schaltet nichts frei — er aendert nur, was
+      // auf dieser Seite steht.
+      const PLAENE = ["free", "start", "grow", "scale"];
+      const bezahltRoh = (p.get("bezahlt") || "").toLowerCase();
       const planRoh = (p.get("plan") || "").toLowerCase();
-      if (planRoh === "basis" || planRoh === "gratis") daten.plan = "basis";
-      else if (planRoh === "plus") daten.plan = "plus";
 
+      // Altlasten aus der Zeit vor Free/Start/Grow/Scale: Die Preisseite
+      // verlinkte frueher mit ?plan=gratis, und im Dashboard hiess der bezahlte
+      // Plan "plus". Beide Links koennen noch in Lesezeichen und E-Mails stehen.
+      const ALTE_NAMEN = { gratis: "free", basis: "start", plus: "grow", enterprise: "scale" };
+      const deute = (w) => (PLAENE.includes(w) ? w : ALTE_NAMEN[w] || "");
+
+      const bezahlt = deute(bezahltRoh);
+      if (bezahlt) {
+        daten.plan = bezahlt;
+        istBezahlt = true;
+      } else {
+        const gewaehlt = deute(planRoh);
+        if (gewaehlt) daten.plan = gewaehlt;
+      }
       // Adresse aus der Probefahrt. Nur ins Feld schreiben, nicht scannen: Der
       // Besucher soll sehen, was übernommen wurde, und es korrigieren können.
       const webseite = (p.get("webseite") || "").trim().slice(0, 200);
@@ -1087,31 +1116,75 @@
       e.target.textContent = ""; const kic = document.createElement("span"); Icons.setzeIcon(kic, "check");
       e.target.append("Kopiert ", kic);
     });
-    // Freischalten direkt aus dem Onboarding. Bis hierher war der einzige Weg
-    // zur Bezahlung ein Knopf in den Dashboard-Einstellungen — ohne Preis und
-    // drei Klicks entfernt vom Moment der höchsten Absicht. Dieselbe Function
-    // wie im Dashboard, damit es nur EINEN Checkout-Weg gibt.
-    document.getElementById("obCheckout").addEventListener("click", async (e) => {
-      const btn = e.currentTarget;
-      const status = document.getElementById("speicherStatus");
-      if (!daten.id) { status.style.color = "#e11d48"; status.textContent = "Bitte zuerst den Agenten speichern (Agent testen)."; return; }
-      btn.disabled = true;
-      try {
-        const res = await fetch("/.netlify/functions/abo-checkout", {
-          method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ firmaId: daten.id, plan: "plus", basis: location.origin }),
-        });
-        const d = await res.json().catch(() => ({}));
-        if (res.status === 501) { status.style.color = "#e11d48"; status.textContent = "Bezahlung ist noch nicht eingerichtet."; return; }
-        if (!res.ok || !d.url) throw new Error(d.error || "Checkout fehlgeschlagen");
-        location.href = d.url;
-      } catch (err) {
-        status.style.color = "#e11d48";
-        status.textContent = "Freischaltung konnte nicht gestartet werden: " + err.message;
-      } finally {
-        btn.disabled = false;
+    // Was der Plan hier auf der Seite bedeutet.
+    //
+    // Zwei Stellen sprechen ueber Geld: die Preiszeile im Willkommensschritt und
+    // die Zeile ganz am Ende. Beide standen fest auf "CHF 49" — einem Preis, den
+    // es seit der Umstellung auf Free/Start/Grow/Scale nicht mehr gibt. Und
+    // schlimmer: Wer eben erst bezahlt hatte, bekam am Ende trotzdem einen
+    // Verkaufsknopf zu sehen.
+    //
+    // Die Betraege stehen WOERTLICH so in public/preis.html. Beim Aendern
+    // muessen beide Stellen angefasst werden — es gibt hier bewusst keinen
+    // gemeinsamen Datensatz, weil eine dritte Datei nur eine dritte Stelle
+    // waere, die auseinanderlaufen kann.
+    const PREIS_TEXT = { free: "CHF 0", start: "CHF 29", grow: "CHF 79", scale: "CHF 199" };
+    const PLAN_NAME  = { free: "Free", start: "Start", grow: "Grow", scale: "Scale" };
+
+    function zeigePlanTexte() {
+      const plan = PLAN_NAME[daten.plan] ? daten.plan : "free";
+      const bezahlt = plan !== "free";
+      const name = PLAN_NAME[plan];
+
+      const preiszeile = document.getElementById("preiszeileStart");
+      if (preiszeile) {
+        const b = preiszeile.querySelector("b");
+        const dazu = preiszeile.querySelector(".dazu");
+        if (bezahlt && istBezahlt) {
+          // Der Kunde kommt gerade von der Bezahlseite zurueck. Ihm hier noch
+          // einmal einen Preis zu zeigen, waere der falsche Satz im teuersten
+          // Moment der ganzen Reise.
+          if (b) b.textContent = name + "-Abo aktiv";
+          if (dazu) dazu.textContent = "danke — jetzt richten wir deinen Agenten ein";
+        } else if (bezahlt) {
+          if (b) b.textContent = PREIS_TEXT[plan];
+          if (dazu) dazu.textContent = "pro Monat für " + name + ", jederzeit kündbar";
+        }
+        // free: der Text im HTML stimmt bereits ("ab CHF 0").
       }
-    });
+
+      const fsZeile = document.getElementById("fsText");
+      const knopf = document.getElementById("obCheckout");
+      if (fsZeile && knopf) {
+        // Hier zaehlt NUR istBezahlt, nicht der gewaehlte Plan: Wer ueber
+        // ?plan=grow hereinkommt, hat den Plan angeklickt, aber nichts bezahlt.
+        // Ihm "Grow aktiv" anzuzeigen waere schlicht falsch — er ist bis zur
+        // Zahlung im kostenlosen Plan, und genau das soll hier stehen.
+        if (istBezahlt) {
+          fsZeile.innerHTML = "";
+          const fett = document.createElement("b");
+          fett.textContent = name + " aktiv";
+          const dazu = document.createElement("span");
+          dazu.className = "fs-dazu";
+          dazu.textContent = "Dein Agent läuft im vollen Umfang. Plan " +
+            "ändern kannst du jederzeit im Dashboard.";
+          fsZeile.append(fett, dazu);
+          // Kein Verkaufsknopf mehr an jemanden, der schon bezahlt hat.
+          knopf.hidden = true;
+        } else {
+          knopf.hidden = false;
+        }
+      }
+    }
+
+    // Der Knopf ist seit dem Umbau ein normaler Link auf die Preisseite.
+    //
+    // Vorher startete er von hier aus direkt einen Checkout — fest auf "plus"
+    // und mit der firmaId. Beides passt nicht mehr: Es gibt vier Plaene, und
+    // das Abo haengt am Nutzer, nicht an der Firma. Ausserdem ist es ehrlicher,
+    // den Kunden den Plan bewusst wählen zu lassen, statt ihm ungefragt den
+    // mittleren zu verkaufen.
+    zeigePlanTexte();
 
     document.getElementById("fertig").addEventListener("click", async () => {
       sammle();

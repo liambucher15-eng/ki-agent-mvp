@@ -460,9 +460,14 @@
             <!-- Preis steht bewusst hier, im ersten Schritt: Wer 14 Schritte
                  durchläuft und Charakterbilder generieren lässt, soll vorher
                  wissen, was das kostet. Kein Zähler, keine Guthaben, keine
-                 Nachzahlung — genau das ist der Unterschied zum Markt. -->
-            <div class="preiszeile">
-              <b>CHF 49</b><span class="dazu">pro Monat, jederzeit kündbar</span>
+                 Nachzahlung — genau das ist der Unterschied zum Markt.
+
+                 Der Text wird von onboarding.js gesetzt, weil er vom Plan
+                 abhängt: Wer gerade bezahlt hat, will keinen Preis mehr lesen,
+                 sondern eine Bestätigung. Hier stand bis zuletzt fest "CHF 49" —
+                 ein Preis, den es seit Free/Start/Grow/Scale nicht mehr gibt. -->
+            <div class="preiszeile" id="preiszeileStart">
+              <b>ab CHF 0</b><span class="dazu">gratis starten, jederzeit wechseln</span>
               <span class="kein-zaehler">Ein Preis, keine Nachzahlung</span>
             </div>
             <div class="grow"></div>
@@ -807,8 +812,10 @@
                  im ganzen Ablauf. Bewusst eine Zeile statt einer Box: Schritt
                  13 hat aktuell 0 px Ueberlauf und soll ihn behalten. -->
             <div class="freischalten" id="freischaltenZeile">
-              <div class="fs-text"><b>CHF 49</b> pro Monat, jederzeit kündbar<span class="fs-dazu">Ohne Freischaltung bleibt der Agent im Testbetrieb.</span></div>
-              <button class="btn btn-primar fs-btn" id="obCheckout">Jetzt freischalten</button>
+              <!-- Beschriftung kommt aus onboarding.js: Wer schon bezahlt hat,
+                   darf hier keinen Verkaufsknopf mehr sehen. -->
+              <div class="fs-text" id="fsText"><b>Kostenloser Plan</b><span class="fs-dazu">150 Antworten im Monat. Für mehr einen Plan wählen.</span></div>
+              <a class="btn btn-primar fs-btn" id="obCheckout" href="preis.html">Plan wählen</a>
             </div>
             <p class="mini">Wissen später pflegen: <a class="link" href="dashboard.html">zum Dashboard <span data-icon="arrow-right"></span></a></p>
             <div class="grow"></div>
