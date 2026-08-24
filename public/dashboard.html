@@ -1709,13 +1709,13 @@
     //  Onboarding. Deshalb geht jetzt die NUTZER-ID mit; das Abo haengt am
     //  Konto, und ein Trigger uebertraegt den Plan auf jede Firma, die dieser
     //  Nutzer anlegt (migration-abo.sql).
-    async function starteCheckout(plan) {
+    async function starteCheckout(plan, takt) {
       const nutzer = window.Auth ? await window.Auth.nutzer() : null;
       if (!nutzer) { alert("Bitte zuerst anmelden."); return; }
       try {
         const res = await fetch("/.netlify/functions/abo-checkout", {
           method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ nutzer: nutzer.id, plan, basis: location.origin }),
+          body: JSON.stringify({ nutzer: nutzer.id, plan, takt, basis: location.origin }),
         });
         const d = await res.json().catch(() => ({}));
         if (res.status === 501) { alert("Bezahlung ist noch nicht eingerichtet (Stripe fehlt)."); return; }
@@ -1857,7 +1857,14 @@
         // Welche Plaene kaufbar sind, entscheidet am Ende der Server
         // (abo-checkout.js). Hier nur so viel Pruefung, dass ein Unsinnswert in
         // der URL nicht zu einem Netzaufruf fuehrt.
-        if (["start", "grow", "scale"].includes(kaufen)) { await starteCheckout(kaufen); return; }
+        if (["start", "grow", "scale"].includes(kaufen)) {
+          // Der Abrechnungstakt kommt vom Umschalter der Preisseite mit.
+          // Ohne ihn zahlte ein Kunde, der "jährlich" gewählt und CHF 66
+          // gelesen hat, still CHF 79 im Monat.
+          const takt = new URLSearchParams(location.search).get("takt");
+          await starteCheckout(kaufen, takt === "jahr" ? "jahr" : "monat");
+          return;
+        }
         // free ist nichts zu kaufen — direkt einrichten.
         if (kaufen === "free") { location.href = "onboarding-aura.html?plan=free"; return; }
       }

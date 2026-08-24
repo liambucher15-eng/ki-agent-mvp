@@ -82,6 +82,23 @@
       document.querySelectorAll(".plan-zahl small").forEach((s) => {
         s.textContent = takt === "jahr" ? "pro Monat, jährlich" : "pro Monat";
       });
+
+      // WICHTIG: Auch die Kaufknöpfe umstellen, nicht nur die Zahlen.
+      //
+      // Vorher tauschte der Umschalter ausschliesslich Text. Wer "jährlich"
+      // wählte, las CHF 66 und landete trotzdem im Monatsabo zu CHF 79 — eine
+      // Falschabrechnung, die niemand vor der Belastung bemerkt hätte.
+      //
+      // Free bleibt aussen vor: Dort gibt es nichts abzurechnen, und der Knopf
+      // führt direkt ins Onboarding statt an die Kasse.
+      document.querySelectorAll('a[href*="kaufen="]').forEach((a) => {
+        const url = new URL(a.getAttribute("href"), location.href);
+        if (takt === "jahr") url.searchParams.set("takt", "jahr");
+        else url.searchParams.delete("takt");
+        // slice(1) statt einer Regex: Der fuehrende Schraegstrich aus new URL()
+        // muss weg, damit der Link relativ bleibt wie im Markup.
+        a.setAttribute("href", url.pathname.slice(1) + url.search);
+      });
     };
     knoepfe.forEach((k) => k.addEventListener("click", () => zeige(k.dataset.takt)));
   })();

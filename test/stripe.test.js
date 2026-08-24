@@ -13,6 +13,8 @@ process.env.STRIPE_SECRET_KEY = "sk_test_x";
 process.env.STRIPE_PREIS_START = "price_start_1";
 process.env.STRIPE_PREIS_GROW = "price_grow_2";
 process.env.STRIPE_PREIS_SCALE = "price_scale_3";
+process.env.STRIPE_PREIS_START_JAHR = "price_start_jahr";
+process.env.STRIPE_PREIS_GROW_JAHR = "price_grow_jahr";
 const { verifiziereWebhook, erstelleCheckout, konfiguriert, preisFuer } = require("../netlify/functions/lib/stripe");
 
 function signiere(body, secret, t) {
@@ -62,6 +64,11 @@ const echterFetch = global.fetch;
 afterEach(() => { global.fetch = echterFetch; });
 
 function mockCheckoutAntwort() {
+  // Zuruecksetzen ist wichtig: letzterAufruf haengt an der FUNKTION und
+  // ueberlebt sonst den Test. Ein Test, der prueft "es gab keinen Aufruf",
+  // saehe dann den Aufruf des vorherigen Tests und schluege grundlos fehl
+  // (oder, schlimmer, ginge grundlos durch).
+  mockCheckoutAntwort.letzterAufruf = undefined;
   global.fetch = async (url, opts) => {
     mockCheckoutAntwort.letzterAufruf = { url, opts };
     return { ok: true, json: async () => ({ id: "cs_test", url: "https://checkout.stripe.com/x" }) };
@@ -143,4 +150,46 @@ test("die alten Env-Namen bleiben gueltig (basis -> start, plus -> grow)", () =>
 
 test("konfiguriert: true, sobald mindestens ein Preis + Secret gesetzt sind", () => {
   assert.equal(konfiguriert(), true);
+});
+
+// --- Abrechnungstakt: monatlich oder jaehrlich --------------------------
+//
+// Die Preisseite bietet beides an. Bis zu dieser Gruppe tauschte der
+// Umschalter NUR Text: Wer "jaehrlich" waehlte, las CHF 66 und landete im
+// Monatsabo zu CHF 79. Eine Falschabrechnung, die niemand vor der Belastung
+// bemerkt haette.
+
+test("takt 'jahr' nimmt den Jahrespreis, nicht den Monatspreis", async () => {
+  mockCheckoutAntwort();
+  await erstelleCheckout({ nutzer: "u", plan: "grow", takt: "jahr", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" });
+  const body = new URLSearchParams(mockCheckoutAntwort.letzterAufruf.opts.body);
+  assert.equal(body.get("line_items[0][price]"), "price_grow_jahr");
+  assert.equal(body.get("metadata[takt]"), "jahr");
+});
+
+test("ohne Takt gilt monatlich", async () => {
+  // Der Wert, den die Preisseite beim Laden anzeigt. Ein fehlender Takt darf
+  // nicht versehentlich das guenstigere Jahresabo ausloesen.
+  mockCheckoutAntwort();
+  await erstelleCheckout({ nutzer: "u", plan: "grow", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" });
+  const body = new URLSearchParams(mockCheckoutAntwort.letzterAufruf.opts.body);
+  assert.equal(body.get("line_items[0][price]"), "price_grow_2");
+  assert.equal(body.get("metadata[takt]"), "monat");
+});
+
+test("fehlender Jahrespreis faellt NICHT auf den Monatspreis zurueck", async () => {
+  // Das ist der eigentliche Punkt: Scale hat oben keinen Jahrespreis. Ein
+  // stiller Rueckfall wuerde CHF 199 statt der gelesenen CHF 166 abbuchen.
+  mockCheckoutAntwort();
+  await assert.rejects(
+    () => erstelleCheckout({ nutzer: "u", plan: "scale", takt: "jahr", erfolgUrl: "https://x/ok", abbruchUrl: "https://x/nein" }),
+    /Jahrespreis/i
+  );
+  assert.equal(mockCheckoutAntwort.letzterAufruf, undefined, "kein Stripe-Aufruf");
+});
+
+test("preisFuer trennt die beiden Takte sauber", () => {
+  assert.equal(preisFuer("start", "monat"), "price_start_1");
+  assert.equal(preisFuer("start", "jahr"), "price_start_jahr");
+  assert.notEqual(preisFuer("grow", "monat"), preisFuer("grow", "jahr"));
 });

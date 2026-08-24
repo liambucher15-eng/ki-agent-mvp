@@ -22,14 +22,34 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 // Free steht bewusst NICHT hier: Für einen kostenlosen Plan gibt es nichts zu
 // kassieren, und eine Checkout-Session über CHF 0 wäre eine Zahlungsaufforderung
 // ohne Betrag — verwirrend für den Kunden und sinnlos für uns.
-function preisFuer(plan) {
-  if (plan === "start") return process.env.STRIPE_PREIS_START || process.env.STRIPE_PREIS_BASIS || "";
-  if (plan === "grow")  return process.env.STRIPE_PREIS_GROW  || process.env.STRIPE_PREIS_PLUS || process.env.STRIPE_PREIS_ID || "";
-  if (plan === "scale") return process.env.STRIPE_PREIS_SCALE || "";
+// Monats- und Jahrespreis sind in Stripe ZWEI verschiedene Preise am selben
+// Produkt. Die Preisseite bietet beide an (Umschalter oben), also muss der
+// Takt bis hierher durchgereicht werden.
+//
+// KEIN Rueckfall vom Jahres- auf den Monatspreis: Wer auf der Preisseite
+// "jaehrlich" gewaehlt und CHF 66 gelesen hat, darf nicht stillschweigend CHF 79
+// monatlich belastet werden. Fehlt der Jahrespreis, gibt es einen klaren
+// Fehler statt einer Falschabrechnung.
+function preisFuer(plan, takt) {
+  const jahr = takt === "jahr";
+  if (plan === "start") {
+    return jahr ? (process.env.STRIPE_PREIS_START_JAHR || "")
+                : (process.env.STRIPE_PREIS_START || process.env.STRIPE_PREIS_BASIS || "");
+  }
+  if (plan === "grow") {
+    return jahr ? (process.env.STRIPE_PREIS_GROW_JAHR || "")
+                : (process.env.STRIPE_PREIS_GROW || process.env.STRIPE_PREIS_PLUS || process.env.STRIPE_PREIS_ID || "");
+  }
+  if (plan === "scale") {
+    return jahr ? (process.env.STRIPE_PREIS_SCALE_JAHR || "")
+                : (process.env.STRIPE_PREIS_SCALE || "");
+  }
   return "";
 }
 
-// Die Pläne, die man kaufen kann. free fehlt mit Absicht (siehe oben).
+// Die beiden Abrechnungstakte der Preisseite.
+const TAKTE = ["monat", "jahr"];
+
 const KAUFBAR = ["start", "grow", "scale"];
 
 // "Eingerichtet" heisst: mindestens EIN Preis ist konfiguriert. erstelleCheckout
@@ -37,7 +57,7 @@ const KAUFBAR = ["start", "grow", "scale"];
 // genau DER fehlt — sonst hiesse es "Bezahlung nicht eingerichtet", obwohl nur
 // ein einzelner Plan fehlt.
 function konfiguriert() {
-  return !!SECRET && KAUFBAR.some((p) => !!preisFuer(p));
+  return !!SECRET && KAUFBAR.some((p) => !!preisFuer(p, "monat"));
 }
 
 // Objekt -> flaches x-www-form-urlencoded (Stripe erwartet metadata[nutzer]=... usw.)
@@ -63,20 +83,24 @@ function formCodieren(obj, praefix, ziel) {
 //  Reihenfolge voraus (erst einrichten, dann irgendwann aus dem Dashboard heraus
 //  bezahlen) und machte den Weg "Preisseite -> Konto -> bezahlen -> einrichten"
 //  unmöglich.
-async function erstelleCheckout({ nutzer, plan, erfolgUrl, abbruchUrl }) {
+async function erstelleCheckout({ nutzer, plan, takt, erfolgUrl, abbruchUrl }) {
   if (!nutzer) throw new Error("Ohne Nutzer-ID kann kein Abo zugeordnet werden.");
   if (!KAUFBAR.includes(plan)) throw new Error("Plan '" + plan + "' ist nicht kaufbar.");
-  const preis = preisFuer(plan);
-  if (!preis) throw new Error("Für den Plan '" + plan + "' ist kein Stripe-Preis eingerichtet.");
+  const abrechnung = takt === "jahr" ? "jahr" : "monat";
+  const preis = preisFuer(plan, abrechnung);
+  if (!preis) {
+    throw new Error("Für den Plan '" + plan + "' ist kein " +
+      (abrechnung === "jahr" ? "Jahres" : "Monats") + "preis in Stripe eingerichtet.");
+  }
   const body = formCodieren({
     mode: "subscription",
     "line_items": [{ price: preis, quantity: 1 }],
     success_url: erfolgUrl,
     cancel_url: abbruchUrl,
     client_reference_id: nutzer,
-    metadata: { nutzer, plan },
+    metadata: { nutzer, plan, takt: abrechnung },
     // Auch am Abo hinterlegen -> der Kündigungs-Webhook findet den Nutzer wieder.
-    subscription_data: { metadata: { nutzer, plan } },
+    subscription_data: { metadata: { nutzer, plan, takt: abrechnung } },
   });
   const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -118,4 +142,4 @@ function verifiziereWebhook(rohBody, signaturHeader) {
   return JSON.parse(rohBody);
 }
 
-module.exports = { KAUFBAR, konfiguriert, preisFuer, erstelleCheckout, verifiziereWebhook };
+module.exports = { KAUFBAR, TAKTE, konfiguriert, preisFuer, erstelleCheckout, verifiziereWebhook };

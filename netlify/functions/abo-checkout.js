@@ -7,7 +7,7 @@
 // Bezahlen existiert der Agent noch nicht.
 
 const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
-const { KAUFBAR, konfiguriert, erstelleCheckout } = require("./lib/stripe");
+const { KAUFBAR, TAKTE, konfiguriert, erstelleCheckout } = require("./lib/stripe");
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
@@ -20,8 +20,8 @@ exports.handler = async (event) => {
     return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
   }
 
-  let nutzer, basis, plan;
-  try { ({ nutzer, basis, plan } = JSON.parse(event.body || "{}")); }
+  let nutzer, basis, plan, takt;
+  try { ({ nutzer, basis, plan, takt } = JSON.parse(event.body || "{}")); }
   catch { return json(400, { error: "Ungültiges JSON" }); }
 
   // Die Nutzer-ID kommt aus dem Browser (Clerk-Session). Serverseitig prüfen
@@ -38,6 +38,12 @@ exports.handler = async (event) => {
   if (!KAUFBAR.includes(plan)) {
     return json(400, { error: "Plan '" + plan + "' kann nicht gekauft werden." });
   }
+  // Ohne Angabe monatlich: Das ist der Wert, den die Preisseite beim Laden
+  // anzeigt, also der teurere pro Monat. Ein unbekannter Takt darf nicht
+  // versehentlich das guenstigere Jahresabo ausloesen.
+  if (takt !== undefined && !TAKTE.includes(takt)) {
+    return json(400, { error: "Unbekannter Abrechnungstakt." });
+  }
 
   // Rücksprung-URLs. basis kommt vom Frontend (location.origin).
   const ziel = (typeof basis === "string" && /^https?:\/\//.test(basis)) ? basis : "";
@@ -48,7 +54,7 @@ exports.handler = async (event) => {
   const abbruchUrl = ziel + "/preis.html?abbruch=1";
 
   try {
-    const session = await erstelleCheckout({ nutzer, plan, erfolgUrl, abbruchUrl });
+    const session = await erstelleCheckout({ nutzer, plan, takt, erfolgUrl, abbruchUrl });
     return json(200, { url: session.url });
   } catch (e) {
     return json(502, { error: e.message });
