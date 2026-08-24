@@ -49,16 +49,26 @@
        Der Vergleich nennt bewusst KEINE Konkurrenznamen, sondern nur
        Abrechnungsmodelle. Sachlich richtig und rechtlich unproblematisch. -->
   <!-- ══ PREIS ══════════════════════════════════════════════════════════
-       Aufbau nach Liams Vorlage: Umschalter, drei Karten mit hervorgehobener
+       Aufbau nach Liams Vorlage: Umschalter, vier Karten mit hervorgehobener
        Empfehlung, darunter die Vergleichstabelle.
        WICHTIG zu den Inhalten: Die Funktionszeilen sind KEINE Erfindung,
        sie bilden ab, was die App kann (Scan bis 12 Seiten aus
        webseiteScannen.js, Figur mit fuenf Zustaenden aus
        charakter-background.js, Posteingang aus dem Lead-Werkzeug in
        chat.js, proaktiver Hinweis aus seiten-hinweis.js).
-       Serverseitig durchgesetzt ist bisher aber nur EINE Grenze, naemlich
-       die eigene Figur (firma.js: plan !== "plus" -> bilder werden
-       entfernt). Alle uebrigen Unterschiede brauchen noch Code. -->
+
+       Serverseitig DURCHGESETZT ist bisher nur eine einzige Zeile dieser
+       Tabelle: die Antworten pro Monat (netlify/functions/lib/verbrauch.js,
+       gezaehlt in chat.js). Alle uebrigen Unterschiede — Posteingang,
+       Produktvorschlaege, Dokumente — stehen hier als Versprechen, ohne
+       dass der Server sie erzwingt. Wer den Plan wechselt, merkt heute also
+       nur beim Kontingent einen Unterschied.
+
+       Frueher stand hier, die eigene Figur sei die durchgesetzte Grenze
+       (firma.js: plan !== "plus" -> bilder werden entfernt). Diese Sperre
+       gibt es nicht mehr: Die Figur ist in JEDEM Plan dabei, auch im
+       kostenlosen — so steht es unten auch in der Antwort auf die Frage
+       nach dem Unterschied zwischen den Plaenen. -->
   <section id="preis">
     <div class="bahn">
       <!-- Umschalter. Er tauscht nur die angezeigten Zahlen; die Jahrespreise

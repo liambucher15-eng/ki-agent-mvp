@@ -83,19 +83,45 @@ const Store = (function () {
       return ergebnis;
     },
 
-    // Eine Firma speichern/aktualisieren. Der Besitzer wird über die anonyme
-    // Sitzung gesetzt (auth.uid()); die RLS-Regel lässt nur den Besitzer schreiben.
+    // Eine Firma speichern/aktualisieren. Der Besitzer ist die Clerk-User-ID;
+    // die RLS-Regel laesst nur den Besitzer schreiben.
     //
-    // WICHTIG (Milestone 5): Die plan-Spalte wird hier NICHT geschrieben — der Plan
-    // ist Server-Wahrheit und wird ausschliesslich vom Stripe-Webhook gesetzt
-    // (Column-Level-REVOKE in migration-m5.sql). Neue Firmen bekommen per DB-Default
-    // "basis"; ein Re-Save lässt einen bezahlten Plan unangetastet.
+    // Die plan-Spalte wird hier NICHT geschrieben, und der Browser koennte es
+    // auch gar nicht: Ein Trigger auf firmen setzt plan bei jedem
+    // Schreibvorgang aus der Tabelle abos, in der allein der Stripe-Webhook
+    // schreibt (migration-abo.sql). Was ein Konto darf, entscheidet damit der
+    // Server — egal was von hier aus mitgeschickt wird.
+    //
+    // Neue Firmen ohne bezahltes Abo bekommen "free" (DB-Default seit
+    // migration-plaene.sql; frueher war es "basis", also ein BEZAHLTER Plan).
     async saveFirma(firma) {
       if (sb) {
         // Besitzer = Clerk-User-ID (passt zur RLS-Policy auth.jwt()->>'sub').
         const nutzer = window.Auth ? await window.Auth.nutzer() : null;
-        const eintrag = { id: firma.id, name: firma.name, daten: firma };
-        if (nutzer) eintrag.besitzer = nutzer.id;
+
+        // OHNE Besitzer NICHT speichern.
+        //
+        // Vorher wurde die Zeile in diesem Fall stillschweigend ohne besitzer
+        // angelegt. Das ist der teuerste stille Fehler im ganzen Ablauf:
+        //   * meineFirmen() filtert nach besitzer — der Agent taucht im
+        //     Dashboard NIE auf, obwohl er in der Datenbank steht.
+        //   * Der Plan-Trigger holt den Plan ueber besitzer aus abos
+        //     (migration-abo.sql). Ohne Besitzer gibt es immer "free" — ein
+        //     Kunde haette also bezahlt und bekaeme den kostenlosen Plan.
+        //
+        // Das passiert nicht nur, wenn jemand den Konto-Schritt umgeht: Das
+        // Einrichten dauert mit Bildgenerierung leicht zehn Minuten, und eine
+        // abgelaufene Clerk-Sitzung sieht hier genauso aus.
+        //
+        // Lieber eine sichtbare Fehlermeldung als ein Agent, den niemand
+        // wiederfindet. In der Datenbank stehen aus der Zeit davor drei solche
+        // herrenlosen Zeilen.
+        if (!nutzer) {
+          throw new Error("Nicht angemeldet — bitte die Seite neu laden und erneut anmelden. " +
+            "Deine Eingaben bleiben erhalten.");
+        }
+
+        const eintrag = { id: firma.id, name: firma.name, daten: firma, besitzer: nutzer.id };
         const { error } = await sb.from("firmen").upsert(eintrag, { onConflict: "id" });
         if (error) throw new Error(error.message);
         return firma;
