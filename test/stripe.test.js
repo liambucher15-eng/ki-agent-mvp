@@ -193,3 +193,28 @@ test("preisFuer trennt die beiden Takte sauber", () => {
   assert.equal(preisFuer("start", "jahr"), "price_start_jahr");
   assert.notEqual(preisFuer("grow", "monat"), preisFuer("grow", "jahr"));
 });
+
+test("STRIPE_API_KEY gilt genauso wie STRIPE_SECRET_KEY", () => {
+  // Die Stripe-CLI und der Stripe-MCP-Server nutzen STRIPE_API_KEY. Genau
+  // daran lag die Bezahlung zuletzt still: Der Schluessel war eingetragen,
+  // nur unter dem anderen Namen, und der Checkout antwortete "noch nicht
+  // eingerichtet" — ohne einen Hinweis, woran es liegt.
+  //
+  // Das Modul liest SECRET beim Laden, deshalb hier ein frischer Require aus
+  // dem Cache heraus statt einer Aenderung an process.env im laufenden Modul.
+  const pfad = require.resolve("../netlify/functions/lib/stripe");
+  const gemerkt = { secret: process.env.STRIPE_SECRET_KEY, api: process.env.STRIPE_API_KEY };
+  try {
+    delete process.env.STRIPE_SECRET_KEY;
+    process.env.STRIPE_API_KEY = "sk_test_ueber_den_anderen_namen";
+    delete require.cache[pfad];
+    const frisch = require("../netlify/functions/lib/stripe");
+    assert.equal(frisch.konfiguriert(), true, "Schluessel unter STRIPE_API_KEY muss zaehlen");
+  } finally {
+    process.env.STRIPE_SECRET_KEY = gemerkt.secret;
+    if (gemerkt.api === undefined) delete process.env.STRIPE_API_KEY;
+    else process.env.STRIPE_API_KEY = gemerkt.api;
+    delete require.cache[pfad];
+    require("../netlify/functions/lib/stripe");
+  }
+});

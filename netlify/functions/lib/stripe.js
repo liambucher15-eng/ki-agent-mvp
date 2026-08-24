@@ -16,7 +16,12 @@
 
 const crypto = require("crypto");
 
-const SECRET = process.env.STRIPE_SECRET_KEY || "";
+// STRIPE_API_KEY ist der Name, den die Stripe-CLI und der Stripe-MCP-Server
+// verwenden. Beide Namen zu akzeptieren erspart eine doppelt gepflegte
+// Zeile in der .env — und genau daran lag die Bezahlung zuletzt still:
+// Der Schluessel war eingetragen, nur unter dem anderen Namen, und der
+// Checkout antwortete "noch nicht eingerichtet".
+const SECRET = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || "";
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 // Free steht bewusst NICHT hier: Für einen kostenlosen Plan gibt es nichts zu
