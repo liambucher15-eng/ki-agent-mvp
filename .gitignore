@@ -3,3 +3,6 @@ node_modules
 .netlify
 .claude
 deno.lock
+
+# Protokoll von 'stripe listen' (enthaelt das lokale Webhook-Secret)
+stripe-listen.log
