@@ -779,6 +779,12 @@
                    welchen Plan der Kunde will, entscheidet er, nicht wir. -->
               <a class="btn klein" id="aboCheckout" href="preis.html">Plan wählen</a>
             </div>
+            <!-- Ein Abo deckt genau EINEN Agenten (migration-abo-ein-agent.sql).
+                 Wer mehrere angelegt hat, muss sehen koennen, welcher davon
+                 bezahlt ist — und ihn wechseln koennen. Ohne das saesse ein
+                 Kunde fest, der seinen Agenten neu aufgesetzt hat. -->
+            <p class="sub" id="aboFirmaZeile" hidden style="margin-top:0.5rem;"></p>
+            <button class="btn klein" id="aboUmhaengen" hidden style="margin-top:0.4rem;"></button>
           </div>
         </article>
         <article class="karte sp7">
@@ -1570,6 +1576,60 @@
       $("planBox").hidden = false;
       $("planName").textContent = name;
       $("planAnzeigen").hidden = false;
+
+      // Ein Abo deckt genau EINEN Agenten. Wer mehrere hat, muss sehen,
+      // welcher davon bezahlt ist — und ihn wechseln koennen.
+      await zeigeAboFirma(plan);
+    }
+
+    // Welcher Agent traegt das Abo, und laesst er sich wechseln?
+    //
+    // Der Fall, der ohne diese Anzeige weh taete: Ein Kunde setzt seinen
+    // Agenten neu auf (neue Firma), der alte traegt aber weiter das Abo. Der
+    // neue laeuft dann auf free, ohne dass irgendwo stuende warum.
+    async function zeigeAboFirma(plan) {
+      const zeile = $("aboFirmaZeile");
+      const knopf = $("aboUmhaengen");
+      if (!zeile || !knopf) return;
+      zeile.hidden = true; knopf.hidden = true;
+
+      // Im kostenlosen Plan gibt es nichts zu binden.
+      if (plan === "free") return;
+
+      const abo = await Store.abo();
+      if (!abo || !abo.firma) return;
+
+      const traeger = firmen.find((f) => f.id === abo.firma);
+      const traegerName = traeger ? (traeger.name || traeger.id) : abo.firma;
+
+      if (abo.firma === firma.id) {
+        // Nur erwaehnen, wenn es ueberhaupt etwas zu verwechseln gibt.
+        if (firmen.length > 1) {
+          zeile.textContent = "Dieser Agent ist der bezahlte. Deine übrigen Agenten laufen im kostenlosen Plan.";
+          zeile.hidden = false;
+        }
+        return;
+      }
+
+      zeile.textContent = "Das Abo gehört derzeit zu " + traegerName +
+        ". Dieser Agent hier läuft im kostenlosen Plan.";
+      zeile.hidden = false;
+      knopf.textContent = "Abo auf diesen Agenten übertragen";
+      knopf.hidden = false;
+      knopf.onclick = async () => {
+        knopf.disabled = true;
+        try {
+          const antwort = await Store.aboAufFirma(firma.id);
+          if (antwort !== "ok") throw new Error(antwort);
+          // Neu laden: Der Wechsel betrifft ZWEI Agenten (dieser bekommt den
+          // Plan, der andere verliert ihn). Alles Einzelne nachzuziehen waere
+          // mehr Code als ein sauberer Neuaufbau.
+          location.reload();
+        } catch (e) {
+          knopf.disabled = false;
+          alert("Konnte das Abo nicht übertragen: " + e.message);
+        }
+      };
     }
 
     // ---------- Verbrauchs-Banner ----------

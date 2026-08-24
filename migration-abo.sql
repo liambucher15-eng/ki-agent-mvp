@@ -113,7 +113,7 @@ on conflict (nutzer) do nothing;
 --   select tgname from pg_trigger where tgrelid = 'firmen'::regclass and not tgisinternal;
 
 -- ===============================================================
--- OFFENE ENTSCHEIDUNG: Ein Abo deckt derzeit ALLE Firmen eines Nutzers.
+-- ENTSCHIEDEN (siehe migration-abo-ein-agent.sql): Ein Abo = ein Agent.
 --
 -- Beim Ausführen dieser Migration ist das sichtbar geworden: Ein Konto besitzt
 -- fünf Firmen. Zwei davon standen auf grow, drei auf free. Da der Plan jetzt am
@@ -129,16 +129,9 @@ on conflict (nutzer) do nothing;
 -- Damit unterläuft die Mehrfach-Firma genau den Kostenschutz, der in
 -- netlify/functions/lib/verbrauch.js aufgebaut wurde.
 --
--- Bewusst NICHT hier entschieden, weil es eine Preisfrage ist und keine
--- technische: public/preis.html sagt heute nirgends, wie viele Agenten ein Plan
--- umfasst. Sie durchgehend im Singular zu formulieren ("deine Webseite") ist
--- kein Vertrag.
---
--- Der technische Weg, falls die Antwort "ein Abo = ein Agent" lautet:
---   alter table abos add column firma text;
---   Der Trigger oben vergibt den Plan dann nur an abos.firma und bindet beim
---   ersten Firmen-Insert nach der Zahlung (firma is null -> new.id eintragen).
---   Jede weitere Firma desselben Nutzers bliebe auf free.
---   Dazu gehört ein Knopf im Dashboard, um das Abo umzuhängen — sonst sitzt
---   ein Kunde fest, der seinen Agenten neu aufsetzt.
+-- Liam hat entschieden: ein Abo deckt genau EINEN Agenten. Umgesetzt in
+-- migration-abo-ein-agent.sql (Spalte abos.firma, drei Trigger und die
+-- Function abo_firma_setzen zum Umhängen). Die Preisseite weist es seither
+-- in der Vergleichstabelle und in den häufigen Fragen aus — es ist eine
+-- Vertragsbedingung und darf nicht nur im Code stehen.
 -- ===============================================================

@@ -129,6 +129,43 @@ const Store = (function () {
       const a = _alleLokal(); a[firma.id] = firma; _speichernLokal(a); return firma;
     },
 
+    // Das Abo des angemeldeten Nutzers: { plan, firma } oder null.
+    //
+    // "firma" ist die EINE Firma, die das Abo traegt. Ein Abo deckt genau
+    // einen Agenten (migration-abo-ein-agent.sql) — alle weiteren Agenten
+    // desselben Kontos laufen auf free.
+    //
+    // Lesen ist ungefaehrlich: Die RLS-Policy auf abos gibt nur die eigene
+    // Zeile heraus. Schreiben geht hier gar nicht, dafuer gibt es aboAufFirma().
+    async abo() {
+      if (!sb) return null;
+      const nutzer = window.Auth ? await window.Auth.nutzer() : null;
+      if (!nutzer) return null;
+      try {
+        const { data, error } = await sb.from("abos")
+          .select("plan,firma").eq("nutzer", nutzer.id).maybeSingle();
+        if (error) { console.warn("abo:", error.message); return null; }
+        return data;
+      } catch (e) { console.warn("abo:", e.message); return null; }
+    },
+
+    // Das Abo auf einen anderen eigenen Agenten umhaengen.
+    //
+    // Geht ueber die Datenbank-Function abo_firma_setzen, nicht ueber einen
+    // eigenen Endpunkt: Dort prueft Postgres die Identitaet selbst aus dem
+    // Clerk-JWT (auth.jwt() ->> 'sub'). Ein Server-Endpunkt muesste die
+    // Nutzer-ID vom Browser entgegennehmen, und wer eine fremde mitschickt,
+    // koennte damit ein fremdes Abo auf eine tote Firma umhaengen.
+    //
+    // Gibt "ok" zurueck oder einen Grund ("gehoert dir nicht", "kein abo",
+    // "nicht angemeldet").
+    async aboAufFirma(firmaId) {
+      if (!sb) return "keine datenbank";
+      const { data, error } = await sb.rpc("abo_firma_setzen", { firma_id: firmaId });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+
     // Alle Firmen des eingeloggten Nutzers (fürs Dashboard).
     async meineFirmen() {
       if (sb) {

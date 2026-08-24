@@ -179,6 +179,12 @@
             </tr>
           </thead>
           <tbody>
+            <!-- Diese Zeile ist keine Kosmetik, sondern eine Bedingung: Ein Abo
+                 deckt genau EINEN Agenten (durchgesetzt von einem Trigger,
+                 migration-abo-ein-agent.sql). Stuende sie nicht hier, koennte
+                 ein Kunde zu Recht annehmen, er duerfe mit einem Abo mehrere
+                 Webseiten bespielen. -->
+            <tr><th scope="row">Agent auf deiner Webseite</th><td><span class="wert">1</span></td><td><span class="wert">1</span></td><td><span class="wert">1</span></td><td><span class="wert">1</span></td></tr>
             <tr><th scope="row">Eigene Figur mit fünf Zuständen</th><td data-ja></td><td data-ja></td><td data-ja></td><td data-ja></td></tr>
             <tr><th scope="row">Agent auf allen Unterseiten, auch mobil</th><td data-ja></td><td data-ja></td><td data-ja></td><td data-ja></td></tr>
             <tr><th scope="row">Wissen aus dem Webseiten-Scan</th><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td><td><span class="wert">12 Seiten</span></td></tr>
@@ -254,6 +260,10 @@
         <h2 style="margin-inline:auto">Was Betriebe vorher wissen wollen.</h2>
       </div>
       <div class="faq auftritt" style="--verzug: 80ms">
+        <details>
+          <summary>Gilt ein Abo für mehrere Webseiten?</summary>
+          <p class="antwort">Nein, ein Abo gehört zu einem Agenten auf einer Webseite. Du kannst in deinem Konto mehrere Agenten anlegen — etwa zum Ausprobieren — die laufen dann im kostenlosen Plan. Welcher Agent der bezahlte ist, steht in deinem Dashboard, und du kannst ihn dort jederzeit wechseln, ohne uns zu schreiben. Für eine zweite Webseite brauchst du ein zweites Abo.</p>
+        </details>
         <details>
           <summary>Was ist der Unterschied zwischen Start und Grow?</summary>
           <p class="antwort">Was der Agent für dich TUT. Start antwortet und nimmt Anfragen in deinen Posteingang auf. Grow bringt dir darüber hinaus Kunden: Er empfiehlt passende Produkte im Gespräch, meldet sich von sich aus auf passenden Unterseiten und liest seine Antworten auf Wunsch vor. Die eigene Figur mit fünf Zuständen ist in JEDEM Plan dabei, auch im kostenlosen — sie ist das Herz des Produkts und gehört nicht hinter eine Schranke.</p>
