@@ -6,3 +6,6 @@ deno.lock
 
 # Protokoll von 'stripe listen' (enthaelt das lokale Webhook-Secret)
 stripe-listen.log
+
+# Bilder der 3D-Stil-Probe (scripts/probe-3d-charakter.js)
+.probe-3d/
