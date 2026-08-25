@@ -1579,7 +1579,7 @@
 
       // Ein Abo deckt genau EINEN Agenten. Wer mehrere hat, muss sehen,
       // welcher davon bezahlt ist — und ihn wechseln koennen.
-      await zeigeAboFirma(plan);
+      await zeigeAboFirma();
     }
 
     // Welcher Agent traegt das Abo, und laesst er sich wechseln?
@@ -1587,17 +1587,20 @@
     // Der Fall, der ohne diese Anzeige weh taete: Ein Kunde setzt seinen
     // Agenten neu auf (neue Firma), der alte traegt aber weiter das Abo. Der
     // neue laeuft dann auf free, ohne dass irgendwo stuende warum.
-    async function zeigeAboFirma(plan) {
+    async function zeigeAboFirma() {
       const zeile = $("aboFirmaZeile");
       const knopf = $("aboUmhaengen");
       if (!zeile || !knopf) return;
       zeile.hidden = true; knopf.hidden = true;
 
-      // Im kostenlosen Plan gibt es nichts zu binden.
-      if (plan === "free") return;
-
+      // Entscheidend ist der Plan des KONTOS, nicht der des offenen Agenten.
+      //
+      // Hier stand zuerst ein Ausstieg bei plan === "free" — also beim Plan
+      // der gerade geoeffneten Firma. Das war genau verkehrt: Der Hinweis
+      // wird bei dem Agenten gebraucht, der NICHT bezahlt ist. Er erschien
+      // damit nie dann, wenn er noetig war.
       const abo = await Store.abo();
-      if (!abo || !abo.firma) return;
+      if (!abo || abo.plan === "free" || !abo.firma) return;
 
       const traeger = firmen.find((f) => f.id === abo.firma);
       const traegerName = traeger ? (traeger.name || traeger.id) : abo.firma;
