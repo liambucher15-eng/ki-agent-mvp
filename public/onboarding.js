@@ -28,6 +28,11 @@
     // Identitäts-Schritt (Name Pflicht + Namensvorschlag), ID-basiert, damit
     // spätere Seiten-Splits die Schrittnummern verschieben können, ohne zu brechen.
     const IDENTITAET_STEP = [...linksSchritte].findIndex((el) => el.id === "schrittIdentitaet");
+    // Der Konto-Schritt, ueber sein Clerk-Fenster erkannt statt ueber die
+    // Nummer: Ein eingeschobener Schritt wuerde die Nummer verschieben.
+    const KONTO_STEP = [...linksSchritte].findIndex((el) => el.querySelector("#clerkKonto"));
+    // Wer schon angemeldet ist, soll den Konto-Schritt gar nicht erst sehen.
+    let kontoSchonErledigt = false;
     let aktuell = 0;
 
     // Übergabe aus der Startseite und der Preisseite.
@@ -235,9 +240,16 @@
           return;
         }
       }
-      sammle(); zeige(aktuell+1, 1);
+      sammle();
+      let ziel = aktuell + 1;
+      if (ziel === KONTO_STEP && kontoSchonErledigt) ziel++;
+      zeige(ziel, 1);
     }));
-    document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => zeige(aktuell-1, -1)));
+    document.querySelectorAll("[data-prev]").forEach(b => b.addEventListener("click", () => {
+      let ziel = aktuell - 1;
+      if (ziel === KONTO_STEP && kontoSchonErledigt) ziel--;
+      zeige(ziel, -1);
+    }));
 
     // Konto (Pflicht): läuft über CLERK. Clerk zeigt sein eigenes Registrier-/
     // Login-Fenster inklusive E-Mail-Bestätigung — erst wenn der Code aus der Mail
@@ -264,14 +276,31 @@
       const schon = await window.Auth.nutzer();
       if (schon) {
         daten.email = schon.email || daten.email;
+        kontoSchonErledigt = true;
+        status.style.color = "var(--gruen)";
+        Icons.praefix(status, "check", "Angemeldet als " + (schon.email || "dein Konto") + ".");
+
+        // Nach einer Zahlung NICHT wegspringen.
+        //
+        // Der Kunde kommt gerade von der Bezahlseite zurueck. Sprang die Seite
+        // hier automatisch weiter, landete er unvermittelt beim Webseiten-Scan
+        // — ohne den Willkommensschritt und ohne die Bestaetigung, dass sein
+        // Abo aktiv ist. Der teuerste Moment der ganzen Reise war damit stumm.
+        //
+        // Er bleibt jetzt vorne und startet selbst. Den Konto-Schritt
+        // ueberspringt er dabei trotzdem (kontoSchonErledigt oben).
+        if (istBezahlt) return;
+
+        // Sonst wie bisher automatisch weiter, kein Klick noetig. Das greift
+        // vor allem direkt nach Clerks Google-Login: Der laeuft ueber einen
+        // vollen Seiten-Redirect, die Seite laedt komplett neu und "aktuell"
+        // steht wieder auf 0 (Willkommen).
         if (aktuell === 0) springeOhneAnimation(1);
         sammle();
         setTimeout(() => zeige(aktuell + 1, 1), 500);
-        status.style.color = "var(--gruen)";
-        Icons.praefix(status, "check", "Angemeldet als " + (schon.email || "dein Konto") + ".");
         return;
       }
-      // Clerks Registrier-Fenster einhängen und auf die Anmeldung warten.
+      // Clerks Registrier-Fenster einhaengen und auf die Anmeldung warten.
       await window.Auth.zeigeRegistrierung(document.getElementById("clerkKonto"));
       window.Auth.beiAnmeldung(async () => {
         const u = await window.Auth.nutzer();
