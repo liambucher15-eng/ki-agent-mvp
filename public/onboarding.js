@@ -1336,6 +1336,15 @@
     // ENTFERNEN: diesen kompletten Block bis "ENDE DEV-SKIP" löschen.
     // Keine andere Datei ist betroffen, nichts weiter anzupassen.
     (function devSkipEinrichten() {
+      // NUR LOKAL. Auf einer echten Domain waere das ein Knopf, mit dem jeder
+      // Kunde die teuren Schritte ueberspringt und am Ende einen Agenten mit
+      // Platzhalter-Daten haette — sichtbar unten rechts auf jedem Schritt,
+      // waehrend er gerade zehn Minuten in die Einrichtung steckt.
+      //
+      // Vorher gab es diese Bedingung nicht; der Knopf war ueberall sichtbar.
+      // Aufgefallen beim Durchspielen des ganzen Ablaufs.
+      if (!["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) return;
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.textContent = "⏭ Skip (Test)";
