@@ -180,6 +180,10 @@
     function springeOhneAnimation(n) {
       linksSchritte.forEach((el, i) => { el.hidden = i !== n; });
       rechtsSchritte.forEach((el, i) => { el.hidden = i !== n; });
+      // Sichtbarkeit zuruecksetzen: zeige() laesst ausgeblendete Schritte auf
+      // autoAlpha 0 zurueck. Ohne diese Zeile bliebe ein Sprungziel, das schon
+      // einmal sichtbar war, unsichtbar — die Seite waere leer.
+      gsap.set([linksSchritte[n], rechtsSchritte[n]], { autoAlpha: 1, x: 0 });
       aktuell = n; updateProgress(); syncSzenenVideos(n);
     }
 
@@ -291,13 +295,18 @@
         // ueberspringt er dabei trotzdem (kontoSchonErledigt oben).
         if (istBezahlt) return;
 
-        // Sonst wie bisher automatisch weiter, kein Klick noetig. Das greift
-        // vor allem direkt nach Clerks Google-Login: Der laeuft ueber einen
-        // vollen Seiten-Redirect, die Seite laedt komplett neu und "aktuell"
-        // steht wieder auf 0 (Willkommen).
-        if (aktuell === 0) springeOhneAnimation(1);
+        // Sonst automatisch weiter, kein Klick noetig. Das greift vor allem
+        // direkt nach Clerks Google-Login: Der laeuft ueber einen vollen
+        // Seiten-Redirect, die Seite laedt komplett neu und "aktuell" steht
+        // wieder auf 0 (Willkommen).
+        //
+        // Ziel ist der Schritt HINTER dem Konto. Frueher wurde erst auf den
+        // Konto-Schritt gesprungen und nach 500 ms weiteranimiert — dabei
+        // blitzte ein Anmeldeformular auf, obwohl der Nutzer laengst
+        // angemeldet ist. Ein halbe Sekunde langer Widerspruch zu dem, was
+        // die Statuszeile daneben sagt ("Angemeldet als ...").
+        springeOhneAnimation(KONTO_STEP + 1);
         sammle();
-        setTimeout(() => zeige(aktuell + 1, 1), 500);
         return;
       }
       // Clerks Registrier-Fenster einhaengen und auf die Anmeldung warten.
