@@ -251,14 +251,24 @@ test("unbekannter Preis stuft NICHT um", async () => {
 });
 
 test("eine gekuendigte, aber noch laufende Subscription bleibt bezahlt", async () => {
-  // Kuendigung im Portal setzt cancel_at_period_end, der Status bleibt
-  // "active". Der Kunde hat die Periode bezahlt und muss sie bekommen —
-  // ihn hier schon auf free zu setzen waere Leistungsentzug.
+  // Kuendigung im Portal beendet das Abo NICHT sofort: Der Status bleibt
+  // "active", nur das Ende steht fest. Der Kunde hat die Periode bezahlt und
+  // muss sie bekommen — ihn hier schon auf free zu setzen waere
+  // Leistungsentzug.
+  //
+  // Die Nutzlast bildet ab, was Stripe in der API-Version 2026-07-29
+  // tatsaechlich schickt: cancel_at mit dem Zeitpunkt, waehrend
+  // cancel_at_period_end auf false steht. Im Browser nachgesehen, nachdem
+  // eine echte Kuendigung im Portal genau so ankam.
+  //
+  // Der Code liest keins der beiden Felder, sondern nur den Status. Genau
+  // deshalb hat ihn der Feldwechsel nicht getroffen.
   const f = fangeAb();
   try {
     await webhook.handler(webhookAnfrage({
       type: "customer.subscription.updated",
-      data: { object: { id: "sub_3", status: "active", cancel_at_period_end: true, customer: "cus_3",
+      data: { object: { id: "sub_3", status: "active", cancel_at_period_end: false,
+        cancel_at: 1819324800, cancellation_details: { reason: "cancellation_requested" }, customer: "cus_3",
         metadata: { nutzer: "user_abc" },
         items: { data: [{ price: { id: "price_grow_test" } }] } } },
     }));
