@@ -207,3 +207,69 @@ test("Webhook: gefaelschte Signatur schaltet nichts frei", async () => {
     assert.equal(f.aboSchreibvorgaenge().length, 0);
   } finally { f.ende(); }
 });
+
+// ── Abo verwalten: wechseln und kuendigen ────────────────────────────────
+//
+// Bis hierher gab es beides nicht. "Plan aendern" fuehrte auf die Preisseite
+// und von dort in einen NEUEN Checkout — der Kunde haette ein zweites Abo
+// bekommen und doppelt gezahlt. Kuendigen ging gar nicht, obwohl preis.html
+// an vier Stellen "monatlich kuendbar" verspricht.
+
+const { planFuerPreis } = require("../netlify/functions/lib/stripe");
+
+test("Planwechsel wird am PREIS erkannt, nicht an den Metadaten", async () => {
+  // Der Kern: Stripe tauscht im Kundenportal nur den Preis der laufenden
+  // Subscription aus. Die Metadaten bleiben die des urspruenglichen Kaufs —
+  // wer von Start auf Grow wechselt, haette dort weiterhin "start" stehen.
+  const f = fangeAb();
+  try {
+    await webhook.handler(webhookAnfrage({
+      type: "customer.subscription.updated",
+      data: { object: { id: "sub_1", status: "active", customer: "cus_1",
+        metadata: { nutzer: "user_abc", plan: "start" },   // veraltet!
+        items: { data: [{ price: { id: "price_grow_test" } }] } } },
+    }));
+    const zeile = f.aboSchreibvorgaenge()[0];
+    assert.equal(zeile.plan, "grow", "der Preis entscheidet, nicht die Metadaten");
+  } finally { f.ende(); }
+});
+
+test("unbekannter Preis stuft NICHT um", async () => {
+  // Ein fremder Preis heisst, dass die Konfiguration nicht stimmt. Den Kunden
+  // deswegen hoch- oder herunterzustufen waere in beide Richtungen falsch.
+  const f = fangeAb();
+  try {
+    const a = await webhook.handler(webhookAnfrage({
+      type: "customer.subscription.updated",
+      data: { object: { id: "sub_2", status: "active", customer: "cus_2",
+        metadata: { nutzer: "user_abc" },
+        items: { data: [{ price: { id: "price_voellig_fremd" } }] } } },
+    }));
+    assert.equal(a.statusCode, 200);
+    assert.equal(f.aboSchreibvorgaenge().length, 0);
+  } finally { f.ende(); }
+});
+
+test("eine gekuendigte, aber noch laufende Subscription bleibt bezahlt", async () => {
+  // Kuendigung im Portal setzt cancel_at_period_end, der Status bleibt
+  // "active". Der Kunde hat die Periode bezahlt und muss sie bekommen —
+  // ihn hier schon auf free zu setzen waere Leistungsentzug.
+  const f = fangeAb();
+  try {
+    await webhook.handler(webhookAnfrage({
+      type: "customer.subscription.updated",
+      data: { object: { id: "sub_3", status: "active", cancel_at_period_end: true, customer: "cus_3",
+        metadata: { nutzer: "user_abc" },
+        items: { data: [{ price: { id: "price_grow_test" } }] } } },
+    }));
+    const zeile = f.aboSchreibvorgaenge()[0];
+    assert.equal(zeile.plan, "grow", "bis zum Periodenende bleibt der Plan");
+  } finally { f.ende(); }
+});
+
+test("planFuerPreis kennt beide Takte und raet nicht", () => {
+  assert.equal(planFuerPreis("price_grow_test"), "grow");
+  assert.equal(planFuerPreis("price_start_test"), "start");
+  assert.equal(planFuerPreis("price_erfunden"), null);
+  assert.equal(planFuerPreis(undefined), null);
+});

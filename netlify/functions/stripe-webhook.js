@@ -11,7 +11,7 @@
 // jemand gefälschte "bezahlt"-Events schicken. Der ROH-Body ist dafür nötig —
 // deshalb NICHT JSON.parse vor der Prüfung.
 
-const { KAUFBAR, verifiziereWebhook } = require("./lib/stripe");
+const { KAUFBAR, planFuerPreis, verifiziereWebhook } = require("./lib/stripe");
 const { setzeAboServer, nutzerZuStripeKunde, besitzerVonFirma } = require("./lib/firmaLaden");
 
 // Wem gehört dieses Event? Bevorzugt der Nutzer aus den Metadaten. Der
@@ -49,6 +49,30 @@ exports.handler = async (event) => {
         console.error("stripe-webhook: Zahlung ohne zuordenbaren Nutzer", obj.id);
       } else if (!KAUFBAR.includes(plan)) {
         console.error("stripe-webhook: unbekannter Plan '" + plan + "' für", nutzer);
+      } else {
+        await setzeAboServer(nutzer, plan, obj.customer || null);
+      }
+    } else if (stripeEvent.type === "customer.subscription.updated" &&
+               (obj.status === "active" || obj.status === "trialing")) {
+      // Plan gewechselt — im Kundenportal (Upgrade/Downgrade).
+      //
+      // Der Plan kommt aus dem PREIS, nicht aus den Metadaten: Stripe tauscht
+      // beim Wechsel nur den Preis der laufenden Subscription aus, die
+      // Metadaten bleiben die des urspruenglichen Kaufs. Wer von Start auf
+      // Grow wechselt, haette dort weiterhin "start" stehen.
+      //
+      // Ohne diesen Zweig kam ein Wechsel nie in der Datenbank an: Der Kunde
+      // zahlte ab sofort Grow und bekam weiterhin Start.
+      const nutzer = (await findeNutzer(obj)) || (await nutzerZuStripeKunde(obj.customer));
+      const preisId = obj.items?.data?.[0]?.price?.id;
+      const plan = planFuerPreis(preisId);
+      if (!nutzer) {
+        console.error("stripe-webhook: Planwechsel ohne zuordenbaren Nutzer", obj.id);
+      } else if (!plan) {
+        // Nicht raten: Ein unbekannter Preis heisst, dass die Konfiguration
+        // nicht stimmt. Den Kunden deswegen hoch- oder herunterzustufen waere
+        // in beide Richtungen falsch.
+        console.error("stripe-webhook: unbekannter Preis " + preisId + " fuer " + nutzer);
       } else {
         await setzeAboServer(nutzer, plan, obj.customer || null);
       }

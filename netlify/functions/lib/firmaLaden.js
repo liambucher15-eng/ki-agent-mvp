@@ -76,6 +76,27 @@ async function setzeAboServer(nutzer, plan, stripeKunde) {
   }
 }
 
+// Das Abo eines Nutzers lesen (Server, Service-Key).
+//
+// Gebraucht vom Kundenportal: Die Stripe-Kunden-ID darf NICHT aus dem Browser
+// kommen — wer eine fremde mitschickte, saehe sonst fremde Rechnungen und
+// Zahlungsmittel. Der Browser sagt nur, wer er ist; die Zuordnung macht die
+// Datenbank.
+async function holeAboServer(nutzer) {
+  if (!nutzer || !URL_BASIS || !KEY) return null;
+  try {
+    const res = await fetch(
+      URL_BASIS + "/rest/v1/abos?nutzer=eq." + encodeURIComponent(nutzer) + "&select=plan,firma,stripe_kunde",
+      { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
+    );
+    if (!res.ok) return null;
+    const zeilen = await res.json();
+    return Array.isArray(zeilen) && zeilen.length ? zeilen[0] : null;
+  } catch {
+    return null;
+  }
+}
+
 // Findet den Nutzer ueber die gespeicherte Stripe-Kunden-ID (der Kuendigungs-
 // Webhook liefert nur die customer-ID, wenn die Metadaten fehlen).
 async function nutzerZuStripeKunde(stripeKunde) {
@@ -140,4 +161,4 @@ async function zaehleAntwort(firmaId) {
   }
 }
 
-module.exports = { ladeFirmaServer, setzeAboServer, nutzerZuStripeKunde, besitzerVonFirma, zaehleAntwort };
+module.exports = { ladeFirmaServer, setzeAboServer, holeAboServer, nutzerZuStripeKunde, besitzerVonFirma, zaehleAntwort };

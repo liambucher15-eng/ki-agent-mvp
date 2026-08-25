@@ -777,7 +777,7 @@
                    und startete sofort einen Checkout — beides falsch, seit es
                    Free/Start/Grow/Scale gibt: CHF 49 ist kein Preis mehr, und
                    welchen Plan der Kunde will, entscheidet er, nicht wir. -->
-              <a class="btn klein" id="aboCheckout" href="preis.html">Plan wählen</a>
+              <button class="btn klein" id="aboCheckout">Plan wählen</button>
             </div>
             <!-- Ein Abo deckt genau EINEN Agenten (migration-abo-ein-agent.sql).
                  Wer mehrere angelegt hat, muss sehen koennen, welcher davon
@@ -1570,8 +1570,18 @@
       // Der Knopf bleibt IMMER sichtbar und heisst je nach Lage anders. Frueher
       // verschwand er, sobald ein Abo lief — wer wechseln oder kuendigen
       // wollte, fand von hier aus keinen Weg mehr.
+      // Zwei verschiedene Wege, die leicht zu verwechseln sind:
+      //   kein Abo  -> Preisseite, dort waehlt der Kunde und kauft.
+      //   Abo laeuft -> Stripes Kundenportal. Dort wird der Preis der
+      //                 LAUFENDEN Subscription getauscht.
+      //
+      // Frueher fuehrten beide Faelle auf die Preisseite. Ein Kunde mit
+      // laufendem Abo haette dort ein ZWEITES gekauft und doppelt gezahlt.
       const knopf = $("aboCheckout");
-      if (knopf) knopf.textContent = bezahlt ? "Plan ändern" : "Plan wählen";
+      if (knopf) {
+        knopf.textContent = bezahlt ? "Abo verwalten" : "Plan wählen";
+        knopf.onclick = bezahlt ? oeffnePortal : () => { location.href = "preis.html"; };
+      }
 
       $("planBox").hidden = false;
       $("planName").textContent = name;
@@ -1702,6 +1712,32 @@
 
     $("planAnzeigen").addEventListener("click", () => zeigeAnsicht("einstellungen"));
     $("agentBearbeiten").addEventListener("click", () => zeigeAnsicht("persona"));
+    // Abo verwalten: Plan wechseln, kuendigen, Zahlungsmittel, Rechnungen.
+    //
+    // Alles auf Stripes eigener Seite. Ein Nachbau waere die Sorte Code, bei
+    // der ein Fehler direkt Geld kostet — anteilige Verrechnung, Fristen,
+    // Steuern. Die Stripe-Kunden-ID schickt der Browser NICHT mit; die
+    // schlaegt der Server in der abos-Tabelle nach.
+    async function oeffnePortal() {
+      const knopf = $("aboCheckout");
+      const nutzer = window.Auth ? await window.Auth.nutzer() : null;
+      if (!nutzer) { alert("Bitte zuerst anmelden."); return; }
+      if (knopf) knopf.disabled = true;
+      try {
+        const res = await fetch("/.netlify/functions/abo-portal", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ nutzer: nutzer.id, basis: location.origin }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok || !d.url) throw new Error(d.error || "Portal nicht erreichbar");
+        location.href = d.url;
+      } catch (e) {
+        alert("Abo-Verwaltung konnte nicht geöffnet werden: " + e.message);
+      } finally {
+        if (knopf) knopf.disabled = false;
+      }
+    }
+
     // Bezahlen. Wird NUR aus dem ?kaufen=-Zweig unten gerufen, also von der
     // Preisseite aus — dort und nur dort waehlt der Kunde seinen Plan.
     //

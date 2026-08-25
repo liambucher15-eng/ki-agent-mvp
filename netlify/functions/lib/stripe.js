@@ -57,6 +57,26 @@ const TAKTE = ["monat", "jahr"];
 
 const KAUFBAR = ["start", "grow", "scale"];
 
+// Umkehrung: Zu welchem Plan gehoert diese Stripe-Preis-ID?
+//
+// Gebraucht fuer Wechsel im Kundenportal. Dort tauscht Stripe den Preis der
+// laufenden Subscription aus und schickt "customer.subscription.updated" — die
+// METADATEN bleiben dabei die des urspruenglichen Kaufs. Wer von Start auf Grow
+// wechselt, haette also weiterhin "plan: start" darin stehen. Verlaesslich ist
+// allein der Preis.
+//
+// Gibt null zurueck, wenn die ID zu keinem konfigurierten Preis passt. Daraus
+// darf KEIN Plan geraten werden: Ein fremder Preis heisst, dass die
+// Konfiguration nicht stimmt — nicht, dass der Kunde Plan X hat.
+function planFuerPreis(preisId) {
+  if (!preisId) return null;
+  for (const plan of KAUFBAR) {
+    if (preisFuer(plan, "monat") === preisId) return plan;
+    if (preisFuer(plan, "jahr") === preisId) return plan;
+  }
+  return null;
+}
+
 // "Eingerichtet" heisst: mindestens EIN Preis ist konfiguriert. erstelleCheckout
 // prüft den konkret gewählten Preis selbst und wirft einen klaren Fehler, falls
 // genau DER fehlt — sonst hiesse es "Bezahlung nicht eingerichtet", obwohl nur
@@ -120,6 +140,33 @@ async function erstelleCheckout({ nutzer, plan, takt, erfolgUrl, abbruchUrl }) {
   return daten; // { id, url, ... }
 }
 
+// Oeffnet Stripes Kundenportal fuer einen bestehenden Kunden.
+//
+// Warum nicht selbst bauen: Upgrade, Downgrade, Kuendigung, Zahlungsmittel und
+// Rechnungen sind alles Faelle mit anteiliger Verrechnung, Steuerlogik und
+// Fristen. Stripe macht das seit Jahren richtig; eine eigene Nachbildung waere
+// die Sorte Code, bei der ein Fehler direkt Geld kostet — auf einer der
+// beiden Seiten.
+//
+// Wichtig: Der Kunde wechselt hier den Plan seiner LAUFENDEN Subscription.
+// Bisher fuehrte "Plan aendern" im Dashboard auf die Preisseite und von dort in
+// einen neuen Checkout — das haette ein ZWEITES Abo erzeugt, und der Kunde
+// haette doppelt gezahlt, ohne dass ihn jemand gewarnt haette.
+async function erstellePortal({ kunde, rueckkehrUrl }) {
+  if (!kunde) throw new Error("Ohne Stripe-Kunden-ID gibt es kein Portal.");
+  const res = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer " + SECRET,
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: formCodieren({ customer: kunde, return_url: rueckkehrUrl }),
+  });
+  const daten = await res.json();
+  if (!res.ok) throw new Error(daten.error?.message || "Stripe-Fehler");
+  return daten; // { id, url, ... }
+}
+
 // Prüft die Stripe-Webhook-Signatur (Header "stripe-signature": "t=...,v1=...").
 // Verhindert gefälschte Webhook-Aufrufe (jemand könnte sich sonst gratis Grow setzen).
 // Gibt das geparste Event zurück oder wirft.
@@ -147,4 +194,4 @@ function verifiziereWebhook(rohBody, signaturHeader) {
   return JSON.parse(rohBody);
 }
 
-module.exports = { KAUFBAR, TAKTE, konfiguriert, preisFuer, erstelleCheckout, verifiziereWebhook };
+module.exports = { KAUFBAR, TAKTE, konfiguriert, preisFuer, planFuerPreis, erstelleCheckout, erstellePortal, verifiziereWebhook };
