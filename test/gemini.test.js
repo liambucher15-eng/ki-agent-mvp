@@ -174,3 +174,52 @@ test("die Ausdrücke bleiben in beiden Stilen dieselben vier", () => {
   assert.deepEqual(Object.keys(a.prompts), Object.keys(b.prompts));
   assert.deepEqual(Object.keys(a.edits), Object.keys(b.edits));
 });
+
+// ----------------------------------------------------------------------
+// Chroma-Key nach Figurfarbe
+//
+// Der Schluessel darf der Figur nicht aehneln, sonst frisst das Freistellen
+// Teile von ihr weg. An einem rosa Donut vor Magenta gemessen: Der Rand war
+// sichtbar angefressen, die Aermchen halb verschwunden. Mit gruenem Schluessel
+// war dasselbe Motiv makellos.
+//
+// Vorher stand Magenta fest, zusammen mit der Bitte, die Figur moege kein
+// Magenta enthalten. Nur waehlt der Kunde seine Hauptfarbe selbst.
+const { keyFuer, hintergrundAnweisung } = require("../netlify/functions/lib/baueCharakterPrompt");
+
+test("eine rosa Figur bekommt den gruenen Schluessel", () => {
+  assert.equal(keyFuer("#e879a0").name, "Chroma-Key-Grün");
+  assert.equal(keyFuer("#ff00ff").name, "Chroma-Key-Grün");
+});
+
+test("eine gruene Figur bekommt Magenta", () => {
+  assert.equal(keyFuer("#3f7d5a").name, "Magenta/Pink");
+  assert.equal(keyFuer("#00b140").name, "Magenta/Pink");
+});
+
+test("ohne brauchbare Farbangabe bleibt es bei Magenta", () => {
+  // Der bisherige Standard. Ein fehlender oder kaputter Wert darf den Ablauf
+  // nicht in eine andere Farbwelt kippen.
+  for (const wert of [undefined, null, "", "blau", "#12", "#gggggg"]) {
+    assert.equal(keyFuer(wert).name, "Magenta/Pink", "Wert " + JSON.stringify(wert));
+  }
+});
+
+test("die gewaehlte Schluesselfarbe steht auch in den Edit-Anweisungen", () => {
+  // Die vier Ausdruecke entstehen als Edits aus dem Basisbild. Stuende dort
+  // eine andere Hintergrundfarbe, kaeme das Basisbild vor Gruen und die
+  // Ausdruecke vor Magenta — das Freistellen muesste bei jedem Bild neu raten.
+  const { stil, edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung: "Donut", farbe: "#e879a0" });
+  assert.match(stil, /Grün/);
+  for (const [zustand, anweisung] of Object.entries(edits)) {
+    assert.match(anweisung, /Grün/, "Edit " + zustand);
+  }
+  assert.match(mundOffenEdit, /Grün/);
+});
+
+test("die Figur wird ausdruecklich von der Schluesselfarbe ferngehalten", () => {
+  assert.match(hintergrundAnweisung("#e879a0"), /Die Figur selbst darf kein Chroma-Key-Grün enthalten/);
+  // includes statt Regex: Der Schraegstrich in "Magenta/Pink" muesste sonst
+  // maskiert werden, und genau daran ist diese Zeile schon einmal gescheitert.
+  assert.ok(hintergrundAnweisung("#3f7d5a").includes("darf kein Magenta/Pink enthalten"));
+});

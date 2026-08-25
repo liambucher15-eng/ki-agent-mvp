@@ -20,10 +20,41 @@ const AUSDRUECKE = {
 // (gemessen z.B. (219,41,133) statt (255,0,255)), darum liest freistellen()
 // die tatsächliche Farbe aus dem Bild selbst statt sie fest anzunehmen —
 // wichtig ist hier nur, dass die Fläche EINHEITLICH ist, nicht der exakte Ton.
-const HINTERGRUND_ANWEISUNG =
-  "Hintergrund: eine EINZIGE, VOLLSTÄNDIG FLACHE Fläche in kräftigem Magenta/Pink, " +
-  "absolut gleichmässig, keine Farbverläufe, kein Schatten, keine Textur, kein Muster. " +
-  "Die Figur selbst darf kein Magenta/Pink enthalten.";
+// Welche Chroma-Key-Farbe passt zu dieser Figur?
+//
+// Der Schluessel darf der Figur nicht aehneln, sonst frisst das Freistellen
+// Teile von ihr weg. Gemessen an einem rosa Donut vor Magenta: Der Rand war
+// sichtbar angefressen, weil Figur und Hintergrund farblich zusammenfielen.
+//
+// Bisher stand Magenta fest, zusammen mit der Bitte, die Figur moege kein
+// Magenta enthalten. Nur waehlt der Kunde seine Hauptfarbe selbst — und wer
+// Rosa waehlt, bekam ein zerfressenes Bild.
+//
+// Zwei Schluessel, und es gewinnt der, der weiter von der Hauptfarbe entfernt
+// ist. Magenta und Gruen liegen im Farbkreis weit auseinander; eine Figurfarbe
+// kann kaum beiden nahe sein.
+const KEYS = {
+  magenta: { name: "Magenta/Pink", rgb: [219, 41, 133] },
+  gruen: { name: "Chroma-Key-Grün", rgb: [0, 177, 64] },
+};
+function keyFuer(farbe) {
+  const hex = String(farbe || "").replace("#", "");
+  if (hex.length !== 6) return KEYS.magenta;   // ohne brauchbare Angabe: wie bisher
+  const rgb = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  if (rgb.some((v) => Number.isNaN(v))) return KEYS.magenta;
+  const abstand = (k) => Math.sqrt(
+    (rgb[0] - k.rgb[0]) ** 2 + (rgb[1] - k.rgb[1]) ** 2 + (rgb[2] - k.rgb[2]) ** 2);
+  return abstand(KEYS.gruen) > abstand(KEYS.magenta) ? KEYS.gruen : KEYS.magenta;
+}
+function hintergrundAnweisung(farbe) {
+  const k = keyFuer(farbe);
+  return "Hintergrund: eine EINZIGE, VOLLSTÄNDIG FLACHE Fläche in kräftigem " + k.name + ", " +
+    "absolut gleichmässig, keine Farbverläufe, kein Schatten, keine Textur, kein Muster. " +
+    "Die Figur selbst darf kein " + k.name + " enthalten.";
+}
+
+// Rückwärtskompatibel: charakter-background.js importiert die Konstante.
+const HINTERGRUND_ANWEISUNG = hintergrundAnweisung();
 
 // Die beiden Stilrichtungen, die das Freistellen tragen.
 //
@@ -65,7 +96,7 @@ function baueCharakterPrompt({ beschreibung, farbe, stilWahl } = {}) {
   const gewaehlt = stilFuer(stilWahl);
   const stil =
     `Ein einfaches, freundliches Maskottchen. ${beschreibung || "rundes, sympathisches Wesen"}. ` +
-    `${STILE[gewaehlt].text} ${HINTERGRUND_ANWEISUNG} ` +
+    `${STILE[gewaehlt].text} ${hintergrundAnweisung(farbe)} ` +
     `Hauptfarbe der Figur ${farbe || "#3f7d5a"}. Immer dieselbe Figur, gleiche Proportionen, zentriert.`;
 
   const prompts = {};
@@ -75,7 +106,7 @@ function baueCharakterPrompt({ beschreibung, farbe, stilWahl } = {}) {
     edits[zustand] =
       `Exakt dieselbe Figur, derselbe Stil, dieselben Farben und Proportionen — ` +
       `ändere NUR den Gesichtsausdruck/die Pose zu: ${ausdruck}. ` +
-      `${HINTERGRUND_ANWEISUNG}`;
+      `${hintergrundAnweisung(farbe)}`;
   }
   // Klappmaul-Frame (Milestone 12): Mund-offen-Variante des Sprechen-Bilds.
   // Wird beim Sprechen mit dem (geschlossenen) Sprechen-Bild abgewechselt, damit
@@ -83,7 +114,7 @@ function baueCharakterPrompt({ beschreibung, farbe, stilWahl } = {}) {
   const mundOffenEdit =
     `Exakt dieselbe Figur, derselbe Stil, dieselben Farben, dieselbe Pose — ` +
     `öffne NUR den Mund weit, als würde die Figur gerade einen Vokal sprechen. ` +
-    `Sonst absolut identisch. ${HINTERGRUND_ANWEISUNG}`;
+    `Sonst absolut identisch. ${hintergrundAnweisung(farbe)}`;
   return { stil, prompts, edits, mundOffenEdit, stilWahl: gewaehlt };
 }
 
@@ -106,4 +137,4 @@ function baueRichtungen({ beschreibung, farbe, stilWahl } = {}) {
   }));
 }
 
-module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN, STILE, stilFuer, HINTERGRUND_ANWEISUNG };
+module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN, STILE, stilFuer, KEYS, keyFuer, hintergrundAnweisung, HINTERGRUND_ANWEISUNG };
