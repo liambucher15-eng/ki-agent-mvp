@@ -182,3 +182,85 @@ test("freistellen: weicher Übergang nahe der Schwelle (keine harte Treppenstufe
   const alpha = info.pixel[(4 * 8 + 4) * 4 + 3];
   assert.ok(alpha > 0 && alpha < 255, "Alpha im Grenzbereich sollte weder 0 noch 255 sein, war: " + alpha);
 });
+
+// ── Weiche Bilder: 3D-Renders ────────────────────────────────────────────
+//
+// Das Fluten braucht eine harte Kante als Barriere — genau die liefert die
+// Stilvorgabe "flacher Cartoon-Stil, klare Konturen". Ein 3D-Render hat keine:
+// weiche Übergänge, Lichtverlauf im Hintergrund, Bodenschatten. Gemessen an
+// einer echten Gemini-Brotfigur blieben davon 0,1 bis 1,2 Prozent deckende
+// Fläche übrig statt der rund 22 Prozent, die ein flaches Bild erreicht — nur
+// Augen, Mund und Gliedmassen.
+//
+// Deshalb der Rückfall auf den Farbton. Diese Tests halten fest, dass er
+// greift, WANN er greift, und dass der flache Fall unberührt bleibt.
+
+function deckenderAnteil(pngBase64) {
+  const { width, height, pixel } = dekodierePng(pngBase64);
+  let deckend = 0;
+  for (let i = 3; i < pixel.length; i += 4) if (pixel[i] > 215) deckend++;
+  return deckend / (width * height);
+}
+
+// Ein 3D-Render im Kleinen: Hintergrund mit Lichtverlauf von oben nach unten,
+// Figur mit weichem Rand statt harter Kontur.
+function weichesBild(w, h) {
+  return baueRgbPng(w, h, (x, y) => {
+    const dx = x - w / 2, dy = y - h / 2;
+    const r = Math.sqrt(dx * dx + dy * dy);
+    const rand = h * 0.3;
+    if (r < rand) {
+      // Figur: helles Beige, zum Rand hin weich auslaufend (kein harter Sprung).
+      const t = Math.min(1, (rand - r) / (h * 0.06));
+      const hg = hintergrundBei(y, h);
+      return [
+        Math.round(230 * t + hg[0] * (1 - t)),
+        Math.round(220 * t + hg[1] * (1 - t)),
+        Math.round(190 * t + hg[2] * (1 - t)),
+      ];
+    }
+    return hintergrundBei(y, h);
+  });
+}
+// Magenta, das nach unten heller wird — gemessener Effekt bei echten Renders
+// (RGB-Abstand oben zu unten: 59 bis 97).
+function hintergrundBei(y, h) {
+  const t = y / h;
+  return [Math.round(150 + 55 * t), Math.round(44 + 58 * t), Math.round(72 + 60 * t)];
+}
+
+test("weiches Bild mit Lichtverlauf wird trotzdem freigestellt", () => {
+  const anteil = deckenderAnteil(freistellen(weichesBild(160, 160)));
+  // Die Figur belegt rund 28 Prozent der Fläche. Ohne den Rückfall blieb hier
+  // fast nichts übrig.
+  assert.ok(anteil > 0.10, "zu wenig übrig geblieben: " + (anteil * 100).toFixed(1) + " %");
+  assert.ok(anteil < 0.60, "zu wenig entfernt: " + (anteil * 100).toFixed(1) + " %");
+});
+
+test("der flache Fall bleibt unberührt", () => {
+  // Harte Kante, einheitlicher Hintergrund: Hier greift das Fluten, und der
+  // Rückfall darf gar nicht erst rechnen.
+  const flach = baueRgbPng(160, 160, (x, y) => {
+    const dx = x - 80, dy = y - 80;
+    return dx * dx + dy * dy < 45 * 45 ? [60, 120, 80] : [219, 41, 133];
+  });
+  const anteil = deckenderAnteil(freistellen(flach));
+  assert.ok(anteil > 0.18 && anteil < 0.30, "Kreis sollte rund 25 % belegen, war " + (anteil * 100).toFixed(1) + " %");
+});
+
+test("dunkle Bildteile werden nie zum Hintergrund gezählt", () => {
+  // Der Stil lebt von dünnen schwarzen Armen und Beinen. Bei sehr dunklen
+  // Pixeln ist der Farbton mathematisch instabil (kleine Zahl im Nenner der
+  // Normierung) — ohne Schutzregel zerfrass das Verfahren genau sie.
+  const mitStrich = baueRgbPng(160, 160, (x, y) => {
+    if (x > 76 && x < 84 && y > 40 && y < 120) return [20, 20, 22];  // dünner schwarzer Strich
+    return hintergrundBei(y, 160);
+  });
+  const { width, height, pixel } = dekodierePng(freistellen(mitStrich));
+  let strichSichtbar = 0;
+  for (let y = 45; y < 115; y++) {
+    const i = (y * width + 80) * 4;
+    if (pixel[i + 3] > 215) strichSichtbar++;
+  }
+  assert.ok(strichSichtbar > 60, "der schwarze Strich wurde weggefressen (" + strichSichtbar + " von 70 Zeilen)");
+});

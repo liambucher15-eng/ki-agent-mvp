@@ -46,6 +46,40 @@ const SICHERHEITS_DECKE = 150;
 // falsch raten), aber ausgewertet über den ganzen Rand statt über 4 Punkte.
 const MIN_ANTEIL = 0.25;
 
+// ----------------------------------------------------------------------
+// RUECKFALL FUER WEICHE BILDER (3D-Renders)
+//
+// Das Fluten oben braucht eine harte Kante als Barriere. Genau die liefert die
+// Stilvorgabe in baueCharakterPrompt.js ("flacher Cartoon-Stil, klare
+// Konturen") — sie ist keine Geschmacksfrage, sondern Voraussetzung.
+//
+// Ein 3D-Render hat weiche Uebergaenge und keine solche Barriere: Die Flut
+// wandert Schritt fuer Schritt in die Figur hinein. Gemessen an einer
+// Brotfigur im Claymorphism-Stil blieben 0,1 bis 1,2 Prozent deckende Flaeche
+// uebrig (nur Augen, Mund, Gliedmassen) statt der rund 22 Prozent, die ein
+// flaches Bild erreicht.
+//
+// Deshalb: Sieht das Ergebnis der Flut unplausibel aus, wird ein zweites
+// Verfahren versucht — Abstand in der CHROMINANZ statt in RGB. Dazu wird
+// jede Farbe auf ihre eigene Summe normiert. Ein Lichtverlauf aendert die
+// Helligkeit, nicht den Farbton; nach der Normierung ist er also weg. Genau
+// daran scheitert das Fluten, und genau das ueberspringt dieser Weg.
+//
+// Der flache Fall bleibt unberuehrt: Liefert die Flut ein plausibles Ergebnis,
+// wird hier gar nichts gerechnet.
+const PLAUSIBEL_MIN = 0.04;   // unter 4 % deckend: die Figur wurde weggefressen
+const PLAUSIBEL_MAX = 0.75;   // ueber 75 % deckend: es wurde kaum etwas entfernt
+const CHROMA_SCHWELLE = 0.085; // an Magenta UND Gruen gemessen
+// Unter dieser Gesamthelligkeit (r+g+b) ist der Farbton nicht mehr aussagekraeftig:
+// Bei sehr dunklen Pixeln steht in der Normierung eine kleine Zahl im Nenner, und
+// schon ein Rauschwert kippt das Ergebnis. Ein Chroma-Key ist dagegen IMMER
+// kraeftig (gemessen: Summe 300 bis 450). Dunkle Pixel gehoeren also zur Figur.
+//
+// Ohne diese Regel zerfrass das Verfahren genau die duennen schwarzen Arme und
+// Beine, die diesen Maskottchen-Stil ausmachen.
+const DUNKEL_GRENZE = 190;
+// ----------------------------------------------------------------------
+
 function distanz(r, g, b, r2, g2, b2) {
   const dr = r - r2, dg = g - g2, db = b - b2;
   return Math.sqrt(dr * dr + dg * dg + db * db);
@@ -125,6 +159,90 @@ function flutHintergrund(pixel, width, height, randpixel, ziel) {
   return erreicht;
 }
 
+// Farbe auf ihre eigene Summe normieren: uebrig bleibt der Farbton ohne
+// Helligkeit. Zwei Pixel derselben Wandfarbe, einer im Licht und einer im
+// Schatten, liefern hier fast denselben Wert.
+function chrominanz(r, g, b) {
+  const s = r + g + b || 1;
+  return [r / s, g / s, b / s];
+}
+
+// Zweites Verfahren, siehe Erklaerung bei den Konstanten oben. Setzt Alpha
+// direkt anhand des Farbtons, ohne zu fluten — deshalb braucht es keine
+// Kante und stoert sich nicht an einem Lichtverlauf.
+//
+// Ausserdem wird der Farbstich entfernt, den der Hintergrund auf die Figur
+// wirft ("Color Spill"): Steht die Figur vor Gruen, faerbt das reflektierte
+// Licht sie gruenlich. Der im Hintergrund staerkste Kanal wird deshalb auf
+// das Mittel der beiden anderen begrenzt — aber nur dort, wo er wirklich
+// heraussticht, damit eine absichtlich gruene Figur gruen bleibt.
+function freistellenNachFarbton(width, height, pixel, ziel) {
+  const zielChroma = chrominanz(ziel.r, ziel.g, ziel.b);
+  // Welcher Kanal traegt den Hintergrund? Nur der verursacht Spill.
+  const kanal = zielChroma.indexOf(Math.max(...zielChroma));
+  let deckend = 0;
+
+  // Abstand je Pixel einmal ausrechnen.
+  const abstand = new Float32Array(width * height);
+  for (let idx = 0; idx < width * height; idx++) {
+    const i = idx * 4;
+    const c = chrominanz(pixel[i], pixel[i + 1], pixel[i + 2]);
+    abstand[idx] = Math.sqrt(
+      (c[0] - zielChroma[0]) ** 2 + (c[1] - zielChroma[1]) ** 2 + (c[2] - zielChroma[2]) ** 2);
+  }
+
+  // Vom Rand her ausbreiten statt jedes Pixel einzeln zu beurteilen.
+  //
+  // Ohne diesen Schritt blieb unten ein rosa Schleier stehen: Dort ist der
+  // Hintergrund am hellsten und sein Farbton am unsichersten, also lag er
+  // knapp ueber der Schwelle. Umgekehrt koennte eine hintergrundaehnliche
+  // Stelle MITTEN in der Figur sonst ein Loch bekommen.
+  //
+  // Der Unterschied zum Fluten oben: Dort entscheidet der Sprung zum Nachbarn
+  // (braucht eine harte Kante), hier der Farbton zum Hintergrund (braucht
+  // keine). Deshalb kommt dieses Verfahren mit weichen 3D-Uebergaengen zurecht.
+  const hintergrund = new Uint8Array(width * height);
+  const stapel = [];
+  const grosszuegig = CHROMA_SCHWELLE * 1.8;
+  for (let x = 0; x < width; x++) { stapel.push(x, (height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { stapel.push(y * width, y * width + width - 1); }
+  while (stapel.length) {
+    const idx = stapel.pop();
+    if (hintergrund[idx] || abstand[idx] >= grosszuegig) continue;
+    const hi = idx * 4;
+    if (pixel[hi] + pixel[hi + 1] + pixel[hi + 2] < DUNKEL_GRENZE) continue; // zu dunkel fuer Hintergrund
+    hintergrund[idx] = 1;
+    const x = idx % width, y = (idx / width) | 0;
+    if (x > 0) stapel.push(idx - 1);
+    if (x < width - 1) stapel.push(idx + 1);
+    if (y > 0) stapel.push(idx - width);
+    if (y < height - 1) stapel.push(idx + width);
+  }
+
+  for (let idx = 0; idx < width * height; idx++) {
+    const i = idx * 4;
+    const d = abstand[idx];
+
+    // Dunkles gehoert zur Figur, egal was der Farbton sagt.
+    if (pixel[i] + pixel[i + 1] + pixel[i + 2] < DUNKEL_GRENZE) { pixel[i + 3] = 255; deckend++; continue; }
+    if (hintergrund[idx]) { pixel[i + 3] = 0; continue; }
+    if (d < CHROMA_SCHWELLE) { pixel[i + 3] = 0; continue; }
+
+    // Weicher Rand wie beim Fluten: knapp ausserhalb der Schwelle sanft
+    // ausblenden, sonst saehe die Kontur treppig aus.
+    const weich = CHROMA_SCHWELLE * 1.6;
+    pixel[i + 3] = d >= weich ? 255 : Math.round(((d - CHROMA_SCHWELLE) / (weich - CHROMA_SCHWELLE)) * 255);
+
+    // Spill: den Hintergrundkanal auf das Mittel der anderen beiden kappen.
+    const andere = [0, 1, 2].filter((k) => k !== kanal);
+    const mittel = (pixel[i + andere[0]] + pixel[i + andere[1]]) / 2;
+    if (pixel[i + kanal] > mittel) pixel[i + kanal] = Math.round(mittel + (pixel[i + kanal] - mittel) * 0.35);
+
+    if (pixel[i + 3] > 215) deckend++;
+  }
+  return deckend / (width * height);
+}
+
 // Bild (Base64-PNG) -> Bild (Base64-PNG) mit echtem Alphakanal. Wirft NUR noch
 // bei wirklich kaputten Bilddaten (siehe pngAlpha.js) — für "kein einheitlicher
 // Hintergrund erkennbar" gibt es jetzt keinen Fehlerpfad mehr, siehe oben.
@@ -134,7 +252,12 @@ function freistellen(bildBase64) {
   const ziel = schaetzeHintergrundfarbe(pixel, randpixel);
   if (!ziel) return kodierePng({ width, height, pixel }); // kein erkennbarer Hintergrund -> unverändert
 
+  // Der Originalzustand wird gebraucht, falls das Fluten daneben liegt und das
+  // zweite Verfahren auf unveraenderten Farben rechnen muss.
+  const unberuehrt = Buffer.from(pixel);
+
   const erreicht = flutHintergrund(pixel, width, height, randpixel, ziel);
+  let deckend = 0;
   for (let idx = 0; idx < width * height; idx++) {
     const i = idx * 4;
     if (erreicht[idx]) { pixel[i + 3] = 0; continue; }
@@ -155,10 +278,29 @@ function freistellen(bildBase64) {
       const d = distanz(pixel[i], pixel[i + 1], pixel[i + 2], pixel[ni], pixel[ni + 1], pixel[ni + 2]);
       if (d < naeheste) naeheste = d;
     }
-    if (naeheste === Infinity) continue; // kein freigestellter Nachbar -> eindeutig Figur, unverändert
+    if (naeheste === Infinity) { deckend++; continue; } // kein freigestellter Nachbar -> eindeutig Figur
     if (naeheste <= SCHRITT_SCHWELLE) pixel[i + 3] = 0;
-    else if (naeheste >= SCHRITT_SCHWELLE + WEICHZONE) pixel[i + 3] = 255;
-    else pixel[i + 3] = Math.round(((naeheste - SCHRITT_SCHWELLE) / WEICHZONE) * 255);
+    else if (naeheste >= SCHRITT_SCHWELLE + WEICHZONE) { pixel[i + 3] = 255; deckend++; }
+    else {
+      pixel[i + 3] = Math.round(((naeheste - SCHRITT_SCHWELLE) / WEICHZONE) * 255);
+      if (pixel[i + 3] > 215) deckend++;
+    }
+  }
+
+  // Plausibel? Dann ist alles gut und wir sind fertig — der flache Fall
+  // laeuft hier durch, ohne dass unten irgendetwas gerechnet wird.
+  const anteil = deckend / (width * height);
+  if (anteil >= PLAUSIBEL_MIN && anteil <= PLAUSIBEL_MAX) {
+    return kodierePng({ width, height, pixel });
+  }
+
+  // Sonst: zweites Verfahren auf den unberuehrten Farben. Nur uebernehmen, wenn
+  // es tatsaechlich besser ist — sonst bliebe ein schlechtes Ergebnis gegen
+  // ein noch schlechteres getauscht.
+  const zweit = Buffer.from(unberuehrt);
+  const zweitAnteil = freistellenNachFarbton(width, height, zweit, ziel);
+  if (zweitAnteil >= PLAUSIBEL_MIN && zweitAnteil <= PLAUSIBEL_MAX) {
+    return kodierePng({ width, height, pixel: zweit });
   }
   return kodierePng({ width, height, pixel });
 }
