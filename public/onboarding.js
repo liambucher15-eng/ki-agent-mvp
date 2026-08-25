@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"free", charakterBilder:null, charakterBeschreibung:"" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"free", charakterStil:"flach", charakterBilder:null, charakterBeschreibung:"" };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -898,12 +898,38 @@
     const CHAR_LABELS = { idle: "Ruhe", denken: "Denken", sprechen: "Sprechen", verlegen: "Verlegen" };
     let charReferenzBild = null; // Data-URL des Uploads, dient auch als KI-Vorlage
 
+    // Stilwahl der Figur. Eigene Bindung statt chipGruppe(): Die dortige
+    // Funktion ruft am Ende die Antwort-Vorschau auf, die mit dem Aussehen der
+    // Figur nichts zu tun hat.
+    (function stilWahlBinden() {
+      const gruppe = document.getElementById("charStilWahl");
+      const hinweis = document.getElementById("charStilHinweis");
+      if (!gruppe) return;
+      const TEXTE = {
+        flach: "Flache Illustration mit klaren Linien.",
+        "3d": "Weiches 3D wie eine kleine Knetfigur.",
+      };
+      const chips = gruppe.querySelectorAll(".pers-chip");
+      function waehle(wert) {
+        daten.charakterStil = TEXTE[wert] ? wert : "flach";
+        chips.forEach((c) => c.classList.toggle("aktiv", c.dataset.stil === daten.charakterStil));
+        if (hinweis) hinweis.textContent = TEXTE[daten.charakterStil];
+      }
+      chips.forEach((c) => c.addEventListener("click", () => waehle(c.dataset.stil)));
+      waehle(daten.charakterStil);
+    })();
+
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                      : Date.now() + "-" + Math.random().toString(36).slice(2));
       const start = await fetch("/.netlify/functions/charakter-background", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jobId, firmaId: daten.id || undefined, farbe: daten.farbe1, ...payload }),
+        // stilWahl geht hier mit, damit sie fuer JEDE Aktion gilt: Entwurf,
+        // Richtungen, Zustaende und spaetere Nachbesserungen. Wuerde sie nur
+        // beim Entwurf mitgehen, kaeme die Figur in einem Stil und ihre
+        // Ausdruecke im anderen.
+        body: JSON.stringify({ jobId, firmaId: daten.id || undefined, farbe: daten.farbe1,
+          stilWahl: daten.charakterStil, ...payload }),
       });
       if (start.status === 429) throw new Error("Limit erreicht, bitte später erneut versuchen.");
       if (start.status !== 202 && !start.ok) throw new Error("Konnte nicht gestartet werden.");

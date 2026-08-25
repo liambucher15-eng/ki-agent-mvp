@@ -80,8 +80,8 @@ async function holeBildFuerEdit(bild) {
   };
 }
 
-async function generiereAlle({ jobId, beschreibung, referenzBild, farbe }) {
-  const { stil, prompts, edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe });
+async function generiereAlle({ jobId, beschreibung, referenzBild, farbe, stilWahl }) {
+  const { stil, prompts, edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe, stilWahl });
 
   // 1) Basisbild (idle). Mit Referenzbild: Figur an der Vorlage ausrichten.
   const idlePrompt = referenzBild
@@ -157,8 +157,8 @@ async function bearbeiteEines({ jobId, bild, anweisung, zustand, beschreibung })
 
 // §4 Schritt 1: vier UNTERSCHIEDLICHE Richtungs-Vorschauen (je 1 Bild).
 // Mit Referenzbild (Upload): jede Richtung orientiert sich an der Vorlage.
-async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild }) {
-  const richtungen = baueRichtungen({ beschreibung, farbe });
+async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild, stilWahl }) {
+  const richtungen = baueRichtungen({ beschreibung, farbe, stilWahl });
   const ergebnisse = await Promise.all(richtungen.map(async (r) => {
     const prompt = referenzBild
       ? r.prompt + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
@@ -178,8 +178,8 @@ async function generiereRichtungen({ jobId, beschreibung, farbe, referenzBild })
 // Chat-Flow: EIN Entwurf aus dem im Chat erarbeiteten Prompt. Statt vier
 // Varianten auf Verdacht entsteht genau eine Figur, die im Chat so lange
 // angepasst wird, bis sie passt — erst danach werden die Ausdrücke erzeugt.
-async function generiereEntwurf({ jobId, beschreibung, farbe, referenzBild }) {
-  const { stil } = baueCharakterPrompt({ beschreibung, farbe });
+async function generiereEntwurf({ jobId, beschreibung, farbe, referenzBild, stilWahl }) {
+  const { stil } = baueCharakterPrompt({ beschreibung, farbe, stilWahl });
   const prompt = referenzBild
     ? stil + " Nutze das beigefügte Bild als Vorlage für Aussehen und Farben der Figur."
     : stil;
@@ -193,9 +193,9 @@ async function generiereEntwurf({ jobId, beschreibung, farbe, referenzBild }) {
 
 // §4 Schritt 2: aus der GEWÄHLTEN Richtung (idle-Bild aus unserem Bucket) die
 // restlichen Zustände + Klappmaul erzeugen. idle bleibt die gewählte URL.
-async function generiereZustaende({ jobId, bild, beschreibung, farbe }) {
+async function generiereZustaende({ jobId, bild, beschreibung, farbe, stilWahl }) {
   const quelle = await holeBildFuerEdit(bild);
-  const { edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe });
+  const { edits, mundOffenEdit } = baueCharakterPrompt({ beschreibung, farbe, stilWahl });
   const roh = {};
   for (const zustand of ["denken", "sprechen", "verlegen"]) {
     const r = await mitWiederholung(() => bearbeiteBild({
@@ -225,7 +225,9 @@ exports.handler = async (event) => {
 
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return { statusCode: 400 }; }
-  const { jobId, aktion, firmaId, beschreibung, bild, anweisung, zustand, farbe } = body;
+  // stilWahl: "flach" (Vorgabe) oder "3d". Ein unbekannter Wert faellt in
+  // baueCharakterPrompt auf "flach" zurueck — den Stil, der seit je laeuft.
+  const { jobId, aktion, firmaId, beschreibung, bild, anweisung, zustand, farbe, stilWahl } = body;
 
   if (typeof jobId !== "string" || !jobId || jobId.length > 100) return { statusCode: 400 };
   const AKTIONEN = ["generieren", "bearbeiten", "richtungen", "zustaende", "entwurf"];
@@ -265,10 +267,10 @@ exports.handler = async (event) => {
     if (!storageOk()) throw new Error("Bild-Speicher ist nicht eingerichtet (SUPABASE_SERVICE_KEY fehlt).");
 
     let ergebnis;
-    if (aktion === "entwurf") ergebnis = await generiereEntwurf({ jobId, beschreibung, farbe, referenzBild: bild });
-    else if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe, referenzBild: bild });
-    else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe });
-    else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe });
+    if (aktion === "entwurf") ergebnis = await generiereEntwurf({ jobId, beschreibung, farbe, referenzBild: bild , stilWahl });
+    else if (aktion === "richtungen") ergebnis = await generiereRichtungen({ jobId, beschreibung, farbe, referenzBild: bild , stilWahl });
+    else if (aktion === "zustaende") ergebnis = await generiereZustaende({ jobId, bild, beschreibung, farbe , stilWahl });
+    else if (aktion === "generieren") ergebnis = await generiereAlle({ jobId, beschreibung, referenzBild: bild, farbe , stilWahl });
     else ergebnis = await bearbeiteEines({ jobId, bild, anweisung, zustand, beschreibung });
 
     await setzeJob(jobId, { status: "done", ergebnis, fehler: null });

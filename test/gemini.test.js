@@ -114,3 +114,63 @@ test("baueRichtungen: liefert 4 verschiedene Richtungen mit Prompt + Label", () 
     assert.match(r.prompt, /Stil-Richtung:/); // Richtungs-Zusatz gesetzt
   }
 });
+
+// ── Stilwahl: gezeichnet oder plastisch ──────────────────────────────────
+//
+// "Flacher Cartoon-Stil, klare Konturen" war lange fest verdrahtet, und zwar
+// aus einem technischen Grund: Das Freistellen flutete vom Bildrand her und
+// brauchte eine harte Kontur als Barriere. Seit lib/freistellen.js daneben ein
+// zweites Verfahren hat (Abstand im Farbton), kommt auch ein 3D-Render durch.
+
+const { STILE, stilFuer } = require("../netlify/functions/lib/baueCharakterPrompt");
+
+test("stilFuer: unbekannte Werte landen bei 'flach'", () => {
+  // Wichtig, weil der Wert aus dem Browser kommt. "flach" ist der Stil, der
+  // seit je funktioniert — ein Tippfehler darf niemanden in den neueren Weg
+  // drängen.
+  assert.equal(stilFuer("flach"), "flach");
+  assert.equal(stilFuer("3d"), "3d");
+  assert.equal(stilFuer("dreidee"), "flach");
+  assert.equal(stilFuer(undefined), "flach");
+  assert.equal(stilFuer(null), "flach");
+});
+
+test("die beiden Stile erzeugen wirklich verschiedene Prompts", () => {
+  const flach = baueCharakterPrompt({ beschreibung: "Brot", stilWahl: "flach" });
+  const raeumlich = baueCharakterPrompt({ beschreibung: "Brot", stilWahl: "3d" });
+  assert.notEqual(flach.stil, raeumlich.stil);
+  assert.match(flach.stil, /Flacher, stilisierter Cartoon-Stil/);
+  assert.match(raeumlich.stil, /3D-Render/i);
+  assert.equal(flach.stilWahl, "flach");
+  assert.equal(raeumlich.stilWahl, "3d");
+});
+
+test("der 3D-Prompt verbietet Schatten und Licht auf dem Hintergrund", () => {
+  // Nicht Kosmetik, sondern Voraussetzung fürs Freistellen: Ein Render setzt
+  // die Figur sonst auf eine Bodenfläche, und Studiolicht erzeugt einen Verlauf
+  // auf dem Hintergrund (gemessen: RGB-Abstand 59 bis 97 zwischen oben und
+  // unten). Beides macht die Fläche uneinheitlich.
+  const { stil } = baueCharakterPrompt({ beschreibung: "Brot", stilWahl: "3d" });
+  assert.match(stil, /kein Schlagschatten/i);
+  assert.match(stil, /keine Bodenflaeche|keine Bodenfläche/i);
+  assert.match(stil, /Licht trifft NUR die Figur/i);
+});
+
+test("der Chroma-Key-Hintergrund gilt in BEIDEN Stilen", () => {
+  // Ohne ihn gäbe es nichts freizustellen — auch nicht im 3D-Stil, wo der
+  // Kunde sonst vielleicht einen weissen Studiogrund erwartet.
+  for (const s of Object.keys(STILE)) {
+    const { stil, edits } = baueCharakterPrompt({ beschreibung: "Brot", stilWahl: s });
+    assert.match(stil, /Magenta/i, "Stil " + s);
+    for (const [zustand, anweisung] of Object.entries(edits)) {
+      assert.match(anweisung, /Magenta/i, "Edit " + zustand + " im Stil " + s);
+    }
+  }
+});
+
+test("die Ausdrücke bleiben in beiden Stilen dieselben vier", () => {
+  const a = baueCharakterPrompt({ stilWahl: "flach" });
+  const b = baueCharakterPrompt({ stilWahl: "3d" });
+  assert.deepEqual(Object.keys(a.prompts), Object.keys(b.prompts));
+  assert.deepEqual(Object.keys(a.edits), Object.keys(b.edits));
+});

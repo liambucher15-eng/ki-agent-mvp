@@ -181,6 +181,9 @@
     .pers-chip:hover { border-color: var(--indigo); }
     .pers-chip.aktiv { border-color: var(--indigo); background: rgba(79,70,229,0.08); color: var(--indigo); }
     .pers-hinweis { font-size: 0.83rem; color: var(--grau); margin-top: 0.5rem; min-height: 1.1em; }
+    /* Stilwahl im Charakter-Schritt. Nutzt bewusst .pers-chip, damit sich die
+       Auswahl anfuehlt wie die uebrigen im Onboarding. */
+    .stil-wahl { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.2rem 0 0.1rem; }
 
     .drop { display: block; text-align: center; padding: 1.6rem 1rem; border: 1.5px dashed var(--border); border-radius: 14px;
             color: var(--grau); cursor: pointer; transition: border-color 0.15s, background 0.15s; margin-top: 0.5rem; }
@@ -747,6 +750,17 @@
                 </div>
                 <p class="marke-satz">Erzähl mir, was für eine Figur dir vorschwebt. Ruhig ganz grob, zum Beispiel: ein netter Hund. Oder: etwas Modernes, das zu uns passt. Ich mache daraus den Rest.</p>
               </div>
+
+              <!-- Stilwahl. Bis hierher war "flach" fest verdrahtet, und zwar aus
+                   einem technischen Grund: Das Freistellen brauchte eine harte
+                   Kontur als Barriere. Seit lib/freistellen.js daneben ein
+                   zweites Verfahren hat (Abstand im Farbton), kommt auch ein
+                   3D-Render sauber durch — also darf der Kunde waehlen. -->
+              <div class="stil-wahl" id="charStilWahl" role="group" aria-label="Stil der Figur">
+                <button type="button" class="pers-chip aktiv" data-stil="flach">Gezeichnet</button>
+                <button type="button" class="pers-chip" data-stil="3d">Plastisch (3D)</button>
+              </div>
+              <p class="mini" id="charStilHinweis" style="text-align:left;margin:0 0 0.6rem;">Flache Illustration mit klaren Linien.</p>
 
               <div class="designer-verlauf" id="charVerlauf"></div>
 

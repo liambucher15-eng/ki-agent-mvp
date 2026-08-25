@@ -25,10 +25,47 @@ const HINTERGRUND_ANWEISUNG =
   "absolut gleichmässig, keine Farbverläufe, kein Schatten, keine Textur, kein Muster. " +
   "Die Figur selbst darf kein Magenta/Pink enthalten.";
 
-function baueCharakterPrompt({ beschreibung, farbe } = {}) {
+// Die beiden Stilrichtungen, die das Freistellen tragen.
+//
+// "flach" war lange die einzige, und zwar aus einem technischen Grund: Das
+// Freistellen flutete vom Bildrand her und brauchte eine harte Kontur als
+// Barriere (lib/freistellen.js). Seit dort ein zweites Verfahren daneben
+// steht — Abstand im Farbton statt Fluten — kommt auch ein 3D-Render durch.
+//
+// Was beim 3D-Stil im Prompt stehen MUSS, gemessen und nicht geraten:
+//   "kein Schlagschatten, keine Bodenflaeche": Ein Render setzt die Figur
+//   sonst auf einen Boden. Der Schatten macht den Hintergrund uneinheitlich.
+//   "Licht nur auf der Figur": Studiolicht faellt sonst auf den Hintergrund
+//   und erzeugt dort einen Verlauf (gemessen: RGB-Abstand 59 bis 97 zwischen
+//   oben und unten).
+// Beides bekommt man nicht vollstaendig weg, aber deutlich reduziert — den
+// Rest faengt das Freistellen ab.
+const STILE = {
+  flach: {
+    label: "Gezeichnet",
+    hinweis: "Flache Illustration mit klaren Linien",
+    text: "Flacher, stilisierter Cartoon-Stil, klare Konturen,",
+  },
+  "3d": {
+    label: "Plastisch (3D)",
+    hinweis: "Weiches 3D wie eine kleine Knetfigur",
+    text: "Weiches 3D-Render im Claymorphism-Stil, matte Oberflaeche, abgerundete Formen, " +
+      "wie eine kleine Figur aus Knete. Das Licht trifft NUR die Figur: kein Schlagschatten, " +
+      "keine Bodenflaeche, kein Lichtabfall auf dem Hintergrund. Die Figur schwebt frei.",
+  },
+};
+
+// Unbekannter Wert -> flach. Das ist der Stil, der seit je funktioniert; ein
+// Tippfehler darf niemanden in den neueren Weg draengen.
+function stilFuer(wunsch) {
+  return STILE[wunsch] ? wunsch : "flach";
+}
+
+function baueCharakterPrompt({ beschreibung, farbe, stilWahl } = {}) {
+  const gewaehlt = stilFuer(stilWahl);
   const stil =
     `Ein einfaches, freundliches Maskottchen. ${beschreibung || "rundes, sympathisches Wesen"}. ` +
-    `Flacher, stilisierter Cartoon-Stil, klare Konturen, ${HINTERGRUND_ANWEISUNG} ` +
+    `${STILE[gewaehlt].text} ${HINTERGRUND_ANWEISUNG} ` +
     `Hauptfarbe der Figur ${farbe || "#3f7d5a"}. Immer dieselbe Figur, gleiche Proportionen, zentriert.`;
 
   const prompts = {};
@@ -47,7 +84,7 @@ function baueCharakterPrompt({ beschreibung, farbe } = {}) {
     `Exakt dieselbe Figur, derselbe Stil, dieselben Farben, dieselbe Pose — ` +
     `öffne NUR den Mund weit, als würde die Figur gerade einen Vokal sprechen. ` +
     `Sonst absolut identisch. ${HINTERGRUND_ANWEISUNG}`;
-  return { stil, prompts, edits, mundOffenEdit };
+  return { stil, prompts, edits, mundOffenEdit, stilWahl: gewaehlt };
 }
 
 // Vier bewusst UNTERSCHIEDLICHE Stil-Richtungen für die Vorschau (Welle 1, §4).
@@ -60,8 +97,8 @@ const RICHTUNGEN = [
   { key: "modern",  label: "Zurückhaltend & modern",  zusatz: "zurückhaltend und modern, minimalistisch, klare geometrische Formen, ruhig" },
 ];
 
-function baueRichtungen({ beschreibung, farbe } = {}) {
-  const { stil } = baueCharakterPrompt({ beschreibung, farbe });
+function baueRichtungen({ beschreibung, farbe, stilWahl } = {}) {
+  const { stil } = baueCharakterPrompt({ beschreibung, farbe, stilWahl });
   return RICHTUNGEN.map((r) => ({
     key: r.key,
     label: r.label,
@@ -69,4 +106,4 @@ function baueRichtungen({ beschreibung, farbe } = {}) {
   }));
 }
 
-module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN, HINTERGRUND_ANWEISUNG };
+module.exports = { baueCharakterPrompt, baueRichtungen, AUSDRUECKE, RICHTUNGEN, STILE, stilFuer, HINTERGRUND_ANWEISUNG };
