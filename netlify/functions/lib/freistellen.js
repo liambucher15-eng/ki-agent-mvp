@@ -45,6 +45,19 @@ const SICHERHEITS_DECKE = 150;
 // die alte Vier-Ecken-Prüfung — mit derselben Absicht (lieber nichts tun als
 // falsch raten), aber ausgewertet über den ganzen Rand statt über 4 Punkte.
 const MIN_ANTEIL = 0.25;
+// Eingeschlossene Hintergrundflaechen: das Loch im O, der Zwischenraum
+// zwischen zwei Klaviertasten, die beiden Bauche einer 8.
+//
+// Solche Flaechen sind vom Bildrand aus NICHT erreichbar, die Flut kommt dort
+// also nie an — sie blieben als farbiger Fleck mitten in der Figur stehen.
+// Deshalb zusaetzlich ein direkter Farbvergleich, unabhaengig von der Lage.
+//
+// Die Schwelle ist BEWUSST enger als SCHRITT_SCHWELLE: Ein Pixel mitten in der
+// Figur wird nur dann zum Loch erklaert, wenn es der Hintergrundfarbe sehr nahe
+// kommt. Dass die Figur selbst kein Magenta enthaelt, verlangt der Prompt
+// ausdruecklich (baueCharakterPrompt.js) — trotzdem soll hier niemand ein
+// Loch in eine Figur reissen, die zufaellig einen roetlichen Ton hat.
+const LOCH_SCHWELLE = 38;
 
 // ----------------------------------------------------------------------
 // RUECKFALL FUER WEICHE BILDER (3D-Renders)
@@ -113,6 +126,30 @@ function schaetzeHintergrundfarbe(pixel, randpixel) {
   let bester = null;
   for (const e of eimer.values()) if (!bester || e.anzahl > bester.anzahl) bester = e;
   if (!bester || bester.anzahl / randpixel.length < MIN_ANTEIL) return null;
+
+  // Gegenprobe ueber die SAETTIGUNG.
+  //
+  // Die Mehrheit am Rand kann kippen: Laeuft die Figur unten aus dem Bild, ist
+  // sie am Rand haeufiger als der Hintergrund — und wird prompt fuer ihn
+  // gehalten. Das Ergebnis waere exakt vertauscht: Figur weg, Hintergrund
+  // stehen geblieben. Kein Teilfehler, sondern ein unbrauchbares Bild.
+  //
+  // Ein Chroma-Key ist per Konstruktion KRAEFTIG (der Prompt verlangt
+  // "kraeftiges Magenta"), eine Maskottchen-Farbe selten. Gibt es am Rand einen
+  // zweiten haeufigen Ton, der deutlich gesaettigter ist, gewinnt der.
+  //
+  // Bewusst eng gefasst: Der andere Kandidat muss mindestens ein Fuenftel des
+  // Randes stellen UND anderthalbmal so gesaettigt sein. Bei einem gewoehnlichen
+  // Bild gibt es nur einen Kandidaten, dann passiert hier gar nichts.
+  const saettigung = (e) => {
+    const r = e.r / e.anzahl, g = e.g / e.anzahl, b2 = e.b / e.anzahl;
+    return Math.max(r, g, b2) - Math.min(r, g, b2);
+  };
+  for (const e of eimer.values()) {
+    if (e === bester) continue;
+    if (e.anzahl / randpixel.length < 0.20) continue;
+    if (saettigung(e) > saettigung(bester) * 1.5) bester = e;
+  }
   return {
     r: Math.round(bester.r / bester.anzahl),
     g: Math.round(bester.g / bester.anzahl),
@@ -257,6 +294,17 @@ function freistellen(bildBase64) {
   const unberuehrt = Buffer.from(pixel);
 
   const erreicht = flutHintergrund(pixel, width, height, randpixel, ziel);
+
+  // Loecher nachtragen, BEVOR die weichen Kanten gerechnet werden — so bekommen
+  // sie denselben sauberen Uebergang wie die Aussenkante.
+  for (let idx = 0; idx < width * height; idx++) {
+    if (erreicht[idx]) continue;
+    const i = idx * 4;
+    if (distanz(pixel[i], pixel[i + 1], pixel[i + 2], ziel.r, ziel.g, ziel.b) <= LOCH_SCHWELLE) {
+      erreicht[idx] = 1;
+    }
+  }
+
   let deckend = 0;
   for (let idx = 0; idx < width * height; idx++) {
     const i = idx * 4;

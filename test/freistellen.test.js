@@ -264,3 +264,132 @@ test("dunkle Bildteile werden nie zum Hintergrund gezählt", () => {
   }
   assert.ok(strichSichtbar > 60, "der schwarze Strich wurde weggefressen (" + strichSichtbar + " von 70 Zeilen)");
 });
+
+// ── Formen mit Löchern ───────────────────────────────────────────────────
+//
+// Der gefährlichste Fall im ganzen Freistellen, und er trifft ganz gewöhnliche
+// Maskottchen: das Loch im O, die beiden Bäuche einer 8, der Zwischenraum
+// zwischen zwei Klaviertasten, das Dreieck im A.
+//
+// Solche Flächen sind Hintergrund, aber vom Bildrand aus NICHT erreichbar — die
+// Flut kommt dort nie an. Ohne eine eigene Behandlung bliebe darin ein
+// magentafarbener Fleck stehen, mitten in der Figur, auf der Seite des Kunden.
+//
+// Die Gegenprobe steht bewusst daneben: Eine Figur mit rötlicher Fläche darf
+// NICHT durchlöchert werden. Beides zusammen hält die Schwelle in der Mitte.
+
+const HINTERGRUND = [219, 41, 133];
+
+function baueBild(w, h, fn) {
+  return baueRgbPng(w, h, (x, y) => fn(x, y) || HINTERGRUND);
+}
+function alphaBei(pngBase64, x, y) {
+  const { width, pixel } = dekodierePng(pngBase64);
+  return pixel[(y * width + x) * 4 + 3];
+}
+const istTransparent = (b, x, y) => alphaBei(b, x, y) < 40;
+const istDeckend = (b, x, y) => alphaBei(b, x, y) > 215;
+
+test("Ring: das Loch in der Mitte wird freigestellt", () => {
+  const ring = baueBild(200, 200, (x, y) => {
+    const r = Math.sqrt((x - 100) ** 2 + (y - 100) ** 2);
+    return r < 70 && r > 35 ? [60, 120, 80] : null;
+  });
+  const frei = freistellen(ring);
+  assert.ok(istDeckend(frei, 100, 45), "der Ring selbst muss stehen bleiben");
+  assert.ok(istTransparent(frei, 100, 100), "das Loch muss transparent werden");
+  assert.ok(istTransparent(frei, 5, 5), "aussen sowieso");
+});
+
+test("Zahl 8: beide Löcher werden freigestellt", () => {
+  const acht = baueBild(200, 240, (x, y) => {
+    const o = Math.sqrt((x - 100) ** 2 + (y - 70) ** 2);
+    const u = Math.sqrt((x - 100) ** 2 + (y - 170) ** 2);
+    return (o < 50 && o > 22) || (u < 55 && u > 25) ? [60, 120, 80] : null;
+  });
+  const frei = freistellen(acht);
+  assert.ok(istTransparent(frei, 100, 70), "oberes Loch");
+  assert.ok(istTransparent(frei, 100, 170), "unteres Loch");
+  assert.ok(istDeckend(frei, 100, 25), "die Figur dazwischen");
+});
+
+test("Klaviertasten: schmale Zwischenräume werden freigestellt", () => {
+  const klavier = baueBild(240, 160, (x, y) => {
+    if (y < 40 || y > 130) return null;
+    return (x - 20) % 24 < 18 && x >= 20 && x <= 220 ? [245, 245, 240] : null;
+  });
+  const frei = freistellen(klavier);
+  assert.ok(istDeckend(frei, 26, 80), "die Taste");
+  assert.ok(istTransparent(frei, 40, 80), "der Spalt dazwischen");
+});
+
+test("eine Fläche IN der Figur wird nicht versehentlich durchlöchert", () => {
+  // Gegenprobe zu den drei Tests oben. Der Innenkreis ist rötlich und damit dem
+  // Magenta ähnlich — aber eben nicht gleich. Er gehört zur Figur.
+  const figur = baueBild(200, 200, (x, y) => {
+    const r = Math.sqrt((x - 100) ** 2 + (y - 100) ** 2);
+    if (r >= 70) return null;
+    return r < 35 ? [200, 90, 150] : [60, 120, 80];
+  });
+  const frei = freistellen(figur);
+  assert.ok(istDeckend(frei, 100, 100), "die rötliche Innenfläche gehört zur Figur");
+  assert.ok(istDeckend(frei, 100, 50), "der Ring aussen herum auch");
+  assert.ok(istTransparent(frei, 5, 5), "nur draussen ist Hintergrund");
+});
+
+test("Löcher werden auch bei weichen Kanten und Lichtverlauf freigestellt", () => {
+  // Derselbe Ring, aber im 3D-Fall: weiche Übergänge, Hintergrund mit Verlauf.
+  // Hier greift das zweite Verfahren — auch dort darf das Loch nicht zubleiben.
+  const verlauf = (y, h) => [Math.round(150 + 55 * y / h), Math.round(44 + 58 * y / h), Math.round(72 + 60 * y / h)];
+  const weich = baueRgbPng(200, 200, (x, y) => {
+    const r = Math.sqrt((x - 100) ** 2 + (y - 100) ** 2);
+    const rampe = (d) => Math.max(0, Math.min(1, d / 9));
+    const drin = Math.min(rampe(70 - r), rampe(r - 35));
+    const hg = verlauf(y, 200);
+    if (drin <= 0) return hg;
+    const f = [230, 220, 190];
+    return [0, 1, 2].map((k) => Math.round(f[k] * drin + hg[k] * (1 - drin)));
+  });
+  const frei = freistellen(weich);
+  assert.ok(istDeckend(frei, 100, 45), "der weiche Ring");
+  assert.ok(istTransparent(frei, 100, 100), "das Loch, trotz Verlauf darin");
+});
+
+test("Figur, die aus dem Bild läuft, wird nicht mit dem Hintergrund vertauscht", () => {
+  // Berührt die Figur den Rand über weite Strecken, ist sie dort HÄUFIGER als
+  // der Hintergrund — und würde prompt für ihn gehalten. Das Ergebnis wäre
+  // exakt vertauscht: Figur weg, Hintergrund stehen geblieben. Kein
+  // Teilfehler, sondern ein unbrauchbares Bild.
+  //
+  // Der Chroma-Key ist per Konstruktion kräftiger als eine Maskottchen-Farbe;
+  // daran wird er erkannt.
+  const halb = baueBild(200, 200, (x, y) => (y > 60 ? [60, 120, 80] : null));
+  const frei = freistellen(halb);
+  assert.ok(istDeckend(frei, 100, 150), "die Figur muss stehen bleiben");
+  assert.ok(istDeckend(frei, 3, 197), "auch dort, wo sie die Kante berührt");
+  assert.ok(istTransparent(frei, 100, 20), "der Hintergrund darüber muss weg");
+});
+
+test("getrennte Teile bleiben alle erhalten", () => {
+  // Schwebende Arme, wie sie dieser Maskottchen-Stil hat: drei Flächen ohne
+  // Verbindung. Keine davon darf verloren gehen, die Luft dazwischen muss weg.
+  const mitArmen = baueBild(240, 160, (x, y) => {
+    const koerper = Math.sqrt((x - 120) ** 2 + (y - 80) ** 2) < 45;
+    const armL = Math.sqrt((x - 40) ** 2 + (y - 80) ** 2) < 16;
+    const armR = Math.sqrt((x - 200) ** 2 + (y - 80) ** 2) < 16;
+    return koerper || armL || armR ? [60, 120, 80] : null;
+  });
+  const frei = freistellen(mitArmen);
+  assert.ok(istDeckend(frei, 120, 80), "Körper");
+  assert.ok(istDeckend(frei, 40, 80), "linker Arm");
+  assert.ok(istDeckend(frei, 200, 80), "rechter Arm");
+  assert.ok(istTransparent(frei, 68, 80), "die Lücke zwischen Arm und Körper");
+});
+
+test("sehr dünne Strukturen überleben", () => {
+  // Brillenbügel, Klaviersaite, Antenne: drei Pixel breit.
+  const linie = baueBild(200, 200, (x, y) => (y > 98 && y < 102 ? [30, 30, 35] : null));
+  const frei = freistellen(linie);
+  assert.ok(istDeckend(frei, 100, 100), "die Linie");
+  assert.ok(istTransparent(frei, 100, 50), "darüber");
+});
