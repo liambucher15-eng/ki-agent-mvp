@@ -331,6 +331,122 @@
     </div>
   </section>
 
+  <!-- ══ BRANCHEN ═══════════════════════════════════════════════════════
+       Breite VOR Tiefe: Diese Sektion zeigt, dass es fuer jede Art Betrieb
+       passt (kein Sondertool fuer eine Nische). Die Charakter-Galerie direkt
+       danach zeigt dasselbe Set noch einmal, aber als Tiefen-Beleg (jede
+       Firma bekommt ein eigenes Wesen) — bewusst dieselben acht Branchen in
+       beiden Sektionen, statt zwei verschiedene Listen, die sich
+       widersprechen koennten.
+       KEIN "Mehr lesen" pro Kachel: Es gibt keine Branchen-Unterseiten, ein
+       Link ins Nichts waere schlechter als gar keiner (gleiche Regel wie im
+       Footer bei Impressum/Datenschutz).
+       Solange keine Fotos hinterlegt sind, steht in jeder Kachel ein
+       Platzhalter — exakt dasselbe ehrliche Muster wie bei den Charakteren.
+       ZUM ERSETZEN: Foto unter public/bilder/branchen/<name>.webp ablegen,
+       der src-Pfad in der Kachel stimmt dann schon. Querformat (4:3), damit
+       Titel und Satz unten in einem ruhigen Streifen Platz haben. -->
+  <section id="branchen">
+    <div class="bahn">
+      <div class="kopfblock auftritt">
+        <span class="augen">Branchen</span>
+        <h2>Jede Branche. Derselbe Agent.</h2>
+        <p class="lead">Er liest deine echte Webseite statt einer Vorlage für „typische" Betriebe. Ein paar Beispiele, wie unterschiedlich das aussieht:</p>
+      </div>
+    </div>
+    <!-- Wie bei der Charakter-Galerie steht die Huelle ausserhalb der Bahn,
+         damit die Reihe bis an den Fensterrand laufen kann und die naechste
+         Kachel am Rand erkennbar anschneidet — genau das laedt zum
+         Weiterscrollen ein. -->
+    <div class="branchen-huelle auftritt" style="--verzug: 120ms">
+      <div class="branchen-galerie" id="branchenGalerie" tabindex="0" role="region" aria-label="Beispiel-Branchen zum Durchblättern">
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/restaurants.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Restaurants</h3>
+            <p class="branchen-text">Cafés, Bäckereien, Bars, Hotels. Öffnungszeiten, Tageskarte, Tisch reservieren.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/arztpraxen.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Arztpraxen</h3>
+            <p class="branchen-text">Zahnärzte, Physio, Tierärzte, Apotheken. Sprechstunden, freie Termine, was im Notfall gilt.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/coiffeure.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Coiffeure</h3>
+            <p class="branchen-text">Kosmetik, Massage, Nagelstudios. Termin, Preise, wie lange es dauert.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/handwerker.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Handwerker</h3>
+            <p class="branchen-text">Maler, Elektriker, Sanitär, Schreiner, Garagen. Offerte, Notfall, bis wohin ihr fahrt.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/treuhaender.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Treuhänder</h3>
+            <p class="branchen-text">Anwälte, Architekten, Versicherungen, Berater. Erstgespräch, Fachgebiete, was es kostet.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/laeden.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Läden</h3>
+            <p class="branchen-text">Boutiquen, Buchhandlungen, Blumen, Onlineshops. Ist es da, was passt dazu, wie kommt es zu mir.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/immobilien.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Immobilien</h3>
+            <p class="branchen-text">Makler, Verwaltungen, Umzug, Reinigung. Objekte, Besichtigung, wer zuständig ist.</p>
+          </div>
+        </article>
+        <article class="branchen-karte">
+          <span class="branchen-ph-marke">Platzhalter</span>
+          <div class="branchen-platzhalter" aria-hidden="true"></div>
+          <img src="bilder/branchen/studios-schulen.webp" alt="" loading="lazy" onerror="this.remove()" />
+          <div class="branchen-verlauf">
+            <h3 class="branchen-titel">Studios & Schulen</h3>
+            <p class="branchen-text">Fitness, Yoga, Fahrschule, Musikschule. Anmeldung, Kursplan, Probelektion.</p>
+          </div>
+        </article>
+      </div>
+      <div class="branchen-steuerung">
+        <button class="branchen-pfeil" type="button" data-richtung="-1" aria-label="Vorherige Branche">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="branchen-pfeil" type="button" data-richtung="1" aria-label="Nächste Branche">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="bahn">
+      <p class="knopf-notiz" style="margin-top:1.6rem;">Nicht dabei? Er lernt trotzdem von deiner Webseite — sie ist seine einzige Quelle.</p>
+    </div>
+  </section>
+
   <!-- ══ CHARAKTER-GALERIE ═════════════════════════════════════════════
        Der einzige echte Beleg fuer die Kernbehauptung. Die Konkurrenz
        kann diese Sektion nicht nachbauen, sie hat keine Charaktere.
@@ -360,8 +476,8 @@
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
-          <img src="bilder/charaktere/velowerkstatt.webp" alt="Agenten-Figur für eine Velowerkstatt" loading="lazy" onerror="this.remove()" />
-          <figcaption class="branche">Velowerkstatt</figcaption>
+          <img src="bilder/charaktere/immobilienbuero.webp" alt="Agenten-Figur für ein Immobilienbüro" loading="lazy" onerror="this.remove()" />
+          <figcaption class="branche">Immobilienbüro</figcaption>
         </figure>
         <figure class="figur">
           <div class="figur-platzhalter"><span class="ph-marke">Platzhalter</span></div>
@@ -1144,6 +1260,52 @@
     // Schriften aendern die Masse noch nach dem Ausfuehren des Skripts.
     window.addEventListener("load", aufbauen);
     if (document.fonts) document.fonts.ready.then(aufbauen);
+  })();
+
+  // Branchen-Galerie: EINFACHER Bildlauf, kein Endlos-Umlauf, kein
+  // Faecher-Versatz. Die Pfeile schieben um genau eine Kartenbreite (Karte +
+  // Luecke) und werden am jeweiligen Ende deaktiviert, statt wirkungslos
+  // weiterzuklicken — so sieht man sofort, dass man am Anfang/Ende steht,
+  // ohne das erst durch einen wirkungslosen Klick herauszufinden.
+  (function () {
+    const galerie = document.getElementById("branchenGalerie");
+    if (!galerie) return;
+    const pfeile = [...document.querySelectorAll(".branchen-pfeil")];
+    // Sanft nur, wenn der Besucher keine reduzierte Bewegung eingestellt hat.
+    // Steht bewusst NICHT als scroll-behavior im CSS (siehe Kommentar dort):
+    // Das haette der JS-Steuerung hier die Kontrolle entzogen.
+    const sanft = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function kartenSchritt() {
+      const karte = galerie.querySelector(".branchen-karte");
+      // Ohne Karte (z.B. leeres Markup) lieber grob um den sichtbaren
+      // Bereich schieben als gar nicht zu reagieren.
+      if (!karte) return galerie.clientWidth * 0.8;
+      const luecke = parseFloat(getComputedStyle(galerie).columnGap) || 0;
+      return karte.getBoundingClientRect().width + luecke;
+    }
+    function aktualisierePfeile() {
+      // 1px Toleranz: Subpixel-Rundung liess "ganz am Ende" sonst manchmal
+      // knapp verfehlen, der rechte Pfeil blieb dann faelschlich aktiv.
+      const amAnfang = galerie.scrollLeft <= 1;
+      const amEnde = galerie.scrollLeft >= galerie.scrollWidth - galerie.clientWidth - 1;
+      pfeile.forEach((p) => { p.disabled = p.dataset.richtung === "-1" ? amAnfang : amEnde; });
+    }
+    pfeile.forEach((p) => {
+      p.addEventListener("click", () => {
+        galerie.scrollBy({ left: Number(p.dataset.richtung) * kartenSchritt(), behavior: sanft ? "smooth" : "auto" });
+      });
+    });
+    let aufgehaengt = false;
+    galerie.addEventListener("scroll", () => {
+      if (aufgehaengt) return;
+      aufgehaengt = true;
+      window.requestAnimationFrame(() => { aktualisierePfeile(); aufgehaengt = false; });
+    }, { passive: true });
+    aktualisierePfeile();
+    // Karten koennen sich noch verschieben, wenn Bilder/Schriften nach dem
+    // ersten Lauf laden (gleicher Grund wie beim "load"-Anlauf oben).
+    window.addEventListener("load", aktualisierePfeile);
   })();
 
 </script>
