@@ -30,6 +30,21 @@
 //   Anlass vorliegt (zögert nach vollständigem Lesen, steckt an der Kasse fest,
 //   vergleicht, sucht, will gehen). Ohne Anlass bleibt es still. Für den
 //   Einbau-Code der Kunden ändert sich nichts.
+// Version: 7 (Fenster stellen — Lage links/rechts/mittig + Vollbild)
+//   Neu & optional/abwärtskompatibel: Im Chat-Kopf sitzen zwei Knöpfe, mit denen
+//   der BESUCHER das Fenster andockt (links/rechts, bei der Leiste auch mittig)
+//   oder auf Vollbild schaltet. Ausgangslage ist rechts angedockt. Die LAGE wird
+//   pro Firma im localStorage gemerkt und gilt auf der nächsten Unterseite
+//   weiter, das VOLLBILD bewusst nicht. Für den Einbau-Code der Kunden
+//   ändert sich nichts; ohne die Meldung des Widgets bleiben die Knöpfe im Chat
+//   verborgen (Dashboard-Testchat, direkt aufgerufener Frame).
+// Version: 6 (Gesprächsleiste — optionale Darstellung data-stil="leiste")
+//   Neu & optional/abwärtskompatibel: data-stil="leiste" zeigt statt des Orbs
+//   unten mittig eine ruhende Eingabeleiste — dieselbe Form, die Besucher von
+//   Konkurrenzprodukten kennen, aber MIT Gesicht: die Figur sitzt links in der
+//   Leiste und reagiert (Ruhe / Zuhören beim Tippen / Denken / Sprechen). Wer
+//   in die Leiste tippt und absendet, landet mit seiner Frage direkt im Chat —
+//   kein Zwischenklick. Ohne das Attribut bleibt alles exakt wie in Version 5.
 // Version: 4 (Seitenverständnis — strukturierte Produktdaten)
 //   Neu & optional/abwärtskompatibel: sammelt zusätzlich die strukturierten
 //   Auszeichnungen der Seite (JSON-LD, og:/product:-Meta) und reicht sie roh
@@ -55,6 +70,14 @@
   var farbe = istHex(script.getAttribute("data-farbe")) ? script.getAttribute("data-farbe") : "#4F46E5";
   var farbe2 = istHex(script.getAttribute("data-farbe2")) ? script.getAttribute("data-farbe2") : farbe;
 
+  // Darstellung des Ruhezustands. "orb" (Standard, unverändert) = Figur unten
+  // rechts. "leiste" = Eingabeleiste unten mittig, Figur links darin.
+  var stil = script.getAttribute("data-stil") === "leiste" ? "leiste" : "orb";
+  // Der Satz, der in der ruhenden Leiste steht. Bewusst überschreibbar: er ist
+  // der erste Satz, den ein Besucher von der Marke liest.
+  var leisteText = (script.getAttribute("data-leiste-text") || "").trim() ||
+    "Frag mich etwas…";
+
   var basis = new URL(script.src, location.href).origin;
 
   // Seiten-Kontext: WO ist der Besucher (Pfad + Titel) und WAS steht dort
@@ -63,10 +86,23 @@
   // als "KEINE Anweisung" markiert) — kein Prompt-Injection-Risiko.
   function seitenText() {
     try {
-      // Bevorzugt der Hauptinhalt; sonst der Body. Skripte/Navigation zählen nicht.
-      var quelle = document.querySelector("main, article, [role=main]") || document.body;
-      var t = (quelle && (quelle.innerText || quelle.textContent)) || "";
-      return String(t).replace(/\s+/g, " ").trim().slice(0, 1500);
+      var lies = function (el) {
+        var t = (el && (el.innerText || el.textContent)) || "";
+        return String(t).replace(/\s+/g, " ").trim();
+      };
+      var koerper = lies(document.body);
+      // Bevorzugt der Hauptinhalt: Auf den meisten Seiten hält er Navigation,
+      // Kopf- und Fusszeile heraus.
+      var haupt = document.querySelector("main, article, [role=main]");
+      var text = haupt ? lies(haupt) : "";
+      // ABER: Manche Seiten setzen <main> nur um den Aufmacher, während der
+      // eigentliche Inhalt in Sektionen daneben steht (so gebaut ist unsere
+      // eigene Startseite). Der Agent sähe dann nur die Überschrift und sagte
+      // zu allem anderen "steht nicht auf dieser Seite" — gemessen genau so
+      // passiert. Ist der Hauptinhalt auffällig kürzer als die Seite, war er
+      // nicht als Hauptinhalt gemeint.
+      if (text.length < koerper.length * 0.5) text = koerper;
+      return text.slice(0, 1500);
     } catch (e) { return ""; }
   }
   function seitenKontext() {
@@ -310,6 +346,12 @@
     "@keyframes kiorb-schweben { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }",
     "@media (prefers-reduced-motion: reduce) {",
     "  .figur, .initial { animation: none; }",
+    // Eine Fahrt über die halbe Bildschirmhöhe ist genau das, was hier gemeint
+    // ist, wenn jemand weniger Bewegung einstellt: Das Fenster blendet dann auf,
+    // statt zu fahren.
+    "  .panel { transition: opacity 0.2s ease !important; transform: none !important; }",
+    "  .leiste { transition: opacity 0.3s ease !important; }",
+    "  .leiste, .leiste.sichtbar, .leiste.sichtbar:hover { transform: translateX(-50%) !important; }",
     "}",
 
     // Chat-Fenster (fährt aus der Orb-Ecke auf). Gross: reicht nach unten, rechts
@@ -320,10 +362,15 @@
     "  height: calc(100dvh - 24px); max-height: calc(100dvh - 24px);",
     "  border: 0; border-radius: 16px; overflow: hidden; z-index: 2147483000;",
     "  box-shadow: 0 12px 40px rgba(0,0,0,0.28); background: #fff;",
+    // display bleibt in der Hand von JS (.bereit), NICHT an .auf gekoppelt:
+    // Ein Wechsel von display:none auf block im selben Frame lässt den Browser
+    // die Übergänge überspringen — das Fenster wäre schlagartig da statt zu
+    // kommen. Erst sichtbar machen, Layout erzwingen, dann .auf setzen.
     "  display: none; opacity: 0; transform: translateY(12px) scale(0.96); transform-origin: bottom right;",
     "  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.34,1.4,0.64,1);",
     "}",
-    ".panel.auf { display: block; opacity: 1; transform: translateY(0) scale(1); }",
+    ".panel.bereit { display: block; }",
+    ".panel.auf { opacity: 1; transform: translateY(0) scale(1); }",
     ".panel iframe { width: 100%; height: 100%; border: 0; display: block; }",
 
     // Proaktive Sprechblase (selten, wegklickbar) — links neben dem Orb.
@@ -340,15 +387,146 @@
     ".hinweis .zu { position: absolute; top: 3px; right: 7px; cursor: pointer; color: #9ca3af; font-size: 0.95rem; line-height: 1; }",
     ".hinweis .zu:hover { color: #6b7280; }",
 
+    // ── Gesprächsleiste (data-stil="leiste") ────────────────────────────────
+    // Warum überhaupt eine zweite Form: Die ruhende Pille unten mittig ist die
+    // Geste, die Besucher inzwischen kennen — sie sagt "hier kannst du reden",
+    // ohne dass jemand erst ein Symbol deuten muss. Der Orb verlangt einen
+    // Klick ins Ungewisse, die Pille sagt in Worten, was passiert.
+    //
+    // Der Unterschied zu den nackten Eingabeleisten der anderen: Links sitzt die
+    // Figur, nicht ein Symbol. Damit ist von der ersten Sekunde an klar, dass
+    // hier jemand antwortet und nicht ein Suchfeld.
+    //
+    // SIE IST BEWUSST KLEIN. Sie ist nur die Einladung; getippt wird drinnen.
+    // Eine breite Leiste mit echtem Eingabefeld nimmt im Ruhezustand Platz und
+    // Aufmerksamkeit weg, die ihr nicht zusteht — sie sieht aus wie eine
+    // Aufgabe. Die Pille ist so gross wie ihr Satz und nicht grösser.
+    ".leiste {",
+    "  position: fixed; bottom: 22px; left: 50%; z-index: 2147483000;",
+    "  max-width: calc(100vw - 28px);",
+    "  display: flex; align-items: center; gap: 10px; padding: 5px 6px 5px 5px;",
+    "  background: #fff; border: 0; border-radius: 999px; cursor: pointer; text-align: left;",
+    "  box-shadow: 0 8px 26px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.06), 0 0 0 1px rgba(17,17,20,0.04);",
+    "  font-family: system-ui, -apple-system, sans-serif;",
+    "  opacity: 0; transform: translateX(-50%) translateY(14px); pointer-events: none;",
+    "  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.3,0.64,1), box-shadow 0.25s ease;",
+    "}",
+    ".leiste.sichtbar { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }",
+    ".leiste.sichtbar:hover {",
+    "  transform: translateX(-50%) translateY(-2px);",
+    "  box-shadow: 0 14px 34px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.06), 0 0 0 1px rgba(17,17,20,0.04);",
+    "}",
+
+    ".l-figur { flex: 0 0 auto; width: 42px; height: 42px; }",
+    ".leiste .figur, .leiste .initial {",
+    "  box-shadow: 0 3px 10px rgba(0,0,0,0.16), 0 0 0 2px #fff, 0 0 0 4px " + farbe + "33;",
+    "}",
+    ".leiste .initial { font-size: 18px; }",
+    ".leiste.sichtbar:hover .figur, .leiste.sichtbar:hover .initial {",
+    "  box-shadow: 0 4px 14px rgba(0,0,0,0.20), 0 0 0 2px #fff, 0 0 14px 3px " + farbe + "66; }",
+
+    ".l-text {",
+    "  flex: 0 1 auto; font-size: 14.5px; line-height: 1.3; color: #4b5563;",
+    "  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;",
+    "}",
+    ".l-pfeil {",
+    "  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;",
+    "  background: " + farbe + "; color: #fff; display: flex; align-items: center; justify-content: center;",
+    "  transition: transform 0.2s ease;",
+    "}",
+    ".leiste.sichtbar:hover .l-pfeil { transform: translateY(-1px); }",
+    ".l-pfeil svg { width: 15px; height: 15px; }",
+
+    // Der proaktive Satz steht bei der Leiste ÜBER der Pille, nicht daneben —
+    // daneben wäre er am Bildschirmrand und liefe bei schmalen Fenstern hinaus.
+    stil === "leiste"
+      ? ".hinweis { left: 50%; right: auto; bottom: 92px; width: 260px;" +
+        " max-width: calc(100vw - 32px); margin-left: -130px; text-align: center; }"
+      : "",
+
+    // Das Fenster kommt bei der Leiste von UNTEN hoch, mittig, und nicht aus der
+    // Ecke: Es fährt genau dort heraus, wo die Pille steht, die es geöffnet hat.
+    // Deshalb auch nur translate (kein scale) — geschoben, nicht aufgeploppt.
+    stil === "leiste"
+      ? [
+        ".panel {",
+        "  left: 50%; right: auto; bottom: 0;",
+        "  width: 440px; max-width: calc(100vw - 24px);",
+        "  height: min(680px, calc(100dvh - 40px)); max-height: calc(100dvh - 40px);",
+        "  border-radius: 20px 20px 0 0; transform-origin: bottom center;",
+        "  transform: translateX(-50%) translateY(100%);",
+        "  box-shadow: 0 -8px 50px rgba(0,0,0,0.22);",
+        "  transition: opacity 0.25s ease, transform 0.46s cubic-bezier(0.22,1,0.36,1);",
+        "}",
+        ".panel.auf { transform: translateX(-50%) translateY(0); }",
+      ].join("")
+      : "",
+
+    // ── Lage und Vollbild ───────────────────────────────────────────────────
+    // Gesteuert aus dem Chat-Kopf, gemerkt pro Besucher. Warum überhaupt: Wo
+    // das Fenster gut steht, hängt von der Seite ab, nicht vom Widget — auf
+    // einer Produktseite verdeckt die rechte Seite den Warenkorb, auf einer
+    // Textseite die Navigation. Das weiss nur, wer davor sitzt.
+    //
+    // Erst ab 481px: Darunter füllt der Chat ohnehin den Bildschirm, da gibt es
+    // keine Seite zum Andocken. Die Knöpfe sind dort auch ausgeblendet.
+    "@media (min-width: 481px) {",
+    "  .panel.pos-links, .panel.pos-rechts {",
+    "    width: 440px; max-width: calc(100vw - 24px); bottom: 12px;",
+    "    height: calc(100dvh - 24px); max-height: calc(100dvh - 24px);",
+    "    border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.28);",
+    "  }",
+    "  .panel.pos-links { left: 12px; right: auto; transform: translateY(calc(100% + 12px)); }",
+    "  .panel.pos-rechts { right: 12px; left: auto; transform: translateY(calc(100% + 12px)); }",
+    "  .panel.pos-links.auf, .panel.pos-rechts.auf { transform: translateY(0); }",
+    // Vollbild steht zuletzt und gewinnt darum über jede Lage.
+    // width:auto statt 100vw: 100vw zählt die Scrollleiste mit und wäre auf
+    // Seiten mit Scrollleiste rund 15px zu breit — das erzeugt auf der
+    // Kundenseite eine waagrechte Scrollleiste, die vorher nicht da war.
+    "  .panel.voll {",
+    "    left: 0; right: 0; top: 0; bottom: 0; width: auto; max-width: none;",
+    "    height: auto; max-height: none; border-radius: 0;",
+    "    transform: translateY(100%);",
+    "  }",
+    "  .panel.voll.auf { transform: translateY(0); }",
+    "}",
+
     "@media (max-width: 480px) {",
     "  .hinweis { display: none; }",
     "  .panel { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; }",
     "  .bubble { bottom: 18px; right: 18px; }",
     "}",
+    // Auf dem Handy bleibt die Pille mittig und kompakt; nur das Fenster wird
+    // ganzflächig — dort fährt es weiterhin von unten hoch statt zu erscheinen.
+    stil === "leiste"
+      ? [
+        "@media (max-width: 480px) {",
+        "  .panel { left: 0; transform: translateY(100%); border-radius: 0; }",
+        "  .panel.auf { transform: translateY(0); }",
+        "}",
+        "@media (max-width: 560px) {",
+        "  .leiste { bottom: 14px; }",
+        "  .l-figur { width: 38px; height: 38px; }",
+        "  .l-text { font-size: 14px; }",
+        "}",
+      ].join("")
+      : "",
     "</style>",
     '<div class="panel" id="panel"></div>',
     '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span></div>',
-    '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="figur" id="figur" hidden></span><span class="initial" id="initial"></span></button>',
+    // Die ganze Pille ist EIN Knopf — nicht Figur, Text und Pfeil einzeln. Wer
+    // sie anklickt, meint immer dasselbe, und mit der Tastatur ist es ein Halt
+    // statt drei.
+    stil === "leiste"
+      ? '<button class="leiste" id="bubble" type="button" aria-label="Chat öffnen">' +
+        '<span class="l-figur"><span class="figur" id="figur" hidden></span>' +
+        '<span class="initial" id="initial"></span></span>' +
+        '<span class="l-text" id="leisteTextEl"></span>' +
+        '<span class="l-pfeil" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg></span>' +
+        "</button>"
+      : '<button class="bubble" id="bubble" aria-label="Chat öffnen"><span class="figur" id="figur" hidden></span><span class="initial" id="initial"></span></button>',
   ].join("");
 
   var bubble = root.getElementById("bubble");
@@ -363,6 +541,43 @@
   var hinweis = root.getElementById("hinweis");
   var hinweisTextEl = root.getElementById("hinweisText");
   var hinweisZu = root.getElementById("hinweisZu");
+  var leisteTextEl = root.getElementById("leisteTextEl");
+  if (leisteTextEl) leisteTextEl.textContent = leisteText;
+
+  // ── Lage des Fensters ──────────────────────────────────────────────────────
+  // Der Besucher entscheidet, wo das Fenster steht, und es bleibt so — auch auf
+  // der nächsten Unterseite. Wer es einmal nach links geschoben hat, hat es
+  // dorthin geschoben, weil es rechts im Weg war; rechts wäre es dort wieder.
+  // Gemerkt wird nur die Lage, pro Firma, im localStorage.
+  var LAGE_KEY = "kiagent-lage-" + firma;
+  // Erster Eintrag = Ausgangslage: rechts angedockt. Das ist die Ecke, in der
+  // Besucher einen Chat erwarten, und sie verdeckt am wenigsten. Die
+  // Gesprächsleiste kennt zusätzlich "mitte" als Lage, in die man zurück kann;
+  // der Orb nur die beiden Seiten.
+  var LAGEN = stil === "leiste" ? ["rechts", "links", "mitte"] : ["rechts", "links"];
+  var lage = LAGEN[0];
+  // Vollbild wird BEWUSST nicht gemerkt: Es ist ein Griff für den Moment ("jetzt
+  // mehr sehen"), keine Vorliebe. Gemerkt käme es auf der nächsten Seite
+  // ungefragt über den ganzen Bildschirm — der Besucher hat dort nichts
+  // gewählt, er ist nur weitergeklickt. Die Lage dagegen ist eine Vorliebe.
+  var vollbild = false;
+  try {
+    var gemerkt = JSON.parse(localStorage.getItem(LAGE_KEY) || "null");
+    if (gemerkt && LAGEN.indexOf(gemerkt.lage) >= 0) lage = gemerkt.lage;
+  } catch (e) { /* ohne Gedächtnis eben die Ausgangslage */ }
+
+  function wendeLageAn() {
+    panel.classList.remove("pos-mitte", "pos-links", "pos-rechts");
+    panel.classList.add("pos-" + lage);
+    if (vollbild) panel.classList.add("voll");
+    else panel.classList.remove("voll");
+  }
+  function merkeLage() {
+    try {
+      localStorage.setItem(LAGE_KEY, JSON.stringify({ lage: lage }));
+    } catch (e) { /* privater Modus o.ä. — dann gilt es nur für diesen Besuch */ }
+  }
+  wendeLageAn();
   var offen = false;
   var geladen = false;
 
@@ -379,6 +594,12 @@
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (f) {
       if (f && f.name) setInitial(f.name); // Initial aus dem echten Firmennamen
+      // Die Pille spricht mit dem Namen der Figur ("Frag Mona etwas…"), sobald
+      // er bekannt ist — ausser die Firma hat einen eigenen Satz gesetzt.
+      var personaName = f && (f.persona || f.name);
+      if (leisteTextEl && !script.hasAttribute("data-leiste-text") && personaName) {
+        leisteTextEl.textContent = "Frag " + personaName + " etwas…";
+      }
       var bilder = f && f.charakter && f.charakter.bilder;
       if (bilder && bilder.idle) {
         // ERST prüfen, ob das Bild wirklich lädt. Nur dann auf die Figur wechseln;
@@ -425,14 +646,53 @@
   }
   function stoppeAuffrischen() { clearInterval(auffrischTimer); auffrischTimer = null; }
 
+  // Beim Öffnen den Schreibcursor gleich in den Chat setzen: Wer die Pille
+  // anklickt, will reden, nicht noch einmal zielen. NICHT auf dem Handy — dort
+  // spränge sofort die Tastatur hoch und deckte die halbe Antwort zu, bevor
+  // überhaupt eine da ist.
+  function fokussiereFrame() {
+    if (!frameEl || !frameEl.contentWindow) return;
+    if (window.innerWidth <= 560) return;
+    try {
+      frameEl.contentWindow.postMessage({ type: "ki-agent-fokus" }, basis);
+    } catch (e) { /* nie die Kundenseite stören */ }
+  }
+
+  // Dem Chat sagen, dass er das Fenster stellen darf — und wie es gerade steht.
+  // Ohne diese Nachricht bleiben die Knöpfe im Chat-Kopf verborgen; so gibt es
+  // sie nur dort, wo sie auch etwas bewirken.
+  function meldeFensterAnFrame() {
+    if (!frameEl || !frameEl.contentWindow) return;
+    try {
+      frameEl.contentWindow.postMessage(
+        {
+          type: "ki-agent-fenster", lagen: LAGEN, lage: lage, vollbild: vollbild,
+          // Wie breit der BILDSCHIRM ist, kann der Frame nicht wissen: Er misst
+          // sich selbst und ist angedockt immer schmal. Also von hier.
+          schmal: window.innerWidth <= 480,
+        },
+        basis
+      );
+    } catch (e) { /* nie die Kundenseite stören */ }
+  }
+
+  // Das Fenster muss sichtbar (display) sein, BEVOR .auf kommt, sonst
+  // überspringt der Browser die Fahrt. Ein erzwungenes Layout dazwischen ist
+  // genau der Punkt, an dem der Startzustand verbindlich wird.
+  var zuTimer = null;
   function oeffne() {
     versteckeHinweis();
+    clearTimeout(zuTimer);
     if (!geladen) {
       var f = document.createElement("iframe");
       f.src = baueFrameUrl(); // Seiten-Kontext beim Öffnen mitgeben
       f.title = "Chat";
       f.setAttribute("allow", "clipboard-write; microphone");
-      f.addEventListener("load", sendeSeiteAnFrame);
+      f.addEventListener("load", function () {
+        sendeSeiteAnFrame();
+        meldeFensterAnFrame();
+        fokussiereFrame();
+      });
       panel.appendChild(f);
       frameEl = f;
       geladen = true;
@@ -440,11 +700,15 @@
       // Schon geladen (Besucher öffnet erneut): Kontext auffrischen — bei
       // Single-Page-Shops kann sich die Seite inzwischen geändert haben.
       sendeSeiteAnFrame();
+      meldeFensterAnFrame(); // Bildschirmbreite kann sich geändert haben
+      fokussiereFrame();
     }
     starteAuffrischen();
+    panel.classList.add("bereit");
+    void panel.offsetWidth; // Startzustand festschreiben -> die Fahrt läuft wirklich
     panel.classList.add("auf");
-    // Grosses Fenster deckt die Orb-Ecke ab -> Launcher ausblenden, solange offen
-    // (zu wird über das × im Chat-Kopf). Beim Schliessen kommt er wieder.
+    // Grosses Fenster deckt den Launcher ab -> ausblenden, solange offen (zu
+    // wird über das × im Chat-Kopf). Beim Schliessen kommt er wieder.
     bubble.classList.remove("sichtbar");
     bubble.setAttribute("aria-label", "Chat schliessen");
     offen = true;
@@ -452,11 +716,24 @@
   function schliesse() {
     stoppeAuffrischen();
     panel.classList.remove("auf");
-    bubble.classList.add("sichtbar"); // Orb wieder zeigen
+    // Erst wegblenden lassen, dann aus dem Layout nehmen — sonst verschwindet
+    // das Fenster schlagartig statt hinunterzufahren. Der iframe bleibt dabei
+    // erhalten (das Gespräch geht beim nächsten Öffnen weiter).
+    clearTimeout(zuTimer);
+    zuTimer = setTimeout(function () { panel.classList.remove("bereit"); }, 500);
+    bubble.classList.add("sichtbar"); // Orb bzw. Pille wieder zeigen
     bubble.setAttribute("aria-label", "Chat öffnen");
     offen = false;
   }
   bubble.addEventListener("click", function () { offen ? schliesse() : oeffne(); });
+
+  // Wer das Browserfenster verkleinert, soll die Andock-Knöpfe verlieren, sobald
+  // sie nichts mehr bewirken (und zurückbekommen, sobald wieder Platz ist).
+  var breiteTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(breiteTimer);
+    breiteTimer = setTimeout(meldeFensterAnFrame, 200);
+  });
 
   // --- Proaktive Sprechblase: nur bei echtem Anlass, selten, wegklickbar ------
   //
@@ -585,6 +862,19 @@
     // fremde Fenster die Seite fernsteuern.
     if (e.origin !== basis) return;
     if (e.data.type === "ki-agent-schliessen") schliesse();
+    // Lage/Vollbild: der Chat sagt, was der Besucher gewählt hat — ausgeführt
+    // und gemerkt wird es hier. Unbekannte Lagen werden verworfen, nicht
+    // erraten; sonst stünde das Fenster nach einem Tippfehler nirgends.
+    if (e.data.type === "ki-agent-lage" && LAGEN.indexOf(e.data.lage) >= 0) {
+      lage = e.data.lage;
+      vollbild = false; // andocken hebt das Vollbild auf, sonst sieht man nichts davon
+      wendeLageAn();
+      merkeLage();
+    }
+    if (e.data.type === "ki-agent-vollbild") {
+      vollbild = !!e.data.an; // absichtlich nicht gemerkt, s.o.
+      wendeLageAn();
+    }
     if (e.data.type === "ki-agent-zustand" && typeof e.data.zustand === "string") {
       setFigurBild(e.data.zustand);
     }

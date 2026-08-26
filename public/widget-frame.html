@@ -18,7 +18,15 @@
       --schrift: 0.9rem;
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
+    /* overflow:hidden hier: Diese Seite hat genau EINEN Ort zum Scrollen
+       (#chat). Ohne das kann der Rest (html/body) selbst minimal überlaufen
+       (Rundungsfehler, lange Inhalte auf dem Handy) — und genau dahin
+       "kettet" der Browser den Scroll weiter, sobald #chat am Anschlag ist.
+       Bei einem eingebetteten Chat (dieses Dokument sitzt im iframe des
+       Widgets auf einer fremden Seite) reicht diese Kette sonst bis zur
+       Kundenseite durch: man scrollt im Verlauf nach unten, kommt am Ende an,
+       scrollt weiter — und plötzlich bewegt sich die Seite dahinter. */
+    html, body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: contain; }
     body {
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
@@ -40,8 +48,18 @@
     .rund-btn:hover { color: var(--farbe); background: #fff; }
     .rund-btn svg { width: 17px; height: 17px; display: block; }
     #schliessen { font-size: 1.2rem; line-height: 1; }
+    /* Erst sichtbar, wenn das Widget die Steuerung angeboten hat. Auf schmalen
+       BILDSCHIRMEN gar nicht: Dort füllt der Chat ohnehin alles, links oder
+       rechts andocken hätte nichts zu andocken.
+       KEINE Media-Query dafür: Die misst dieses Fenster, und das ist als
+       angedockter Chat immer schmal (440px) — auch auf einem grossen Monitor.
+       Wie breit der Bildschirm wirklich ist, weiss nur das Widget draussen; es
+       schickt es mit. */
+    .nur-fenster { display: none; }
+    body.fenster-steuerbar .nur-fenster { display: grid; }
+    body.fenster-schmal .nur-fenster { display: none; }
     #schliessen:hover { transform: rotate(90deg); }
-    #stimme.an { background: var(--farbe); color: #fff; border-color: transparent; }
+    /* Vorlesen sitzt nicht mehr hier oben, sondern als Pille in der Eingabe-Karte. */
 
     /* Charakter-Bühne: die Figur steht FREI (kein harter Kreis) auf einem weichen,
        aus --farbe abgeleiteten Schein. Der Orb bringt seinen eigenen Kreis mit. */
@@ -78,9 +96,8 @@
     #kopf-online::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #4ade80;
                            box-shadow: 0 0 0 0 rgba(74,222,128,0.7); animation: puls 2.4s ease-out infinite; }
     @keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); } 70%,100% { box-shadow: 0 0 0 6px rgba(74,222,128,0); } }
-    /* Vorschlags-Chips: nur im Begrüssungszustand (auf der Bühne). */
-    #chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 0.5rem; }
-    #chips:empty { display: none; }
+    /* Die Vorschläge stehen nicht mehr hier bei der Figur, sondern in der
+       Eingabe-Karte unten (#komponist) — dort, wo gefragt wird. */
     /* Sobald ein Gespräch läuft: Bühne etwas kompakter, Rolle/Chips weg. Die
        Figur bleibt aber gross und praesent — sie schrumpfte hier frueher auf
        Daumennagelgroesse, womit das Gegenueber im Gespraech verschwand. */
@@ -113,7 +130,12 @@
     @keyframes huepf { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
 
     /* --- Chatverlauf (Hauptbereich unter dem Charakter) --- */
-    #chat { flex: 1; overflow-y: auto; padding: 0.3rem 0.9rem 0.9rem; display: flex; flex-direction: column;
+    /* overscroll-behavior: contain haelt den Scroll HIER an, sobald der
+       Verlauf am oberen/unteren Ende ankommt — er "kettet" sich sonst weiter
+       zu html/body dieses Dokuments und von dort (dieses Dokument sitzt im
+       Widget-iframe auf der Kundenseite) potenziell bis zur Kundenseite durch. */
+    #chat { flex: 1; overflow-y: auto; overscroll-behavior-y: contain;
+            padding: 0.3rem 0.9rem 0.9rem; display: flex; flex-direction: column;
             gap: 0.5rem; scroll-behavior: smooth; }
     #chat::-webkit-scrollbar { width: 6px; }
     #chat::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--farbe) 22%, transparent); border-radius: 999px; }
@@ -136,15 +158,48 @@
     .tippt span:nth-child(3) { animation-delay: 0.36s; }
     @keyframes tip { 0%,60%,100% { opacity: 0.28; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
 
-    /* --- Eingabe: Glasleiste --- */
-    #form { display: flex; gap: 0.5rem; padding: 0.7rem 0.75rem; flex-shrink: 0; align-items: center;
-            background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-            border-top: 1px solid var(--linie); }
-    #input { flex: 1; padding: 0.65rem 0.9rem; border: 1px solid var(--linie); border-radius: 999px; font: inherit;
-             font-size: var(--schrift); background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
-    #input:focus { outline: none; border-color: var(--farbe);
-                   box-shadow: 0 0 0 3px color-mix(in srgb, var(--farbe) 18%, transparent); }
-    #send { width: 40px; height: 40px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; color: #fff;
+    /* --- Eingabe: EINE Karte statt einer Leiste ---------------------------
+       Die flache Leiste am unteren Rand sah aus wie das Suchfeld einer Seite.
+       Als Karte ist sie ein eigener Ort: Vorschläge oben, Zeile zum Tippen in
+       der Mitte, Werkzeuge und Senden unten. Der Blick geht von "was könnte
+       ich fragen" zu "hier tippe ich" zu "so schicke ich es ab". */
+    #komponist { flex-shrink: 0; margin: 0.15rem 0.6rem 0.6rem; padding: 0.5rem;
+                 background: #fff; border: 1px solid var(--linie); border-radius: 22px;
+                 box-shadow: 0 6px 22px -14px rgba(15,23,42,0.5), 0 1px 3px rgba(15,23,42,0.04);
+                 transition: box-shadow 0.2s, border-color 0.2s; }
+    #komponist:focus-within { border-color: color-mix(in srgb, var(--farbe) 45%, var(--linie));
+                 box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--farbe) 65%, transparent),
+                             0 0 0 3px color-mix(in srgb, var(--farbe) 12%, transparent); }
+    #form { display: flex; flex-direction: column; gap: 0.35rem; }
+    #input { width: 100%; padding: 0.5rem 0.6rem 0.2rem; border: 0; background: transparent;
+             font: inherit; font-size: var(--schrift); color: #0f172a; }
+    #input:focus { outline: none; }
+    #input::placeholder { color: #94a3b8; }
+
+    /* Unterste Zeile: links die Werkzeuge, rechts das Senden. */
+    .k-reihe { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+    .k-werkzeuge { display: flex; align-items: center; gap: 0.3rem; min-width: 0; }
+    /* Werkzeug-Pillen: Symbol plus Wort. Ein Symbol allein muss geraten werden,
+       und "Vorlesen" ist nichts, wofür jemand raten will. */
+    /* Mit #komponist davor, weil lib/chat-ui.js seine .ki-mic-Regeln zur
+       Laufzeit in den <head> nachschiebt — die stünden sonst später und würden
+       das Mikrofon wieder zum 40px-Quadrat machen. */
+    #komponist .k-pille { display: inline-flex; align-items: center; gap: 0.35rem; height: 32px;
+               width: auto; padding: 0 0.7rem;
+               border: 1px solid var(--linie); border-radius: 999px; background: #fff; cursor: pointer;
+               font: inherit; font-size: 0.76rem; color: #64748b; white-space: nowrap;
+               transition: background 0.18s, color 0.18s, border-color 0.18s; }
+    #komponist .k-pille svg { width: 15px; height: 15px; flex-shrink: 0; }
+    #komponist .k-pille:hover { color: var(--farbe);
+               border-color: color-mix(in srgb, var(--farbe) 40%, var(--linie)); background: var(--tint); }
+    /* Aufnahme läuft: rot, wie in lib/chat-ui.js gedacht — nur in Pillen-Form. */
+    #komponist .ki-mic.hoert { background: #ef4444; border-color: transparent; color: #fff; }
+    /* Eingeschaltet (Vorlesen an): die Pille füllt sich. Mit #komponist davor,
+       sonst gewinnt die allgemeine Pillen-Regel weiter unten (gleich stark,
+       aber später) und die Pille bliebe weiss. */
+    #komponist #stimme.an { background: var(--farbe); border-color: transparent; color: #fff; }
+    #komponist #stimme.an:hover { background: var(--farbe-dunkel); color: #fff; }
+    #send { width: 38px; height: 38px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; color: #fff;
             cursor: pointer; font-size: 1.1rem; display: grid; place-items: center;
             background: linear-gradient(135deg, var(--farbe), var(--farbe-dunkel));
             box-shadow: 0 5px 14px -5px color-mix(in srgb, var(--farbe) 70%, transparent);
@@ -152,9 +207,56 @@
     #send:hover:not(:disabled) { transform: translateY(-1px) scale(1.05);
             box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--farbe) 75%, transparent); }
     #send:disabled { opacity: 0.45; cursor: default; }
-    .fuss { text-align: center; font-size: 0.64rem; color: #9aa3af; padding: 0.35rem 0 0.5rem;
-            background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+
+    /* Vorschläge in der Karte: nebeneinander liegende Kacheln, nicht Pillen —
+       ganze Fragen brauchen zwei Zeilen, eine Pille zwingt sie in eine.
+       Überschreibt die Pillen-Form aus lib/chat-ui.js. */
+    #chips { display: block; }
+    #chips:empty { display: none; }
+    #komponist .ki-vorschlaege { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 6px; }
+    #komponist .ki-vorschlag { padding: 0.5rem 0.6rem; border-radius: 14px; text-align: left;
+              font-size: 0.74rem; line-height: 1.3; white-space: normal; box-shadow: none;
+              background: var(--tint); color: #475569;
+              border: 1px solid color-mix(in srgb, var(--farbe) 12%, var(--linie)); }
+    #komponist .ki-vorschlag:hover { background: var(--tint); color: var(--farbe); transform: none;
+              border-color: color-mix(in srgb, var(--farbe) 45%, transparent); box-shadow: none; }
+    /* Ohne eigene Fläche: Die Karte darüber schwebt, ein weisser Balken darunter
+       machte daraus wieder eine Leiste. */
+    .fuss { text-align: center; font-size: 0.64rem; color: #9aa3af; padding: 0 0 0.45rem; }
     .fuss a { color: inherit; text-decoration: none; }
+
+    /* ═══ VOLLBILD: zweispaltig ═══════════════════════════════════════════
+       ÜBERNOMMEN aus index.html (dort schon gebaut und bewährt) — dasselbe
+       Layout, nur auf die Bezeichner dieses Frames gelegt: #topbar statt
+       #kopfleiste, #held statt #buehne, #form statt form.
+       Die Figur bekommt eine eigene Spalte und bleibt dadurch IMMER gross —
+       sie muss sich den Platz nicht mehr mit dem Text teilen und schrumpft nie.
+       Rechts leben Verlauf und Eingabe zusammen. Ausserhalb des Vollbilds
+       bleibt das Layout unverändert einspaltig.
+       Die Breite misst hier ausnahmsweise richtig: Im Vollbild IST dieser Frame
+       der ganze Bildschirm. */
+    @media (min-width: 900px) {
+      body.vollbild { display: grid; grid-template-columns: minmax(320px, 38%) 1fr;
+        grid-template-rows: auto 1fr auto; }
+      body.vollbild #topbar { grid-column: 1 / -1; grid-row: 1; }
+      /* Statt einer Trennlinie zur rechten Spalte trägt die Bühne ihren eigenen
+         weichen Schein — der grenzt die Figur ab, ohne zu schneiden. */
+      body.vollbild #held { grid-column: 1; grid-row: 2 / 4; min-height: 0;
+        justify-content: center;
+        background: radial-gradient(72% 58% at 50% 45%, var(--tint), transparent 76%);
+        --figur: min(520px, 34vw, 62vh) !important; }
+      /* Auch im laufenden Gespräch: eigene Spalte, also keine Verkleinerung.
+         Rolle und Name dürfen hier stehen bleiben, der Platz ist da. */
+      body.vollbild.hat-verlauf #kopf-name { font-size: 1.05rem; }
+      body.vollbild.hat-verlauf #kopf-rolle { display: block; }
+      body.vollbild #chat { grid-column: 2; grid-row: 2; padding: 1.4rem 1.6rem; }
+      /* In der rechten Spalte sitzt jetzt die ganze Eingabe-Karte, nicht mehr
+         das nackte Formular. */
+      body.vollbild #komponist { grid-column: 2; grid-row: 3; margin: 0 1.6rem 1.2rem; padding: 0.6rem; }
+      /* Breite Spalte: die Vorschlags-Kacheln dürfen nebeneinander atmen. */
+      body.vollbild #komponist .ki-vorschlaege { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      body.vollbild .fuss { display: none; }
+    }
 
     @media (prefers-reduced-motion: reduce) {
       #kopf-avatar svg, #kopf-avatar.sprechen, #kopf-online::before, .augen, .msg,
@@ -165,9 +267,12 @@
 </head>
 <body>
   <div id="topbar">
-    <button id="stimme" class="rund-btn" aria-label="Vorlesen einschalten" aria-pressed="false" title="Antworten vorlesen">
-      <svg id="stimme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-    </button>
+    <!-- Lage und Vollbild gehören dem Fenster, nicht dem Chat: Sie sind darum
+         versteckt, bis das Widget meldet, dass es sie ausführen kann. Steht der
+         Chat woanders (Dashboard-Testchat, direkt aufgerufen), bleiben sie weg
+         statt tote Knöpfe zu sein. -->
+    <button id="lage" class="rund-btn nur-fenster" type="button" aria-label="Fenster anders stellen" title="Fenster anders stellen"></button>
+    <button id="vollbild" class="rund-btn nur-fenster" type="button" aria-label="Vollbild" title="Vollbild" aria-pressed="false"></button>
     <button id="schliessen" class="rund-btn" aria-label="Schliessen" title="Schliessen">×</button>
   </div>
 
@@ -193,16 +298,30 @@
     <div id="kopf-rolle"></div>
     <div id="kopf-online">Online</div>
     <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-    <div id="chips"></div>
   </div>
 
   <div id="chat"></div>
 
-  <form id="form">
-    <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
-    <button id="mic" type="button" class="ki-mic" aria-label="Spracheingabe" title="Sprechen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg></button>
-    <button id="send" type="submit" aria-label="Senden">→</button>
-  </form>
+  <!-- Eingabe als KARTE, nicht als Leiste: oben die Vorschläge (was man hier
+       fragen könnte), darunter die Zeile zum Tippen, unten die Werkzeuge links
+       und Senden rechts. Alles, was zum Fragen gehört, liegt damit an einem
+       Ort und in einer Umrandung — statt Chips oben bei der Figur, Mikrofon im
+       Feld und Vorlesen in der Kopfleiste.
+       #chips steht bewusst INNERHALB der Karte: Die Vorschläge sind der erste
+       Zug des Besuchers, nicht Beiwerk der Figur. -->
+  <div id="komponist">
+    <div id="chips"></div>
+    <form id="form">
+      <input id="input" placeholder="Frag mich etwas…" autocomplete="off" />
+      <div class="k-reihe">
+        <div class="k-werkzeuge">
+          <button id="mic" type="button" class="ki-mic k-pille" aria-label="Spracheingabe" title="Sprechen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M5 10v1a7 7 0 0 0 14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg><span>Sprechen</span></button>
+          <button id="stimme" type="button" class="k-pille" aria-label="Vorlesen einschalten" aria-pressed="false" title="Antworten vorlesen"><svg id="stimme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg><span>Vorlesen</span></button>
+        </div>
+        <button id="send" type="submit" aria-label="Senden">→</button>
+      </div>
+    </form>
+  </div>
   <div class="fuss">mit KI-Agent</div>
 
   <!-- Bewusst OHNE Supabase-Skripte (Milestone 0): Das Widget läuft im BESUCHER-
@@ -392,7 +511,10 @@
       } catch (e) { /* Aussehen ist nicht kritisch */ }
       setCharakter("freuen", 700);
       ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
-      ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle));
+      // Zwei Kacheln, nicht vier: Die Karte sitzt über dem Verlauf und nimmt ihm
+      // jede weitere Zeile weg. Zwei gute Einstiege sind ein Angebot, vier sind
+      // eine Liste, die man erst lesen muss.
+      ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle).slice(0, 2));
     }
 
     // Gemeinsame Chat-Logik aus lib/chat-ui.js. Der Charakter oben reagiert über
@@ -405,6 +527,9 @@
     const figur = ChatUI.figurRegler({
       buehne: document.getElementById("held"),
       chat,
+      // Im Vollbild hat die Figur eine eigene Spalte — dort nie schrumpfen
+      // (gleiche Regel wie in index.html).
+      aktiv: () => !document.body.classList.contains("vollbild"),
       stufen: [
         "min(250px, 52vw, 30vh)",
         "min(200px, 44vw, 25vh)",
@@ -431,6 +556,104 @@
       onAntwort: (text) => { liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
+
+    // --- Fenster-Steuerung: Lage und Vollbild -----------------------------
+    //
+    // Der Chat sitzt im iframe und kann sich nicht selbst verschieben — er sagt
+    // nur, was der Besucher will; ausgeführt wird es vom Widget. Welche Lagen
+    // es überhaupt gibt, gibt ebenfalls das Widget vor (beim Orb sind das zwei,
+    // bei der Gesprächsleiste drei) — so muss der Chat nichts über die
+    // Darstellung auf der Kundenseite wissen.
+    const lageBtn = document.getElementById("lage");
+    const vollBtn = document.getElementById("vollbild");
+    const LAGE_NAME = { links: "Links andocken", rechts: "Rechts andocken", mitte: "Mittig stellen" };
+    const LAGE_ICON = {
+      // Rahmen mit gefüllter Seite: zeigt, WOHIN es geht, nicht wo es ist.
+      links: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16" /><path d="M3 8h6M3 12h6M3 16h6"/>',
+      rechts: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16" /><path d="M15 8h6M15 12h6M15 16h6"/>',
+      mitte: '<rect x="6" y="4" width="12" height="16" rx="2"/>',
+    };
+    // Dieselben Symbole wie im Vollbild-Knopf von index.html — dort schon
+    // gezeichnet, hier nur wiederverwendet.
+    const VOLL_ICON = {
+      an: '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+      aus: '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>',
+    };
+    function svg(inhalt) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+        'stroke-linecap="round" stroke-linejoin="round">' + inhalt + "</svg>";
+    }
+
+    let lagen = [];
+    let lageNr = 0;
+    let istVollbild = false;
+
+    function zeichneFensterKnoepfe() {
+      if (lagen.length > 1) {
+        const ziel = lagen[(lageNr + 1) % lagen.length];
+        lageBtn.innerHTML = svg(LAGE_ICON[ziel] || LAGE_ICON.rechts);
+        lageBtn.title = LAGE_NAME[ziel] || "Fenster anders stellen";
+        lageBtn.setAttribute("aria-label", lageBtn.title);
+      }
+      vollBtn.innerHTML = svg(istVollbild ? VOLL_ICON.aus : VOLL_ICON.an);
+      vollBtn.title = istVollbild ? "Vollbild verlassen" : "Vollbild";
+      vollBtn.setAttribute("aria-label", vollBtn.title);
+      vollBtn.setAttribute("aria-pressed", istVollbild ? "true" : "false");
+    }
+
+    function sagWidget(nachricht) {
+      try { parent.postMessage(nachricht, "*"); } catch (err) { /* egal */ }
+    }
+
+    // Im Vollbild schaltet dieser Frame auf das ZWEISPALTIGE Layout aus
+    // index.html um: Figur links in eigener Spalte, Verlauf und Eingabe rechts.
+    // Dort hat die Figur ihren eigenen Platz und soll NIE schrumpfen — der
+    // Platz-Regler wird deshalb stillgelegt (aktiv-Prüfung unten) und seine
+    // bereits gesetzte Grösse zurückgenommen, damit die Spaltengrösse greift.
+    // Beim Verlassen läuft er wieder.
+    function setzeVollbild(an) {
+      istVollbild = an;
+      document.body.classList.toggle("vollbild", an);
+      figur.zuruecksetzen();
+      if (!an) figur.pruefe();
+      zeichneFensterKnoepfe();
+    }
+
+    lageBtn.addEventListener("click", () => {
+      if (lagen.length < 2) return;
+      lageNr = (lageNr + 1) % lagen.length;
+      // Andocken heisst: kein Vollbild mehr. Sonst führte der Knopf sichtbar zu
+      // nichts, weil das Vollbild jede Lage überdeckt.
+      sagWidget({ type: "ki-agent-lage", lage: lagen[lageNr] });
+      setzeVollbild(false);
+    });
+    vollBtn.addEventListener("click", () => {
+      sagWidget({ type: "ki-agent-vollbild", an: !istVollbild });
+      setzeVollbild(!istVollbild);
+    });
+
+    // --- Nachrichten vom Widget -------------------------------------------
+    // "ki-agent-fokus": Fenster ist aufgefahren -> Schreibcursor ins Feld. Wer
+    //   den Chat öffnet, will schreiben.
+    // "ki-agent-fenster": Das Widget bietet die Fenster-Steuerung an und sagt,
+    //   welche Lagen es gibt und wie es gerade steht (aus früherem Besuch).
+    // Nur vom eigenen Eltern-Fenster — dieselbe Regel wie beim Seiten-Kontext.
+    window.addEventListener("message", (e) => {
+      if (e.source !== parent || !e.data) return;
+      if (e.data.type === "ki-agent-fokus") {
+        try { input.focus(); } catch (err) { /* egal */ }
+      }
+      if (e.data.type === "ki-agent-fenster") {
+        lagen = Array.isArray(e.data.lagen) ? e.data.lagen : [];
+        lageNr = Math.max(0, lagen.indexOf(e.data.lage));
+        document.body.classList.add("fenster-steuerbar");
+        document.body.classList.toggle("fenster-schmal", !!e.data.schmal);
+        if (lagen.length < 2) lageBtn.style.display = "none";
+        // Aus einem früheren Besuch kann das Vollbild schon an sein — dann muss
+        // auch das zweispaltige Layout gleich stehen, nicht erst nach einem Klick.
+        setzeVollbild(!!e.data.vollbild);
+      }
+    });
 
     start();
   </script>

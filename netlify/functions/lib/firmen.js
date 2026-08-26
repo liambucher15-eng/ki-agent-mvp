@@ -13,8 +13,14 @@ const nordlicht = require("../../../data/nordlicht.json");
 const nordform = require("../../../data/nordform.json");
 // Aus einem ECHTEN Shop gescannt — Beleg, dass der Katalog im Feld traegt.
 const collectif = require("../../../data/collectif.json");
+// Wir selbst. Der Agent auf der eigenen Startseite beantwortet Fragen zu
+// AuraChat — das Produkt fuehrt sich damit an sich selbst vor. Sein Wissen ist
+// ausschliesslich das, was auf start.html steht; was es noch nicht gibt
+// (Impressum, Referenzen, Kontaktadresse), steht dort ausdruecklich als
+// fehlend, damit er es nicht erfindet.
+const aurachat = require("../../../data/aurachat.json");
 
-const firmen = { salbei, nordlicht, nordform, collectif };
+const firmen = { salbei, nordlicht, nordform, collectif, aurachat };
 
 // Gibt die Daten einer Firma zurück, oder null wenn es sie nicht gibt.
 function ladeFirma(firmaId) {
