@@ -49,10 +49,46 @@
       <a class="knopf knopf-voll" href="demo-nordform.html">Demo testen</a>
       <a class="knopf knopf-rand" href="onboarding-aura.html">Gratis Version testen</a>
     </div>
-    <div class="hero-bild-zone">
-      <img class="hero-bild" src="bilder/hero-hintergrund.webp" alt="" role="presentation" />
-    </div>
+    <!-- Aus dem festen Hero-Bild ist eine Szene geworden: dieselbe Figur am
+         selben Browser, aber beim Scrollen springt sie hinein und sitzt dort
+         als Chat-Knopf. Der Film ist freigestellt (WebM mit Alphakanal), der
+         Verlauf steht deshalb im CSS statt im Bild.
+
+         Das Standbild ist nicht nur Notnagel, sondern der Ruhezustand: Es
+         liegt immer da und traegt das Layout; der Film legt sich nur darueber,
+         wenn er wirklich laufen kann. -->
   </main>
+
+  <!-- Die Buehne steht bewusst NEBEN dem Hero und nicht darin: Innerhalb von
+       main.hero blieb die Szene trotz position:sticky nicht stehen — gemessen
+       lief sie einfach mit, waehrend ein sonst identisches Element direkt im
+       body klebte. Hier draussen klebt sie. -->
+  <section class="sprung-buehne" data-sprung-zone aria-label="Der Agent springt in die Webseite">
+    <div class="sprung-klebt">
+      <div class="sprung" data-sprung>
+        <!-- Zeigt die RUHEPOSE, nicht das Ergebnis: Bei Scrollposition null
+             steht genau dieses Bild, und der Film setzt beim selben Frame an.
+             Mit der Endpose sprang das Bild sichtbar um, sobald der Film
+             geladen war. -->
+        <img class="sprung-standbild" src="bilder/sprung-ruhe.png"
+             alt="Ein Maskottchen lehnt an einem Browserfenster" />
+        <!-- Ohne src: Der Film wird unten per fetch geholt und als Blob
+             eingehaengt. Warum, steht dort. -->
+        <video class="sprung-film" muted playsinline aria-hidden="true"></video>
+        <!-- Steigt rechts von unten auf, sobald sich das Fenster wegneigt.
+             Steht bewusst im selben Rasterfeld wie Bild und Film, damit es
+             ueber dem Verlauf liegt statt daneben. -->
+        <div class="sprung-text">
+          <span class="sprung-marke">Das Ergebnis</span>
+          <h2>Ab jetzt sitzt er auf deiner Seite.</h2>
+          <p>
+            Unten rechts, immer erreichbar. Er kennt dein Angebot, beantwortet
+            Fragen und führt Besucher zum richtigen Ort — rund um die Uhr.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ══ VERTRAUENSLEISTE ═══════════════════════════════════════════════
        Statt erfundener Kundenzahlen: was heute wirklich stimmt. Diese
@@ -131,11 +167,18 @@
       <div class="vorteile">
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">01 · Die Figur im Chat, in mehreren Zuständen nebeneinander</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-7l-4 3.4V16H7a3 3 0 0 1-3-3z"/>
+              <circle cx="9" cy="10" r=".9" fill="currentColor" stroke="none"/>
+              <circle cx="12" cy="10" r=".9" fill="currentColor" stroke="none"/>
+              <circle cx="15" cy="10" r=".9" fill="currentColor" stroke="none"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/01-mitarbeiter.webp" alt="Die Figur im Chat, in mehreren Zuständen nebeneinander"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -148,11 +191,17 @@
 
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">02 · Eine Webseite, aus der Inhalte zur Figur fliessen</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3.5" y="4.5" width="10" height="13" rx="1.5"/>
+              <path d="M6.5 8h4M6.5 11h4M6.5 14h2.5"/>
+              <path d="M15 11h5.5M17.5 8.5 20.5 11l-3 2.5"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/02-lernt.webp" alt="Eine Webseite, aus der Inhalte zur Figur fliessen"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -165,11 +214,16 @@
 
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">03 · Die Figur neben einer geöffneten Produktseite</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/>
+              <circle cx="12" cy="9.5" r="2.4"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/03-kontext.webp" alt="Die Figur neben einer geöffneten Produktseite"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -182,11 +236,16 @@
 
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">04 · Produktkarten, die aus dem Gespräch auftauchen</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12.6 3.5h5.4A1.5 1.5 0 0 1 19.5 5v5.4a1.5 1.5 0 0 1-.44 1.06l-8 8a1.5 1.5 0 0 1-2.12 0l-5.4-5.4a1.5 1.5 0 0 1 0-2.12l8-8a1.5 1.5 0 0 1 1.06-.44z"/>
+              <circle cx="15.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/04-fuehren.webp" alt="Produktkarten, die aus dem Gespräch auftauchen"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -199,11 +258,18 @@
 
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">05 · Einstellungen im Dashboard, daneben die Figur</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 6h9M17 6h3M4 12h3M9 12h11M4 18h13M21 18h-2"/>
+              <circle cx="11.5" cy="6" r="1.6" fill="currentColor" stroke="none"/>
+              <circle cx="6.5" cy="12" r="1.6" fill="currentColor" stroke="none"/>
+              <circle cx="17" cy="18" r="1.6" fill="currentColor" stroke="none"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/05-anpassbar.webp" alt="Einstellungen im Dashboard, daneben die Figur"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -216,11 +282,16 @@
 
         <article class="vorteil">
           <div class="vorteil-bild">
-            <span class="vorteil-marke" aria-hidden="true">06 · Die Figur, die ehrlich abwinkt statt zu raten</span>
-            <!-- Fehlt die Datei noch, entfernt sich das Bild selbst und der
-                 Platzhalter darunter bleibt stehen. onerror als ATTRIBUT, nicht
-                 per addEventListener: Nur so ueberlebt der Handler ein
-                 cloneNode (siehe Charakter-Galerie weiter oben). -->
+            <svg class="vorteil-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3.5 5 6v5.5c0 4.6 3 7.9 7 9 4-1.1 7-4.4 7-9V6z"/>
+              <path d="M9 12.2l2 2 4-4.4"/>
+            </svg>
+            <!-- Verlauf + Symbol sind die fertige Gestaltung, kein Notbehelf.
+                 Kommt spaeter ein echtes Foto dazu, deckt das <img> beides
+                 einfach zu; fehlt es weiterhin, bleiben Verlauf und Symbol
+                 stehen. onerror als ATTRIBUT, nicht per addEventListener: Nur
+                 so ueberlebt der Handler ein cloneNode (siehe
+                 Charakter-Galerie weiter oben). -->
             <img src="bilder/vorteile/06-ehrlichkeit.webp" alt="Die Figur, die ehrlich abwinkt statt zu raten"
                  loading="lazy" decoding="async" onerror="this.remove()" />
           </div>
@@ -1306,6 +1377,200 @@
     // Karten koennen sich noch verschieben, wenn Bilder/Schriften nach dem
     // ersten Lauf laden (gleicher Grund wie beim "load"-Anlauf oben).
     window.addEventListener("load", aktualisierePfeile);
+  })();
+
+  /* ── Die Sprung-Szene: drei Abschnitte auf einer Scrollstrecke ─────────
+
+     1. ZOOM   Der Text scrollt weg, die Szene waechst in den frei werdenden
+               Platz — und der Film laeuft schon ein Stueck an, damit sich die
+               Figur waehrenddessen aufrichtet statt reglos zu warten.
+     2. SPRUNG Die Szene steht fest, der Film laeuft zu Ende.
+     3. WEGDREHEN Das Fenster neigt sich in den Raum, rechts steigt der Text
+               von unten auf.
+     4. ABGANG  Das Fenster kippt weiter nach hinten, zieht nach oben aus dem
+               Bild und verblasst; der Text geht mit. Danach ist die Buehne
+               leer und der naechste Abschnitt rueckt nach.
+
+     Alles rechnet direkt aus window.scrollY. Die Geometrie ist bekannt (erst
+     der Text, dann die Buehne), und drei ineinandergreifende Phasen aus
+     getBoundingClientRect zu rekonstruieren waere nur schwerer zu lesen.
+
+     Kein autoplay und kein play(): Wer stehen bleibt, sieht ein Standbild; wer
+     scrollt, treibt alles selbst voran — auch rueckwaerts. */
+  (() => {
+    const hero = document.querySelector(".hero");
+    const zone = document.querySelector("[data-sprung-zone]");
+    const szene = document.querySelector("[data-sprung]");
+    if (!hero || !zone || !szene) return;
+    const film = szene.querySelector(".sprung-film");
+    const wurzel = document.documentElement.style;
+
+    const SPRUNG_WEG = 760;   // Scrollstrecke, ueber die der Film laeuft
+    const SEITE_WEG = 500;    // Scrollstrecke fuers Wegdrehen danach
+    const ABGANG_WEG = 420;   // und fuers Hochkippen zum Schluss
+    // Wie viel vom Abgang die Szene noch klebt. Unter eins loest sie sich,
+    // waehrend das Fenster noch wegkippt — dann rueckt der naechste Abschnitt
+    // herein, waehrend der Abgang laeuft, statt erst danach. Genau so macht es
+    // die Vorlage.
+    const ABGANG_KLEBT = 0.6;
+    const ABGANG_KIPP = 44;   // Neigung am Ende des Abgangs
+    const ABGANG_HOCH = 0.85; // wie weit hoch, Anteil der Szenenhoehe
+    const VORLAUF = 0.15;     // Anteil des Films, der schon beim Zoom laeuft
+    const DREH_GRAD = 18;     // Drehung: rechte Kante nach hinten, weg vom Text
+    const KIPP_GRAD = 6;      // ein Hauch nach hinten dazu, sonst wirkt es flach
+    const TEXT_HOCH = 48;     // von so weit unten faehrt der Text herein
+    // Anteil der Szenenhoehe, um den das Fenster beim Neigen hochrueckt. Zwei
+    // Aufgaben auf einmal: Die geneigte Unterkante bleibt in der Szene statt
+    // an deren Rand gekappt zu werden, und die Mitte des Browserfensters
+    // kommt auf die Mitte des Textes.
+    //
+    // Haengt am Film: Im aktuellen sitzt das Browserfenster zwischen 33 % und
+    // 97 % der Bildhoehe — der Schlagschatten darunter ist weggeschnitten, das
+    // Bild endet also fast an der Fensterkante. Kommt ein neuer Film mit
+    // anderer Kadrierung, muss dieser Wert mitwandern.
+    const HOCH_ENDE = 0.15;
+
+    // Bei prefers-reduced-motion bleibt die Szene in Ruhegroesse stehen: kein
+    // Wachsen, kein Kippen. Die Hoehen werden trotzdem gesetzt, sonst griffe
+    // der CSS-Ersatzwert und die erste Seite saesse nicht mehr passgenau.
+    const sanft = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    // Gedaempfter Lauf statt harter Kopplung an window.scrollY. Das Mausrad
+    // liefert Spruenge von 50 bis 120 px auf einmal; bei 760 px Filmstrecke
+    // sind das rund anderthalb Sekunden Film pro Rastung, und der Sprung
+    // zuckt sichtbar. Die Anzeige zieht deshalb weich nach.
+    //
+    // Bewusst NICHT scroll-behavior: smooth oder eine Smooth-Scroll-
+    // Bibliothek: Beides kapert die Scroll-Physik der ganzen Seite, was auf
+    // Touchpads und Handys traege wirkt. Gedaempft wird nur die Animation.
+    const DAEMPFUNG = 0.2;
+    let stand = window.scrollY;
+    let angefordert = false;
+
+    function zeichne(y) {
+      const sicht = window.innerHeight;
+      const text = hero.offsetHeight;
+
+      // 1. Zoom. Ruhemass ist der Platz unter dem Text bis zum unteren
+      // Bildschirmrand; die Untergrenze faengt sehr flache Fenster ab, wo die
+      // Szene sonst zu einem Streifen zusammenfiele.
+      const ruhe = Math.max(sicht - text, 240);
+      const z = (sanft && text > 0) ? Math.min(1, Math.max(0, y / text)) : 0;
+      wurzel.setProperty("--sprung-hoehe", Math.round(ruhe + (sicht - ruhe) * z) + "px");
+      wurzel.setProperty("--sprung-oben", Math.round(text * (1 - z)) + "px");
+      // Feste Buehnenhoehe: Waechst sie mit der Szene, verschiebt sich beim
+      // Scrollen alles, was darunter steht.
+      wurzel.setProperty("--buehne-hoehe",
+        Math.round(sicht + SPRUNG_WEG + SEITE_WEG + ABGANG_WEG * ABGANG_KLEBT) + "px");
+
+      // 2. Sprung — laeuft erst, wenn der Text durch ist und die Szene steht.
+      const s = Math.min(1, Math.max(0, (y - text) / SPRUNG_WEG));
+
+      // 3. Wegdrehen. Das Fenster bleibt stehen, wo es ist, und neigt sich nur
+      // in den Raum: rechte Kante nach hinten, linke nach vorne. Keine
+      // Verschiebung zur Seite — dann waere es eine Fahrt und keine Drehung.
+      // Geglaettet statt linear: Die Vorlage laesst das Fenster weich anlaufen
+      // und weich ankommen. Ein linear an den Scroll gekoppeltes Kippen setzt
+      // dagegen ruckartig ein und bleibt ruckartig stehen.
+      const dRoh = sanft ? Math.min(1, Math.max(0, (y - text - SPRUNG_WEG) / SEITE_WEG)) : 0;
+      const d = dRoh * dRoh * (3 - 2 * dRoh);
+
+      // 4. Abgang. Setzt genau dort an, wo das Wegdrehen endet, und fuehrt die
+      // Werte weiter: Weil a erst ueber null geht, wenn d schon eins ist,
+      // ergibt die Summe an der Nahtstelle stetig denselben Wert.
+      const a = sanft ? Math.min(1, Math.max(0, (y - text - SPRUNG_WEG - SEITE_WEG) / ABGANG_WEG)) : 0;
+      const sanftA = a * a * (3 - 2 * a);   // weiches An- und Auslaufen
+
+      // Der Farbverlauf geht erst mit dem Fenster: Waehrend Text und Fenster
+      // nebeneinander stehen, bleibt die Buehne farbig. Erst beim Abgang
+      // loest sich beides zugleich in Weiss auf, und daraus wird der Uebergang
+      // in den naechsten Abschnitt.
+      wurzel.setProperty("--grund-auf", (1 - sanftA).toFixed(2));
+      // Die weiche Unterkante gehoert zum Uebergang: Sie kommt mit dem Abgang
+      // und ist vorher nicht da.
+      wurzel.setProperty("--blende-auf", sanftA.toFixed(2));
+
+      wurzel.setProperty("--sprung-dreh", (d * DREH_GRAD + sanftA * 10).toFixed(1) + "deg");
+      wurzel.setProperty("--sprung-kipp", (d * KIPP_GRAD + sanftA * (ABGANG_KIPP - KIPP_GRAD)).toFixed(1) + "deg");
+      wurzel.setProperty("--sprung-hoch",
+        Math.round(-(d * HOCH_ENDE + sanftA * (ABGANG_HOCH - HOCH_ENDE)) * szene.offsetHeight) + "px");
+      // Erst spaet verblassen: Das Fenster soll sichtbar wegkippen und nicht
+      // einfach ausgehen.
+      wurzel.setProperty("--sprung-auf", (1 - Math.min(1, Math.max(0, (a - 0.55) / 0.45))).toFixed(2));
+
+      // Der Text steigt von unten auf, sobald sich das Fenster zu neigen
+      // beginnt — und geht beim Abgang wieder mit. Die drei Teile setzen
+      // versetzt ein, damit er sich aufbaut statt einfach da zu sein.
+      const weg = Math.min(1, Math.max(0, a / 0.5));
+      [0, 0.12, 0.22].forEach((versatz, i) => {
+        const roh = Math.min(1, Math.max(0, (dRoh - 0.25 - versatz) / 0.45));
+        const s = roh * roh * (3 - 2 * roh);
+        wurzel.setProperty("--text-auf-" + (i + 1), (s * (1 - weg)).toFixed(2));
+        wurzel.setProperty("--text-hoch-" + (i + 1),
+          Math.round((1 - s) * TEXT_HOCH - weg * TEXT_HOCH) + "px");
+      });
+
+      // Der Film setzt am Zoom an und laeuft beim Stehen zu Ende. Beide Teile
+      // treffen sich bei VORLAUF, also ohne Sprung in der Bewegung.
+      if (sanft && film && film.duration && isFinite(film.duration)) {
+        const p = z < 1 ? z * VORLAUF : VORLAUF + (1 - VORLAUF) * s;
+        // Ein Hauch Abstand zum Ende: Genau auf der letzten Frame-Grenze
+        // springen manche Browser zurueck auf den ersten Frame.
+        film.currentTime = Math.min(film.duration - 0.03, p * film.duration);
+      }
+    }
+
+    // Ein Frame: ein Stueck naeher an die echte Scroll-Position. Bleibt ein
+    // Rest, wird der naechste Frame angefordert — die Schleife laeuft also nur,
+    // solange sich wirklich etwas bewegt, und kostet im Stillstand nichts.
+    function schritt() {
+      angefordert = false;
+      const ziel = window.scrollY;
+      const rest = ziel - stand;
+      if (!sanft || Math.abs(rest) < 0.5) stand = ziel;
+      else { stand += rest * DAEMPFUNG; anfordern(); }
+      zeichne(stand);
+    }
+    function anfordern() {
+      if (angefordert) return;
+      angefordert = true;
+      window.requestAnimationFrame(schritt);
+    }
+    // Sofort zeichnen: Beim Laden darf die erste Seite nicht erst einschwingen.
+    function sofort() { stand = window.scrollY; zeichne(stand); }
+
+    sofort();
+    window.addEventListener("scroll", anfordern, { passive: true });
+    window.addEventListener("resize", sofort, { passive: true });
+    // Schriften koennen nach dem ersten Lauf eintreffen und den Text neu
+    // umbrechen — dann stimmt die gemessene Texthoehe nicht mehr.
+    window.addEventListener("load", sofort);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(sofort);
+
+    // Der Film wird als Ganzes geholt und als Blob eingehaengt, statt ihn ueber
+    // src streamen zu lassen. Grund: Zum Spulen verlangt der Browser vom Server
+    // Bereichsabfragen (Range). "netlify dev" beantwortet die lokal mit 200
+    // statt 206 und ohne Accept-Ranges — gemessen —, und dann meldet das Video
+    // seekable = 0-0 und bleibt auf Frame 0 stehen. Aus dem Speicher ist es
+    // unabhaengig vom Server sofort und ueberall spulbar.
+    //
+    // Safari spielt WebM zwar ab, wertet den Alphakanal von VP9 aber nicht aus
+    // und malt eine schwarze Flaeche. Einen Feature-Test dafuer gibt es nicht,
+    // also bleibt dort das Standbild liegen — es zeigt ohnehin das Ergebnis.
+    // Zoom und Kippen laufen weiter, die sind reines CSS.
+    const istSafari = /^((?!chrome|chromium|android|edg).)*safari/i.test(navigator.userAgent);
+    if (film && sanft && !istSafari) {
+      fetch("video/sprung.webm").then((antwort) => {
+        if (!antwort.ok) throw new Error("Film nicht erreichbar: " + antwort.status);
+        return antwort.blob();
+      }).then((brocken) => {
+        film.addEventListener("loadeddata", () => {
+          szene.classList.add("film-laeuft");
+          sofort();
+        }, { once: true });
+        film.src = URL.createObjectURL(brocken);
+      }).catch(() => { /* Standbild bleibt liegen. */ });
+    }
   })();
 
 </script>

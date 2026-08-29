@@ -197,8 +197,11 @@
     }
 
     /* ── Hero ─────────────────────────────────────────────────────────── */
+    /* Kein min-height: Text und Sprung-Szene teilen sich den ersten
+       Bildschirm und ergeben zusammen genau 100dvh. Der Hero nimmt nur, was
+       sein Text braucht; den Rest bekommt die Szene (--sprung-hoehe, unten). */
     .hero {
-      position: relative; min-height: 100dvh;
+      position: relative;
       display: flex; flex-direction: column; align-items: center;
       text-align: center;
       padding: clamp(5rem, 11vh, 6.5rem) var(--rand) 0;
@@ -237,6 +240,162 @@
       object-fit: cover; object-position: center bottom;
     }
     @media (max-width: 860px) { .hero-bild { object-position: 72% bottom; } }
+
+    /* ── Sprung-Szene ─────────────────────────────────────────────────── */
+    /* Die Buehne ist hoeher als die Szene, und dieser Ueberschuss IST der
+       Film: Die Szene bleibt stehen, bis er durchgelaufen ist. Groesserer
+       Zuschlag heisst laengeres Scrollen fuer denselben Sprung.
+
+       min-height und NICHT padding-bottom: Ein klebendes Element darf sich nur
+       innerhalb der Content-Box seines Elternteils bewegen. Mit padding waere
+       die Content-Box genau so hoch wie die Szene — Klebeweg null, die Szene
+       liefe einfach mit. Genau daran ist die erste Fassung gescheitert. */
+    /* --sprung-hoehe ist der Platz, der unter dem Hero-Text bis zum unteren
+       Bildschirmrand uebrig bleibt. Damit stehen Text und Szene zusammen auf
+       genau einem Bildschirm, und die Figur ist ohne Scrollen ganz zu sehen.
+       Gesetzt wird der Wert in start.html, weil die Texthoehe von Schrift und
+       Umbruch abhaengt; der Ersatzwert hier greift, solange das Skript noch
+       nicht gelaufen ist. */
+    .sprung-buehne {
+      position: relative; line-height: 0;
+      /* Feste Hoehe, NICHT an --sprung-hoehe gekoppelt: Die Szene waechst
+         beim Scrollen, und eine mitwachsende Buehne wuerde alles darunter
+         waehrend des Scrollens verschieben. */
+      min-height: var(--buehne-hoehe, calc(42.6vw + 760px));
+      /* Randlos in alle Richtungen, wie frueher das Hero-Bild. Abschnitte
+         bringen hier sonst seitlichen Rand UND oben Abstand mit — die
+         gemessenen 87 px Luft ueber der Szene liessen sie unten aus dem
+         ersten Bildschirm rutschen. */
+      padding: 0;
+    }
+    /* Die Szene haengt genau dort, wo sie schon beim Laden steht — sie rutscht
+       also gar nicht erst weg, sondern bleibt vom ersten Moment an, wo sie ist.
+       Der Wert kommt aus derselben Messung wie --sprung-hoehe: 100dvh und
+       window.innerHeight sind NICHT dasselbe (im Test 716 gegen 630), und aus
+       genau dieser Differenz ragte die Figur vorher unten hinaus. */
+    .sprung-klebt { position: sticky; top: var(--sprung-oben, max(0px, calc(100dvh - 42.6vw))); }
+    @media (max-width: 860px) {
+      .sprung-buehne { min-height: var(--buehne-hoehe, calc(75vw + 520px)); }
+    }
+
+    /* Der Verlauf steckte frueher im Bild selbst (bilder/hero-hintergrund.webp).
+       Der Film ist freigestellt, also steht er jetzt hier — die fuenf Farben
+       sind aus genau diesem Bild gemessen, damit der Hero gleich aussieht wie
+       vorher: oben weiss, unten von Violett ueber Pink nach Orange. */
+    .sprung {
+      position: relative; width: 100%;
+      height: var(--sprung-hoehe, 42.6vw);
+      /* minmax(0, 1fr) und nicht einfach display:grid: Eine auto-Zeile waechst
+         auf die Eigengroesse des Films (gemessen 750 statt 254 px), und dann
+         sitzt die Figur ausserhalb der Szene. So bleibt die Zeile genau so
+         hoch wie die Szene und object-fit darf einpassen. */
+      display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden;
+      /* Tiefe fuer das Wegkippen am Schluss. Ohne perspective bliebe rotateX
+         eine flache Stauchung statt einer Neigung in den Raum. */
+      perspective: 1400px;
+      background: #fff;
+    }
+    /* Der Farbverlauf liegt in einer eigenen Ebene, damit er sich getrennt
+       ausblenden laesst: In der Vorlage ist der farbige Grund schon fort,
+       bevor sich das Fenster dreht — es steht dann auf Weiss, und genau das
+       laesst den Schluss aufgeraeumt wirken. */
+    .sprung::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      opacity: var(--grund-auf, 1);
+      background:
+        linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,.72) 50%, #fff 80%),
+        linear-gradient(to right, #b965fa 0%, #e27ff3 25%, #fd8bd0 50%, #fd8e9d 75%, #fb9a67 100%);
+    }
+    /* Weiche Unterkante ueber allem: Ohne sie schneidet die Buehne hart in den
+       naechsten Abschnitt, und das Fenster wird an der Kante abgesaebelt.
+       Liegt bewusst UEBER Bild und Film, nicht nur ueber dem Verlauf. */
+    /* Die weiche Unterkante gehoert zum Uebergang, nicht zur Szene: Sie ist
+       die ganze Zeit unsichtbar und kommt erst mit dem Abgang. Von Anfang an
+       eingeblendet wuerde sie dem Browserfenster in der Ruhepose die
+       Unterkante aufhellen. */
+    .sprung::after {
+      content: ""; position: absolute; inset: auto 0 0 0; height: 26%;
+      z-index: 2; pointer-events: none;
+      opacity: var(--blende-auf, 0);
+      background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 92%);
+    }
+    /* Beide im selben Rasterfeld, also exakt uebereinander. Das Standbild
+       bleibt liegen und haelt die Hoehe; der Film deckt es zu, sobald er
+       laeuft. Ein Wechsel per display waere ein Layoutsprung.
+
+       Die Kippung sitzt auf Bild und Film, NICHT auf .sprung: Sonst kippte
+       der Verlauf mit und gaebe die weisse Seite dahinter frei. So bleibt er
+       als Buehne stehen, und nur das Fenster mit der Figur neigt sich weg. */
+    .sprung-standbild, .sprung-film {
+      grid-area: 1 / 1; height: 100%; width: 100%;
+      object-fit: contain; object-position: center bottom; display: block;
+      transform-origin: center center;
+      /* Keine Verschiebung zur Seite: Das Fenster bleibt stehen, wo es ist,
+         und neigt sich nur in den Raum — rechte Kante nach hinten, linke nach
+         vorne.
+         Nach oben schon: Die Neigung laesst die untere Kante nach vorne und
+         damit aus der Szene ragen, wo sie hart abgeschnitten wuerde. Oben ist
+         im Film ohnehin nur leerer Raum (die Figur springt dort durch), also
+         kostet das Hochruecken nichts. */
+      transform: translateY(var(--sprung-hoch, 0px))
+                 rotateY(var(--sprung-dreh, 0deg))
+                 rotateX(var(--sprung-kipp, 0deg));
+    }
+    /* --sprung-auf blendet beim Abgang aus. Die weiche Ueberblendung sitzt
+       bewusst NUR auf dem Standbild: Auf dem Film wuerde sie jede Aenderung
+       um 0,3 s verzoegern, und beim Scrubben soll er dem Scrollen sofort
+       folgen. Das Standbild liegt darunter und verblasst weich, sobald der
+       Film da ist. */
+    .sprung-standbild { opacity: var(--sprung-auf, 1); transition: opacity .3s ease; }
+    .sprung-film { opacity: 0; }
+    .sprung.film-laeuft .sprung-standbild { opacity: 0; }
+    .sprung.film-laeuft .sprung-film { opacity: var(--sprung-auf, 1); }
+    @media (prefers-reduced-motion: reduce) { .sprung-film { display: none; } }
+
+    /* Der Text rechts. Liegt im selben Rasterfeld wie Bild und Film, also
+       darueber; das Fenster bleibt links und dreht sich weg, statt ihm
+       entgegenzukommen. Spiegelverkehrt zur CREDIX-Vorlage — der Film hat den
+       Browser nun einmal links, und ihn quer ueber das Bild zu schieben, nur
+       um die Vorlage zu treffen, waere Bewegung ohne Grund. */
+    .sprung-text {
+      grid-area: 1 / 1; align-self: center; justify-self: end;
+      max-width: min(28rem, 40%);
+      padding-right: clamp(1.25rem, 5vw, 4.5rem);
+      line-height: 1.5; text-align: left;
+      /* Solange er unsichtbar ist, darf er nichts abfangen. */
+      pointer-events: none;
+    }
+    /* Die drei Teile steigen nacheinander auf, nicht als ein Block: Marke,
+       Ueberschrift, Absatz. Der Versatz ist klein, aber er ist der
+       Unterschied zwischen "eingeblendet" und "aufgebaut" — dieselbe
+       Staffelung benutzt die CREDIX-Vorlage fuer ihre Feature-Spalten.
+       Faehrt von unten herein und nicht von der Seite: Das Fenster bewegt
+       sich nicht mehr quer, ein seitlicher Einflug kaeme aus dem Nichts. */
+    .sprung-marke, .sprung-text h2, .sprung-text p { display: block; }
+    .sprung-marke {
+      opacity: var(--text-auf-1, 0);
+      transform: translateY(var(--text-hoch-1, 2.5rem));
+      font-size: .78rem; font-weight: 600; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--violett-text);
+      margin: 0 0 .7rem;
+    }
+    .sprung-text h2 {
+      opacity: var(--text-auf-2, 0);
+      transform: translateY(var(--text-hoch-2, 2.5rem));
+      font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+      font-weight: 600; line-height: 1.1; letter-spacing: -0.03em;
+      margin: 0 0 .8rem; color: var(--tinte);
+    }
+    .sprung-text p {
+      opacity: var(--text-auf-3, 0);
+      transform: translateY(var(--text-hoch-3, 2.5rem));
+      margin: 0; color: var(--tinte-weich);
+      font-size: clamp(.95rem, 1.15vw, 1.05rem); text-wrap: pretty;
+    }
+    /* Auf schmalen Schirmen steht das Fenster im Weg: Dort bleibt der Text
+       weg, statt sich mit der Figur zu ueberlagern. */
+    @media (max-width: 860px) { .sprung-text { display: none; } }
+    @media (max-width: 860px) { .sprung { height: var(--sprung-hoehe, 75vw); } }
 
     /* ── Aussage + Kachelraster ───────────────────────────────────────── */
     /* Ersetzt die frühere schlichte Vertrauensleiste. Gleiche Botschaft,
@@ -348,20 +507,25 @@
       .vorteil:nth-child(even) .vorteil-bild { order: 2; }
     }
 
+    /* Zweite Fassung: keine KI-Szene mehr, sondern derselbe Marken-Verlauf
+       wie hinter der Ablauf-Buehne (--ablauf-grund) plus ein einziges
+       schlichtes Strich-Symbol. Bewusst "basic" statt bunt — sechs
+       verschiedene Akzentfarben wirkten unruhig, ein Verlauf plus ein Symbol
+       traegt den Punkt genauso und bringt den Verlauf dafuer öfter auf die
+       Seite. Braucht keine KI-Generierung mehr: das <img> bleibt als Haken
+       fuer ein spaeteres echtes Foto, faellt aber sonst einfach weg
+       (onerror="this.remove()"), der Verlauf darunter ist bereits die
+       fertige Gestaltung, kein Notbehelf. */
     .vorteil-bild {
       position: relative; overflow: hidden;
       aspect-ratio: 16 / 9; border-radius: 20px;
-      background: linear-gradient(135deg, #edeaf6 0%, #f6f5fb 55%, #e9e6f2 100%);
+      background: var(--ablauf-grund);
       display: grid; place-items: center;
     }
     .vorteil-bild img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    /* Steht nur da, solange das Bild fehlt — es deckt sie sonst zu. Sie nennt
-       den Dateinamen-Inhalt, damit beim Austauschen niemand raten muss. */
-    .vorteil-marke {
-      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      max-width: 80%; text-align: center;
-      font-size: .85rem; line-height: 1.45; color: var(--tinte-hell);
-      background: rgba(255,255,255,0.75); padding: .5rem .9rem; border-radius: 10px;
+    .vorteil-symbol {
+      width: clamp(3.2rem, 8vw, 4.8rem); height: auto;
+      color: var(--violett-text); opacity: .8;
     }
 
     .vorteil-nr {
