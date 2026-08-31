@@ -797,19 +797,59 @@
 
     /* ── Branchen ──────────────────────────────────────────────────────
        Breite statt Tiefe (siehe Kommentar in start.html): eine ruhige Reihe
-       gleich grosser Querformat-Kacheln, ECHTER Bildlauf des Browsers, kein
+       gleich grosser Querformat-Karten, ECHTER Bildlauf des Browsers, kein
        Fächer-Versatz wie bei den Charakteren — die zwei Sektionen sollen
        sich in der Bewegung unterscheiden, nicht nur im Text, sonst wirkt
        die zweite wie eine Wiederholung der ersten.
        Dieselbe Technik wie bei der Charakter-Galerie fuer die Randkachel:
        Die Sektion gibt ihren seitlichen Abstand ab, die Bahn holt ihn fuer
-       den Kopfblock zurueck, die Huelle laeuft bis an den Fensterrand. */
+       den Kopf zurueck, die Huelle laeuft bis an den Fensterrand. */
     #branchen { padding-inline: 0; }
     #branchen .bahn { max-width: calc(72rem + 2 * var(--rand)); padding-inline: var(--rand); }
-    .branchen-huelle { position: relative; isolation: isolate; }
+
+    /* Kopf in zwei Spalten: links die kleine Marke, rechts der grosse Satz.
+       Die Marke sitzt auf der Grundlinie der ERSTEN Zeile des Satzes, nicht
+       darueber — deshalb align-items: start und ein Ausgleich per padding,
+       der die kleine Zeile auf die optische Mitte der grossen hebt.
+       Zwei Spalten statt untereinander, weil der Satz sonst die ganze Breite
+       fuellt und dieselbe Form wie jeder andere Kopfblock der Seite bekommt.
+       Hier soll er breit und ruhig stehen, wie ein Zitat. */
+    .bereiche-kopf {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr);
+      gap: clamp(1rem, 3vw, 2.5rem);
+      align-items: start;
+      margin-bottom: clamp(2rem, 3.6vw, 3rem);
+    }
+    .bereiche-marke {
+      margin: 0; padding-top: .35em;
+      font-size: .92rem; font-weight: 500; color: var(--tinte-hell);
+    }
+    /* Eigene Groesse statt der h2-Regel: Der Satz ist laenger als eine
+       Ueberschrift und darf breiter laufen (h2 deckelt bei 22ch). */
+    .bereiche-satz {
+      margin: 0; max-width: 30ch;
+      font-size: clamp(1.5rem, 2.9vw, 2.3rem); font-weight: 600;
+      line-height: 1.16; letter-spacing: -0.025em; text-wrap: balance;
+    }
+    @media (max-width: 760px) {
+      .bereiche-kopf { grid-template-columns: 1fr; gap: .7rem; }
+      .bereiche-marke { padding-top: 0; }
+      .bereiche-satz { max-width: none; }
+    }
+
+    .bereiche-huelle { position: relative; isolation: isolate; }
+    /* GRID statt flex: grid-auto-columns gibt jeder Karte exakt dieselbe
+       Breite, egal was drinsteht. Bei flex musste die Breite doppelt
+       gesetzt werden (flex-basis UND width), und ein zu breites Kind konnte
+       die Karte trotzdem aufziehen. Mit einer festen Spaltenbreite ist die
+       Groesse eine Eigenschaft der Bahn, nicht der Karte. */
     .branchen-galerie {
-      --bkarte: clamp(15rem, 32vw, 21rem);
-      display: flex; gap: clamp(.9rem, 1.8vw, 1.3rem);
+      --bkarte: clamp(16rem, 33vw, 24rem);
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: var(--bkarte);
+      gap: clamp(.5rem, 1.1vw, .9rem);
       overflow-x: auto; overflow-y: hidden;
       /* Dieselbe Begruendung wie bei .galerie: verhindert, dass ein
          waagrechtes Wischen die Seite mitzieht oder die Zurueck-Geste des
@@ -829,9 +869,14 @@
     }
     .branchen-galerie::-webkit-scrollbar { display: none; }
 
+    /* Querformat 4:3 — das Format, in dem die Bilder erzeugt wurden. Kein
+       Beschnitt noetig, das Bild fuellt die Karte genau aus.
+       Die Karte bekommt KEINE Breite: die steckt in grid-auto-columns.
+       Nur das Verhaeltnis legt die Hoehe fest, damit alle acht auf einer
+       Linie stehen. */
     .branchen-karte {
-      flex: 0 0 var(--bkarte); width: var(--bkarte); aspect-ratio: 3 / 4;
-      position: relative; border-radius: 18px; overflow: hidden;
+      position: relative; aspect-ratio: 4 / 3;
+      border-radius: 14px; overflow: hidden;
       background: var(--flaeche); border: 1px solid var(--rand-fein);
       box-shadow: 0 14px 30px -20px rgba(20, 20, 40, .4);
     }
@@ -846,22 +891,32 @@
         linear-gradient(45deg, rgba(255,255,255,.55) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.55) 75%);
       background-size: 24px 24px; background-position: 0 0, 12px 12px;
     }
-    .branchen-ph-marke {
-      position: absolute; top: .7rem; left: .7rem; z-index: 3;
-      font-size: .6rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-      color: var(--tinte-weich); background: rgba(255,255,255,.85); border-radius: 999px;
-      padding: .28rem .55rem;
+    /* Weisses Schild unten links statt Titel und Satz auf einem dunklen
+       Verlauf. Der Verlauf war noetig, solange Fliesstext ueber dem Foto
+       lag; ein Schild bringt seinen eigenen Grund mit und bleibt ueber
+       jedem Bild lesbar, ohne die untere Bildhaelfte abzudunkeln.
+       Kein Fliesstext mehr: Beim Weiterschieben liest niemand drei Zeilen.
+       Masse relativ zur Kartenbreite (cqw), damit das Schild auf der
+       kleinen und der grossen Karte gleich proportioniert bleibt. */
+    .branchen-karte { container-type: inline-size; }
+    .bereich-schild {
+      position: absolute; z-index: 2;
+      left: 4.5cqw; bottom: 4.5cqw;
+      display: grid; place-items: center;
+      /* FESTE Breite, nicht min-width: Im Vorbild sind alle Schilder exakt
+         gleich breit, egal wie lang der Name ist. Mit min-width waere das
+         laengste Schild breiter geworden und haette aus der Reihe getanzt. */
+      width: 42cqw; min-height: 15cqw; padding: 3.2cqw 1.5cqw;
+      background: #fff; border-radius: 10px;
+      font-size: clamp(.82rem, 4.2cqw, 1.05rem); font-weight: 600;
+      letter-spacing: -0.01em; color: var(--tinte);
+      text-align: center; white-space: nowrap;
     }
-    /* Titel und Satz sitzen auf einem dunklen Verlauf statt auf eigener
-       Flaeche: So bleiben sie ueber JEDES Foto hinweg lesbar, ohne dass
-       jedes Foto von Hand auf Kontrast geprueft werden muss. */
-    .branchen-verlauf {
-      position: absolute; inset: auto 0 0 0; z-index: 2;
-      padding: 2.6rem .95rem .85rem;
-      background: linear-gradient(0deg, rgba(15,15,26,.88) 0%, rgba(15,15,26,.5) 60%, transparent 100%);
-    }
-    .branchen-titel { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; color: #fff; }
-    .branchen-text { margin: 0; font-size: .8rem; line-height: 1.4; color: rgba(255,255,255,.86); }
+    /* Ein Name ist deutlich laenger als die uebrigen. Statt sein Schild zu
+       verbreitern (dann waere die Reihe uneben) oder den Namen zu kuerzen
+       (dann fielen Fahr- und Musikschulen aus der Aufzaehlung), wird nur die
+       Schrift auf diesem einen Schild kleiner. */
+    .bereich-schild.lang { font-size: clamp(.6rem, 3.4cqw, .92rem); letter-spacing: -0.02em; }
 
     /* Unter der Galerie kosteten die Pfeile eine eigene Zeile, und im
        Hochformat schob das sie unter die Sichtkante — man musste zum
@@ -902,7 +957,6 @@
     .branchen-pfeil:active:not(:disabled) { transform: scale(.94); }
     .branchen-pfeil:disabled { opacity: .35; cursor: default; box-shadow: none; }
     .branchen-pfeil svg { width: 22px; height: 22px; }
-
     /* ── Charakter-Galerie ──────────────────────────────────────────────
        Der einzige Beleg fuer die Kernbehauptung, dass jede Firma ein
        eigenes Wesen bekommt. Solange keine echten Figuren hinterlegt sind,

@@ -379,95 +379,74 @@
   <!-- ══ BRANCHEN ═══════════════════════════════════════════════════════
        Breite VOR Tiefe: Diese Sektion zeigt, dass es fuer jede Art Betrieb
        passt (kein Sondertool fuer eine Nische). Die Charakter-Galerie direkt
-       danach zeigt dasselbe Set noch einmal, aber als Tiefen-Beleg (jede
-       Firma bekommt ein eigenes Wesen) — bewusst dieselben acht Branchen in
-       beiden Sektionen, statt zwei verschiedene Listen, die sich
-       widersprechen koennten.
-       KEIN "Mehr lesen" pro Kachel: Es gibt keine Branchen-Unterseiten, ein
+       danach zeigt dasselbe noch einmal, aber als Tiefen-Beleg (jede Firma
+       bekommt ein eigenes Wesen).
+
+       AUFBAU nach Referenz: Oben eine Zeile aus zwei Spalten — links eine
+       kleine Marke, rechts der grosse Satz. Darunter eine Reihe gleich
+       grosser Querformat-Karten, die bis an den Fensterrand laeuft und
+       waagrecht scrollt. Jede Karte traegt nur ein weisses Schild mit dem
+       Namen, kein Fliesstext: Beim Weiterschieben liest ohnehin niemand drei
+       Zeilen, und ein leeres Bild mit Namen wirkt ruhiger als acht
+       Textkacheln.
+
+       KEIN "Mehr lesen" pro Karte: Es gibt keine Branchen-Unterseiten, ein
        Link ins Nichts waere schlechter als gar keiner (gleiche Regel wie im
        Footer bei Impressum/Datenschutz).
-       Solange keine Fotos hinterlegt sind, steht in jeder Kachel ein
-       Platzhalter — exakt dasselbe ehrliche Muster wie bei den Charakteren.
        ZUM ERSETZEN: Foto unter public/bilder/branchen/<name>.webp ablegen,
-       der src-Pfad in der Kachel stimmt dann schon. Querformat (4:3), damit
-       Titel und Satz unten in einem ruhigen Streifen Platz haben. -->
+       der src-Pfad in der Karte stimmt dann schon. QUERFORMAT 4:3 — das ist
+       auch das Format, in dem die Bilder erzeugt wurden. -->
   <section id="branchen">
     <div class="bahn">
-      <div class="kopfblock auftritt">
-        <span class="augen">Branchen</span>
-        <h2>Jede Branche. Derselbe Agent.</h2>
-        <p class="lead">Er liest deine echte Webseite statt einer Vorlage für „typische" Betriebe. Ein paar Beispiele, wie unterschiedlich das aussieht:</p>
+      <div class="bereiche-kopf auftritt">
+        <p class="bereiche-marke">Jede Branche.</p>
+        <h2 class="bereiche-satz">Er lernt aus deiner echten Webseite statt aus einer Vorlage für „typische“ Betriebe. Deshalb kennt er auch das, was nur bei dir gilt.</h2>
       </div>
     </div>
-    <!-- Wie bei der Charakter-Galerie steht die Huelle ausserhalb der Bahn,
-         damit die Reihe bis an den Fensterrand laufen kann und die naechste
-         Kachel am Rand erkennbar anschneidet — genau das laedt zum
-         Weiterscrollen ein. -->
-    <div class="branchen-huelle auftritt" style="--verzug: 120ms">
+    <!-- Die Huelle steht ausserhalb der Bahn, damit die Reihe bis an den
+         Fensterrand laufen kann und die naechste Karte am Rand erkennbar
+         anschneidet — genau das laedt zum Weiterscrollen ein. -->
+    <div class="bereiche-huelle auftritt" style="--verzug: 120ms">
       <div class="branchen-galerie" id="branchenGalerie" tabindex="0" role="region" aria-label="Beispiel-Branchen zum Durchblättern">
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/restaurants.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Restaurants</h3>
-            <p class="branchen-text">Cafés, Bäckereien, Bars, Hotels. Öffnungszeiten, Tageskarte, Tisch reservieren.</p>
-          </div>
+          <span class="bereich-schild">Restaurants</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/arztpraxen.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Arztpraxen</h3>
-            <p class="branchen-text">Zahnärzte, Physio, Tierärzte, Apotheken. Sprechstunden, freie Termine, was im Notfall gilt.</p>
-          </div>
+          <span class="bereich-schild">Arztpraxen</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/coiffeure.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Coiffeure</h3>
-            <p class="branchen-text">Kosmetik, Massage, Nagelstudios. Termin, Preise, wie lange es dauert.</p>
-          </div>
+          <span class="bereich-schild">Coiffeure</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/handwerker.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Handwerker</h3>
-            <p class="branchen-text">Maler, Elektriker, Sanitär, Schreiner, Garagen. Offerte, Notfall, bis wohin ihr fahrt.</p>
-          </div>
+          <span class="bereich-schild">Handwerker</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/treuhaender.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Treuhänder</h3>
-            <p class="branchen-text">Anwälte, Architekten, Versicherungen, Berater. Erstgespräch, Fachgebiete, was es kostet.</p>
-          </div>
+          <span class="bereich-schild">Treuhänder</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/laeden.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Läden</h3>
-            <p class="branchen-text">Boutiquen, Buchhandlungen, Blumen, Onlineshops. Ist es da, was passt dazu, wie kommt es zu mir.</p>
-          </div>
+          <span class="bereich-schild">Läden</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/immobilien.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Immobilien</h3>
-            <p class="branchen-text">Makler, Verwaltungen, Umzug, Reinigung. Objekte, Besichtigung, wer zuständig ist.</p>
-          </div>
+          <span class="bereich-schild">Immobilien</span>
         </article>
         <article class="branchen-karte">
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/studios-schulen.webp" alt="" loading="lazy" onerror="this.remove()" />
-          <div class="branchen-verlauf">
-            <h3 class="branchen-titel">Studios & Schulen</h3>
-            <p class="branchen-text">Fitness, Yoga, Fahrschule, Musikschule. Anmeldung, Kursplan, Probelektion.</p>
-          </div>
+          <span class="bereich-schild lang">Studios &amp; Schulen</span>
         </article>
       </div>
       <div class="branchen-steuerung">
@@ -483,7 +462,6 @@
       <p class="knopf-notiz" style="margin-top:1.6rem;">Nicht dabei? Er lernt trotzdem von deiner Webseite — sie ist seine einzige Quelle.</p>
     </div>
   </section>
-
   <!-- ══ CHARAKTER-GALERIE ═════════════════════════════════════════════
        Der einzige echte Beleg fuer die Kernbehauptung. Die Konkurrenz
        kann diese Sektion nicht nachbauen, sie hat keine Charaktere.
