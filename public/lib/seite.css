@@ -132,6 +132,15 @@
       background: rgba(255,255,255,0.82); backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--nav-linie);
     }
+    /* Auf weissen Abschnitten faellt die Unterkante nicht auf. Ueber dem
+       Farbverlauf der Sprung-Szene dagegen schon: Dort trifft deckendes Weiss
+       auf Rosa und zieht eine harte Linie quer durchs Bild. Der Auslauf nimmt
+       ihr den Sprung, ohne dem Kopfbereich seine Lesbarkeit zu nehmen. */
+    .kopf[data-gescrollt="ja"]::after {
+      content: ""; position: absolute; top: 100%; left: 0; right: 0;
+      height: 34px; pointer-events: none;
+      background: linear-gradient(to bottom, rgba(255,255,255,.82), rgba(255,255,255,0));
+    }
     .logo {
       display: inline-flex; align-items: center; gap: .55rem;
       font-size: 1.02rem; font-weight: 600; letter-spacing: -.02em;
@@ -204,12 +213,21 @@
       position: relative;
       display: flex; flex-direction: column; align-items: center;
       text-align: center;
-      padding: clamp(5rem, 11vh, 6.5rem) var(--rand) 0;
+      /* Der obere Abstand haelt den Text vom Kopfbereich frei — sonst klebt die
+         Schlagzeile an der Navigation. Was er kostet, holt der Ueberlapp
+         unten wieder herein. */
+      padding: clamp(6.5rem, 13vh, 8.5rem) var(--rand) 0;
       overflow: hidden;
+      /* Ueber der Szene, damit die Knoepfe vor dem Verlauf liegen und nicht
+         dahinter verschwinden. */
+      z-index: 1;
     }
+    /* Bewusst kleiner gesetzt, als der Platz hergaebe: Was der Text nicht
+       braucht, bekommt die Sprung-Szene darunter (siehe --sprung-hoehe). Der
+       Blick soll auf der Figur landen, nicht auf der Schlagzeile. */
     .hero h1 {
-      font-size: clamp(2.3rem, 5.4vw, 4.4rem);
-      font-weight: 600; line-height: 0.98; letter-spacing: -0.035em;
+      font-size: clamp(1.9rem, 4.2vw, 3.3rem);
+      font-weight: 600; line-height: 1.02; letter-spacing: -0.035em;
       /* 26ch: Die laengere Zeile ("persönlichen Mitarbeiter.") hat 25 Zeichen.
          Knapper gesetzt brach sie gemessen auf eine dritte Zeile um. Kein
          text-wrap: balance, der Umbruch steht per <br>. */
@@ -258,6 +276,10 @@
        nicht gelaufen ist. */
     .sprung-buehne {
       position: relative; line-height: 0;
+      /* Rutscht unter den Hero, sodass die Knoepfe leicht vor dem Verlauf
+         stehen statt hart darueber abzuschliessen. Den Betrag setzt das
+         Skript, weil die Szenenhoehe ihn mitrechnen muss. */
+      margin-top: calc(-1 * var(--sprung-ueberlapp, 0px));
       /* Feste Hoehe, NICHT an --sprung-hoehe gekoppelt: Die Szene waechst
          beim Scrollen, und eine mitwachsende Buehne wuerde alles darunter
          waehrend des Scrollens verschieben. */
@@ -303,7 +325,18 @@
       content: ""; position: absolute; inset: 0; pointer-events: none;
       opacity: var(--grund-auf, 1);
       background:
-        linear-gradient(to top, rgba(255,255,255,0) 0%, rgba(255,255,255,.72) 50%, #fff 80%),
+        /* Viele kleine Schritte statt drei grosse: Mit einem Sprung von
+           konstant deckendem Weiss auf abnehmende Deckung entsteht bei 80 %
+           ein sichtbarer Knick, und der las sich als harte Kante quer durchs
+           Bild. Die Zwischenstufen glaetten ihn. */
+        linear-gradient(to top,
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,.20) 22%,
+          rgba(255,255,255,.45) 42%,
+          rgba(255,255,255,.68) 58%,
+          rgba(255,255,255,.86) 72%,
+          rgba(255,255,255,.96) 84%,
+          #fff 96%),
         linear-gradient(to right, #b965fa 0%, #e27ff3 25%, #fd8bd0 50%, #fd8e9d 75%, #fb9a67 100%);
     }
     /* Weiche Unterkante ueber allem: Ohne sie schneidet die Buehne hart in den
@@ -392,6 +425,26 @@
       margin: 0; color: var(--tinte-weich);
       font-size: clamp(.95rem, 1.15vw, 1.05rem); text-wrap: pretty;
     }
+    /* Wort fuer Wort aufsteigen lassen. inline-block, damit translateY greift —
+       auf einem reinen Inline-Element bleibt es wirkungslos. Der Zeilenumbruch
+       funktioniert weiter, weil die Leerzeichen zwischen den Stuecken stehen
+       bleiben.
+       Nicht auf .satzzeichen: Die sind inline-grid und wuerden als Kreis
+       zerfallen; sie bekommen nur die Bewegung, nicht die Darstellung. */
+    .wort-auftritt:not(.satzzeichen) { display: inline-block; }
+    /* Das Verstecken steht wie beim .auftritt-System NICHT hier, sondern wird
+       vom Skript gesetzt: Bricht es ab, bleibt der Satz lesbar und es fehlt
+       nur die Bewegung. */
+    .wort-auftritt[data-da="nein"] { opacity: 0; transform: translateY(.55em); }
+    .wort-auftritt[data-da="ja"] {
+      opacity: 1; transform: none;
+      transition: opacity .5s ease, transform .5s cubic-bezier(.22, .8, .3, 1);
+      transition-delay: var(--verzug, 0ms);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .wort-auftritt[data-da="nein"] { opacity: 1; transform: none; }
+      .wort-auftritt[data-da="ja"] { transition: none; }
+    }
     /* Auf schmalen Schirmen steht das Fenster im Weg: Dort bleibt der Text
        weg, statt sich mit der Figur zu ueberlagern. */
     @media (max-width: 860px) { .sprung-text { display: none; } }
@@ -405,7 +458,16 @@
        ALLE ZAHLEN SIND ECHT. 3 Minuten, 1 Zeile, 5 Zustände, CHF 49 lassen
        sich am Produkt nachprüfen. Kundenzahlen, Bewertungen oder Umsatzwerte
        stehen bewusst nicht da, es gibt sie noch nicht. */
-    .aussage { text-align: center; }
+    /* Rueckt in den leeren unteren Teil der Sprung-Buehne hinein. Die ist dort
+       schon weiss — der Verlauf verblasst beim Abgang —, also verdeckt der
+       Ueberlapp nichts, spart aber den langen weissen Weg bis hierher.
+       Kuerzen liesse sich die Buehne nicht: Ihre Hoehe ist die Strecke, ueber
+       die Sprung und Wegdrehen laufen. */
+    .aussage {
+      text-align: center;
+      margin-top: calc(-1 * clamp(70px, 15.5vh, 155px));
+      position: relative; z-index: 1;
+    }
     .grosse-aussage {
       font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 600;
       line-height: 1.16; letter-spacing: -0.03em;
@@ -774,7 +836,7 @@
     #branchen .bahn { max-width: calc(72rem + 2 * var(--rand)); padding-inline: var(--rand); }
     .branchen-huelle { position: relative; isolation: isolate; }
     .branchen-galerie {
-      --bkarte: clamp(16rem, 34vw, 22rem);
+      --bkarte: clamp(15rem, 32vw, 21rem);
       display: flex; gap: clamp(.9rem, 1.8vw, 1.3rem);
       overflow-x: auto; overflow-y: hidden;
       /* Dieselbe Begruendung wie bei .galerie: verhindert, dass ein
@@ -796,7 +858,7 @@
     .branchen-galerie::-webkit-scrollbar { display: none; }
 
     .branchen-karte {
-      flex: 0 0 var(--bkarte); width: var(--bkarte); aspect-ratio: 4 / 3;
+      flex: 0 0 var(--bkarte); width: var(--bkarte); aspect-ratio: 3 / 4;
       position: relative; border-radius: 18px; overflow: hidden;
       background: var(--flaeche); border: 1px solid var(--rand-fein);
       box-shadow: 0 14px 30px -20px rgba(20, 20, 40, .4);
@@ -829,9 +891,27 @@
     .branchen-titel { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; color: #fff; }
     .branchen-text { margin: 0; font-size: .8rem; line-height: 1.4; color: rgba(255,255,255,.86); }
 
+    /* Unter der Galerie kosteten die Pfeile eine eigene Zeile, und im
+       Hochformat schob das sie unter die Sichtkante — man musste zum
+       Weiterblaettern erst scrollen. Seitlich ueber den Karten brauchen sie
+       keine Hoehe, also duerfen die Bilder gross bleiben. */
     .branchen-steuerung {
-      display: flex; justify-content: center; gap: .8rem;
-      margin-top: clamp(.6rem, 1.6vw, 1rem);
+      display: flex; justify-content: space-between; gap: .8rem;
+      position: absolute; top: 50%; left: 0; right: 0; z-index: 2;
+      transform: translateY(-50%);
+      padding: 0 clamp(.5rem, 1.6vw, 1.1rem);
+      /* Die Leiste selbst faengt nichts ab, sonst liesse sich die Galerie
+         darunter nicht mehr wischen. Nur die Knoepfe sind anklickbar. */
+      pointer-events: none;
+    }
+    .branchen-steuerung > * { pointer-events: auto; }
+    /* Auf schmalen Schirmen lagen die Knoepfe auf den Karten. Dort wird
+       ohnehin gewischt, also wandern sie zurueck unter die Reihe. */
+    @media (max-width: 700px) {
+      .branchen-steuerung {
+        position: static; transform: none; justify-content: center;
+        padding: 0; margin-top: clamp(.6rem, 1.6vw, 1rem);
+      }
     }
     /* Gleiche Optik wie .galerie-pfeil, aber eigene Klasse: Die bestehende
        Faecher-Galerie fragt document.querySelectorAll(".galerie-pfeil")

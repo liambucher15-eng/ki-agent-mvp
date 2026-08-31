@@ -113,38 +113,12 @@
         wenn jemand fragt.</span>
       </h2>
 
-      <div class="bento">
-        <!-- Bildkachel: zeigt die Figur, nicht den leeren Verlauf -->
-        <div class="k-bild kachel-hoch">
-          <img src="bilder/hero-hintergrund.webp" alt="Die gezeichnete Agenten-Figur" />
-          <div class="karte-innen">
-            <div class="k-zahl">5</div>
-            <div class="k-label" style="margin-top:.3rem;">Zustände</div>
-            <p class="k-text">Wartend, zuhörend, nachdenkend, sprechend, verlegen. Besucher merken, dass jemand zuhört.</p>
-          </div>
-        </div>
-
-        <div class="k-hell kachel-hoch">
-          <div class="k-label">Einrichtung</div>
-          <div class="k-zahl" style="margin-top:.5rem;">3 Minuten</div>
-          <p class="k-text">Adresse eingeben, Scan abwarten, Gesicht geben. Kein Wissensdokument, keine Agentur, keine Einrichtungsgebühr.</p>
-          <p class="k-text" style="color:var(--tinte-hell);">Er liest deine Seite selbst und zeigt dir vorher, was er verstanden hat.</p>
-        </div>
-
-        <div class="k-violett">
-          <div class="k-label">Einbau</div>
-          <div class="k-zahl" style="margin-top:.5rem;">1 Zeile</div>
-          <div class="k-code">&lt;script src="…/widget.js"&gt;&lt;/script&gt;</div>
-        </div>
-
-        <div class="k-dunkel">
-          <div class="k-label">Preis</div>
-          <div class="k-zahl" style="margin-top:.5rem;">CHF 49</div>
-          <p class="k-text" style="opacity:.72;">Pro Monat, in Franken, mit MwSt. Kein Zähler, keine Nachzahlung, monatlich kündbar.</p>
-        </div>
-      </div>
-
-      <p class="fussnote">Alle Zahlen hier lassen sich am Produkt nachprüfen. Kundenzahlen stehen bewusst nicht dabei, es gibt noch keine.</p>
+      <!-- Hier stand ein Kachelblock mit vier Zahlen (5 Zustaende, 3 Minuten,
+           1 Zeile, CHF 49). Entfernt, weil jede davon weiter unten ohnehin
+           steht — und zwei davon dem Rest der Seite widersprachen: Der Ablauf
+           nennt "rund zehn Minuten", nicht drei, und der Preisteil nennt drei
+           Plaene ab gratis, waehrend die Kachel CHF 49 als DEN Preis las.
+           Die Fussnote ging mit, sie bezog sich auf genau diese Zahlen. -->
     </div>
   </section>
 
@@ -432,7 +406,6 @@
     <div class="branchen-huelle auftritt" style="--verzug: 120ms">
       <div class="branchen-galerie" id="branchenGalerie" tabindex="0" role="region" aria-label="Beispiel-Branchen zum Durchblättern">
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/restaurants.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -441,7 +414,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/arztpraxen.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -450,7 +422,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/coiffeure.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -459,7 +430,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/handwerker.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -468,7 +438,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/treuhaender.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -477,7 +446,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/laeden.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -486,7 +454,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/immobilien.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -495,7 +462,6 @@
           </div>
         </article>
         <article class="branchen-karte">
-          <span class="branchen-ph-marke">Platzhalter</span>
           <div class="branchen-platzhalter" aria-hidden="true"></div>
           <img src="bilder/branchen/studios-schulen.webp" alt="" loading="lazy" onerror="this.remove()" />
           <div class="branchen-verlauf">
@@ -1379,6 +1345,72 @@
     window.addEventListener("load", aktualisierePfeile);
   })();
 
+  /* ── Die grosse Aussage steigt Wort fuer Wort auf ──────────────────────
+     Nicht an der Scroll-Position wie die Sprung-Szene, sondern beim ersten
+     Sichtwerden — wie das uebrige .auftritt-System der Seite, nur je Wort
+     statt je Block.
+
+     Der Satz traegt zwei SVG-Zeichen mittendrin. Die werden nicht zerlegt,
+     sondern als ein Stueck mitgenommen; alles andere wird an Leerzeichen
+     getrennt, die als eigene Textknoten stehen bleiben, damit der
+     Zeilenumbruch weiter Trennstellen findet. */
+  (() => {
+    const aussage = document.querySelector(".grosse-aussage");
+    if (!aussage) return;
+    // Gleiche Bedingung wie beim .auftritt-System: Ohne Beobachter oder bei
+    // abgeschalteter Bewegung wird gar nicht erst versteckt.
+    if (!window.IntersectionObserver ||
+        (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+
+    const stuecke = [];
+    (function zerlege(knoten) {
+      [...knoten.childNodes].forEach((kind) => {
+        if (kind.nodeType === 3) {
+          const teile = kind.textContent.split(/(\s+)/);
+          const ersatz = document.createDocumentFragment();
+          teile.forEach((teil) => {
+            if (!teil) return;
+            if (/^\s+$/.test(teil)) { ersatz.appendChild(document.createTextNode(teil)); return; }
+            const wort = document.createElement("span");
+            wort.className = "wort-auftritt";
+            wort.textContent = teil;
+            stuecke.push(wort);
+            ersatz.appendChild(wort);
+          });
+          kind.replaceWith(ersatz);
+        } else if (kind.nodeType === 1) {
+          if (kind.classList.contains("satzzeichen")) {
+            kind.classList.add("wort-auftritt");
+            stuecke.push(kind);
+          } else {
+            zerlege(kind);
+          }
+        }
+      });
+    })(aussage);
+    if (!stuecke.length) return;
+
+    stuecke.forEach((stueck, i) => {
+      stueck.dataset.da = "nein";
+      stueck.style.setProperty("--verzug", (i * 55) + "ms");
+    });
+
+    // Spaeter als das uebrige .auftritt-System (dort 0,15): Der Satz ist gross,
+    // und bei einem frueh gesetzten Schwellwert war die Welle schon durch,
+    // bevor er ueberhaupt richtig im Blick stand. Zwei Stellschrauben wirken
+    // zusammen — es muss mehr als die Haelfte sichtbar sein, und das untere
+    // Fuenftel des Sichtfelds zaehlt dabei nicht mit, der Satz muss also
+    // wirklich hereingekommen sein.
+    const beobachter = new IntersectionObserver((eintraege) => {
+      eintraege.forEach((e) => {
+        if (!e.isIntersecting) return;
+        stuecke.forEach((s) => { s.dataset.da = "ja"; });
+        beobachter.disconnect();
+      });
+    }, { threshold: 0.55, rootMargin: "0px 0px -20% 0px" });
+    beobachter.observe(aussage);
+  })();
+
   /* ── Die Sprung-Szene: drei Abschnitte auf einer Scrollstrecke ─────────
 
      1. ZOOM   Der Text scrollt weg, die Szene waechst in den frei werdenden
@@ -1407,12 +1439,14 @@
 
     const SPRUNG_WEG = 760;   // Scrollstrecke, ueber die der Film laeuft
     const SEITE_WEG = 500;    // Scrollstrecke fuers Wegdrehen danach
-    const ABGANG_WEG = 420;   // und fuers Hochkippen zum Schluss
-    // Wie viel vom Abgang die Szene noch klebt. Unter eins loest sie sich,
-    // waehrend das Fenster noch wegkippt — dann rueckt der naechste Abschnitt
-    // herein, waehrend der Abgang laeuft, statt erst danach. Genau so macht es
-    // die Vorlage.
-    const ABGANG_KLEBT = 0.6;
+    // Der Abgang bekommt keine eigene Strecke: Er dauert genau so lange, wie
+    // die Buehne braucht, um nach oben aus dem Bild zu fahren — eine
+    // Bildschirmhoehe. Das Fenster kippt also weg, waehrend die Buehne schon
+    // hochfaehrt, und der naechste Abschnitt rueckt gleichzeitig nach.
+    //
+    // Mit eigener Strecke war der Abgang vorher fertig, und danach stand noch
+    // die leere Szene im Weg: gemessen 660 px reines Weiss, bevor der naechste
+    // Abschnitt kam.
     const ABGANG_KIPP = 44;   // Neigung am Ende des Abgangs
     const ABGANG_HOCH = 0.85; // wie weit hoch, Anteil der Szenenhoehe
     const VORLAUF = 0.15;     // Anteil des Films, der schon beim Zoom laeuft
@@ -1454,14 +1488,20 @@
       // 1. Zoom. Ruhemass ist der Platz unter dem Text bis zum unteren
       // Bildschirmrand; die Untergrenze faengt sehr flache Fenster ab, wo die
       // Szene sonst zu einem Streifen zusammenfiele.
-      const ruhe = Math.max(sicht - text, 240);
+      // Die Szene rutscht um diesen Betrag unter den Hero, damit die Knoepfe
+      // vor dem Verlauf stehen. Sie bekommt ihn zu ihrer Hoehe dazu, sonst
+      // fehlte er unten und die erste Seite waere zu kurz.
+      const UEBERLAPP = Math.round(Math.min(72, sicht * 0.08));
+      wurzel.setProperty("--sprung-ueberlapp", UEBERLAPP + "px");
+      const ruhe = Math.max(sicht - text + UEBERLAPP, 240);
       const z = (sanft && text > 0) ? Math.min(1, Math.max(0, y / text)) : 0;
       wurzel.setProperty("--sprung-hoehe", Math.round(ruhe + (sicht - ruhe) * z) + "px");
-      wurzel.setProperty("--sprung-oben", Math.round(text * (1 - z)) + "px");
+      // Die Klebekante folgt der Oberkante der Szene, und die liegt durch den
+      // Ueberlapp hoeher als das Ende des Textes.
+      wurzel.setProperty("--sprung-oben", Math.round((text - UEBERLAPP) * (1 - z)) + "px");
       // Feste Buehnenhoehe: Waechst sie mit der Szene, verschiebt sich beim
       // Scrollen alles, was darunter steht.
-      wurzel.setProperty("--buehne-hoehe",
-        Math.round(sicht + SPRUNG_WEG + SEITE_WEG + ABGANG_WEG * ABGANG_KLEBT) + "px");
+      wurzel.setProperty("--buehne-hoehe", (sicht + SPRUNG_WEG + SEITE_WEG) + "px");
 
       // 2. Sprung — laeuft erst, wenn der Text durch ist und die Szene steht.
       const s = Math.min(1, Math.max(0, (y - text) / SPRUNG_WEG));
@@ -1478,17 +1518,25 @@
       // 4. Abgang. Setzt genau dort an, wo das Wegdrehen endet, und fuehrt die
       // Werte weiter: Weil a erst ueber null geht, wenn d schon eins ist,
       // ergibt die Summe an der Nahtstelle stetig denselben Wert.
-      const a = sanft ? Math.min(1, Math.max(0, (y - text - SPRUNG_WEG - SEITE_WEG) / ABGANG_WEG)) : 0;
+      // Gerechnet ab der Oberkante der Buehne, nicht ab dem Textende: Die
+      // Buehne liegt um den Ueberlapp hoeher, und ohne ihn begaenne der Abgang
+      // genau diese Strecke zu spaet — die Szene haette sich da schon geloest
+      // und ihre Unterkante als harte Schnittkante gezeigt.
+      const a = sanft ? Math.min(1, Math.max(0, (y - (text - UEBERLAPP) - SPRUNG_WEG - SEITE_WEG) / sicht)) : 0;
       const sanftA = a * a * (3 - 2 * a);   // weiches An- und Auslaufen
 
       // Der Farbverlauf geht erst mit dem Fenster: Waehrend Text und Fenster
       // nebeneinander stehen, bleibt die Buehne farbig. Erst beim Abgang
       // loest sich beides zugleich in Weiss auf, und daraus wird der Uebergang
       // in den naechsten Abschnitt.
-      wurzel.setProperty("--grund-auf", (1 - sanftA).toFixed(2));
-      // Die weiche Unterkante gehoert zum Uebergang: Sie kommt mit dem Abgang
-      // und ist vorher nicht da.
-      wurzel.setProperty("--blende-auf", sanftA.toFixed(2));
+      // Verlauf und Blende laufen SCHNELLER als der Abgang. Der dauert eine
+      // ganze Bildschirmhoehe, aber die Unterkante der Szene wird sichtbar,
+      // sobald sie sich loest — und genau dort war die harte Schnittkante.
+      // Beide sind deshalb nach einem knappen Fuenftel der Strecke fertig.
+      const uebergang = Math.min(1, a * 5.5);
+      const sanftU = uebergang * uebergang * (3 - 2 * uebergang);
+      wurzel.setProperty("--grund-auf", (1 - sanftU).toFixed(2));
+      wurzel.setProperty("--blende-auf", sanftU.toFixed(2));
 
       wurzel.setProperty("--sprung-dreh", (d * DREH_GRAD + sanftA * 10).toFixed(1) + "deg");
       wurzel.setProperty("--sprung-kipp", (d * KIPP_GRAD + sanftA * (ABGANG_KIPP - KIPP_GRAD)).toFixed(1) + "deg");
@@ -1542,10 +1590,15 @@
     sofort();
     window.addEventListener("scroll", anfordern, { passive: true });
     window.addEventListener("resize", sofort, { passive: true });
-    // Schriften koennen nach dem ersten Lauf eintreffen und den Text neu
-    // umbrechen — dann stimmt die gemessene Texthoehe nicht mehr.
     window.addEventListener("load", sofort);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(sofort);
+    // Der Hero aendert seine Hoehe noch, nachdem gerechnet wurde: Bis die
+    // Schrift da ist, baut der Text mit der Ersatzschrift — gemessen 539 statt
+    // 375 px. document.fonts.ready loeste dabei zu frueh aus, die Szene behielt
+    // die zu kleine Hoehe und die erste Seite passte nicht mehr. Der Beobachter
+    // haengt an der Hoehe selbst und trifft damit jeden Grund, aus dem sie sich
+    // aendert.
+    if (window.ResizeObserver) new ResizeObserver(sofort).observe(hero);
+    else if (document.fonts && document.fonts.ready) document.fonts.ready.then(sofort);
 
     // Der Film wird als Ganzes geholt und als Blob eingehaengt, statt ihn ueber
     // src streamen zu lassen. Grund: Zum Spulen verlangt der Browser vom Server
