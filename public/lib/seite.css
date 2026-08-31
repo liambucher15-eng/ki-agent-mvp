@@ -467,6 +467,11 @@
       text-align: center;
       margin-top: calc(-1 * clamp(70px, 15.5vh, 155px));
       position: relative; z-index: 1;
+      /* Knapp unter voller Bildschirmhoehe: Der Satz bekommt Luft und steht
+         allein, ohne dass der naechste Abschnitt schon hereinragt — aber die
+         Kante bleibt sichtbar, sodass klar ist, dass es weitergeht. */
+      min-height: 85dvh;
+      display: flex; align-items: center; justify-content: center;
     }
     .grosse-aussage {
       font-size: clamp(1.8rem, 4.4vw, 3.4rem); font-weight: 600;
@@ -485,44 +490,11 @@
     .satzzeichen.voll { background: var(--violett); color: #fff; }
     .satzzeichen.zart { background: #dcdafa; color: var(--tinte); }
 
-    .bento {
-      display: grid; gap: 1rem;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      text-align: left;
-    }
-    .bento > * { border-radius: 18px; padding: clamp(1.2rem, 2.4vw, 1.7rem); min-width: 0; }
-    .kachel-hoch { grid-row: span 2; }
-    @media (max-width: 900px) {
-      .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .kachel-hoch { grid-row: span 1; }
-    }
-    @media (max-width: 600px) { .bento { grid-template-columns: minmax(0, 1fr); } }
-
-    .k-zahl { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -.04em; line-height: 1; }
-    .k-label { font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; opacity: .65; }
-    .k-text { font-size: .95rem; line-height: 1.55; margin-top: .7rem; }
-
-    /* Bildkachel: der Ausschnitt zeigt die Figur, nicht den leeren Verlauf. */
-    .k-bild {
-      padding: 0; overflow: hidden; position: relative;
-      background: var(--flaeche); display: flex; flex-direction: column; min-height: 17rem;
-    }
-    .k-bild img { width: 100%; flex: 1; min-height: 0; object-fit: cover; object-position: 78% 45%; display: block; }
-    .k-bild .karte-innen {
-      margin: -3.5rem 1rem 1rem; position: relative; z-index: 1;
-      background: #fff; border-radius: 14px; padding: 1.1rem 1.2rem;
-      box-shadow: 0 16px 34px -22px rgba(17,17,20,.5);
-    }
-    .k-hell { background: var(--flaeche); }
-    .k-violett { background: #dcdafa; }
-    .k-dunkel { background: var(--dunkel); color: #fff; }
-    .k-dunkel .k-label { opacity: .55; }
-    .k-code {
-      margin-top: .9rem; font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: .78rem; background: rgba(17,17,20,.07); border-radius: 8px;
-      padding: .55rem .7rem; overflow-x: auto; white-space: nowrap;
-    }
-    .aussage .fussnote { margin-top: 1.6rem; font-size: .88rem; color: var(--tinte-hell); }
+    /* Der Kachelblock (.bento mit .k-zahl, .k-label, .k-text, .k-bild,
+       .k-hell, .k-violett, .k-dunkel, .k-code, .kachel-hoch, .karte-innen)
+       und die Fussnote der Aussage sind mit dem Block selbst entfallen —
+       siehe die Begruendung in start.html. Die Regeln waren danach von
+       nichts mehr benutzt. */
 
     /* ── Zweispalter (Problem / Loesung, Grenzen) ─────────────────────── */
     .zwei { display: grid; gap: clamp(1.5rem, 3vw, 2.5rem); grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }

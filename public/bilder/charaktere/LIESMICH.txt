@@ -1,25 +1,35 @@
 Charakter-Galerie der Startseite (Sektion "Charaktere" in start.html)
 
-Hier gehoeren die Beispiel-Figuren hinein, die mit AuraChat selbst erzeugt
-wurden. Solange eine Datei fehlt, zeigt die Kachel einen Platzhalter; das
-Skript am Seitenende entfernt das kaputte Bild, damit kein Bruchsymbol
-erscheint. Sobald die Datei da ist, deckt sie den Platzhalter zu. Es muss
-nichts am Code geaendert werden.
+Hier liegen die Beispiel-Figuren, die mit AuraChat selbst erzeugt wurden.
+Solange eine Datei fehlt, zeigt die Kachel einen Platzhalter; das Skript am
+Seitenende entfernt das kaputte Bild, damit kein Bruchsymbol erscheint.
+Sobald die Datei da ist, deckt sie den Platzhalter zu. Es muss nichts am
+Code geaendert werden.
 
-Erwartete Dateien:
-  restaurant.webp
+Vorhandene Dateien (Reihenfolge wie in start.html):
+  cafe.webp
   zahnarztpraxis.webp
-  velowerkstatt.webp
-  coiffeursalon.webp
-  treuhandbuero.webp
-  fitnessstudio.webp
-  blumenladen.webp
   autogarage.webp
+  blumenladen.webp
+  arztpraxis.webp
+  baeckerei.webp
+  anwaltskanzlei.webp
+  buchhandlung.webp
+  handwerk.webp
+  malerbetrieb.webp
+  fotostudio.webp
+  reisebuero.webp
 
 Format: quadratisch (1:1), Figur mittig, heller oder freigestellter
-Hintergrund. Die Kachel ist auf dem Desktop rund 271 px breit, auf dem
-Handy rund 160 px; 600x600 reicht also aus.
+Hintergrund. Die Kachel ist auf dem Desktop rund 368 px breit, auf dem
+Handy rund 160 px; 800x800 reicht also aus. Die Quellen kamen im Format
+16:9 und wurden mittig auf 1:1 beschnitten.
 
-Die Branchen sind bewusst weit auseinander gewaehlt: Die Sektion soll
-zeigen, wie unterschiedlich die Figuren ausfallen koennen. Wenn du andere
-Branchen nimmst, die Beschriftung in start.html mit anpassen.
+Die Reihenfolge mischt bewusst die beiden Stile, die das Produkt anbietet:
+flach gezeichnet und dreidimensional gerendert. So sieht man beim
+Durchblaettern beides abwechselnd, statt erst vier flache und dann acht
+gerenderte Figuren.
+
+Die Branchen sind weit auseinander gewaehlt: Die Sektion soll zeigen, wie
+unterschiedlich die Figuren ausfallen koennen. Wenn du andere Branchen
+nimmst, die Beschriftung in start.html mit anpassen.
