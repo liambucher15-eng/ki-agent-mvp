@@ -44,6 +44,83 @@ function originErlaubt(event) {
   return erlaubt.includes(origin);
 }
 
+// ── Einbettung auf der Kunden-Domain ────────────────────────────────────────
+// Das Widget ist GENAU DAFÜR gebaut, auf fremden Domains zu laufen: eine Zeile
+// im Quelltext des Kunden, danach läuft es auf seiner Seite. Für solche Aufrufe
+// ist originErlaubt() oben zwangsläufig falsch — die Kunden-Domain ist weder
+// Same-Origin noch steht sie in ERLAUBTE_ORIGINS.
+//
+// ERLAUBTE_ORIGINS kann das auch nicht lösen: Dort müsste bei JEDEM neuen
+// Kunden von Hand eine Domain nachgetragen und neu deployt werden. Bis dahin
+// bekäme jeder frisch eingerichtete Agent ein stilles 403 — also genau der
+// Fall, der hier zu prüfen war.
+//
+// Die Freigabe pflegt sich deshalb selbst: Im Onboarding gibt der Kunde seine
+// Webseite an (onboarding.js speichert sie als firma.webseite), und genau diese
+// Domain darf seinen Agenten aufrufen. Wer nur die firmaId abschreibt und das
+// Widget auf einer fremden Seite einbettet, bleibt draussen.
+function originPasstZuFirma(event, firma) {
+  const h = event.headers || {};
+  const origin = h.origin || h.Origin || "";
+  const webseite = (firma && firma.webseite) || "";
+  if (!origin || !webseite) return false;
+  try {
+    const oHost = new URL(origin).host.toLowerCase();
+    // Die hinterlegte Webseite kann mit oder ohne Protokoll gespeichert sein —
+    // "example.ch" genauso wie "https://www.example.ch/ueber-uns".
+    const wHost = new URL(/^https?:\/\//i.test(webseite) ? webseite : "https://" + webseite)
+      .host.toLowerCase();
+    if (!oHost || !wHost) return false;
+    // www. ist dieselbe Seite. Ohne diese Normalisierung scheitert der
+    // häufigste Fall überhaupt: eingetragen "example.ch", eingebettet auf
+    // "www.example.ch".
+    const ohneWww = (x) => x.replace(/^www\./, "");
+    return ohneWww(oHost) === ohneWww(wHost);
+  } catch {
+    return false;
+  }
+}
+
+// CORS-Kopfzeilen für Aufrufe von der Kunden-Domain.
+//
+// Der Origin wird zurückgespiegelt statt "*", weil "*" zusammen mit
+// Anmeldedaten nicht erlaubt wäre und wir uns diese Tür nicht zubauen wollen.
+// Vary: Origin ist dabei Pflicht — sonst könnte ein Cache die Antwort für
+// Domain A an Domain B ausliefern.
+function corsKopf(event) {
+  const h = event.headers || {};
+  const origin = h.origin || h.Origin || "";
+  if (!origin) return {};
+  return {
+    "access-control-allow-origin": origin,
+    "vary": "Origin",
+  };
+}
+
+// Antwort auf den Vorab-Check des Browsers (OPTIONS).
+//
+// Ein POST mit content-type: application/json löst immer einen Preflight aus.
+// Ohne Antwort darauf blockiert der Browser die eigentliche Anfrage, noch bevor
+// sie den Server erreicht — die Function liefe nie an, egal wie ihre Prüfungen
+// aussehen.
+//
+// Der Preflight wird bewusst für JEDEN Origin bejaht: Er verrät nichts und gibt
+// nichts frei, er beantwortet nur "welche Methode/Kopfzeile ist erlaubt". Die
+// eigentliche Berechtigung prüft danach die POST-Anfrage selbst
+// (originPasstZuFirma), und die kennt die firmaId, die dem Preflight fehlt.
+function preflightAntwort(event) {
+  return {
+    statusCode: 204,
+    headers: {
+      ...corsKopf(event),
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-headers": "content-type",
+      "access-control-max-age": "86400",
+    },
+    body: "",
+  };
+}
+
 // true = Anfrage erlaubt. Nutzt die Postgres-Funktion rate_hit (siehe schema.sql).
 // Fail-open: Ist Supabase/die RPC nicht verfügbar, wird NICHT blockiert (der Chat
 // soll nicht wegen eines fehlenden Limits ausfallen).
@@ -60,4 +137,7 @@ async function rateOk(kennung, limit, fensterSek) {
   } catch { return true; }
 }
 
-module.exports = { json, holeIp, originErlaubt, rateOk, IST_DEV };
+module.exports = {
+  json, holeIp, originErlaubt, rateOk, IST_DEV,
+  originPasstZuFirma, corsKopf, preflightAntwort,
+};

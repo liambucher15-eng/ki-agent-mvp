@@ -362,7 +362,14 @@
     const titel = text(r.titel, 200);
     const typ = seitenTyp({ pfad, titel, produkte });
 
-    const analyse = { pfad, titel, typ, produkte, inhalt: text(r.text, 1500) };
+    // 9000 MUSS mit dem Deckel in public/widget.js (seitenText()) mitwachsen —
+    // sonst schneidet dieser zweite Deckel serverseitig wieder zurueck, egal
+    // wie viel der Browser tatsaechlich schickt. Auf einer langen Seite
+    // (start.html, gemessen 8022 Zeichen) lag "Preis" (Zeichen 6439) damit
+    // ausserhalb dessen, was der Agent je zu sehen bekam: seite_zeigen("Preis")
+    // schlug an zielStehtAufSeite() fehl, der Agent redete nur ÜBER die Stelle
+    // statt hinzufuehren.
+    const analyse = { pfad, titel, typ, produkte, inhalt: text(r.text, 9000) };
     // Auf einer Produktseite ist EIN Produkt das Thema — das hebt der Prompt hervor.
     if (typ === "produkt" && produkte.length === 1) analyse.hauptprodukt = produkte[0];
     return analyse;

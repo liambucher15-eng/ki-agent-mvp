@@ -441,9 +441,57 @@
       if (d.farbe1) { daten.farbe1 = d.farbe1; document.getElementById("farbe1").value = d.farbe1; }
       if (d.farbe2) { daten.farbe2 = d.farbe2; document.getElementById("farbe2").value = d.farbe2; }
     }
+    // Die Webseite ist PFLICHT — und zwar in brauchbarer Form, nicht nur
+    // irgendein nicht-leerer Text.
+    //
+    // Grund ist nicht der Scan (der kann auch scheitern, dann geht es ohne ihn
+    // weiter). Grund ist die spaetere Einbettung beim Kunden: Der Server laesst
+    // einen Aufruf von einer fremden Domain nur zu, wenn diese zu der hier
+    // hinterlegten Webseite passt (netlify/functions/lib/schutz.js,
+    // originPasstZuFirma). Steht hier nichts oder etwas Unparsbares wie
+    // "meine firma", schweigt die proaktive Ansprache auf der Kundenseite
+    // spaeter STILL — niemand wuerde je erfahren, warum.
+    //
+    // Darum wird hier normalisiert und geprueft, statt nur auf "nicht leer" zu
+    // testen. Gespeichert wird die normalisierte Form, damit derselbe Wert
+    // spaeter serverseitig sicher zu parsen ist.
+    function pruefeWebseite(roh) {
+      const wert = String(roh || "").trim();
+      if (!wert) return { ok: false, hinweis: "Bitte gib deine Webseite ein." };
+      // Ohne Protokoll ist es fuer new URL() keine Adresse — die meisten
+      // tippen aber "deine-firma.ch". Ergaenzen statt abweisen.
+      const mitProtokoll = /^https?:\/\//i.test(wert) ? wert : "https://" + wert;
+      let host;
+      try {
+        host = new URL(mitProtokoll).hostname;
+      } catch {
+        return { ok: false, hinweis: "Das sieht nicht nach einer Internetadresse aus." };
+      }
+      // Ein Punkt und keine Leerzeichen: unterscheidet "deine-firma.ch" von
+      // "meine firma". localhost faellt damit auch raus, was hier richtig ist.
+      if (!host.includes(".") || /\s/.test(host)) {
+        return { ok: false, hinweis: "Bitte die vollstaendige Adresse, z.B. deine-firma.ch" };
+      }
+      return { ok: true, url: mitProtokoll };
+    }
+
     document.getElementById("scanBtn").addEventListener("click", async () => {
-      const url = document.getElementById("webseite").value.trim();
-      if (!url) { alert("Bitte gib deine Webseite ein."); return; }
+      const feld = document.getElementById("webseite");
+      const hinweisEl = document.getElementById("webseiteHinweis");
+      const geprueft = pruefeWebseite(feld.value);
+      if (!geprueft.ok) {
+        // Inline-Hinweis statt alert() — dasselbe Muster wie beim Pflichtfeld
+        // "Agenten-Name" weiter hinten.
+        hinweisEl.textContent = geprueft.hinweis;
+        hinweisEl.style.color = "#e11d48";
+        feld.focus();
+        return;
+      }
+      hinweisEl.textContent = "";
+      const url = geprueft.url;
+      // Die normalisierte Form auch ins Feld zurueckschreiben, damit sichtbar
+      // ist, was tatsaechlich gespeichert wird.
+      feld.value = url;
       daten.webseite = url;
       const status = document.getElementById("scanStatus");
       const loader = document.getElementById("scanLoader");

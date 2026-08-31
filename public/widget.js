@@ -102,7 +102,19 @@
       // passiert. Ist der Hauptinhalt auffällig kürzer als die Seite, war er
       // nicht als Hauptinhalt gemeint.
       if (text.length < koerper.length * 0.5) text = koerper;
-      return text.slice(0, 1500);
+      // 1500 Zeichen genuegten fuer eine kurze Landingpage, nicht aber fuer
+      // eine lange wie unsere eigene start.html: "Preis" liegt dort erst nach
+      // Hero, Vertrauensleiste, Funktionen, Warum-ueberhaupt, Beweis-Band,
+      // Charaktere und "So funktioniert es" — gemessen bei Zeichen 6439, also
+      // auch ausserhalb eines ersten (zu knapp bemessenen) Versuchs mit 6000.
+      // Der Agent bekam den Preis-Abschnitt serverseitig nie zu sehen,
+      // seite_zeigen("Preis") schlug an zielStehtAufSeite() fehl (siehe
+      // netlify/functions/lib/seiten-analyse.js, derselbe Deckel dort MUSS
+      // mitwachsen), und er redete nur ÜBER das Abo statt dorthin zu fuehren.
+      // 9000 Zeichen deckt die komplette heutige start.html (gemessen 8022)
+      // mit etwas Reserve ab. Waechst die Seite deutlich weiter, muss diese
+      // Zahl mitwachsen — sonst wiederholt sich genau dieser Fehler.
+      return text.slice(0, 9000);
     } catch (e) { return ""; }
   }
   function seitenKontext() {

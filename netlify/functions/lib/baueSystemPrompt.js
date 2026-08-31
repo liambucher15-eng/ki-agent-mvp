@@ -75,12 +75,51 @@ function baueSystemPrompt(firma) {
       `Karte nur halb so nützlich.`
     : "";
 
+  // Steht das Produkt schon als EIGENE Kachel auf der aktuellen Seite (eine
+  // Katalogseite wie demo-nordform.html listet alle Stuecke direkt mit Namen,
+  // Bild und Preis), war die Regel oben trotzdem strikt: IMMER
+  // "produkte_vorschlagen", also eine neue Chat-Karte samt Link zu einer
+  // ANDEREN Seite — obwohl das Stueck einen Scroll weiter unten auf
+  // DERSELBEN Seite schon zu sehen ist. Gemessen als schlechte Erfahrung:
+  // der Knopf "Ansehen" ersetzt die ganze Seite (und den Chat darin) durch
+  // eine Produktseite, wo ein simples Hinscrollen gereicht haette.
+  //
+  // Das Signal dafuer ist bereits da, ohne neue Plumbing: Die Produkte im
+  // KONTEXT-Block stammen aus dem JSON-LD GENAU dieser Seite (siehe
+  // seiten-analyse.js). Steht ein Produkt dort, ist es auf dieser Seite
+  // sichtbar — sonst nicht.
+  const kannProduktSeite = kannProdukte && Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("seite");
+  const produktSeiteRegel = kannProduktSeite
+    ? `\n- AUSNAHME zur vorigen Regel: Steht das Produkt bereits in der Liste im KONTEXT-Block ` +
+      `weiter unten (heisst: es ist auf DIESER Seite selbst schon als Kachel zu sehen), nutze ` +
+      `NICHT „produkte_vorschlagen", sondern „seite_zeigen" (aktion „zeigen", ziel = genauer ` +
+      `Produktname). Der Besucher landet dann direkt bei der Kachel, statt dass eine neue Karte ` +
+      `im Chat erscheint, die zu einer anderen Seite führt. Erst wenn das Produkt NICHT zu den im ` +
+      `KONTEXT gelisteten gehört (der Besucher ist also woanders), gilt wieder die Regel oben: ` +
+      `„produkte_vorschlagen" mit Bild, Preis und Link.`
+    : "";
+
   const kannSeite = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("seite");
+  // Die Regel deckte urspruenglich nur FRAGEN ab ("wenn die Antwort auf eine
+  // Frage bereits auf der Seite steht"). Gemessen reichte das nicht: Auf
+  // "Ich moechte ein Abo abschliessen" antwortete der Agent nur IN WORTEN
+  // ueber das Abo, statt mit seite_zeigen zur Preis-Sektion zu fuehren — eine
+  // geaeusserte ABSICHT ist keine Frage, die Regel griff also gar nicht erst.
+  // Genau das widerspricht dem Kernversprechen der Seite ("Er fuehrt zum
+  // Angebot, statt nur zu antworten") — deshalb jetzt ein eigener, expliziter
+  // Absatz dafuer statt nur ein Beispiel am Rand.
   const seiteRegel = kannSeite
     ? `\n- Wenn die Antwort auf eine Frage bereits auf der Seite steht, ZEIG sie mit dem ` +
       `Werkzeug „seite_zeigen" (aktion „zeigen", dazu der sichtbare Text der Stelle), ` +
-      `statt sie nur zu beschreiben. Für eine andere Seite desselben Shops nimm aktion ` +
-      `„oeffnen" und sag vorher, wohin es geht.\n` +
+      `statt sie nur zu beschreiben.\n` +
+      `- Das gilt genauso, wenn der Besucher eine ABSICHT äussert statt einer Frage zu ` +
+      `stellen — „ich möchte ein Abo abschliessen", „ich will das buchen", „zeig mir die ` +
+      `Preise" sind kein Rätsel, sondern ein klarer Wunsch. Antworte dann nicht nur IN ` +
+      `WORTEN darüber, sondern rufe „seite_zeigen" auf und führe wirklich zur passenden ` +
+      `Stelle — sonst bist du nur ein Chatfenster, das antwortet, kein Concierge, der ` +
+      `hinführt.\n` +
+      `- Für eine andere Seite desselben Shops nimm aktion „oeffnen" und sag vorher, ` +
+      `wohin es geht.\n` +
       `- Du kannst NICHTS anklicken, nichts absenden und nichts in den Warenkorb legen. ` +
       `Das entscheidet der Besucher selbst. Wenn er kaufen will, sag ihm wo der Knopf ist, ` +
       `aber drücke ihn nicht.`
@@ -213,7 +252,7 @@ dass du es nicht weisst, und biete an, das Team zu fragen.`;
 Ton: ${p.ton}. Sprich ${spr}. ${anredeRegel}${aussehenRegel}
 
 So verhältst du dich:
-${verhaltenKopf}${produktRegel}${seiteRegel}${kontaktRegel}${fallbackRegel}
+${verhaltenKopf}${produktRegel}${produktSeiteRegel}${seiteRegel}${kontaktRegel}${fallbackRegel}
 - RICHTE DICH NACH DER LAGE: Unten kann ein KONTEXT-Block stehen — welche Seite
   der Besucher gerade offen hat, welches Produkt dort steht (mit Preis und
   Verfügbarkeit) und wie er sich verhält. Nutze das aktiv:

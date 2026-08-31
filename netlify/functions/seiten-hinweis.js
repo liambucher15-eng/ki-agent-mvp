@@ -13,7 +13,10 @@
 const { ladeFirmaServer } = require("./lib/firmaLaden");
 const { rufeClaude } = require("./lib/claude");
 const { leseHinweis, setzeHinweis } = require("./lib/hinweisSpeicher");
-const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const {
+  json, holeIp, originErlaubt, rateOk,
+  originPasstZuFirma, corsKopf, preflightAntwort,
+} = require("./lib/schutz");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const { beurteile: beurteileVerhalten } = require("./lib/verhalten");
 const { entscheide, baueAnspracheAuftrag } = require("./lib/ansprache");
@@ -23,12 +26,21 @@ const MAX_TITEL = 200;
 const MAX_INHALT = 1500;
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
-  if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
+  // Vorab-Check des Browsers. MUSS vor allem anderen kommen und ohne jede
+  // weitere Prüfung beantwortet werden — sonst blockiert der Browser die
+  // eigentliche Anfrage, bevor sie hier ankommt (siehe lib/schutz.js).
+  if (event.httpMethod === "OPTIONS") return preflightAntwort(event);
+
+  // Jede Antwort trägt die CORS-Kopfzeilen. Ohne sie verwirft der Browser auch
+  // eine erfolgreiche Antwort, sobald sie von einer Kunden-Domain aus geholt
+  // wurde — das Widget bekäme sie nie zu sehen.
+  const antwort = (code, obj) => json(code, obj, corsKopf(event));
+
+  if (event.httpMethod !== "POST") return antwort(405, { error: "Nur POST erlaubt" });
 
   // Großzügig, aber gedeckelt (ein Besucher pro Seitenaufruf, meist Cache-Treffer).
   if (!(await rateOk("hinweis:" + holeIp(event), 30, 60))) {
-    return json(429, { error: "Zu viele Anfragen." });
+    return antwort(429, { error: "Zu viele Anfragen." });
   }
 
   let firmaId, pfad, titel, inhalt, jsonLd, meta;
@@ -39,9 +51,27 @@ exports.handler = async (event) => {
       verhalten, schonAngesprochen, sekundenSeitLetzter, chatOffen, weggeklickt,
     } = JSON.parse(event.body || "{}"));
   } catch {
-    return json(400, { error: "Ungültiges JSON" });
+    return antwort(400, { error: "Ungültiges JSON" });
   }
-  if (!firmaId || typeof firmaId !== "string") return json(400, { error: "firmaId fehlt" });
+  if (!firmaId || typeof firmaId !== "string") return antwort(400, { error: "firmaId fehlt" });
+
+  // ── Origin ───────────────────────────────────────────────────────────────
+  // Erst NACH dem Auslesen des Bodys, weil die Entscheidung die firmaId
+  // braucht: Ein Aufruf von der Kunden-Domain ist erlaubt, wenn er zu der
+  // Webseite gehört, die für GENAU DIESE Firma hinterlegt ist.
+  //
+  // Für unsere eigenen Seiten (Same-Origin) greift wie bisher originErlaubt()
+  // und es wird nichts nachgeladen — der billige Abbruch weiter unten bleibt
+  // also unangetastet. Nur bei einer fremden Domain kostet es einen
+  // Firmen-Lookup, und der wird unten wiederverwendet statt doppelt gemacht.
+  let firma = null;
+  if (!originErlaubt(event)) {
+    firma = await ladeFirmaServer(firmaId);
+    if (!firma) return antwort(404, { error: "Unbekannte Firma" });
+    if (!originPasstZuFirma(event, firma)) {
+      return antwort(403, { error: "Origin nicht erlaubt" });
+    }
+  }
   pfad = String(pfad || "/").slice(0, MAX_PFAD);
   titel = String(titel || "").slice(0, MAX_TITEL).replace(/\s+/g, " ").trim();
   inhalt = String(inhalt || "").slice(0, MAX_INHALT).replace(/\s+/g, " ").trim();
@@ -75,7 +105,7 @@ exports.handler = async (event) => {
       weggeklickt: !!weggeklickt,
     });
     if (!entscheidung.ansprechen) {
-      return json(200, { ansprechen: false, text: "", grund: entscheidung.grund });
+      return antwort(200, { ansprechen: false, text: "", grund: entscheidung.grund });
     }
     anlass = entscheidung.anlass;
   }
@@ -86,17 +116,20 @@ exports.handler = async (event) => {
 
   // 1) Cache-Treffer? Dann sofort zurück (kein API-Aufruf).
   const gecacht = await leseHinweis(firmaId, cacheSchluessel);
-  if (gecacht) return json(200, { ansprechen: true, text: gecacht, anlass, cache: true });
+  if (gecacht) return antwort(200, { ansprechen: true, text: gecacht, anlass, cache: true });
 
   // 2) Firma muss existieren — schützt vor teuren Aufrufen für Fremd-IDs.
-  const firma = await ladeFirmaServer(firmaId);
-  if (!firma) return json(404, { error: "Unbekannte Firma" });
+  // Bei einem Aufruf von der Kunden-Domain ist sie oben schon geladen worden
+  // (für die Origin-Prüfung) und wird hier wiederverwendet, statt sie ein
+  // zweites Mal aus der Datenbank zu holen.
+  if (!firma) firma = await ladeFirmaServer(firmaId);
+  if (!firma) return antwort(404, { error: "Unbekannte Firma" });
 
   // Ohne verwertbaren Seitenkontext lohnt kein KI-Aufruf — das Widget nutzt dann
   // seinen statischen Fallback-Satz. Erkannte Produkte zählen als Kontext, auch
   // wenn Titel und sichtbarer Text leer sind (kommt bei bildlastigen Shops vor).
   if (!inhalt && !titel && !analyse.produkte.length) {
-    return json(200, { ansprechen: !!anlass, text: "" });
+    return antwort(200, { ansprechen: !!anlass, text: "" });
   }
 
   const name = firma.name || (firma.persona && firma.persona.name) || "die Firma";
@@ -134,14 +167,14 @@ exports.handler = async (event) => {
       temperature: 0.6,
       timeout: 12000,
     });
-    if (!ok) return json(200, { ansprechen: !!anlass, text: "" }); // Fehler -> Widget nimmt Fallback
+    if (!ok) return antwort(200, { ansprechen: !!anlass, text: "" }); // Fehler -> Widget nimmt Fallback
     let text = (data.content?.[0]?.text || "").replace(/^["']|["']$/g, "").replace(/\s+/g, " ").trim();
     text = text.slice(0, 140);
-    if (!text) return json(200, { ansprechen: !!anlass, text: "" });
+    if (!text) return antwort(200, { ansprechen: !!anlass, text: "" });
 
     await setzeHinweis(firmaId, cacheSchluessel, text); // Cache für die nächsten Besucher
-    return json(200, { ansprechen: true, text, anlass, cache: false });
+    return antwort(200, { ansprechen: true, text, anlass, cache: false });
   } catch {
-    return json(200, { ansprechen: !!anlass, text: "" });
+    return antwort(200, { ansprechen: !!anlass, text: "" });
   }
 };
