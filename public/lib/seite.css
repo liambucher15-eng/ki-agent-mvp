@@ -816,7 +816,12 @@
        Hier soll er breit und ruhig stehen, wie ein Zitat. */
     .bereiche-kopf {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr);
+      /* Der Satz beginnt bewusst erst nach gut der Haelfte. Bei 1fr zu 2.1fr
+         setzte er nach knapp einem Drittel an; das Verhaeltnis unten schiebt
+         ihn um rund ein Fuenftel der Kopfbreite nach rechts. Er wird dadurch
+         schmaler und braucht eine Zeile mehr — genau das ist gewollt, der
+         Satz soll als schmaler Block stehen, nicht als breite Ueberschrift. */
+      grid-template-columns: minmax(0, 1.13fr) minmax(0, 1fr);
       gap: clamp(1rem, 3vw, 2.5rem);
       align-items: start;
       margin-bottom: clamp(2rem, 3.6vw, 3rem);
