@@ -279,62 +279,6 @@
     </div>
   </section>
 
-  <!-- ══ WARUM ÜBERHAUPT ═══════════════════════════════════════════════
-       Fasst die frueheren Sektionen "Das Problem" und "Der Unterschied"
-       zusammen. Getrennt trugen die beiden dasselbe Argument zweimal
-       hintereinander vor, bevor auf der Seite ueberhaupt etwas zu sehen
-       war. -->
-  <section class="dunkel">
-    <div class="bahn">
-      <div class="kopfblock">
-        <span class="augen">Warum überhaupt</span>
-        <h2>Er sagt nie: „Dazu habe ich keine Informationen."</h2>
-        <p class="lead">Die grossen Anbieter bauen Werkzeuge, die Anfragen wegräumen sollen. Das ergibt Sinn, wenn du eine Supportabteilung hast. Hast du keine, ist dein Mitarbeiter kein Sparposten, sondern zusätzliches Personal im Schaufenster: mit Namen, mit Gesicht, und mit deiner Art zu reden.</p>
-      </div>
-      <!-- Der Unterschied wird gezeigt, nicht behauptet: dieselbe Frage, zwei
-           Antworten. Den linken Satz kennt jeder, der schon mal mit einem Bot
-           geredet hat — deshalb braucht er keine Erklärung.
-
-           Die rechte Antwort ist KEIN Werbetext. Sie stammt aus einem echten
-           Aufruf mit dem System-Prompt aus baueSystemPrompt.js und den Daten
-           aus data/nordform.json. Wer es nicht glaubt, kann Jonna in der
-           Vorführung dieselbe Frage stellen. Genau deshalb steht darunter der
-           Link dorthin. -->
-      <div class="gegenueber">
-        <p class="gegen-frage"><span>Besucher fragt</span>Habt ihr den Tisch auch in 240 cm?</p>
-        <div class="gegen-paar">
-          <div class="gegen-spalte">
-            <span class="gegen-marke">Üblicher Chatbot</span>
-            <p class="gegen-blase gegen-schlecht">Zu dieser Frage liegen mir leider keine Informationen vor. Bitte wenden Sie sich an unseren Kundenservice.</p>
-          </div>
-          <div class="gegen-spalte">
-            <span class="gegen-marke">Dein Mitarbeiter</span>
-            <p class="gegen-blase gegen-gut" id="gegenAntwort"></p>
-          </div>
-        </div>
-
-        <!-- Und hier wird die Personalisierung anfassbar. Die vier Antworten
-             sind echte Stichproben aus demselben Agenten mit anderer Einstellung
-             — nicht vier umformulierte Werbesätze. -->
-        <div class="regler">
-          <p class="regler-titel">Derselbe Agent, andere Einstellung:</p>
-          <div class="regler-reihe" role="group" aria-label="Anrede">
-            <button type="button" class="chip aktiv" data-anrede="du">Du</button>
-            <button type="button" class="chip" data-anrede="sie">Sie</button>
-          </div>
-          <div class="regler-reihe" role="group" aria-label="Ton">
-            <button type="button" class="chip aktiv" data-ton="freundlich">Freundlich</button>
-            <button type="button" class="chip" data-ton="gehoben">Gehoben</button>
-          </div>
-          <p class="regler-fuss">
-            Dazu kommen Name, Rolle, Gesicht und was er ausdrücklich nicht sagen darf.
-            <a href="demo-nordform.html">Stell ihm die Frage selbst</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ══ ÜBERZEUGE DICH SELBST ══════════════════════════════════════════
        Steht mit Absicht VOR der Galerie: Bis hierher hat die Seite nur
        behauptet. Wer ab hier weiterliest, soll das freiwillig tun, weil er es
@@ -851,53 +795,6 @@
   </footer>
 
 <script>
-  // ── „Derselbe Agent, andere Einstellung" ────────────────────────────────
-  //
-  // Die vier Antworten sind ECHT: einmal erzeugt mit dem System-Prompt aus
-  // netlify/functions/lib/baueSystemPrompt.js und den Daten aus
-  // data/nordform.json, nur mit unterschiedlicher persona.ansprache und
-  // persona.ton. Sie sind fest hinterlegt und nicht live erzeugt — ein
-  // Claude-Aufruf pro Klick auf der oeffentlichen Startseite waere ein
-  // offener Geldhahn ohne Zaehler.
-  //
-  // Warum ausgerechnet „freundlich" gegen „gehoben": Gemessen wurden alle
-  // sechs Toene aus dem Onboarding. Professionell, freundlich und humorvoll
-  // klangen praktisch gleich — die haette hier niemand auseinandergehalten,
-  // und die Sektion haette das Gegenteil ihrer Aussage bewiesen. Freundlich
-  // gegen gehoben ist der Unterschied, der wirklich zu sehen ist.
-  (function () {
-    var ANTWORTEN = {
-      "freundlich-du":
-        "Ja, das geht! Längen zwischen 140 und 280 cm sind ohne Aufpreis möglich — du kannst also jeden unserer Tische in 240 cm bestellen. Die Lieferzeit verlängert sich dann auf 4–5 Wochen statt der üblichen 2–3 Wochen. Welcher Tisch interessiert dich denn?",
-      "freundlich-sie":
-        "Ja, gerne! Der Tisch lässt sich in Längen zwischen 140 und 280 cm ohne Aufpreis anfertigen — 240 cm ist also kein Problem. Die Lieferzeit verlängert sich dann auf 4–5 Wochen statt der üblichen 2–3 Wochen. Welcher Tisch interessiert Sie — der Eichentisch Nord oder der Esstisch Sund?",
-      "gehoben-du":
-        "Ja, das ist kein Problem. Längen zwischen 140 und 280 cm sind ohne Aufpreis möglich — du könntest den Tisch also in 240 cm bestellen. Die Lieferzeit verlängert sich dann auf 4–5 Wochen statt der üblichen 2–3 Wochen. Welcher Tisch interessiert dich — der Nord aus Eiche oder der Sund aus Nussbaum?",
-      "gehoben-sie":
-        "Ja, gerne. Welcher Tisch interessiert Sie — der Eichentisch Nord oder der Esstisch Sund? Bei beiden sind Längen zwischen 140 und 280 cm ohne Aufpreis möglich. Die Lieferzeit verlängert sich dann auf etwa 4–5 Wochen statt der üblichen 2–3 Wochen."
-    };
-    var ziel = document.getElementById("gegenAntwort");
-    var regler = document.querySelector(".regler");
-    if (!ziel || !regler) return;
-
-    var wahl = { anrede: "du", ton: "freundlich" };
-    function zeige() {
-      ziel.textContent = ANTWORTEN[wahl.ton + "-" + wahl.anrede] || "";
-    }
-    regler.addEventListener("click", function (e) {
-      var chip = e.target.closest(".chip");
-      if (!chip) return;
-      var art = chip.hasAttribute("data-anrede") ? "anrede" : "ton";
-      wahl[art] = chip.getAttribute("data-" + art);
-      // Nur die Geschwister derselben Reihe zuruecksetzen, nicht alle Chips.
-      var reihe = chip.parentElement.querySelectorAll(".chip");
-      for (var i = 0; i < reihe.length; i++) reihe[i].classList.remove("aktiv");
-      chip.classList.add("aktiv");
-      zeige();
-    });
-    zeige();
-  })();
-
   // Ablauf-Stepper: ein Schritt offen, passende Aufnahme rechts.
   //
   // EINE Uhr steuert beides. Der Balken liest dieselbe verstrichene Zeit wie
