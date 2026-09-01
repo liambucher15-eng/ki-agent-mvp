@@ -923,6 +923,36 @@
        Schrift auf diesem einen Schild kleiner. */
     .bereich-schild.lang { font-size: clamp(.6rem, 3.4cqw, .92rem); letter-spacing: -0.02em; }
 
+    /* Letzte Karte der Reihe, ohne Foto. Sie schliesst die Aufzaehlung ab,
+       statt sie zu verlaengern: Acht Branchen decken laengst nicht alles ab,
+       und wer seine eigene nicht findet, soll das nicht als Absage lesen.
+       Ein Foto haette daraus eine neunte Branche gemacht — deshalb Text.
+       Gleiche Huelle, gleiches 4:3, gleiche Spaltenbreite wie die uebrigen,
+       damit sie beim Weiterschieben nicht aus der Reihe faellt. Nur der
+       Grund ist heller und flaechig, das unterscheidet sie auf einen Blick
+       von den acht Beispielen. */
+    .branchen-karte.weitere {
+      display: grid; align-content: center; gap: .55rem;
+      /* Prozent, NICHT cqw. Container-Einheiten loesen sich am naechsten
+         UEBERGEORDNETEN Container auf, nie am Element selbst — die Karte ist
+         zwar Container fuer ihre Kinder (das Schild rechnet richtig), fuer
+         ihr eigenes Polster faellt cqw aber auf die Fensterbreite zurueck:
+         gemessen 89,6 px statt der gedachten 27. Auf der kleinsten Karte
+         blieben dem Text so 13 px Hoehe. Prozent rechnet gegen die Breite
+         des Rasterfelds, und das ist genau die Kartenbreite. */
+      padding: 7%;
+      background: linear-gradient(158deg, #eeecfa 0%, var(--flaeche) 52%, #ffffff 100%);
+      border-color: var(--rand-linie);
+    }
+    .weitere-titel {
+      margin: 0; line-height: 1.12; letter-spacing: -0.02em;
+      font-size: clamp(1rem, 6.4cqw, 1.55rem); font-weight: 600; color: var(--tinte);
+    }
+    .weitere-text {
+      margin: 0; line-height: 1.5; max-width: 26ch;
+      font-size: clamp(.7rem, 3.5cqw, .92rem); color: var(--tinte-weich);
+    }
+
     /* Unter der Galerie kosteten die Pfeile eine eigene Zeile, und im
        Hochformat schob das sie unter die Sichtkante — man musste zum
        Weiterblaettern erst scrollen. Seitlich ueber den Karten brauchen sie
