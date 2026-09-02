@@ -139,7 +139,16 @@
           <p class="plan-text">Er hält viel aus. Für eine Seite, auf der sehr viel los ist.</p>
           <div class="plan-zahl"><span data-monat="CHF 199" data-jahr="CHF 166">CHF 199</span><small>pro Monat</small></div>
           <p class="plan-takt" data-takt-text>monatlich kündbar</p>
-          <a class="knopf knopf-linie" href="dashboard.html?kaufen=scale">Scale anfragen</a>
+          <!-- Scale wird ANGEFRAGT, nicht gekauft. Der Knopf hiess schon
+               immer "anfragen", fuehrte aber direkt an die Stripe-Kasse — wer
+               ihn drueckte, zahlte CHF 199, ohne dass je jemand mit ihm
+               gesprochen haette. Ziel ist jetzt der Agent weiter unten: Er
+               kennt den Fall, fragt nach Groesse und Bedarf und nimmt Name und
+               E-Mail auf.
+               Der Kaufweg selbst bleibt im Server bestehen (stripe.js kennt
+               scale weiterhin) — damit nach dem Gespraech ein Link auf
+               dashboard.html?kaufen=scale genuegt, statt von Hand abzurechnen. -->
+          <a class="knopf knopf-linie" href="#testen">Scale anfragen</a>
           <p class="plan-titel">Alles aus Grow, dazu</p>
           <ul>
             <li><span class="hak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>25’000 Antworten pro Monat</li>

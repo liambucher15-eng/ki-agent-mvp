@@ -181,8 +181,10 @@
         ziel: "dashboard.html?kaufen=start", knopf: "Start wählen" },
       { id: "grow",  name: "Grow",  grenze: 12000, monat: "CHF 79",  jahr: "CHF 66",
         ziel: "dashboard.html?kaufen=grow", knopf: "Grow wählen" },
+      // Scale hat als einziger Plan kein Kassenziel: Er wird angefragt.
+      // Begruendung steht bei der Karte in preis.html.
       { id: "scale", name: "Scale", grenze: 25000, monat: "CHF 199", jahr: "CHF 166",
-        ziel: "dashboard.html?kaufen=scale", knopf: "Scale anfragen" }
+        ziel: "#testen", knopf: "Scale anfragen" }
     ];
 
     // Schweizer Schreibweise mit hohem Apostroph, wie ueberall sonst auf der
@@ -310,9 +312,14 @@
       // Den Abrechnungstakt mitgeben, sonst laege der Preis in der Tafel
       // neben dem, was an der Kasse steht. Free geht nicht an die Kasse und
       // braucht ihn nicht.
+      // Der Takt gehoert NUR an ein Kassenziel. Die Pruefung haengt jetzt am
+      // Ziel selbst, nicht an der Plan-Kennung: Sonst haette Scale nach dem
+      // Wechsel auf die Anfrage "#testen&takt=jahr" bekommen — einen Anker, den
+      // es nicht gibt.
+      const zurKasse = plan.ziel.indexOf("kaufen=") !== -1;
       ergebnisKnopf.setAttribute(
         "href",
-        plan.ziel + (takt === "jahr" && plan.id !== "free" ? "&takt=jahr" : "")
+        plan.ziel + (zurKasse && takt === "jahr" ? "&takt=jahr" : "")
       );
       ergebnisKnopf.setAttribute("aria-label", plan.knopf + ", " + plan[takt] + " pro Monat");
     }
