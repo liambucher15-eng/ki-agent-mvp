@@ -281,7 +281,8 @@
         // Ehrlich bleiben: Ueber 25'000 reicht kein Plan mehr, und so
         // etwas verkauft man nicht per Schieberegler.
         ergebnisGrund.textContent =
-          "Über " + zahl(PLAENE[PLAENE.length - 1].grenze) + " Antworten im Monat. Scale ist der grösste Plan — für mehr sprechen wir persönlich.";
+          "Über " + zahl(PLAENE[PLAENE.length - 1].grenze) + " Antworten im Monat. Scale ist der grösste Plan von der Stange. " +
+          "Für mehr gibt es keinen Listenpreis — frag den Agenten weiter unten, er nimmt deine Anfrage auf.";
       } else if (freeWuerdeReichen) {
         // Ehrlich benennen, statt Free zu verschweigen ODER es zu empfehlen.
         ergebnisGrund.textContent =
@@ -292,6 +293,17 @@
         ergebnisGrund.textContent =
           plan.name + " deckt " + zahl(plan.grenze) + " Antworten im Monat. " +
           kleiner.name + " deckt " + zahl(kleiner.grenze) + " — das wäre zu knapp.";
+      }
+
+      if (drueber) {
+        // Kein Plan deckt das ab — dann fuehrt der Knopf zur Anfrage statt an
+        // die Kasse. Ziel ist der Agent auf derselben Seite: Er kennt den Fall
+        // (data/aurachat.json), fragt nach Groesse und Branche und nimmt Name
+        // und E-Mail auf. Deshalb braucht es kein Formular und keine Adresse.
+        ergebnisKnopf.textContent = "Anfrage stellen";
+        ergebnisKnopf.setAttribute("href", "#testen");
+        ergebnisKnopf.setAttribute("aria-label", "Anfrage beim Agenten stellen");
+        return;
       }
 
       ergebnisKnopf.textContent = plan.knopf;
