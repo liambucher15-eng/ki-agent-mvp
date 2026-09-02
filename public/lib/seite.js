@@ -183,8 +183,8 @@
         ziel: "dashboard.html?kaufen=grow", knopf: "Grow wählen" },
       // Scale hat als einziger Plan kein Kassenziel: Er wird angefragt.
       // Begruendung steht bei der Karte in preis.html.
-      { id: "scale", name: "Scale", grenze: 25000, monat: "CHF 199", jahr: "CHF 166",
-        ziel: "#testen", knopf: "Scale anfragen" }
+      { id: "scale", name: "Scale", grenze: 25000, monat: "ab CHF 199", jahr: "ab CHF 166",
+        ziel: "#testen", knopf: "Anfrage stellen" }
     ];
 
     // Schweizer Schreibweise mit hohem Apostroph, wie ueberall sonst auf der
