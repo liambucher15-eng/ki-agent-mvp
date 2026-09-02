@@ -181,7 +181,7 @@
         ziel: "dashboard.html?kaufen=start", knopf: "Start wählen" },
       { id: "grow",  name: "Grow",  grenze: 12000, monat: "CHF 79",  jahr: "CHF 66",
         ziel: "dashboard.html?kaufen=grow", knopf: "Grow wählen" },
-      { id: "scale", name: "Scale", grenze: 50000, monat: "CHF 199", jahr: "CHF 166",
+      { id: "scale", name: "Scale", grenze: 25000, monat: "CHF 199", jahr: "CHF 166",
         ziel: "dashboard.html?kaufen=scale", knopf: "Scale anfragen" }
     ];
 
@@ -278,7 +278,7 @@
       ergebnisPreis.textContent = plan[takt];
 
       if (drueber) {
-        // Ehrlich bleiben: Ueber 50'000 reicht kein Plan mehr, und so
+        // Ehrlich bleiben: Ueber 25'000 reicht kein Plan mehr, und so
         // etwas verkauft man nicht per Schieberegler.
         ergebnisGrund.textContent =
           "Über " + zahl(PLAENE[PLAENE.length - 1].grenze) + " Antworten im Monat. Scale ist der grösste Plan — für mehr sprechen wir persönlich.";

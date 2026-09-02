@@ -30,18 +30,26 @@
 //   free      150 -> rund CHF 0.54 bei CHF 0    (Akquisekosten, bewusst)
 //   start   3.000 -> rund CHF 11   bei CHF 29
 //   grow   12.000 -> rund CHF 43   bei CHF 79
-//   scale  50.000 -> rund CHF 180  bei CHF 199  (knapp, aber positiv —
-//                                                 der Preis wurde von 149 auf
-//                                                 199 gehoben, weil 50.000
-//                                                 Antworten rechnerisch schon
-//                                                 rund CHF 180 kosten)
+//   scale  25.000 -> rund CHF 90   bei CHF 199
+//
+// Scale stand bis dahin auf 50.000 und war damit die einzige Stufe, die
+// kippen konnte. Nachgerechnet mit den heutigen Haiku-4.5-Preisen ($1 je
+// Million Eingabe-, $5 je Million Ausgabe-Token): Eine EINFACHE Antwort
+// kostet CHF 0,0036 — aber chat.js laeuft bei Werkzeugnutzung bis zu drei
+// Runden, eine Antwort mit Werkzeug also das Zwei- bis Dreifache. Bei
+// 50.000 Antworten und nur 30 % Werkzeuganteil lag Scale bereits bei
+// CHF 234 Kosten gegen CHF 199 Einnahmen. Mit 25.000 bleibt die Stufe auch
+// im Hoechstfall (jede Antwort drei Runden) knapp positiv.
+//
+// Wer mehr als 25.000 Antworten braucht, fragt an — dafuer gibt es keinen
+// Knopf, weil es keinen Preis von der Stange gibt.
 const GRENZEN = {
   // Die vier Plaene der Preisseite. Die Zahlen stehen dort woertlich in der
   // Vergleichstabelle ("Antworten pro Monat") — beim Aendern BEIDE Stellen.
   free: 150,
   start: 3000,
   grow: 12000,
-  scale: 50000,
+  scale: 25000,
 
   // Alte Schluessel aus der Zeit vor Free/Start/Grow/Scale. Sie stehen noch in
   // der Datenbank (schema.sql: check (plan in ('basis','plus','enterprise')))
@@ -51,7 +59,7 @@ const GRENZEN = {
   // Datenbank umgestellt ist.
   basis: 3000,        // = start
   plus: 12000,        // = grow
-  enterprise: 50000,  // = scale
+  enterprise: 25000,  // = scale
 };
 
 // Ab wann gewarnt wird, und ab wann der Agent sich einschraenkt.
