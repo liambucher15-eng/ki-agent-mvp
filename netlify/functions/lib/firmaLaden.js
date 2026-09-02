@@ -23,7 +23,10 @@ async function ladeFirmaServer(id) {
   if (!URL_BASIS || !KEY) return null;
   try {
     const res = await fetch(
-      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(id) + "&select=daten,plan",
+      // erstellt kommt mit, weil daraus das Ende des Testzeitraums gerechnet
+      // wird (lib/testzeit.js). Ein eigenes Ablauf-Feld waere eine zweite
+      // Wahrheit, die mit dieser auseinanderlaufen kann.
+      URL_BASIS + "/rest/v1/firmen?id=eq." + encodeURIComponent(id) + "&select=daten,plan,erstellt",
       { headers: { apikey: KEY, authorization: "Bearer " + KEY } }
     );
     if (!res.ok) return null;
@@ -31,8 +34,8 @@ async function ladeFirmaServer(id) {
     if (!Array.isArray(zeilen) || !zeilen.length) return null;
     // plan kommt aus der EIGENEN Spalte (Server-Wahrheit, künftig Stripe) und
     // überschreibt einen evtl. noch im JSONB liegenden Wert.
-    const { daten, plan } = zeilen[0];
-    return { ...daten, plan: plan || daten.plan || "basis" };
+    const { daten, plan, erstellt } = zeilen[0];
+    return { ...daten, plan: plan || daten.plan || "basis", erstellt: erstellt || null };
   } catch {
     return null;
   }

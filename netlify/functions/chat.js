@@ -18,6 +18,7 @@ const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { leseJob, zaehleProbeFrage } = require("./lib/jobSpeicher");
 const { zaehleAntwort } = require("./lib/firmaLaden");
 const { stufeFuer, kuerzeVerlauf, promptZusatz, SPAR_MAX_TOKENS } = require("./lib/verbrauch");
+const { testLage, promptZusatzTest } = require("./lib/testzeit");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
   beurteile: beurteileVerhalten,
@@ -245,6 +246,15 @@ exports.handler = async (event) => {
     lage = stufeFuer(stand, firma.plan || "basis");
   }
 
+  // Testzeitraum. Steht NACH der Verbrauchsstufe, weil er sie ueberstimmt:
+  // Ein abgelaufener Test schaltet in den Nachrichtendienst, egal wie viel
+  // Kontingent noch offen ist. Die Probefahrt (probeId) gehoert keiner Firma
+  // und hat ihren eigenen Deckel — sie kennt keinen Testzeitraum.
+  const test = probeId ? { testet: false, abgelaufen: false } : testLage(firma);
+  if (test.abgelaufen) {
+    lage = { ...lage, nurNachricht: true, sparmodus: false, testAbgelaufen: true };
+  }
+
   const tools = baueTools(firma);
   // Bei Fähigkeiten mehr Ausgabe-Budget: Tool-Aufruf + finale Antwort in einem Turn.
   // Im Sparmodus deutlich kuerzere Antworten. Das ist der groesste einzelne
@@ -256,10 +266,10 @@ exports.handler = async (event) => {
   // Im Nachrichtendienst und im Sparmodus bekommt der Agent eine zusaetzliche
   // Lage-Anweisung. Sie steht GANZ am Ende des Prompts, damit sie die
   // uebrigen Regeln ueberstimmt.
-  SYSTEM_PROMPT += promptZusatz(
-    lage,
-    Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt")
-  );
+  const kannKontakt = Array.isArray(firma.faehigkeiten) && firma.faehigkeiten.includes("kontakt");
+  // Eigener Text beim abgelaufenen Test: "gerade ist viel los" waere gelogen,
+  // es ist nichts los. Begruendung in lib/testzeit.js.
+  SYSTEM_PROMPT += lage.testAbgelaufen ? promptZusatzTest(kannKontakt) : promptZusatz(lage, kannKontakt);
 
   const verlauf = kuerzeVerlauf(messages.slice(), lage.sparmodus);
   const letzteFrage = [...messages].reverse().find((m) => m && m.role === "user");

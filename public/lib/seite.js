@@ -159,28 +159,23 @@
 
     const ANTWORTEN_JE_GESPRAECH = 4;
 
-    // Free wird NIE empfohlen, auch wenn das Kontingent rechnerisch reicht.
-    //
-    // Free ist zum Ausprobieren da, nicht zum Betreiben. Bei 2,5 % Schreibenden
-    // deckt es Seiten bis rund 1'500 Besucher im Monat — das ist fuer viele
-    // Kleinbetriebe die Dauerloesung, und dann zahlt niemand je etwas. Jede
-    // Free-Antwort kostet ausserdem echtes Geld (Haiku 4.5, rund CHF 0,004 je
-    // Antwort), das Kontingent von 150 also bis zu CHF 0.54 im Monat.
-    //
-    // Der Rechner verschweigt Free trotzdem nicht — es steht als Karte oben auf
-    // derselben Seite, und es wegzulassen waere unehrlich. Stattdessen wird es
-    // benannt und eingeordnet: reicht rechnerisch, ist aber der Probelauf.
-    const KLEINSTER_BEZAHLTER = 1;   // Platz von "Start" in PLAENE
+    // Den Gratisplan gibt es nicht mehr, er ist einem Testzeitraum gewichen:
+    // vierzehn Tage, ohne Zahlungsmittel (netlify/functions/lib/testzeit.js).
+    // Deshalb kennt der Rechner nur noch bezahlte Plaene — es gibt keinen
+    // Dauerzustand mehr, in dem jemand nichts zahlt.
+    const TESTTAGE = 14;
 
     // Reihenfolge ist Teil der Logik: gesucht wird der ERSTE Plan, der
     // reicht. Darum aufsteigend.
     const PLAENE = [
-      { id: "free",  name: "Free",  grenze: 150,   monat: "CHF 0",   jahr: "CHF 0",
-        ziel: "onboarding-aura.html?plan=free", knopf: "Gratis anfangen" },
+      // Die Ziele fuehren ins Onboarding, NICHT an die Kasse: Bezahlt wird
+      // erst nach den vierzehn Tagen, aus dem Dashboard heraus. Ein Knopf, der
+      // "gratis testen" verspricht und an die Kasse fuehrt, waere derselbe
+      // Fehler wie vorher bei Scale.
       { id: "start", name: "Start", grenze: 3000,  monat: "CHF 29",  jahr: "CHF 24",
-        ziel: "dashboard.html?kaufen=start", knopf: "Start wählen" },
+        ziel: "onboarding-aura.html?plan=start", knopf: TESTTAGE + " Tage gratis testen" },
       { id: "grow",  name: "Grow",  grenze: 12000, monat: "CHF 79",  jahr: "CHF 66",
-        ziel: "dashboard.html?kaufen=grow", knopf: "Grow wählen" },
+        ziel: "onboarding-aura.html?plan=grow", knopf: TESTTAGE + " Tage gratis testen" },
       // Scale hat als einziger Plan kein Kassenziel: Er wird angefragt.
       // Begruendung steht bei der Karte in preis.html.
       { id: "scale", name: "Scale", grenze: 25000, monat: "ab CHF 199", jahr: "ab CHF 166",
@@ -268,10 +263,8 @@
 
       const passt = PLAENE.findIndex((p) => antworten <= p.grenze);
       const drueber = passt === -1;              // mehr als der groesste Plan
-      // Unter Start wird nicht empfohlen, siehe Begruendung oben.
-      const nr = drueber ? PLAENE.length - 1 : Math.max(passt, KLEINSTER_BEZAHLTER);
+      const nr = drueber ? PLAENE.length - 1 : passt;
       const plan = PLAENE[nr];
-      const freeWuerdeReichen = passt === 0;
 
       ergebnisPlan.textContent = plan.name;
       ergebnisPreis.dataset.monat = plan.monat;
@@ -285,11 +278,10 @@
         ergebnisGrund.textContent =
           "Über " + zahl(PLAENE[PLAENE.length - 1].grenze) + " Antworten im Monat. Scale ist der grösste Plan von der Stange. " +
           "Für mehr gibt es keinen Listenpreis — frag den Agenten weiter unten, er nimmt deine Anfrage auf.";
-      } else if (freeWuerdeReichen) {
-        // Ehrlich benennen, statt Free zu verschweigen ODER es zu empfehlen.
+      } else if (nr === 0) {
         ergebnisGrund.textContent =
-          "Free deckt " + zahl(PLAENE[0].grenze) + " Antworten und würde rechnerisch reichen — zum Ausprobieren. " +
-          "Für den Dauerbetrieb ist Start der kleinste Plan.";
+          "Start deckt " + zahl(plan.grenze) + " Antworten im Monat. Das reicht bei dieser Zahl mit Abstand — " +
+          "und die ersten vierzehn Tage kosten nichts.";
       } else {
         const kleiner = PLAENE[nr - 1];
         ergebnisGrund.textContent =
