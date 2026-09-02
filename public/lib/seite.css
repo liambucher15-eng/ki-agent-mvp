@@ -1173,14 +1173,26 @@
        Ohne das war sie auf dem Tablet gemessen 676 px breit; eine Preiskarte
        mit sechs Zeilen wirkt auf dieser Breite leer. */
     .plan-raster > .plan { max-width: 30rem; width: 100%; margin-inline: auto; }
-    /* Zwei nebeneinander ab Tablet: Vier Karten in einer Reihe waeren dort
-       je rund 170 px breit — unlesbar. Erst ab 1100 px alle vier. */
+    /* Zwei nebeneinander ab Tablet: Drei Karten in einer Reihe waeren dort
+       je rund 175 px breit — unlesbar. Erst ab 1100 px alle drei.
+
+       Es sind DREI Karten, seit der Gratisplan einem Testzeitraum gewichen
+       ist. Die Regel stand danach noch auf vier Spalten: Die vierte blieb
+       leer, und die Reihe klebte sichtbar am linken Rand statt mittig zu
+       stehen. */
     @media (min-width: 640px) and (max-width: 1099px) {
       .plan-raster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .plan-raster > .plan { max-width: none; margin-inline: 0; }
+      /* Bei ungerader Zahl bleibt unten eine Karte allein. Sie soll nicht
+         halblinks haengen, sondern ueber beide Spalten mittig stehen — mit
+         derselben Deckelung wie im gestapelten Fall, sonst wird sie doppelt
+         so breit wie die beiden darueber. */
+      .plan-raster > .plan:last-child:nth-child(odd) {
+        grid-column: 1 / -1; max-width: 30rem; margin-inline: auto;
+      }
     }
     @media (min-width: 1100px) {
-      .plan-raster { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .plan-raster { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .plan-raster > .plan { max-width: none; margin-inline: 0; }
     }
     .plan {
