@@ -159,6 +159,19 @@
 
     const ANTWORTEN_JE_GESPRAECH = 4;
 
+    // Free wird NIE empfohlen, auch wenn das Kontingent rechnerisch reicht.
+    //
+    // Free ist zum Ausprobieren da, nicht zum Betreiben. Bei 2,5 % Schreibenden
+    // deckt es Seiten bis rund 1'500 Besucher im Monat — das ist fuer viele
+    // Kleinbetriebe die Dauerloesung, und dann zahlt niemand je etwas. Jede
+    // Free-Antwort kostet ausserdem echtes Geld (Haiku 4.5, rund CHF 0,004 je
+    // Antwort), das Kontingent von 150 also bis zu CHF 0.54 im Monat.
+    //
+    // Der Rechner verschweigt Free trotzdem nicht — es steht als Karte oben auf
+    // derselben Seite, und es wegzulassen waere unehrlich. Stattdessen wird es
+    // benannt und eingeordnet: reicht rechnerisch, ist aber der Probelauf.
+    const KLEINSTER_BEZAHLTER = 1;   // Platz von "Start" in PLAENE
+
     // Reihenfolge ist Teil der Logik: gesucht wird der ERSTE Plan, der
     // reicht. Darum aufsteigend.
     const PLAENE = [
@@ -251,9 +264,12 @@
       zeileGespraeche.textContent = zahl(gespraeche) + (gespraeche === 1 ? " Gespräch" : " Gespräche");
       zeileAntworten.textContent = zahl(antworten) + " Antworten";
 
-      const nr = PLAENE.findIndex((p) => antworten <= p.grenze);
-      const drueber = nr === -1;                 // mehr als der groesste Plan
-      const plan = drueber ? PLAENE[PLAENE.length - 1] : PLAENE[nr];
+      const passt = PLAENE.findIndex((p) => antworten <= p.grenze);
+      const drueber = passt === -1;              // mehr als der groesste Plan
+      // Unter Start wird nicht empfohlen, siehe Begruendung oben.
+      const nr = drueber ? PLAENE.length - 1 : Math.max(passt, KLEINSTER_BEZAHLTER);
+      const plan = PLAENE[nr];
+      const freeWuerdeReichen = passt === 0;
 
       ergebnisPlan.textContent = plan.name;
       ergebnisPreis.dataset.monat = plan.monat;
@@ -266,9 +282,11 @@
         // etwas verkauft man nicht per Schieberegler.
         ergebnisGrund.textContent =
           "Über " + zahl(PLAENE[PLAENE.length - 1].grenze) + " Antworten im Monat. Scale ist der grösste Plan — für mehr sprechen wir persönlich.";
-      } else if (nr === 0) {
+      } else if (freeWuerdeReichen) {
+        // Ehrlich benennen, statt Free zu verschweigen ODER es zu empfehlen.
         ergebnisGrund.textContent =
-          "Free deckt " + zahl(plan.grenze) + " Antworten im Monat. Bei dieser Zahl reicht das.";
+          "Free deckt " + zahl(PLAENE[0].grenze) + " Antworten und würde rechnerisch reichen — zum Ausprobieren. " +
+          "Für den Dauerbetrieb ist Start der kleinste Plan.";
       } else {
         const kleiner = PLAENE[nr - 1];
         ergebnisGrund.textContent =
