@@ -1245,6 +1245,155 @@
     .plan li[data-aus="ja"] { color: var(--tinte-hell); }
     .plan li[data-aus="ja"] .hak { background: var(--rand-linie); color: var(--tinte-hell); }
 
+
+    /* ── Welcher Plan: Regler-Rechner ───────────────────────────────────
+       Zwei Spalten: links die Eingaben in weissen Karten wie .plan, rechts
+       die Rechnung auf --flaeche. Dieselbe Aufteilung wie bei den grossen
+       Anbietern, aber mit den Farben dieses Systems: kein zweites Violett,
+       kein Rot, nur Rand, Flaeche und der bestehende Markenton. */
+    .rechner {
+      display: grid; gap: clamp(1rem, 2.2vw, 1.6rem);
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+    /* Erst ab 900 px nebeneinander, gleiche Schwelle wie beim Plan-Raster.
+       Darunter stehen Eingaben und Rechnung untereinander — auf dem Handy
+       zieht man den Regler und scrollt zum Ergebnis, was in Ordnung ist,
+       solange die Tafel direkt darunter beginnt. */
+    @media (min-width: 900px) {
+      .rechner { grid-template-columns: 1.05fr .95fr; gap: clamp(1.4rem, 3vw, 2.4rem); }
+    }
+    .rechner-eingaben { display: grid; gap: clamp(.9rem, 1.8vw, 1.2rem); }
+
+    .regelfeld {
+      background: var(--grund); border: 1px solid var(--rand-fein); border-radius: 18px;
+      padding: clamp(1.1rem, 2.2vw, 1.5rem);
+    }
+    .regelfeld-kopf {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: .8rem; margin-bottom: 1.1rem;
+    }
+    .regelfeld-kopf label { font-size: .96rem; font-weight: 500; color: var(--tinte); }
+    /* Der Wert steht in einem Kaestchen statt frei daneben: So springt er
+       beim Ziehen nicht in der Breite und schiebt die Beschriftung nicht hin
+       und her. Tabellenziffern halten die Breite zusaetzlich ruhig. */
+    .regelfeld-wert {
+      flex: none; min-width: 5.2rem; text-align: center;
+      padding: .3rem .6rem; border: 1px solid var(--rand-fein); border-radius: 9px;
+      background: var(--flaeche); color: var(--violett-text);
+      font-size: .92rem; font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    .regelfeld-fuss {
+      display: flex; align-items: baseline; justify-content: space-between; gap: .7rem;
+      margin-top: .6rem; font-size: .76rem; color: var(--tinte-hell);
+    }
+    /* Der mittlere Hinweis darf nicht mit den Endwerten kollidieren; er
+       nimmt den Rest und bleibt mittig. */
+    .regelfeld-fuss > span:nth-child(2) { flex: 1; text-align: center; color: var(--tinte-weich); }
+
+    /* Regler. appearance: none entfernt die Systemoptik komplett, danach
+       muss ALLES selbst gezeichnet werden — Bahn und Griff getrennt je
+       Maschine, es gibt bis heute keine gemeinsame Schreibweise dafuer.
+       Der gefuellte Teil steckt in --fuell (Prozent), gesetzt vom Skript:
+       Ein Verlauf mit hartem Farbsprung an dieser Stelle ist der einzige
+       Weg, der in beiden Maschinen gleich aussieht. */
+    .rechner input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 22px; margin: 0; padding: 0;
+      background: transparent; cursor: pointer; display: block;
+      --fuell: 50%;
+    }
+    .rechner input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px; border-radius: 999px;
+      background:
+        linear-gradient(90deg, #a9a9f2 0%, var(--violett) 100%) 0 / var(--fuell) 100% no-repeat,
+        var(--rand-fein);
+    }
+    .rechner input[type="range"]::-moz-range-track {
+      height: 8px; border-radius: 999px;
+      background:
+        linear-gradient(90deg, #a9a9f2 0%, var(--violett) 100%) 0 / var(--fuell) 100% no-repeat,
+        var(--rand-fein);
+    }
+    .rechner input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--violett); border: 3px solid #fff;
+      box-shadow: 0 2px 8px -2px rgba(20, 20, 40, .5);
+      /* Der Griff sitzt in Webkit auf der Oberkante der Bahn und muss von
+         Hand zentriert werden: (Bahnhoehe 8 − Griffhoehe 20) / 2 = −6. */
+      margin-top: -6px;
+    }
+    .rechner input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--violett); border: 3px solid #fff;
+      box-shadow: 0 2px 8px -2px rgba(20, 20, 40, .5);
+    }
+    .rechner input[type="range"]:focus-visible { outline: none; }
+    .rechner input[type="range"]:focus-visible::-webkit-slider-thumb {
+      outline: 2px solid var(--violett-text); outline-offset: 2px;
+    }
+    .rechner input[type="range"]:focus-visible::-moz-range-thumb {
+      outline: 2px solid var(--violett-text); outline-offset: 2px;
+    }
+
+    .rechner-annahme {
+      margin: 0; padding: .1rem .2rem;
+      font-size: .85rem; line-height: 1.55; color: var(--tinte-weich);
+    }
+    .rechner-annahme strong { color: var(--tinte); font-weight: 600; }
+
+    .rechner-tafel {
+      background: var(--flaeche); border: 1px solid var(--rand-fein); border-radius: 18px;
+      padding: clamp(1.3rem, 2.6vw, 1.9rem);
+      display: grid; gap: 0;
+      /* Klebt auf breiten Schirmen mit, damit das Ergebnis beim Ziehen im
+         Blick bleibt. Der Abstand entspricht der Kopfzeilenhoehe. */
+      position: sticky; top: 5.5rem;
+    }
+    @media (max-width: 899px) { .rechner-tafel { position: static; } }
+
+    .tafel-titel {
+      margin: 0 0 1rem; font-size: .78rem; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--tinte-hell);
+    }
+    .tafel-liste { margin: 0; display: grid; gap: 0; }
+    .tafel-zeile {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+      padding: .62rem 0; border-bottom: 1px solid var(--rand-fein);
+    }
+    .tafel-zeile dt { font-size: .89rem; color: var(--tinte-weich); }
+    /* Der veraenderliche Teil der Beschriftung hebt sich ab: So sieht man
+       beim Ziehen, welcher Wert gerade eingeflossen ist. */
+    .tafel-zeile dt span { color: var(--violett-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .tafel-zeile dd {
+      margin: 0; font-size: .89rem; font-weight: 600; color: var(--tinte);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+
+    .tafel-ergebnis { padding-top: 1.1rem; }
+    .tafel-marke {
+      margin: 0 0 .2rem; font-size: .78rem; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase; color: var(--tinte-hell);
+    }
+    .tafel-plan {
+      margin: 0; font-size: clamp(1.6rem, 3.4vw, 2.05rem); font-weight: 600;
+      letter-spacing: -.03em; line-height: 1.1; color: var(--tinte);
+    }
+    .tafel-preis {
+      display: flex; align-items: baseline; gap: .45rem; margin: .35rem 0 .55rem;
+      font-size: clamp(1.5rem, 3vw, 1.9rem); font-weight: 600; letter-spacing: -.03em;
+      font-variant-numeric: tabular-nums;
+    }
+    .tafel-preis small { font-size: .9rem; font-weight: 500; color: var(--tinte-weich); letter-spacing: 0; }
+    .tafel-grund {
+      margin: 0; font-size: .88rem; line-height: 1.55; color: var(--tinte-weich);
+      min-height: 2.7em;
+    }
+    .rechner-tafel .knopf { width: 100%; margin: 1.2rem 0 0; }
+    .tafel-fuss {
+      margin: .95rem 0 0; font-size: .79rem; line-height: 1.5; color: var(--tinte-hell);
+    }
     /* Vergleichstabelle. Erste Spalte bleibt beim seitlichen Rollen stehen,
        sonst weiss man auf dem Handy nicht mehr, welche Zeile man liest. */
     .vergleich th, .vergleich td { text-align: center; }

@@ -156,6 +156,126 @@
     </div>
   </section>
 
+
+  <!-- ══ WELCHER PLAN ═══════════════════════════════════════════════════
+       Die Karten oben beantworten „was kostet welcher Plan". Sie können
+       eine Frage NICHT beantworten: „welcher ist meiner?" Denn „150 gegen
+       3'000 Antworten pro Monat" sagt einem Bäcker nichts — er kennt seine
+       Besucherzahl, nicht seinen Antwortverbrauch.
+
+       Der Rechner übersetzt genau diese eine Strecke, und zwar offen: Jeder
+       Zwischenschritt steht als eigene Zeile in der Tafel. Wer das Ergebnis
+       nicht glaubt, kann es nachrechnen — dieselbe Regel wie überall sonst
+       auf der Seite.
+
+       Die Voreinstellungen sind NICHT geraten. In
+       netlify/functions/lib/verbrauch.js steht die Ableitung der Grenzen:
+       „Ein normaler Kleinbetrieb mit 5.000 Besuchern im Monat landet bei
+       etwa 250 bis 750 Antworten." 5'000 × 2,5 % × 4 = 500 — die Mitte
+       dieser Spanne. Beim Ändern der Voreinstellungen dort nachsehen.
+
+       Bewusst KEIN Preisrechner wie bei den grossen Anbietern. Deren Preis
+       hat zwei Achsen (Nutzer mal Verbrauch) und lässt sich ohne Rechner
+       nicht darstellen. Hier gibt es vier feste Preise; ein Preisrechner
+       würde eine Kompliziertheit behaupten, die es nicht gibt, und damit
+       genau das Versprechen dieser Seite untergraben. -->
+  <section id="welcher-plan">
+    <div class="bahn">
+      <div class="kopfblock auftritt">
+        <span class="augen">Welcher Plan</span>
+        <h2>Sag, wie viel los ist.<br>Wir sagen, was reicht.</h2>
+        <p class="lead">Antworten pro Monat sind schwer zu schätzen, Besucher nicht. Schieb deine Zahl hin — die Rechnung steht daneben, Schritt für Schritt.</p>
+      </div>
+
+      <div class="rechner auftritt" style="--verzug: 120ms">
+
+        <!-- Linke Spalte: die Eingaben. Zwei Regler, nicht mehr. Jeder
+             fragt etwas, das ein Betrieb über sich weiss. -->
+        <div class="rechner-eingaben">
+
+          <div class="regelfeld">
+            <div class="regelfeld-kopf">
+              <label for="reglerBesucher">Besucher auf deiner Webseite</label>
+              <output class="regelfeld-wert" id="wertBesucher" for="reglerBesucher">5’000</output>
+            </div>
+            <!-- Der Regler zählt NICHT Besucher, sondern Schritte (0–240).
+                 Umgerechnet wird im Skript über eine Kurve. Linear wäre der
+                 Bereich unbrauchbar: Die meisten Betriebe liegen zwischen
+                 500 und 10'000, das wären auf einer Skala bis 200'000 die
+                 ersten fünf Prozent des Wegs. -->
+            <input type="range" id="reglerBesucher" min="0" max="240" step="1" value="112"
+                   aria-describedby="hinweisBesucher" />
+            <div class="regelfeld-fuss">
+              <span>200</span>
+              <span id="hinweisBesucher">im Monat</span>
+              <span>200’000</span>
+            </div>
+          </div>
+
+          <div class="regelfeld">
+            <div class="regelfeld-kopf">
+              <label for="reglerAnteil">Davon schreiben ihm an</label>
+              <output class="regelfeld-wert" id="wertAnteil" for="reglerAnteil">2,5 %</output>
+            </div>
+            <input type="range" id="reglerAnteil" min="5" max="150" step="1" value="25"
+                   aria-describedby="hinweisAnteil" />
+            <div class="regelfeld-fuss">
+              <span>0,5 %</span>
+              <span id="hinweisAnteil">je nach Branche 1 bis 5 %</span>
+              <span>15 %</span>
+            </div>
+          </div>
+
+          <p class="rechner-annahme">
+            Gerechnet wird mit <strong>vier Antworten je Gespräch</strong> — Frage,
+            Antwort, Rückfrage, Antwort. Kurze Gespräche brauchen weniger,
+            Beratung mehr.
+          </p>
+        </div>
+
+        <!-- Rechte Spalte: die Rechnung. aria-live, damit Vorlesewerkzeuge
+             die Änderung mitbekommen; ohne das bewegt sich für sie beim
+             Ziehen nichts. -->
+        <div class="rechner-tafel">
+          <p class="tafel-titel">Deine Rechnung</p>
+
+          <dl class="tafel-liste">
+            <div class="tafel-zeile">
+              <dt>Besucher im Monat</dt>
+              <dd id="zeileBesucher">5’000</dd>
+            </div>
+            <div class="tafel-zeile">
+              <dt>Davon schreiben ihm an <span id="zeileAnteil">2,5 %</span></dt>
+              <dd id="zeileGespraeche">125 Gespräche</dd>
+            </div>
+            <div class="tafel-zeile">
+              <dt>Antworten je Gespräch <span>× 4</span></dt>
+              <dd id="zeileAntworten">500 Antworten</dd>
+            </div>
+          </dl>
+
+          <div class="tafel-ergebnis" aria-live="polite">
+            <p class="tafel-marke">Das reicht</p>
+            <p class="tafel-plan"><span id="ergebnisPlan">Start</span></p>
+            <p class="tafel-preis">
+              <span id="ergebnisPreis" data-monat="CHF 29" data-jahr="CHF 24">CHF 29</span>
+              <small>pro Monat</small>
+            </p>
+            <p class="tafel-grund" id="ergebnisGrund">Start deckt 3’000 Antworten im Monat. Free deckt 150 — das wäre zu knapp.</p>
+          </div>
+
+          <a class="knopf knopf-voll" id="ergebnisKnopf" href="onboarding-aura.html?plan=start">Mit Start anfangen</a>
+
+          <p class="tafel-fuss">
+            Eine Schätzung, keine Zusage. Im Dashboard siehst du später deinen
+            echten Verbrauch — und wechselst mit einem Knopf, wenn er danebenliegt.
+            Von selbst höherstufen tun wir nie.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
   <!-- ══ VERGLEICH ══════════════════════════════════════════════════════ -->
   <section class="hellflaeche" id="vergleich">
     <div class="bahn">
