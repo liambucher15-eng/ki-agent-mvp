@@ -181,6 +181,31 @@
     .pers-chip:hover { border-color: var(--indigo); }
     .pers-chip.aktiv { border-color: var(--indigo); background: rgba(79,70,229,0.08); color: var(--indigo); }
     .pers-hinweis { font-size: 0.83rem; color: var(--grau); margin-top: 0.5rem; min-height: 1.1em; }
+
+    /* Vorschau der Ruhe-Darstellung (Kreis oder Leiste).
+       Bewusst als gezeichnete Andeutung statt als Bild oder echtes Widget:
+       Es geht hier nur um die FORM und ihren Platz auf der Seite. Zwei Woerter
+       ("Kreis", "Leiste") erklaeren das schlechter als eine Skizze, ein echtes
+       Widget waere dafuer viel zu viel Aufwand mitten im Onboarding.
+       Die angedeuteten Textzeilen geben den Massstab — ohne sie sieht man
+       nicht, dass der Kreis klein und die Leiste breit ist. */
+    .wstil-vorschau { position: relative; height: 96px; margin-top: 0.6rem;
+                      border: 1.5px solid var(--border); border-radius: 12px;
+                      background: #fff; overflow: hidden; }
+    .wstil-seite { position: absolute; inset: 12px 12px 46px; display: flex;
+                   flex-direction: column; gap: 6px; }
+    .wstil-seite i { display: block; height: 5px; border-radius: 3px; background: #EEF0F4; }
+    .wstil-seite i:nth-child(1) { width: 55%; }
+    .wstil-seite i:nth-child(2) { width: 85%; }
+    .wstil-seite i:nth-child(3) { width: 70%; }
+    .wstil-figur { position: absolute; background: var(--indigo); transition: all 0.25s ease; }
+    /* Kreis: klein, unten rechts, ausserhalb des Textflusses. */
+    .wstil-vorschau[data-wstil="orb"] .wstil-figur {
+      right: 12px; bottom: 12px; width: 30px; height: 30px; border-radius: 50%; }
+    /* Leiste: breit, unten mittig, wie eine Eingabezeile. */
+    .wstil-vorschau[data-wstil="leiste"] .wstil-figur {
+      left: 14%; right: 14%; bottom: 12px; height: 30px; border-radius: 999px; }
+    @media (prefers-reduced-motion: reduce) { .wstil-figur { transition: none; } }
     /* Stilwahl im Charakter-Schritt. Nutzt bewusst .pers-chip, damit sich die
        Auswahl anfuehlt wie die uebrigen im Onboarding. */
     .stil-wahl { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.2rem 0 0.1rem; }
@@ -705,6 +730,22 @@
                 <button type="button" class="pers-chip aktiv" data-design="auto">Automatisch</button>
                 <button type="button" class="pers-chip" data-design="eigen">Selbst anpassen</button>
               </div>
+
+            <!-- Ruhezustand: was der Besucher sieht, BEVOR er den Chat oeffnet.
+                 Nicht zu verwechseln mit chatLayout (wie der geoeffnete Chat
+                 liegt) — hier geht es allein um die geschlossene Form. Landet
+                 als data-stil in der Einbett-Zeile; das Widget kennt genau
+                 diese zwei Werte (public/widget.js). -->
+            <label class="feld" style="margin-top:1.1rem;">Wie erscheint er auf deiner Seite?</label>
+            <div class="pers" id="stilListe">
+              <button type="button" class="pers-chip aktiv" data-wstil="orb">Kreis in der Ecke</button>
+              <button type="button" class="pers-chip" data-wstil="leiste">Leiste unten</button>
+            </div>
+            <div class="wstil-vorschau" id="stilVorschau" data-wstil="orb" aria-hidden="true">
+              <div class="wstil-seite"><i></i><i></i><i></i></div>
+              <div class="wstil-figur"></div>
+            </div>
+            <p class="pers-hinweis" id="stilHinweis"></p>
             <!-- Farben + Schrift nur sichtbar, wenn "Selbst anpassen" gewählt ist. -->
             <div id="eigenControls" hidden>
               <label class="feld">Farben</label>

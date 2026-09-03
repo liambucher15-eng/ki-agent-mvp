@@ -270,6 +270,25 @@
                  padding: 0.45rem 0.95rem; border-radius: 999px; border: 1.5px solid var(--border);
                  background: #fff; color: var(--text); transition: border-color 0.15s, background 0.15s, color 0.15s; }
     .pers-chip.aktiv { border-color: var(--indigo); background: var(--indigo); color: #fff; }
+
+    /* Skizze des Ruhezustands (Kreis oder Leiste) — dieselbe Darstellung wie im
+       Onboarding, damit der Kunde hier wiedererkennt, was er dort gewaehlt hat.
+       Nur eine Andeutung: Es geht um die FORM und ihren Platz, nicht um Inhalt. */
+    .wstil-vorschau { position: relative; height: 96px; margin-top: 0.5rem;
+                      border: 1px solid var(--border); border-radius: 11px;
+                      background: #fff; overflow: hidden; }
+    .wstil-seite { position: absolute; inset: 12px 12px 46px; display: flex;
+                   flex-direction: column; gap: 6px; }
+    .wstil-seite i { display: block; height: 5px; border-radius: 3px; background: #EEF0F4; }
+    .wstil-seite i:nth-child(1) { width: 55%; }
+    .wstil-seite i:nth-child(2) { width: 85%; }
+    .wstil-seite i:nth-child(3) { width: 70%; }
+    .wstil-figur { position: absolute; background: var(--indigo); transition: all 0.25s ease; }
+    .wstil-vorschau[data-wstil="orb"] .wstil-figur {
+      right: 12px; bottom: 12px; width: 30px; height: 30px; border-radius: 50%; }
+    .wstil-vorschau[data-wstil="leiste"] .wstil-figur {
+      left: 14%; right: 14%; bottom: 12px; height: 30px; border-radius: 999px; }
+    @media (prefers-reduced-motion: reduce) { .wstil-figur { transition: none; } }
     .btn { font: inherit; font-weight: 600; font-size: 0.9rem; border: 0; border-radius: 999px; cursor: pointer;
            padding: 0.6rem 1.2rem; background: var(--indigo); color: #fff;
            box-shadow: 0 10px 20px -10px rgba(79,70,229,0.55); }
@@ -716,6 +735,20 @@
               <button type="button" class="pers-chip" data-layout="sidebar">Seitenleiste</button>
               <button type="button" class="pers-chip" data-layout="fullscreen">Fokusmodus</button>
             </div>
+            <!-- Ruhezustand: die GESCHLOSSENE Form auf der Seite. Nicht zu
+                 verwechseln mit "Layout" darueber, das den GEOEFFNETEN Chat
+                 meint. Aendert sich hier etwas, muss die Einbett-Zeile weiter
+                 unten neu gebaut werden — deshalb ruft die Wahl zeigeEmbed(). -->
+            <label class="feld">Ruhezustand auf der Seite</label>
+            <div class="pers" id="stilListe">
+              <button type="button" class="pers-chip" data-wstil="orb">Kreis in der Ecke</button>
+              <button type="button" class="pers-chip" data-wstil="leiste">Leiste unten</button>
+            </div>
+            <div class="wstil-vorschau" id="stilVorschau" data-wstil="orb" aria-hidden="true">
+              <div class="wstil-seite"><i></i><i></i><i></i></div>
+              <div class="wstil-figur"></div>
+            </div>
+            <p class="sub" id="stilHinweis" style="margin-top:0.45rem;"></p>
           </article>
 
           <article class="karte sp7">
@@ -938,6 +971,21 @@
     const formatChips = chipGruppe("formatListe", "format", (w) => { firma.persona.antwortFormat = w; }, aktualisiereAntwortVorschau);
     const designChips = chipGruppe("designListe", "design", (w) => { firma.charakter.chatDesign = w; });
     const layoutChips = chipGruppe("layoutListe", "layout", (w) => { firma.charakter.chatLayout = w; });
+    // Ruhezustand des Widgets (Kreis oder Leiste). Steckt als data-stil in der
+    // Einbett-Zeile, deshalb wird die hier gleich mit neu gebaut — sonst haette
+    // der Kunde umgestellt und trotzdem die alte Zeile kopiert.
+    const STIL_HINWEIS = {
+      orb: "Ein Kreis mit dem Gesicht deines Agenten, unten rechts. Zurückhaltend — er wartet, bis jemand klickt.",
+      leiste: "Eine Eingabezeile unten mittig, mit dem Gesicht darin. Auffälliger, lädt direkt zum Tippen ein.",
+    };
+    const stilChips = chipGruppe("stilListe", "wstil",
+      (w) => { firma.charakter.widgetStil = w; },
+      (w) => {
+        const stil = w === "leiste" ? "leiste" : "orb";
+        const v = $("stilVorschau"); if (v) v.dataset.wstil = stil;
+        const h = $("stilHinweis"); if (h) h.textContent = STIL_HINWEIS[stil];
+        zeigeEmbed();
+      });
 
     function aktualisiereAntwortVorschau() {
       if (!firma) return;
@@ -1500,7 +1548,7 @@
         ["volume-2", "Ton", tonSchluessel(p.ton), "persona"],
         ["pen-line", "Antwortstil", (p.antwortLaenge || "—") + " · " + (p.emojiStil || "—") + " · " + (p.antwortFormat || "—"), "persona"],
         ["compass", "Bei Nichtwissen", p.fallbackKontakt ? "verweist auf " + String(p.fallbackKontakt).slice(0, 40) : "—", "persona"],
-        ["palette", "Design", (c.chatDesign === "eigen" ? "selbst angepasst" : "automatisch") + " · " + (c.chatLayout === "fullscreen" ? "Fokusmodus" : "Seitenleiste"), "design"],
+        ["palette", "Design", (c.chatDesign === "eigen" ? "selbst angepasst" : "automatisch") + " · " + (c.chatLayout === "fullscreen" ? "Fokusmodus" : "Seitenleiste") + " · " + (c.widgetStil === "leiste" ? "Leiste" : "Kreis"), "design"],
         ["type", "Schrift", c.schrift || "—", "design"],
       ];
       const box = $("einstellungsListe");
@@ -1766,8 +1814,12 @@
     }
 
     function zeigeEmbed() {
+      // data-stil nur bei "leiste": "orb" ist der Standard im Widget, das
+      // Attribut waere dort nur Rauschen in einer Zeile, die der Kunde in
+      // seinen Quelltext kopiert. Gleiche Regel wie im Onboarding.
+      const stilAttr = firma.charakter.widgetStil === "leiste" ? ' data-stil="leiste"' : "";
       $("embedText").textContent = '<script src="' + location.origin + '/widget.js" data-firma="' + firma.id +
-        '" data-farbe="' + firma.charakter.farbe + '" data-farbe2="' + firma.charakter.akzent + '"><\/script>';
+        '" data-farbe="' + firma.charakter.farbe + '" data-farbe2="' + firma.charakter.akzent + '"' + stilAttr + '><\/script>';
       $("e-id").value = firma.id;
     }
     $("embedKopieren").addEventListener("click", (e) => {
@@ -1819,6 +1871,9 @@
       formatChips.waehle(firma.persona.antwortFormat || "absatz");
       designChips.waehle(firma.charakter.chatDesign || "auto");
       layoutChips.waehle(firma.charakter.chatLayout || "sidebar");
+      // Firmen aus der Zeit vor dieser Wahl haben kein widgetStil — "orb" ist
+      // fuer sie richtig, denn genau so lief ihr Widget bisher.
+      stilChips.waehle(firma.charakter.widgetStil || "orb");
       zeigeFarbVorschau(); zeigeSchriftVorschau();
       zeigeFaq(); zeigeQuellen(); zeigeCharGrid(); zeigeEmbed();
       $("rescanUrl").value = firma.webseite || "";

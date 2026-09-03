@@ -398,6 +398,18 @@
     ".hinweis .text { cursor: pointer; }",
     ".hinweis .zu { position: absolute; top: 3px; right: 7px; cursor: pointer; color: #9ca3af; font-size: 0.95rem; line-height: 1; }",
     ".hinweis .zu:hover { color: #6b7280; }",
+    // Antwort-Knoepfe unter dem Satz. Sie sind der eigentliche Zweck der Blase:
+    // Der Besucher muss nicht selbst formulieren, was er fragen will, sondern
+    // waehlt. Untereinander statt nebeneinander — die Blase ist nur 220px breit,
+    // zwei Knoepfe nebeneinander waeren beide zu schmal zum Lesen.
+    ".hinweis .wahl { display: flex; flex-direction: column; gap: 5px; margin-top: 7px; }",
+    ".hinweis .wahl button {",
+    "  font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer;",
+    "  padding: 6px 10px; border-radius: 9px; border: 1px solid " + farbe + "33;",
+    "  background: " + farbe + "14; color: " + farbe + ";",
+    "  transition: background 0.15s ease, border-color 0.15s ease;",
+    "}",
+    ".hinweis .wahl button:hover { background: " + farbe + "26; border-color: " + farbe + "66; }",
 
     // ── Gesprächsleiste (data-stil="leiste") ────────────────────────────────
     // Warum überhaupt eine zweite Form: Die ruhende Pille unten mittig ist die
@@ -525,7 +537,8 @@
       : "",
     "</style>",
     '<div class="panel" id="panel"></div>',
-    '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span></div>',
+    '<div class="hinweis" id="hinweis"><span class="zu" id="hinweisZu">×</span><span class="text" id="hinweisText"></span>' +
+      '<div class="wahl" id="hinweisWahl"></div></div>',
     // Die ganze Pille ist EIN Knopf — nicht Figur, Text und Pfeil einzeln. Wer
     // sie anklickt, meint immer dasselbe, und mit der Tastatur ist es ein Halt
     // statt drei.
@@ -553,6 +566,10 @@
   var hinweis = root.getElementById("hinweis");
   var hinweisTextEl = root.getElementById("hinweisText");
   var hinweisZu = root.getElementById("hinweisZu");
+  var hinweisWahl = root.getElementById("hinweisWahl");
+  // Frame-Bereitschaft und eine ggf. wartende Frage (siehe stelleFrage weiter unten).
+  var frameBereit = false;
+  var offeneFrage = null;
   var leisteTextEl = root.getElementById("leisteTextEl");
   if (leisteTextEl) leisteTextEl.textContent = leisteText;
 
@@ -701,9 +718,16 @@
       f.title = "Chat";
       f.setAttribute("allow", "clipboard-write; microphone");
       f.addEventListener("load", function () {
+        frameBereit = true;
         sendeSeiteAnFrame();
         meldeFensterAnFrame();
         fokussiereFrame();
+        // Hat der Besucher eine Antwortmoeglichkeit angeklickt, bevor der Frame
+        // stand, wird sie jetzt nachgereicht.
+        if (offeneFrage) {
+          var f2 = offeneFrage; offeneFrage = null;
+          stelleFrage(f2);
+        }
       });
       panel.appendChild(f);
       frameEl = f;
@@ -799,7 +823,7 @@
         .then(function (d) {
           if (fertig) return;
           fertig = true; clearTimeout(ab);
-          cb(d && d.ansprechen && d.text ? d.text : null);
+          cb(d && d.ansprechen && d.text ? { text: d.text, knoepfe: Array.isArray(d.knoepfe) ? d.knoepfe : [] } : null);
         })
         .catch(function () { if (!fertig) { fertig = true; clearTimeout(ab); cb(null); } });
     } catch (e) { if (!fertig) { fertig = true; clearTimeout(ab); cb(null); } }
@@ -808,13 +832,37 @@
     clearTimeout(hinweisTimer);
     hinweis.classList.remove("sichtbar");
   }
-  function zeigeSatz(satz) {
+  function zeigeSatz(satz, knoepfe) {
     if (offen || !satz) return;
     hinweisTextEl.textContent = satz;
+
+    // Antwort-Knoepfe. Per DOM gebaut, NIE per innerHTML: Die Beschriftungen
+    // stammen aus einer Modell-Antwort, die ihrerseits Seitentext gelesen hat.
+    // textContent kann nichts ausfuehren, eingeschleustes Markup bliebe Text.
+    hinweisWahl.textContent = "";
+    var liste = Array.isArray(knoepfe) ? knoepfe.slice(0, 2) : [];
+    for (var i = 0; i < liste.length; i++) {
+      (function (frage) {
+        if (typeof frage !== "string" || !frage.trim()) return;
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = frage;
+        b.addEventListener("click", function (e) {
+          e.stopPropagation();   // sonst greift zusaetzlich der Klick auf den Satz
+          versteckeHinweis();
+          oeffne();
+          stelleFrage(frage);
+        });
+        hinweisWahl.appendChild(b);
+      })(liste[i]);
+    }
+
     hinweis.classList.add("sichtbar");
     schonAngesprochen++;
     letzteAnspracheZeit = Date.now();
-    hinweisTimer = setTimeout(versteckeHinweis, 8000); // verschwindet von selbst
+    // Mit Knoepfen laenger stehen lassen: Sie wollen gelesen und abgewogen
+    // werden, dafuer reichen acht Sekunden nicht.
+    hinweisTimer = setTimeout(versteckeHinweis, liste.length ? 14000 : 8000);
   }
 
   // Lokale Vorprüfung. Erst wenn sie durchgeht, wird überhaupt gefragt — sonst
@@ -836,10 +884,34 @@
   function pruefeAnlass() {
     if (!darfUeberhauptFragen()) return;
     anspracheLaeuft = true;
-    frageAnsprache(function (satz) {
+    frageAnsprache(function (ergebnis) {
       anspracheLaeuft = false;
-      zeigeSatz(satz);
+      if (ergebnis) zeigeSatz(ergebnis.text, ergebnis.knoepfe);
     });
+  }
+
+  // Eine angeklickte Antwortmoeglichkeit als erste Frage in den Chat geben.
+  //
+  // Der Frame muss dafuer bereit sein. Beim ERSTEN Oeffnen wird er gerade erst
+  // erzeugt und geladen — eine sofort gesendete Nachricht ginge ins Leere.
+  // Darum wird auf sein "bereit" gewartet, mit einer Obergrenze, damit ein
+  // haengender Frame nicht ewig einen Timer offen haelt.
+  function stelleFrage(frage) {
+    // "geladen" heisst nur, dass das iframe ERZEUGT wurde — sein Skript und
+    // damit sein Nachrichten-Empfaenger laufen zu dem Zeitpunkt noch nicht.
+    // Eine sofort gesendete Nachricht ginge ins Leere, ohne Fehler: Wo niemand
+    // zuhoert, verpufft postMessage stillschweigend.
+    //
+    // Deshalb wird beim ersten Oeffnen gemerkt und erst gesendet, wenn das
+    // load-Ereignis des Frames kommt. Bis dahin sind seine Inline-Skripte
+    // sicher gelaufen.
+    if (frameBereit && frameEl && frameEl.contentWindow) {
+      try {
+        frameEl.contentWindow.postMessage({ type: "ki-agent-frage", frage: frage }, basis);
+      } catch (e) { /* Frame weg -> Frage faellt weg, der Chat ist trotzdem offen */ }
+      return;
+    }
+    offeneFrage = frage;
   }
 
   hinweisTextEl.addEventListener("click", function () { versteckeHinweis(); oeffne(); });

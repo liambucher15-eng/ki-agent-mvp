@@ -1,7 +1,7 @@
 // Onboarding-Wizard, Logik zu onboarding-aura.html.
 // Aus dem HTML extrahiert (Milestone 1), damit Markup/CSS und Logik getrennt
 // wartbar sind. KEINE Logik-Aenderung bei der Extraktion.
-    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", plan:"free", charakterStil:"flach", charakterBilder:null, charakterBeschreibung:"" };
+    const daten = { id:"", email:"", webseite:"", name:"", angebot:"", oeffnungszeiten:"", adresse:"", kontakt:"", faq:[], weiteres:"", leistungen:[], preise:"", team:"", besonderheiten:"", regeln:"", dokumente:[], farbe1:"#4F46E5", farbe2:"#FB7185", schrift:"Plus Jakarta Sans", persoenlichkeit:"freundlich", agentName:"", agentRolle:"Assistent", agentAnrede:"du", antwortLaenge:"ausgewogen", emojiStil:"dezent", antwortFormat:"absatz", uebergabe:"kontakt", fallbackKontakt:"", grenzen:"", chatDesign:"auto", chatLayout:"sidebar", widgetStil:"orb", plan:"free", charakterStil:"flach", charakterBilder:null, charakterBeschreibung:"" };
 
     // Persönlichkeit -> Ton-Beschreibung (fließt in persona.ton für baueSystemPrompt)
     const TON_TEXTE = {
@@ -698,6 +698,45 @@
       chips.forEach((c) => c.addEventListener("click", () => waehleDesign(c.dataset.design)));
       waehleDesign(daten.chatDesign);
     })();
+
+    // Ruhezustand des Widgets: Kreis in der Ecke oder Leiste unten.
+    //
+    // Beides konnte das Widget schon lange (public/widget.js liest data-stil),
+    // waehlbar war es aber nirgends — die eigene Startseite setzt "leiste" von
+    // Hand im Quelltext, jeder Kunde bekam zwangslaeufig "orb".
+    //
+    // Der Wert landet an zwei Stellen: in der Einbett-Zeile (dort liest ihn das
+    // Widget) und in der gespeicherten Firma (damit das Dashboard spaeter weiss,
+    // was der Kunde gewaehlt hat, und die Zeile neu bauen kann).
+    (function () {
+      const chips = document.querySelectorAll("#stilListe .pers-chip");
+      const vorschau = document.getElementById("stilVorschau");
+      const hinweis = document.getElementById("stilHinweis");
+      const TEXTE = {
+        orb: "Ein Kreis mit dem Gesicht deines Agenten, unten rechts. Zurückhaltend — er wartet, bis jemand klickt.",
+        leiste: "Eine Eingabezeile unten mittig, mit dem Gesicht darin. Auffälliger, lädt direkt zum Tippen ein.",
+      };
+      function waehleStil(wert) {
+        const stil = wert === "leiste" ? "leiste" : "orb";
+        daten.widgetStil = stil;
+        chips.forEach((c) => c.classList.toggle("aktiv", c.dataset.wstil === stil));
+        if (vorschau) vorschau.dataset.wstil = stil;
+        if (hinweis) hinweis.textContent = TEXTE[stil];
+      }
+      chips.forEach((c) => c.addEventListener("click", () => {
+        waehleStil(c.dataset.wstil);
+        // Einbett-Zeile sofort nachziehen, damit sie auch dann stimmt, wenn der
+        // Kunde spaeter ueber "Zurueck" hierher kommt und die Wahl aendert.
+        //
+        // Bewusst NUR beim Klick, nicht beim Initialisieren weiter unten:
+        // sammle() uebernimmt die Formularfelder OHNE Fallback (Feld leer ->
+        // Wert leer, damit sich etwas auch loeschen laesst). Beim Seitenstart
+        // sind die Felder noch leer, ein Aufruf dort koennte also Daten
+        // wegwischen, die auf anderem Weg schon gesetzt wurden.
+        sammle();
+      }));
+      waehleStil(daten.widgetStil);
+    })();
     document.getElementById("fallbackKontakt").addEventListener("input", (e) => { daten.fallbackKontakt = e.target.value.trim(); });
     document.getElementById("agentGrenzen").addEventListener("input", (e) => { daten.grenzen = e.target.value.trim(); });
 
@@ -1220,8 +1259,12 @@
       if (!daten.id && (daten.name || daten.webseite)) {
         daten.id = (daten.name || daten.webseite).toLowerCase().replace(/^https?:\/\//,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24);
       }
+      // data-stil nur bei "leiste" mitschreiben: "orb" ist ohnehin der Standard
+      // im Widget, ein data-stil="orb" waere also nur Rauschen in einer Zeile,
+      // die der Kunde in seinen Quelltext kopiert.
+      const stilAttr = daten.widgetStil === "leiste" ? ' data-stil="leiste"' : "";
       document.getElementById("embed-text").textContent =
-        '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"><\/script>';
+        '<script src="' + location.origin + '/widget.js" data-firma="' + daten.id + '" data-farbe="' + daten.farbe1 + '" data-farbe2="' + daten.farbe2 + '"' + stilAttr + '><\/script>';
     }
     document.getElementById("copy").addEventListener("click", (e) => {
       navigator.clipboard.writeText(document.getElementById("embed-text").textContent);
@@ -1370,7 +1413,7 @@
         fakten, faq: daten.faq, wissensquellen,
         // Jeder Agent kann von Anfang an Kontaktanfragen aufnehmen (Lead-Capture).
         faehigkeiten: ["kontakt"],
-        charakter: { ...charakter, chatDesign: daten.chatDesign, chatLayout: daten.chatLayout },
+        charakter: { ...charakter, chatDesign: daten.chatDesign, chatLayout: daten.chatLayout, widgetStil: daten.widgetStil },
       };
       try {
         await Store.saveFirma(firma);

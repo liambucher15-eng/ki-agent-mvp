@@ -213,7 +213,13 @@
        Überschreibt die Pillen-Form aus lib/chat-ui.js. */
     #chips { display: block; }
     #chips:empty { display: none; }
-    #komponist .ki-vorschlaege { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 6px; }
+    /* Eine Spalte, nicht zwei: Seit die Vorschlaege zur Seite passen, sind es
+       drei ganze Fragen statt zweier Schlagworte. Nebeneinander ergaeben sie ein
+       schiefes 2+1-Raster, in dem jede Frage ueber zwei Zeilen bricht. */
+    #komponist .ki-vorschlaege { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0 0 6px; }
+    /* Volle Breite heisst linksbuendig — zentrierter Text sieht in einer langen
+       Zeile aus, als waere er verrutscht. */
+    #komponist .ki-vorschlag { text-align: left; }
     #komponist .ki-vorschlag { padding: 0.5rem 0.6rem; border-radius: 14px; text-align: left;
               font-size: 0.74rem; line-height: 1.3; white-space: normal; box-shadow: none;
               background: var(--tint); color: #475569;
@@ -254,7 +260,9 @@
          das nackte Formular. */
       body.vollbild #komponist { grid-column: 2; grid-row: 3; margin: 0 1.6rem 1.2rem; padding: 0.6rem; }
       /* Breite Spalte: die Vorschlags-Kacheln dürfen nebeneinander atmen. */
-      body.vollbild #komponist .ki-vorschlaege { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      /* Im Vollbild ist Platz fuer mehrere nebeneinander — aber nur so viele,
+         wie ohne staendigen Zeilenumbruch hineinpassen. */
+      body.vollbild #komponist .ki-vorschlaege { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
       body.vollbild .fuss { display: none; }
     }
 
@@ -373,6 +381,12 @@
       seiteInfo.verhalten = s.verhalten && typeof s.verhalten === "object" ? s.verhalten : null;
     });
     let bilder = null;       // generierte Charakter-Bilder pro Zustand (sonst SVG-Fallback)
+    // Hat der Besucher im Hinweis eine Antwortmoeglichkeit angeklickt, statt den
+    // Chat leer zu oeffnen? Dann faellt die Begruessung weg (siehe unten).
+    let frageAusHinweis = false;
+    // Sobald der Besucher selbst gefragt hat, duerfen keine Einstiegs-Chips mehr
+    // nachtraeglich hereinschneien (siehe holeSeitenFragen).
+    let gespraechBegonnen = false;
 
     // --- Schliessen: dem Eltern-Fenster (widget.js) Bescheid geben ---
     document.getElementById("schliessen").addEventListener("click", () => {
@@ -493,6 +507,41 @@
       if (c.bilder) bilder = c.bilder;
     }
 
+    // Drei Fragen, die zu GENAU DIESER Seite passen — statt auf jeder Seite
+    // derselben zwei Chips aus den Firmendaten.
+    //
+    // Läuft absichtlich NEBEN dem Aufbau des Chats, nicht davor: Der Chat ist
+    // sofort benutzbar, die Chips tauschen sich nach, wenn die Antwort da ist.
+    // Kommt nichts zurück (Fehler, kein Seiteninhalt, Modell danebengegriffen),
+    // bleiben die festen Chips einfach stehen — es geht nie etwas verloren.
+    async function holeSeitenFragen() {
+      try {
+        const res = await fetch("/.netlify/functions/seiten-fragen", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            firmaId: FIRMA_ID,
+            pfad: seiteInfo.pfad,
+            titel: seiteInfo.titel,
+            inhalt: seiteInfo.inhalt,
+            jsonLd: seiteInfo.jsonLd,
+            meta: seiteInfo.meta,
+          }),
+        });
+        if (!res.ok) return;
+        const d = await res.json();
+        const fragen = Array.isArray(d.fragen)
+          ? d.fragen.filter((f) => typeof f === "string" && f.trim())
+          : [];
+        if (!fragen.length) return;
+        // Inzwischen könnte der Besucher schon gefragt haben. Dann sind die Chips
+        // weg und sollen weg bleiben — sie jetzt nachzuschieben, würde mitten in
+        // ein laufendes Gespräch platzen.
+        if (gespraechBegonnen) return;
+        ui.zeigeVorschlaege(fragen.slice(0, 3));
+      } catch (e) { /* feste Chips bleiben stehen */ }
+    }
+
     // Firma laden — NUR über die gefilterte /firma-Function (Seed + Onboarding-
     // Firmen). Liefert auch faq/fakten für die Vorschlags-Chips, aber keine
     // privaten Felder. Der Prompt wird sowieso serverseitig gebaut (chat.js).
@@ -510,11 +559,23 @@
         }
       } catch (e) { /* Aussehen ist nicht kritisch */ }
       setCharakter("freuen", 700);
-      ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
-      // Zwei Kacheln, nicht vier: Die Karte sitzt über dem Verlauf und nimmt ihm
-      // jede weitere Zeile weg. Zwei gute Einstiege sind ein Angebot, vier sind
-      // eine Liste, die man erst lesen muss.
-      ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle).slice(0, 2));
+      // "Wie kann ich dir helfen?" NACH einer bereits gestellten Frage liest
+      // sich, als haette der Agent sie ueberhoert — und genau so kam es heraus:
+      // Die Begruessung haengt hinter einem await (Firmendaten laden), waehrend
+      // eine per Hinweis-Knopf gestellte Frage sofort abgeschickt wird und sie
+      // damit ueberholt. Wer schon konkret gefragt hat, braucht sie ohnehin nicht.
+      if (!frageAusHinweis) {
+        ui.addBubble("Hallo! Wie kann ich dir helfen?", "bot");
+      }
+      // Chips sind Einstiegsangebote — wer schon eingestiegen ist, braucht keine.
+      if (!frageAusHinweis) {
+        // Erst die festen Chips aus den Firmendaten zeigen: Sie stehen sofort da
+        // und sind nie falsch. Die seitengenauen Fragen brauchen einen
+        // Server-Aufruf und ersetzen sie, sobald sie da sind — so starrt niemand
+        // auf eine leere Fläche, während gewartet wird.
+        ui.zeigeVorschlaege(ChatUI.vorschlaegeAus(quelle).slice(0, 2));
+        holeSeitenFragen();
+      }
     }
 
     // Gemeinsame Chat-Logik aus lib/chat-ui.js. Der Charakter oben reagiert über
@@ -552,7 +613,7 @@
       },
       chipsZiel: chips,
       nachNachricht: () => figur.pruefe(),
-      onFrage: () => { document.body.classList.add("hat-verlauf"); },
+      onFrage: () => { gespraechBegonnen = true; document.body.classList.add("hat-verlauf"); },
       onAntwort: (text) => { liesVor(text); },
     });
     ChatUI.spracheAn(document.getElementById("mic"), input);
@@ -642,6 +703,23 @@
       if (e.source !== parent || !e.data) return;
       if (e.data.type === "ki-agent-fokus") {
         try { input.focus(); } catch (err) { /* egal */ }
+      }
+      // Eine im Hinweis angeklickte Antwortmoeglichkeit als erste Frage stellen.
+      //
+      // Bewusst ueber das Formular statt ueber einen eigenen Sendeweg: So laeuft
+      // es durch GENAU dieselbe Verarbeitung wie eine getippte Frage (Blase
+      // zeichnen, Verlauf fuehren, Figur animieren, Vorschlags-Chips raeumen).
+      // Ein zweiter Weg daneben waere eine zweite Stelle, die kaputtgehen kann.
+      if (e.data.type === "ki-agent-frage") {
+        var frage = typeof e.data.frage === "string" ? e.data.frage.trim().slice(0, 200) : "";
+        if (frage) {
+          frageAusHinweis = true;
+          input.value = frage;
+          try {
+            if (typeof form.requestSubmit === "function") form.requestSubmit();
+            else form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+          } catch (err) { /* Absenden fehlgeschlagen -> Text bleibt im Feld stehen */ }
+        }
       }
       if (e.data.type === "ki-agent-fenster") {
         lagen = Array.isArray(e.data.lagen) ? e.data.lagen : [];

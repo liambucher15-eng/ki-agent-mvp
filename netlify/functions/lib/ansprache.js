@@ -88,9 +88,50 @@
       "AUFGABE: " + eintrag.auftrag + "\n" +
       "Antworte mit GENAU EINEM Satz, höchstens 14 Wörter, ohne Begrüssung, ohne " +
       "Anführungszeichen. Sprich die Beobachtung nicht aus — frag einfach das, was " +
-      "gerade weiterhilft."
+      "gerade weiterhilft.\n\n" +
+      "Danach ZWEI Antwortmöglichkeiten, die der Besucher mit einem Klick waehlen " +
+      "kann, statt selbst zu tippen. Jede ist die ausgeschriebene Frage aus SEINER " +
+      "Sicht (etwa: Welche Groesse passt mir?), nicht ein Schlagwort. Sie muessen " +
+      "zu DIESER Seite passen und sich klar unterscheiden — zwei Wege, nicht " +
+      "zweimal dasselbe. Hoechstens 6 Woerter pro Moeglichkeit.\n\n" +
+      "FORMAT, genau so, ohne weitere Zeilen:\n" +
+      "SATZ: <der eine Satz>\n" +
+      "WAHL: <erste Moeglichkeit>\n" +
+      "WAHL: <zweite Moeglichkeit>"
     );
   }
 
-  return { entscheide, baueAnspracheAuftrag, ANLAESSE, REGELN: R };
+  // Zerlegt die Modell-Antwort in Satz + Antwortmoeglichkeiten.
+  //
+  // Bewusst zeilenbasiert statt JSON: Ein kleines Modell haelt ein
+  // "SATZ:/WAHL:"-Schema zuverlaessiger ein als geschweifte Klammern, und ein
+  // halb geschriebenes JSON waere gar nicht mehr zu retten. Haelt es sich
+  // trotzdem nicht daran, greift der Rueckfall: Dann gilt die ganze Antwort als
+  // Satz und es gibt keine Knoepfe — also genau das Verhalten von vorher, nie
+  // schlechter als bisher.
+  function zerlegeAnsprache(roh) {
+    const text = String(roh || "").trim();
+    if (!text) return { text: "", knoepfe: [] };
+
+    const zeilen = text.split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
+    let satz = "";
+    const knoepfe = [];
+    for (const z of zeilen) {
+      const mSatz = z.match(/^SATZ\s*:\s*(.+)$/i);
+      if (mSatz) { if (!satz) satz = mSatz[1].trim(); continue; }
+      const mWahl = z.match(/^WAHL\s*:\s*(.+)$/i);
+      if (mWahl) {
+        // Anfuehrungszeichen aussen weg — das Modell setzt sie gern trotz Verbot.
+        const w = mWahl[1].trim().replace(/^["'„“]+|["'“”]+$/g, "").trim();
+        // Zu lange "Knoepfe" sind keine Knoepfe mehr, sondern Saetze: Sie
+        // sprengen die schmale Blase. Lieber weglassen als sie zerlegen.
+        if (w && w.length <= 42) knoepfe.push(w);
+        continue;
+      }
+    }
+    if (!satz) return { text: text.replace(/\s+/g, " ").trim(), knoepfe: [] };
+    return { text: satz, knoepfe: knoepfe.slice(0, 2) };
+  }
+
+  return { entscheide, baueAnspracheAuftrag, zerlegeAnsprache, ANLAESSE, REGELN: R };
 });

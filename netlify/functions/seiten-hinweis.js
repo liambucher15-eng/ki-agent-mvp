@@ -19,11 +19,29 @@ const {
 } = require("./lib/schutz");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const { beurteile: beurteileVerhalten } = require("./lib/verhalten");
-const { entscheide, baueAnspracheAuftrag } = require("./lib/ansprache");
+const { entscheide, baueAnspracheAuftrag, zerlegeAnsprache } = require("./lib/ansprache");
 
 const MAX_PFAD = 200;
 const MAX_TITEL = 200;
 const MAX_INHALT = 1500;
+
+// Cache-Eintrag deuten. Seit den Antwort-Knoepfen liegt dort JSON
+// ({text, knoepfe}); davor lag reiner Text. Beides muss gelesen werden koennen,
+// sonst bekaeme jeder Besucher waehrend der TTL der alten Eintraege (Tage!) eine
+// kaputte oder gar keine Blase — ein Deploy darf nicht so lange nachhallen.
+function lesCache(roh) {
+  const s = String(roh || "");
+  if (s.startsWith("{")) {
+    try {
+      const o = JSON.parse(s);
+      return {
+        text: typeof o.text === "string" ? o.text : "",
+        knoepfe: Array.isArray(o.knoepfe) ? o.knoepfe.filter((k) => typeof k === "string" && k) : [],
+      };
+    } catch { /* kaputtes JSON -> unten als reiner Text behandeln */ }
+  }
+  return { text: s, knoepfe: [] };
+}
 
 exports.handler = async (event) => {
   // Vorab-Check des Browsers. MUSS vor allem anderen kommen und ohne jede
@@ -116,7 +134,10 @@ exports.handler = async (event) => {
 
   // 1) Cache-Treffer? Dann sofort zurück (kein API-Aufruf).
   const gecacht = await leseHinweis(firmaId, cacheSchluessel);
-  if (gecacht) return antwort(200, { ansprechen: true, text: gecacht, anlass, cache: true });
+  if (gecacht) {
+    const c = lesCache(gecacht);
+    return antwort(200, { ansprechen: true, text: c.text, knoepfe: c.knoepfe, anlass, cache: true });
+  }
 
   // 2) Firma muss existieren — schützt vor teuren Aufrufen für Fremd-IDs.
   // Bei einem Aufruf von der Kunden-Domain ist sie oben schon geladen worden
@@ -163,17 +184,28 @@ exports.handler = async (event) => {
     const { ok, data } = await rufeClaude({
       system,
       messages: [{ role: "user", content: prompt }],
-      maxTokens: 60,
+      // 60 reichten fuer einen Satz; jetzt kommen zwei Wahlmoeglichkeiten dazu.
+      maxTokens: 140,
       temperature: 0.6,
       timeout: 12000,
     });
     if (!ok) return antwort(200, { ansprechen: !!anlass, text: "" }); // Fehler -> Widget nimmt Fallback
-    let text = (data.content?.[0]?.text || "").replace(/^["']|["']$/g, "").replace(/\s+/g, " ").trim();
-    text = text.slice(0, 140);
+
+    // REIHENFOLGE IST WICHTIG: erst zerlegen, dann saeubern. Das Format ist
+    // zeilenbasiert (SATZ:/WAHL:) — ein .replace(/\s+/g," ") davor wuerde
+    // genau die Zeilenumbrueche vernichten, an denen es haengt.
+    const zerlegt = zerlegeAnsprache(data.content?.[0]?.text || "");
+    const text = zerlegt.text.replace(/^["']|["']$/g, "").replace(/\s+/g, " ").trim().slice(0, 140);
+    const knoepfe = zerlegt.knoepfe
+      .map((k) => k.replace(/\s+/g, " ").trim().slice(0, 42))
+      .filter(Boolean);
     if (!text) return antwort(200, { ansprechen: !!anlass, text: "" });
 
-    await setzeHinweis(firmaId, cacheSchluessel, text); // Cache für die nächsten Besucher
-    return antwort(200, { ansprechen: true, text, anlass, cache: false });
+    // Satz UND Knoepfe zusammen in den Cache — als JSON in dieselbe text-Spalte,
+    // damit dafuer keine Datenbank-Migration noetig ist. Beim Lesen zerlegt
+    // lesCache() das wieder; alte Zeilen sind reiner Text und funktionieren weiter.
+    await setzeHinweis(firmaId, cacheSchluessel, JSON.stringify({ text, knoepfe }));
+    return antwort(200, { ansprechen: true, text, knoepfe, anlass, cache: false });
   } catch {
     return antwort(200, { ansprechen: !!anlass, text: "" });
   }
