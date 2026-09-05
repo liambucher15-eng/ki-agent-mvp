@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Seite nicht gefunden — AuraChat</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#ffffff" />
+  <!--
+    ALLE PFADE HIER SIND ABSOLUT ("/lib/seite.css", nicht "lib/seite.css").
+    Das ist kein Schönheitsfehler, sondern der Grund, warum viele 404-Seiten
+    nackt aussehen: Netlify liefert diese Datei unter der ADRESSE aus, die der
+    Besucher aufgerufen hat. Bei /shop/artikel/42 würde "lib/seite.css" zu
+    /shop/artikel/lib/seite.css — und die Seite käme ohne jedes Aussehen an.
+    Dasselbe gilt für jeden Link unten.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/lib/seite.css" />
+</head>
+<body id="oben">
+
+  <header class="kopf" id="kopf">
+    <a class="logo" href="/">
+      <span class="zeichen" aria-hidden="true"></span>AuraChat
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="/#so">So funktioniert es</a>
+      <a href="/#funktionen">Funktionen</a>
+      <a href="/preis.html">Preis</a>
+      <a href="/#faq">Fragen</a>
+    </nav>
+    <div class="kopf-rechts">
+      <a class="anmelden" href="/dashboard.html">Anmelden</a>
+    </div>
+  </header>
+
+  <!-- ══ NICHT GEFUNDEN ═════════════════════════════════════════════════
+       Kein Witz und keine Entschuldigung über drei Zeilen. Wer hier landet,
+       wollte irgendwo hin — die Seite soll ihn dorthin bringen, nicht
+       unterhalten. Darum drei echte Ziele statt eines "zurück"-Knopfes.
+
+       Kein Suchfeld: Es gibt keine Suche auf dieser Webseite. Eines
+       hinzustellen, das nichts findet, wäre die zweite Enttäuschung nach
+       der ersten. -->
+  <section class="preis-einstieg">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Fehler 404</span>
+        <h1>Diese Seite gibt es nicht.</h1>
+        <p class="lead">Vielleicht ein alter Link, vielleicht ein Tippfehler. Beides ist schnell behoben — hier sind die Wege, die es wirklich gibt.</p>
+      </div>
+
+      <div class="knoepfe mitte auftritt" style="--verzug: 80ms">
+        <a class="knopf knopf-voll" href="/">Zur Startseite</a>
+        <a class="knopf knopf-rand" href="/preis.html">Preise ansehen</a>
+      </div>
+
+      <p class="knopf-notiz" style="text-align:center">
+        Etwas Bestimmtes gesucht? <a href="/kontakt.html">Frag Aura</a> — sie kennt die Seite.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="fuss-karte">
+      <div class="fuss-oben">
+        <p class="fuss-claim">Der persönliche Mitarbeiter für kleine Betriebe. Er lernt alles selbst von deiner Webseite, du musst nichts vorbereiten.</p>
+
+        <div class="fuss-spalte">
+          <h4>Erkunden</h4>
+          <ul>
+            <li><a href="/#funktionen">Funktionen</a></li>
+            <li><a href="/#preis">Preis</a></li>
+            <li><a href="/demo-nordform.html">Demo</a></li>
+            <li><a href="/kontakt.html">Kontakt</a></li>
+          </ul>
+        </div>
+
+        <div class="fuss-spalte">
+          <h4>Rechtliches</h4>
+          <ul>
+            <li><span class="folgt">Impressum <em>folgt</em></span></li>
+            <li><span class="folgt">Datenschutz <em>folgt</em></span></li>
+            <li><span class="folgt">AGB <em>folgt</em></span></li>
+          </ul>
+        </div>
+
+        <div class="fuss-cta">
+          <a class="fuss-aktion" href="/kontakt.html">
+            Sprich mit Aura
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Kein Formular, ein echtes Gespräch</p>
+
+          <a class="fuss-aktion fuss-aktion--rand" href="/onboarding-aura.html">
+            14 Tage gratis testen
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Ohne Zahlungsmittel</p>
+        </div>
+      </div>
+
+      <div class="fuss-marke">
+        <span class="fuss-punkt" aria-hidden="true"></span>
+        <a class="fuss-wort" href="/">AuraChat</a>
+      </div>
+
+      <div class="fuss-unten">
+        <span>AuraChat © 2026 · KI-Agenten für kleine Betriebe</span>
+        <span>Schweiz · <time id="fussZeit">--:--</time></span>
+      </div>
+    </div>
+  </footer>
+
+<script src="/lib/seite.js"></script>
+
+</body>
+</html>

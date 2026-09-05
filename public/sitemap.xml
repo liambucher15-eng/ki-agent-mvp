@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sitemap für AuraChat.
+
+  DOMAIN IST EINE ANNAHME: aurachat.ch steht so auf der Seite selbst, geprüft
+  ist es nicht (siehe ops/todo.md, "Deploy prüfen"). Stimmt sie nicht, zeigt
+  diese Datei Suchmaschinen auf einen toten Host. Vor dem Livegang prüfen und
+  hier sowie in robots.txt anpassen.
+
+  Nur drei Seiten stehen drin — die drei, die wirklich für Publikum sind.
+  Dashboard, Onboarding, Chat-Ansichten, Prüfstände und die Nordform-Vorführung
+  fehlen absichtlich; sie tragen eine noindex-Kopfzeile aus netlify.toml.
+
+  Kein <lastmod>: Ein Datum, das beim nächsten Textwechsel nicht mitgezogen
+  wird, ist eine Lüge gegenüber der Suchmaschine. Lieber weglassen als falsch
+  pflegen. Wer es einführt, muss es automatisch aus Git setzen.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Startseite. Liegt physisch als start.html, wird aber unter / bedient
+       (Regel in netlify.toml). Hier steht deshalb / — die Adresse, die auch
+       das canonical in start.html nennt. -->
+  <url>
+    <loc>https://aurachat.ch/</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://aurachat.ch/preis.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aurachat.ch/kontakt.html</loc>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>

@@ -10,6 +10,14 @@
   <meta property="og:description" content="Er lernt alles selbst von deiner Webseite. Du musst nichts vorbereiten. Vierzehn Tage gratis testen, danach ab CHF 29 im Monat — ein Preis ohne Zähler." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="bilder/hero-hintergrund.webp" />
+  <!-- Diese Seite ist ab jetzt unter ZWEI Adressen erreichbar: unter "/" (per
+       Regel in netlify.toml) und unter "/start.html". Ohne canonical müsste
+       eine Suchmaschine raten, welche gilt, und teilt die Bewertung womöglich
+       auf beide auf. "/" ist die richtige — sie steht auch so in sitemap.xml.
+       Bewusst relativ statt https://aurachat.ch/: Die Domain ist noch nicht
+       bestätigt, und ein canonical auf eine falsche Domain nimmt die Seite aus
+       dem Index. Relativ stimmt unter jeder Domain. -->
+  <link rel="canonical" href="/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="image" href="bilder/hero-hintergrund.webp" />

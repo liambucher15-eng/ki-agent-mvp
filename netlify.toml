@@ -21,3 +21,92 @@
   from = "/p/*"
   to = "/demo-nordform-produkt.html?p=:splat"
   status = 200
+
+# Die Startseite. Ohne diese Regel zeigte aurachat.ch den alten Prototyp aus
+# public/index.html ("KI-Agent MVP") statt der Marketingseite — die eigentliche
+# Startseite war nur unter /start.html erreichbar und wurde nirgends verlinkt.
+#
+# WARUM force = true NÖTIG IST: Netlify bedient eine vorhandene statische Datei
+# IMMER vor einer Weiterleitungsregel. Da public/index.html existiert, greift
+# eine Regel auf "/" ohne force gar nicht — sie sieht funktionierend aus und tut
+# nichts. Mit force gewinnt die Regel.
+#
+# status = 200 statt 301: Die Adresse bleibt "/" (nicht "/start.html"), der
+# Inhalt kommt aus start.html. Deshalb hat start.html jetzt ein canonical auf
+# "/" — sonst wäre dieselbe Seite unter zwei Adressen erreichbar und
+# Suchmaschinen müssten raten, welche gilt.
+#
+# index.html bleibt bewusst liegen: dashboard.html verlinkt es als
+# Vollbild-Chat (index.html?firma=…). Diese Adresse funktioniert weiter, sie
+# ist unten nur aus dem Suchindex genommen.
+[[redirects]]
+  from = "/"
+  to = "/start.html"
+  status = 200
+  force = true
+
+# ── Was NICHT in den Suchindex gehört ───────────────────────────────────────
+# Bewusst als Kopfzeile hier statt als <meta name="robots"> in den Seiten:
+# dashboard.html und widget-frame.html werden gerade von einer zweiten Sitzung
+# bearbeitet. Eine Kopfzeile wirkt genauso und fasst keine fremde Datei an.
+#
+# X-Robots-Tag statt robots.txt-Disallow: Disallow verbietet das LESEN, nicht
+# das Aufnehmen — eine verlinkte Seite landet trotzdem im Index, nur ohne
+# Textauszug. noindex nimmt sie wirklich heraus.
+
+# Anwendung: nur für angemeldete Nutzer, kein Suchergebnis.
+[[headers]]
+  for = "/dashboard.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/onboarding-aura.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# Technisch: Chat-Ansichten, die nie allein aufgerufen werden sollen.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/widget-frame.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# Interne Prüfstände, nie für Publikum gedacht.
+[[headers]]
+  for = "/demo-shop.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/demo-restaurant.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/test-einbetten.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# Die Nordform-Vorführung: öffentlich und verlinkt, aber vorerst nicht im Index.
+# Nordform ist eine erfundene Firma mit erfundenen Möbelpreisen. Im Suchindex
+# würde sie für echte Möbelsuchen auftauchen und AuraChat wie einen Möbelshop
+# aussehen lassen.
+[[headers]]
+  for = "/demo-nordform.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/demo-nordform-produkt.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/demo-nordform-ueber-uns.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"

@@ -1,0 +1,17 @@
+# robots.txt für AuraChat
+#
+# ACHTUNG, EINE ANNAHME STECKT HIER DRIN: Die Domain aurachat.ch ist die, die
+# die Seite selbst überall anzeigt — bestätigt ist sie nicht. Sobald die echte
+# Adresse feststeht, muss sie hier UND in sitemap.xml angepasst werden. Eine
+# Sitemap unter falscher Domain ist schlimmer als gar keine.
+#
+# Hier steht bewusst KEIN Disallow für Dashboard, Onboarding oder die
+# Vorführungen. Disallow verbietet das Lesen — dann sieht eine Suchmaschine die
+# noindex-Kopfzeile aus netlify.toml nie und nimmt die Seite über eingehende
+# Links trotzdem auf, nur ohne Textauszug. Genau das Gegenteil des Ziels.
+# Lesen erlauben, per Kopfzeile aus dem Index nehmen: das wirkt.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://aurachat.ch/sitemap.xml
