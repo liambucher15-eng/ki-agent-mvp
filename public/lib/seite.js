@@ -324,3 +324,22 @@
     document.querySelectorAll(".schalter button").forEach((k) => k.addEventListener("click", rechne));
     rechne();
   })();
+
+  // Footer: Schweizer Uhrzeit, echt und live — kein Wetter-Icon mit
+  // erfundener Zahl. Intl mit fester Zeitzone, nicht new Date().toLocaleTimeString()
+  // ohne Angabe: Das naehme die Zeitzone des Geraets, und ein Besucher in
+  // Toronto saehe seine eigene Zeit unter der Aufschrift "Schweiz" — falsch
+  // beschriftet ist schlimmer als gar keine Angabe.
+  (function () {
+    const ziel = document.getElementById("fussZeit");
+    if (!ziel) return;
+    const format = new Intl.DateTimeFormat("de-CH", {
+      timeZone: "Europe/Zurich", hour: "2-digit", minute: "2-digit",
+    });
+    const aktualisiere = () => { ziel.textContent = format.format(new Date()); };
+    aktualisiere();
+    // Jede 20 Sekunden reicht: Es ist eine Uhr, kein Chronometer, und ein
+    // Intervall in Sekundentakt liefe auf jeder der drei Seiten dauerhaft
+    // mit, ohne dass es irgendjemand auf einer Minutenanzeige saehe.
+    setInterval(aktualisiere, 20000);
+  })();

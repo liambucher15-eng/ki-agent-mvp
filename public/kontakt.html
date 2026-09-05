@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kontakt — AuraChat</title>
+  <meta name="description" content="Kein Kontaktformular, das irgendwo verschwindet. Schreib mit Aura, demselben Agenten, den du nachher auf deine eigene Seite setzt — sie nimmt deine Nachricht auf, Liam meldet sich." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta property="og:title" content="Kontakt — AuraChat" />
+  <meta property="og:description" content="Schreib mit Aura statt mit einem Formular. Sie nimmt deine Nachricht auf, Liam meldet sich." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="kontakt.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="lib/seite.css" />
+</head>
+<body id="oben">
+
+  <header class="kopf" id="kopf">
+    <a class="logo" href="start.html">
+      <span class="zeichen" aria-hidden="true"></span>AuraChat
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="start.html#so">So funktioniert es</a>
+      <a href="start.html#funktionen">Funktionen</a>
+      <a href="preis.html">Preis</a>
+      <a href="start.html#faq">Fragen</a>
+    </nav>
+    <div class="kopf-rechts">
+      <a class="anmelden" href="dashboard.html">Anmelden</a>
+    </div>
+  </header>
+
+  <!-- ══ EINSTIEG ═══════════════════════════════════════════════════════
+       Gleiches Muster wie preis-einstieg: eigene Seite, eigener schmaler
+       Einstieg. Kein Formular und keine E-Mail-Adresse — die gibt es fuer
+       AuraChat nicht (siehe Kommentar am Widget-Einbau weiter unten), und
+       eine erfundene waere schlimmer als keine. Stattdessen der Weg, den
+       es wirklich gibt: derselbe Agent, den Kunden nachher selbst bekommen. -->
+  <section class="preis-einstieg">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Kontakt</span>
+        <h1>Sprich mit Aura, nicht mit einem Formular.</h1>
+        <p class="lead" style="margin-inline:auto">Aura ist derselbe Agent, den du nachher auf deine eigene Seite setzt. Sag ihr, worum es geht — eine Frage zu einem Plan, ein Fehler, eine Idee, eine Zusammenarbeit. Sie nimmt deinen Namen und eine Kontaktmöglichkeit auf, Liam meldet sich.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ DER AGENT ══════════════════════════════════════════════════════
+       Dieselbe Buehne wie preis.html #testen, bewusst identisch: Ein
+       zweites Aussehen fuer denselben Mechanismus wuerde behaupten, es
+       gaebe zwei verschiedene Wege — es gibt nur diesen einen. -->
+  <section class="hellflaeche">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Schreib ihr</span>
+        <h2 style="margin-inline:auto">Kein Ticket, keine Warteschlange.</h2>
+        <p class="lead" style="margin-inline:auto">Das hier ist derselbe Agent, der weiter unten auf jeder Seite in der Leiste sitzt — nicht extra fuer diese Seite gebaut.</p>
+      </div>
+
+      <div class="testen-buehne auftritt" style="--verzug: 80ms">
+        <div class="fenster">
+          <div class="fenster-leiste" aria-hidden="true">
+            <i></i><i></i><i></i>
+            <span class="adresse">aurachat.ch/kontakt</span>
+          </div>
+          <div class="testen-rahmen">
+            <!-- loading=lazy: startet ein Gespraech und kostet damit einen
+                 Aufruf, soll also erst laden, wenn jemand wirklich hier
+                 ankommt. Gleiche Firma (aurachat), eigener pfad-Parameter,
+                 damit der Agent weiss, dass er auf der Kontaktseite steht. -->
+            <iframe src="widget-frame.html?firma=aurachat&amp;pfad=%2Fkontakt.html&amp;titel=Kontakt"
+                    title="Mit Aura schreiben" loading="lazy"></iframe>
+          </div>
+        </div>
+        <p class="testen-beispiele">
+          Zum Beispiel <b>„Ich will das für meine Physiopraxis"</b>, <b>„Ich habe eine Frage zu Scale"</b> oder <b>„Ich habe einen Fehler gefunden"</b>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ WARUM SO ═══════════════════════════════════════════════════════
+       Zwei Fragen, die sich stellen, sobald jemand ein Formular oder eine
+       Adresse ERWARTET und stattdessen einen Chat vorfindet. Gleiches
+       Muster wie die FAQ auf preis.html (details/summary). -->
+  <section id="warum">
+    <div class="bahn">
+      <div class="kopfblock auftritt" style="text-align:center">
+        <span class="augen">Warum so</span>
+        <h2 style="margin-inline:auto">Zwei Fragen, die naheliegen.</h2>
+      </div>
+      <div class="faq auftritt" style="--verzug: 80ms">
+        <details>
+          <summary>Warum kein Kontaktformular oder eine E-Mail-Adresse?</summary>
+          <p class="antwort">Weil du sofort eine Antwort bekommst, statt auf eine Rückmeldung zu warten — und weil du dabei genau das erlebst, was du kaufen würdest, bevor du es kaufst. Findet Aura keine Antwort, nimmt sie deine Nachricht auf, genau wie sie es später für deine eigenen Besucher tut.</p>
+        </details>
+        <details>
+          <summary>Was passiert mit meiner Nachricht?</summary>
+          <p class="antwort">Sie wird gespeichert, zusammen mit deinem Namen und einer Kontaktmöglichkeit, falls du sie angibst. Ohne Kontaktmöglichkeit kann dir niemand antworten — schreib sie also dazu, wenn dir eine Antwort wichtig ist.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="fuss-karte">
+      <div class="fuss-oben">
+        <p class="fuss-claim">Der persönliche Mitarbeiter für kleine Betriebe. Er lernt alles selbst von deiner Webseite, du musst nichts vorbereiten.</p>
+
+        <div class="fuss-spalte">
+          <h4>Erkunden</h4>
+          <ul>
+            <li><a href="start.html#funktionen">Funktionen</a></li>
+            <li><a href="start.html#preis">Preis</a></li>
+            <li><a href="demo-nordform.html">Demo</a></li>
+            <li><a href="kontakt.html" aria-current="page">Kontakt</a></li>
+          </ul>
+        </div>
+
+        <!-- Impressum, Datenschutz und AGB stehen bewusst als Text statt als
+             Link. Sie sind fuer ein gewerbliches Angebot in der Schweiz und
+             der EU Pflicht und muessen vor dem Livegang existieren, aber ein
+             Link ins Nichts ist schlechter als ein ehrliches "folgt". -->
+        <div class="fuss-spalte">
+          <h4>Rechtliches</h4>
+          <ul>
+            <li><span class="folgt">Impressum <em>folgt</em></span></li>
+            <li><span class="folgt">Datenschutz <em>folgt</em></span></li>
+            <li><span class="folgt">AGB <em>folgt</em></span></li>
+          </ul>
+        </div>
+
+        <div class="fuss-cta">
+          <a class="fuss-aktion" href="kontakt.html">
+            Sprich mit Aura
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Kein Formular, ein echtes Gespräch</p>
+
+          <a class="fuss-aktion fuss-aktion--rand" href="onboarding-aura.html">
+            14 Tage gratis testen
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Ohne Zahlungsmittel</p>
+        </div>
+      </div>
+
+      <div class="fuss-marke">
+        <span class="fuss-punkt" aria-hidden="true"></span>
+        <a class="fuss-wort" href="start.html#oben">AuraChat</a>
+      </div>
+
+      <div class="fuss-unten">
+        <span>AuraChat © 2026 · KI-Agenten für kleine Betriebe</span>
+        <span>Schweiz · <time id="fussZeit">--:--</time></span>
+      </div>
+    </div>
+  </footer>
+
+<!-- Fehlte bisher komplett auf dieser Seite: Ohne seite.js kein Scroll-
+     Schatten im Kopf, kein sanftes Anker-Scrollen, kein "nur eine Antwort
+     offen" bei der FAQ oben, und (seit heute) keine laufende Uhr im Footer. -->
+<script src="lib/seite.js"></script>
+
+</body>
+</html>

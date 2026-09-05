@@ -752,26 +752,34 @@
     </div>
   </section>
 
-  <!-- ══ FOOTER ═════════════════════════════════════════════════════════ -->
+  <!-- ══ FOOTER ═════════════════════════════════════════════════════════
+       Helle Karte statt dunklem Balken (siehe seite.css). Der Schriftzug
+       unten ist ein echter Link zurueck nach oben, kein Bild und keine
+       Deko — deshalb kein zweites kleines "AuraChat"-Logo obendrauf, das
+       waere ein zweiter Link zum selben Ziel. Kein "Follow me": Es gibt
+       keine Social-Media-Konten, eine erfundene Zeile waere schlimmer als
+       eine fehlende. Zwei echte Wege statt eines Formulars in der CTA-
+       Spalte: mit Aura schreiben, oder direkt testen. -->
   <footer>
-    <div class="bahn">
-      <a class="logo" href="#oben"><span class="zeichen" aria-hidden="true"></span>AuraChat</a>
-      <div class="footer-raster">
-        <div>
-          <h4>Produkt</h4>
+    <div class="fuss-karte">
+      <div class="fuss-oben">
+        <p class="fuss-claim">Der persönliche Mitarbeiter für kleine Betriebe. Er lernt alles selbst von deiner Webseite, du musst nichts vorbereiten.</p>
+
+        <div class="fuss-spalte">
+          <h4>Erkunden</h4>
           <ul>
             <li><a href="#funktionen">Funktionen</a></li>
             <li><a href="#preis">Preis</a></li>
             <li><a href="demo-nordform.html">Demo</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
           </ul>
         </div>
-        <!-- "Über uns" und "Kontakt" sind raus: Es gibt weder Seite noch
-             Abschnitt dazu, ein Link darauf waere tot.
-             Impressum, Datenschutz und AGB stehen bewusst als Text statt als
+
+        <!-- Impressum, Datenschutz und AGB stehen bewusst als Text statt als
              Link. Sie sind fuer ein gewerbliches Angebot in der Schweiz und
              der EU Pflicht und muessen vor dem Livegang existieren, aber ein
              Link ins Nichts ist schlechter als ein ehrliches "folgt". -->
-        <div>
+        <div class="fuss-spalte">
           <h4>Rechtliches</h4>
           <ul>
             <li><span class="folgt">Impressum <em>folgt</em></span></li>
@@ -779,17 +787,30 @@
             <li><span class="folgt">AGB <em>folgt</em></span></li>
           </ul>
         </div>
-        <div>
-          <h4>Konto</h4>
-          <ul>
-            <li><a href="dashboard.html">Anmelden</a></li>
-            <li><a href="onboarding-aura.html">Agent einrichten</a></li>
-          </ul>
+
+        <div class="fuss-cta">
+          <a class="fuss-aktion" href="kontakt.html">
+            Sprich mit Aura
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Kein Formular, ein echtes Gespräch</p>
+
+          <a class="fuss-aktion fuss-aktion--rand" href="onboarding-aura.html">
+            14 Tage gratis testen
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Ohne Zahlungsmittel</p>
         </div>
       </div>
-      <div class="footer-fuss">
-        <span>KI-Agenten für kleine Betriebe</span>
-        <span>© 2026 AuraChat</span>
+
+      <div class="fuss-marke">
+        <span class="fuss-punkt" aria-hidden="true"></span>
+        <a class="fuss-wort" href="#oben">AuraChat</a>
+      </div>
+
+      <div class="fuss-unten">
+        <span>AuraChat © 2026 · KI-Agenten für kleine Betriebe</span>
+        <span>Schweiz · <time id="fussZeit">--:--</time></span>
       </div>
     </div>
   </footer>
