@@ -4,11 +4,21 @@
 // Text-Dateien (.txt/.md) werden NICHT hier verarbeitet — die liest das Frontend direkt.
 // Der API-Schlüssel bleibt hier auf dem Server.
 
-const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { json, holeIp, originErlaubt, rateOk, serverFehler } = require("./lib/schutz");
+const { pruefeAnmeldung } = require("./lib/anmeldung");
 const { rufeClaude } = require("./lib/claude");
 
 // ~6,7 Mio. Base64-Zeichen ≈ 5 MB Rohdaten -> Obergrenze fürs Hochladen.
 const MAX_BASE64 = 6_700_000;
+
+// Erlaubte Dateitypen, abschliessend aufgezählt.
+//
+// Vorher galt: alles, was mit "image/" anfängt, wird als Bild durchgereicht.
+// Der mediaType kommt aber ungeprüft aus dem Browser — "image/svg+xml" oder
+// "image/irgendwas" ging damit genauso durch wie ein echtes Foto. Eine feste
+// Liste ist die einzige Prüfung, die nicht davon abhängt, was der Absender
+// über seine eigene Datei behauptet.
+const ERLAUBTE_TYPEN = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"];
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
@@ -20,6 +30,11 @@ exports.handler = async (event) => {
     return json(429, { error: "Zu viele Uploads. Bitte einen Moment warten." });
   }
 
+  // Dokumente lesen kostet einen Claude-Aufruf mit bis zu 5 MB Anhang. Das ist
+  // eine Funktion für angemeldete Kunden, kein offener Dienst.
+  const anmeldung = await pruefeAnmeldung(event);
+  if (!anmeldung.ok) return anmeldung.antwort;
+
   let dateiname, mediaType, daten;
   try { ({ dateiname, mediaType, daten } = JSON.parse(event.body || "{}")); }
   catch { return json(400, { error: "Ungültiges JSON" }); }
@@ -29,14 +44,12 @@ exports.handler = async (event) => {
   }
 
   // Content-Block je nach Dateityp bauen
-  let block;
-  if (mediaType.startsWith("image/")) {
-    block = { type: "image", source: { type: "base64", media_type: mediaType, data: daten } };
-  } else if (mediaType === "application/pdf") {
-    block = { type: "document", source: { type: "base64", media_type: "application/pdf", data: daten } };
-  } else {
-    return json(415, { error: "Nur Bilder oder PDF werden hier verarbeitet." });
+  if (!ERLAUBTE_TYPEN.includes(mediaType)) {
+    return json(415, { error: "Nur PNG, JPEG, WebP, GIF oder PDF werden hier verarbeitet." });
   }
+  const block = mediaType === "application/pdf"
+    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: daten } }
+    : { type: "image", source: { type: "base64", media_type: mediaType, data: daten } };
 
   const anweisung =
     `Das ist ein Dokument der Firma (z.B. Menükarte, Preisliste, Broschüre) — Dateiname: ${dateiname || "unbekannt"}. ` +
@@ -56,6 +69,12 @@ exports.handler = async (event) => {
     const text = data.content?.[0]?.text?.trim() || "";
     return json(200, { text });
   } catch (e) {
-    return json(502, { error: e.name === "AbortError" ? "Zeitüberschreitung beim Lesen" : e.message });
+    // Die Zeitüberschreitung darf der Nutzer erfahren — sie sagt ihm, was zu
+    // tun ist (kleinere Datei). Alles andere bleibt im Log.
+    if (e.name === "AbortError") {
+      return json(504, { error: "Das Lesen hat zu lange gedauert. Versuch es mit einer kleineren Datei." });
+    }
+    return serverFehler("dokument-lesen", e,
+      "Das Dokument konnte nicht gelesen werden. Bitte nochmal versuchen.");
   }
 };

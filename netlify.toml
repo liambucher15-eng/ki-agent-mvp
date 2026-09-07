@@ -6,6 +6,62 @@
 [functions]
   included_files = ["data/**"]
 
+# ── Sicherheits-Kopfzeilen ──────────────────────────────────────────────────
+# Gelten für JEDE ausgelieferte Seite. Bis hierher stand in dieser Datei nur
+# X-Robots-Tag; keine einzige Schutz-Kopfzeile war gesetzt.
+#
+# ACHTUNG bei frame-ancestors und X-Frame-Options: Die stehen bewusst NICHT
+# hier, sondern weiter unten pro Seite. Ein globales Einbett-Verbot würde
+# widget-frame.html abschalten — und damit das Produkt. Diese Seite ist genau
+# dafür gebaut, im iframe auf einer FREMDEN Kundendomain zu laufen.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # HTTPS erzwingen, auch beim nächsten Besuch. Netlify liefert ohnehin nur
+    # per HTTPS aus; diese Zeile sorgt dafür, dass der Browser es sich merkt und
+    # einen http-Aufruf gar nicht erst rausschickt.
+    #
+    # BEWUSST OHNE "preload": Der Eintrag in die Preload-Liste der Browser ist
+    # praktisch nicht rückgängig zu machen und gilt für ALLE Subdomains. Solange
+    # nicht bestätigt ist, unter welcher Domain die Seite läuft (siehe die
+    # Warnung in robots.txt), wäre das eine Zusage, die man später bereut.
+    # Nachtragen, sobald die Domain steht und jede Subdomain per HTTPS läuft.
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+    # Der Browser soll den Dateityp nicht raten. Ohne das kann eine Datei, die
+    # als Text ausgeliefert wird, als Skript ausgeführt werden.
+    X-Content-Type-Options = "nosniff"
+
+    # Beim Klick auf einen fremden Link nur die Domain mitgeben, nicht den vollen
+    # Pfad. Sonst erfährt die Zielseite Adressen wie /dashboard.html?firma=…
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Was die Seite an Geräten anfassen darf. MIKROFON BLEIBT ERLAUBT — der Chat
+    # hat Spracheingabe (widget-frame.html, lib/chat-ui.js). Ein pauschales
+    # microphone=() würde sie stumm abschalten, und der Fehlerpfad dafür ist
+    # heute unsichtbar (siehe WISSEN-aurachat-fallstricke).
+    Permissions-Policy = "geolocation=(), camera=(), payment=(), usb=(), microphone=(self)"
+
+    # ── Content-Security-Policy: ZUERST NUR BEOBACHTEN ──────────────────────
+    # Report-Only heisst: Der Browser meldet Verstösse in der Konsole, blockiert
+    # aber nichts. Das ist hier keine Bequemlichkeit, sondern nötig — start.html,
+    # preis.html und dashboard.html arbeiten durchgehend mit inline <script> und
+    # <style>. Eine scharfe Regel legt die Seite in derselben Sekunde lahm.
+    #
+    # VORGEHEN: ausrollen, ein paar Tage die Browser-Konsole beobachten, die
+    # Liste ergänzen, dann die Kopfzeile in "Content-Security-Policy" umbenennen.
+    # Erst dann schützt sie wirklich.
+    #
+    # Die Supabase-Adresse steht hier fest verdrahtet, genau wie in
+    # public/lib/supabase-config.js. Wer das Projekt wechselt, muss BEIDE
+    # Stellen anfassen.
+    #
+    # challenges.cloudflare.com steht schon drin, obwohl der Bot-Schutz noch
+    # nicht eingeschaltet ist (public/probe.html, data-sitekey). Sonst waere
+    # der Tag, an dem jemand den Site Key eintraegt, genau der Tag, an dem die
+    # Probefahrt ohne sichtbare Fehlermeldung nicht mehr laedt.
+    Content-Security-Policy-Report-Only = "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.clerk.accounts.dev https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://naxicmzlnkbikvitkxgj.supabase.co https://img.clerk.com; media-src 'self' blob:; connect-src 'self' https://naxicmzlnkbikvitkxgj.supabase.co https://*.clerk.accounts.dev https://clerk-telemetry.com https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com"
+
 # Produktlinks, die der AGENT vorschlägt. In data/nordform.json stehen Links der
 # Form /p/eichentisch-nord — genau so, wie ein echter Shop sie hätte. Ohne diese
 # Weiterleitung führt jeder Produktvorschlag ins Leere, und die Vorführung bricht
@@ -21,6 +77,31 @@
   from = "/p/*"
   to = "/demo-nordform-produkt.html?p=:splat"
   status = 200
+
+# ── Interne Prüfstände: nicht mehr erreichbar ───────────────────────────────
+# test-einbetten.html und demo-shop.html sind Werkbank, nicht Produkt. Sie
+# trugen bisher nur noindex — wer die Adresse kannte, kam trotzdem hin. Ein
+# öffentlich erreichbarer Prüfstand ist die harmloseste Sorte "debug endpoint",
+# aber er gehört trotzdem nicht auf eine Verkaufsseite.
+#
+# 404 STATT LÖSCHEN: Die Dateien bleiben im Repo. Wer lokal daran arbeitet,
+# muss die zwei Regeln hier vorübergehend auskommentieren.
+#
+# demo-restaurant.html bleibt bewusst ERREICHBAR: data/aurachat.json nennt sie
+# dem Agenten als Demo-Adresse. Sperren hiesse, dass Aura auf der eigenen
+# Startseite auf einen toten Link zeigt. (Der Footer verlinkt inzwischen
+# demo-nordform — welche der beiden die Demo ist, gehört einmal geklärt.)
+[[redirects]]
+  from = "/test-einbetten.html"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/demo-shop.html"
+  to = "/404.html"
+  status = 404
+  force = true
 
 # Die Startseite. Ohne diese Regel zeigte aurachat.ch den alten Prototyp aus
 # public/index.html ("KI-Agent MVP") statt der Marketingseite — die eigentliche
@@ -55,15 +136,27 @@
 # Textauszug. noindex nimmt sie wirklich heraus.
 
 # Anwendung: nur für angemeldete Nutzer, kein Suchergebnis.
+#
+# Dazu das Einbett-Verbot: Diese beiden Seiten dürfen in KEINEM fremden iframe
+# stehen. Sonst könnte eine fremde Seite das Dashboard unsichtbar über ihre
+# eigenen Knöpfe legen und den angemeldeten Kunden Klicks ausführen lassen,
+# die er nie wollte (Clickjacking).
+#
+# X-Frame-Options UND frame-ancestors: Ersteres ist die alte Kopfzeile, die
+# jeder Browser versteht, letzteres die aktuelle. Beide kosten nichts.
 [[headers]]
   for = "/dashboard.html"
   [headers.values]
     X-Robots-Tag = "noindex"
+    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors 'none'"
 
 [[headers]]
   for = "/onboarding-aura.html"
   [headers.values]
     X-Robots-Tag = "noindex"
+    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors 'none'"
 
 # Technisch: Chat-Ansichten, die nie allein aufgerufen werden sollen.
 [[headers]]
@@ -71,8 +164,39 @@
   [headers.values]
     X-Robots-Tag = "noindex"
 
+# widget-frame.html bekommt mit Absicht KEIN Einbett-Verbot. Diese Seite IST das
+# Produkt: Sie läuft im iframe auf der Webseite des Kunden, auf einer fremden
+# Domain. X-Frame-Options oder frame-ancestors würden hier jeden eingebauten
+# Agenten stumm abschalten. Wer diese Datei später anfasst: bitte nicht
+# "vergessene" Kopfzeile nachtragen.
+#
+# Der Schutz an dieser Stelle ist ein anderer: chat.js prüft über
+# originPasstZuFirma(), dass die einbettende Domain die im Onboarding
+# hinterlegte Webseite dieser Firma ist (lib/schutz.js).
 [[headers]]
   for = "/widget-frame.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# ── Die Rechtsseiten, SOLANGE SIE ENTWÜRFE SIND ────────────────────────────
+# impressum.html, datenschutz.html und agb.html sind Gerüste mit Platzhaltern.
+# Ein Impressum mit Lücken im Suchindex ist schlimmer als keines: Es sieht
+# gültig aus und ist es nicht.
+#
+# DIESE DREI BLÖCKE GEHÖREN GELÖSCHT, sobald die Texte stehen — Rechtsseiten
+# MÜSSEN auffindbar sein. Schritt 5 in RECHT-CHECKLISTE.md.
+[[headers]]
+  for = "/impressum.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/datenschutz.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/agb.html"
   [headers.values]
     X-Robots-Tag = "noindex"
 

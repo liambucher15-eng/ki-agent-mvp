@@ -105,6 +105,19 @@
     body.hat-verlauf #kopf-name { font-size: 0.92rem; }
     body.hat-verlauf #kopf-rolle, body.hat-verlauf #chips { display: none; }
     body.hat-verlauf #held { padding-bottom: 0.55rem; }
+
+    /* ── KI-Hinweis ──────────────────────────────────────────────────────
+       Der Besucher muss erkennen können, dass er mit einer Maschine
+       schreibt (EU AI Act Art. 50). Die Figur hat einen Namen, ein Gesicht
+       und einen Charakter — genau deshalb ist der Hinweis hier nötig und
+       nicht bloss Formsache.
+
+       Er steht bewusst NICHT bei #kopf-rolle, das im laufenden Gespräch
+       ausgeblendet wird: Eine Kennzeichnung, die verschwindet, sobald das
+       Gespräch beginnt, ist keine. Klein und ruhig, aber immer da. */
+    #kopf-ki { font-size: 0.68rem; color: #6a6a78; margin-top: 0.15rem; }
+    body.hat-verlauf #kopf-ki { font-size: 0.64rem; }
+
     /* Schallwellen — nur beim Vorlesen sichtbar */
     #welle { display: none; gap: 3px; align-items: center; height: 13px; margin-top: 0.05rem; }
     #welle span { width: 3px; height: 13px; border-radius: 2px; background: var(--farbe);
@@ -305,6 +318,9 @@
     <div id="kopf-name">Assistent</div>
     <div id="kopf-rolle"></div>
     <div id="kopf-online">Online</div>
+    <!-- Pflichtkennzeichnung, kein Beiwerk: EU AI Act Art. 50 verlangt, dass
+         erkennbar ist, wer mit einer KI spricht. Nicht entfernen. -->
+    <div id="kopf-ki">KI-Assistent · Antworten werden automatisch erzeugt</div>
     <div id="welle" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
   </div>
 

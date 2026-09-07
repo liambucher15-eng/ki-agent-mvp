@@ -507,7 +507,7 @@
         const jobId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                        : Date.now() + "-" + Math.random().toString(36).slice(2);
         // 1) Background-Scan anstoßen (antwortet sofort mit 202)
-        const start = await fetch("/.netlify/functions/scan-background", {
+        const start = await Auth.fetch("/.netlify/functions/scan-background", {
           method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ url, jobId }),
         });
         if (start.status !== 202 && !start.ok) throw new Error("Scan konnte nicht gestartet werden");
@@ -584,7 +584,7 @@
           } else {
             stat.textContent = "liest";
             const dataUrl = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
-            const resp = await fetch("/.netlify/functions/dokument-lesen", { method:"POST", headers:{"content-type":"application/json"},
+            const resp = await Auth.fetch("/.netlify/functions/dokument-lesen", { method:"POST", headers:{"content-type":"application/json"},
               body: JSON.stringify({ dateiname:f.name, mediaType:f.type, daten:String(dataUrl).split(",")[1] }) });
             const d = await resp.json(); if (!resp.ok) throw new Error(d.error||"Fehler");
             text = d.text || "";
@@ -857,7 +857,7 @@
       charBusySetzen(true);
       const tippt = charMsg("ki", "denkt nach…", "ki tippt");
       try {
-        const res = await fetch("/.netlify/functions/charakter-prompt", {
+        const res = await Auth.fetch("/.netlify/functions/charakter-prompt", {
           method: "POST", headers: { "content-type": "application/json" },
           body: JSON.stringify({ verlauf: charVerlauf, firma: daten.name || "", angebot: daten.angebot || "" }),
         });
@@ -1009,7 +1009,7 @@
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                      : Date.now() + "-" + Math.random().toString(36).slice(2));
-      const start = await fetch("/.netlify/functions/charakter-background", {
+      const start = await Auth.fetch("/.netlify/functions/charakter-background", {
         method: "POST", headers: { "content-type": "application/json" },
         // stilWahl geht hier mit, damit sie fuer JEDE Aktion gilt: Entwurf,
         // Richtungen, Zustaende und spaetere Nachbesserungen. Wuerde sie nur

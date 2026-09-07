@@ -19,6 +19,11 @@ process.env.STRIPE_PREIS_START = "price_start_test";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_probe";
 process.env.SUPABASE_URL = "https://probe.invalid";
 process.env.SUPABASE_SERVICE_KEY = "service_probe";
+// Seit lib/anmeldung.js prueft der Server das Clerk-Token selbst. Ohne
+// CLERK_ISSUER lehnt er JEDE angemeldete Anfrage ab — das ist Absicht
+// (fail-closed), hier wird deshalb ein eigener Herausgeber vorgetaeuscht.
+const HERAUSGEBER = "https://probe-clerk.invalid";
+process.env.CLERK_ISSUER = HERAUSGEBER;
 
 const checkout = require("../netlify/functions/abo-checkout.js");
 const webhook = require("../netlify/functions/stripe-webhook.js");
@@ -34,6 +39,26 @@ function kaufAnfrage(koerper) {
   };
 }
 
+// ── Anmeldung vortaeuschen ───────────────────────────────────────────────
+// Eigenes RSA-Paar; der JWKS-Endpunkt wird unten in fangeAb() mitbedient.
+const paar = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const KID = "abo-test-1";
+const JWK = { ...paar.publicKey.export({ format: "jwk" }), kid: KID, alg: "RS256", use: "sig" };
+
+function token(sub) {
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const daten = b64({ alg: "RS256", typ: "JWT", kid: KID }) +
+    "." + b64({ iss: HERAUSGEBER, sub, exp: Math.floor(Date.now() / 1000) + 60 });
+  return daten + "." + crypto.sign("sha256", Buffer.from(daten, "utf8"), paar.privateKey).toString("base64url");
+}
+
+// Anfrage einer ANGEMELDETEN Person. Das Token bestimmt, wer sie ist.
+function kaufAnfrageAls(sub, koerper) {
+  const a = kaufAnfrage(koerper);
+  a.headers.authorization = "Bearer " + token(sub);
+  return a;
+}
+
 function webhookAnfrage(nutzlast) {
   const body = JSON.stringify(nutzlast);
   const t = Math.floor(Date.now() / 1000);
@@ -47,6 +72,9 @@ function fangeAb(vorgaben) {
   const rufe = [];
   global.fetch = async (url, opts) => {
     rufe.push({ url: String(url), methode: opts && opts.method, koerper: opts && opts.body });
+    if (String(url).includes("jwks.json")) {
+      return { ok: true, status: 200, json: async () => ({ keys: [JWK] }) };
+    }
     if (String(url).includes("api.stripe.com")) {
       return { ok: true, json: async () => ({ id: "cs_test", url: "https://checkout.stripe.com/PROBE" }) };
     }
@@ -77,7 +105,7 @@ function fangeAb(vorgaben) {
 test("Kauf: der Nutzer geht an Stripe, keine Firma", async () => {
   const f = fangeAb();
   try {
-    const a = await checkout.handler(kaufAnfrage({ nutzer: "user_abc", plan: "grow", basis: "https://aurachat.ch" }));
+    const a = await checkout.handler(kaufAnfrageAls("user_abc", { plan: "grow", basis: "https://aurachat.ch" }));
     assert.equal(a.statusCode, 200);
     const p = f.stripeKoerper();
     assert.equal(p.get("metadata[nutzer]"), "user_abc");
@@ -92,7 +120,7 @@ test("Kauf: nach der Zahlung geht es ins ONBOARDING, nicht ins Dashboard", async
   // waere an dieser Stelle eine Sackgasse.
   const f = fangeAb();
   try {
-    await checkout.handler(kaufAnfrage({ nutzer: "u", plan: "grow", basis: "https://aurachat.ch" }));
+    await checkout.handler(kaufAnfrageAls("u", { plan: "grow", basis: "https://aurachat.ch" }));
     const p = f.stripeKoerper();
     assert.match(p.get("success_url"), /onboarding-aura\.html\?bezahlt=grow$/);
     assert.match(p.get("cancel_url"), /preis\.html/);
@@ -104,8 +132,35 @@ test("Kauf: ohne Anmeldung gar nicht erst zu Stripe", async () => {
   const f = fangeAb();
   try {
     const a = await checkout.handler(kaufAnfrage({ plan: "grow", basis: "https://aurachat.ch" }));
-    assert.equal(a.statusCode, 400);
+    assert.equal(a.statusCode, 401);
     assert.equal(f.stripeKoerper(), null);
+  } finally { f.ende(); }
+});
+
+test("Kauf: ein gefaelschtes Token kommt nicht durch", async () => {
+  const f = fangeAb();
+  try {
+    const a = kaufAnfrage({ plan: "grow", basis: "https://aurachat.ch" });
+    a.headers.authorization = "Bearer nicht.mal.echt";
+    assert.equal((await checkout.handler(a)).statusCode, 401);
+    assert.equal(f.stripeKoerper(), null);
+  } finally { f.ende(); }
+});
+
+test("Kauf: die Nutzer-ID kommt aus dem TOKEN, nicht aus dem Body", async () => {
+  // Der Kern der Luecke, die lib/anmeldung.js geschlossen hat: Vorher glaubte
+  // der Server jede Nutzer-ID, die im Body stand. Wer eine fremde kannte,
+  // konnte ihr ein Abo unterschieben — und ueber abo-portal.js an ihre
+  // Rechnungsdaten.
+  const f = fangeAb();
+  try {
+    const a = kaufAnfrageAls("user_echt", {
+      nutzer: "user_fremd", plan: "grow", basis: "https://aurachat.ch",
+    });
+    assert.equal((await checkout.handler(a)).statusCode, 200);
+    const p = f.stripeKoerper();
+    assert.equal(p.get("metadata[nutzer]"), "user_echt");
+    assert.equal(p.get("client_reference_id"), "user_echt");
   } finally { f.ende(); }
 });
 
@@ -113,7 +168,7 @@ test("Kauf: free und Tippfehler werden abgelehnt, nicht geraten", async () => {
   const f = fangeAb();
   try {
     for (const plan of ["free", "gorw", undefined]) {
-      const a = await checkout.handler(kaufAnfrage({ nutzer: "u", plan, basis: "https://aurachat.ch" }));
+      const a = await checkout.handler(kaufAnfrageAls("u", { plan, basis: "https://aurachat.ch" }));
       assert.equal(a.statusCode, 400, "Plan " + plan);
     }
     assert.equal(f.stripeKoerper(), null, "kein einziger Stripe-Aufruf");

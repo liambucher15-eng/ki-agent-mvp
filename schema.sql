@@ -104,6 +104,24 @@ grant execute on function rate_hit(text, int, int) to anon;
 -- 4) Storage: Bucket "charaktere" für Charakterbilder (Milestone 1)
 --    Öffentlich lesbar (Widget zeigt die Bilder), Upload nur in den
 --    eigenen Ordner (Pfad = eigene Nutzer-ID).
+--
+--    ACHTUNG, DAS SIEHT WIDERSPRÜCHLICH AUS: Der Bucket steht auf
+--    public = true. Damit ist JEDE Datei darin über ihre URL abrufbar, ohne
+--    Anmeldung — die "for select to authenticated"-Policy unten ändert daran
+--    nichts, öffentlich gewinnt.
+--
+--    Das ist Absicht und notwendig: Das Widget läuft auf der Webseite des
+--    KUNDEN, wo niemand bei uns angemeldet ist. Wären die Bilder geschützt,
+--    hätte jeder Agent auf jeder Kundenseite ein leeres Gesicht.
+--
+--    WAS DARAUS FOLGT: In diesen Bucket gehört ausschliesslich, was ohnehin
+--    jeder sehen darf — also Charakterbilder. Wer hier später Dokumente,
+--    Uploads aus dem Onboarding oder sonst etwas Vertrauliches ablegt, macht
+--    es im selben Moment öffentlich. Dafür einen zweiten, PRIVATEN Bucket
+--    anlegen.
+--
+--    Die Policies unten regeln das SCHREIBEN, und nur das: hochladen und
+--    ersetzen darf jeder nur in seinem eigenen Ordner.
 -- ────────────────────────────────────────────────────────────────
 insert into storage.buckets (id, name, public, file_size_limit)
   values ('charaktere', 'charaktere', true, 5242880)

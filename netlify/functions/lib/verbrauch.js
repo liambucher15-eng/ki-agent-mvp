@@ -165,8 +165,62 @@ function promptZusatz(lage, kannKontakt) {
   return "";
 }
 
+// ── Deckel ueber die GANZE Plattform ────────────────────────────────────────
+//
+// Alles oberhalb dieser Zeile zaehlt je Firma. Das schuetzt den einzelnen
+// Kunden vor seiner eigenen Rechnung — aber niemanden vor der Summe.
+//
+// Was bisher fehlte: eine Obergrenze ueber ALLE Firmen zusammen. Drei Faelle,
+// in denen die Zaehlung je Firma nichts ausrichtet:
+//   - ein Fehler, der eine Antwortschleife ausloest,
+//   - hundert frisch angelegte Testkonten mit je 14 Gratistagen,
+//   - jemand, der die Probefahrt automatisiert aufruft.
+// In allen dreien bleibt jede einzelne Firma unter ihrer Grenze, und die
+// Summe laeuft trotzdem davon.
+//
+// Umgesetzt mit dem Zaehler, den es schon gibt (rate_hit in schema.sql): ein
+// Schluessel je Kalendertag, Fenster 24 Stunden. Kein neues Schema, keine
+// neue Tabelle.
+const { rateOkStreng, sicherheitsLog } = require("./schutz");
+
+// Antworten pro TAG ueber alle Firmen zusammen.
+//
+// 4000 x CHF 0,0036 = rund CHF 14 am Tag, gut CHF 430 im Monat. Das liegt
+// weit ueber allem, was der heutige Kundenstamm erzeugt, und weit unter einer
+// Rechnung, die weh tut. Notbremse, keine Sparmassnahme.
+//
+// Zum Anheben: Umgebungsvariable PLATTFORM_TAGESDECKEL setzen — dafuer ist
+// kein Deploy noetig. Wer nachts eine Rechnung sieht, will einen Regler,
+// keinen Build.
+const PLATTFORM_TAG = Number(process.env.PLATTFORM_TAGESDECKEL) || 4000;
+
+function heuteSchluessel() {
+  return "plattform:" + new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * true = es darf noch geantwortet werden.
+ *
+ * Wird in chat.js VOR dem Modellaufruf gefragt. Ist der Deckel erreicht,
+ * faellt der Agent in denselben Nachrichtendienst wie bei vollem
+ * Monatskontingent — er verstummt nicht. Der Grundsatz gilt auch hier: Der
+ * Besucher der Kundenseite hat nichts falsch gemacht.
+ *
+ * FAIL-CLOSED ueber rateOkStreng: Ein Deckel, der bei Stoerung durchlaesst,
+ * ist genau dann weg, wenn es auf ihn ankaeme.
+ */
+async function plattformDeckelOk() {
+  const ok = await rateOkStreng(heuteSchluessel(), PLATTFORM_TAG, 24 * 60 * 60);
+  if (!ok) {
+    sicherheitsLog("plattform",
+      "Tagesdeckel von " + PLATTFORM_TAG + " Antworten erreicht — Nachrichtendienst fuer ALLE Firmen. " +
+      "Ursache pruefen, BEVOR PLATTFORM_TAGESDECKEL angehoben wird.");
+  }
+  return ok;
+}
+
 module.exports = {
   GRENZEN, HINWEIS_AB, SPARMODUS_AB, NACHRICHT_AB,
-  SPAR_MAX_TOKENS, SPAR_VERLAUF,
-  stufeFuer, kuerzeVerlauf, promptZusatz,
+  SPAR_MAX_TOKENS, SPAR_VERLAUF, PLATTFORM_TAG,
+  stufeFuer, kuerzeVerlauf, promptZusatz, plattformDeckelOk,
 };

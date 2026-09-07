@@ -25,7 +25,9 @@ const { speichereBild, istEigeneBildUrl, konfiguriert: storageOk } = require("./
 const { baueCharakterPrompt, baueRichtungen, HINTERGRUND_ANWEISUNG } = require("./lib/baueCharakterPrompt");
 const { freistellen } = require("./lib/freistellen");
 const { setzeJob, raeumeAlteJobs } = require("./lib/jobSpeicher");
-const { holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { holeIp, originErlaubt, rateOkStreng, sicherheitsLog } = require("./lib/schutz");
+const { pruefeAnmeldung } = require("./lib/anmeldung");
+const { besitzerVonFirma } = require("./lib/firmaLaden");
 
 // freistellen() selbst bricht seit der Umstellung auf Rand-Mehrheit + Flood-Fill
 // nicht mehr ab, wenn kein einheitlicher Hintergrund erkennbar ist — dann kommt
@@ -243,14 +245,32 @@ exports.handler = async (event) => {
   if (firmaId != null && (typeof firmaId !== "string" || firmaId.length > 100))
     return { statusCode: 400 };
 
+  // ── Wer ruft das hier auf? ────────────────────────────────────────────────
+  // Bildgenerierung kostet bei Gemini echtes Geld. Vorher konnte das JEDER
+  // auslösen, der die Adresse der Function kannte; es wurde nirgends geprüft,
+  // wem die firmaId gehört. Ein Fremder konnte damit das Monatskontingent einer
+  // fremden Firma leerlaufen lassen — die Rate-Limits unten zählen ja auf
+  // genau diese firmaId.
+  const anmeldung = await pruefeAnmeldung(event);
+  if (!anmeldung.ok) return { statusCode: 401 };
+
+  // Und wenn eine Firma genannt ist: Sie muss dem Anmelder gehören.
+  if (firmaId && anmeldung.nutzer) {
+    const besitzer = await besitzerVonFirma(firmaId).catch(() => null);
+    if (besitzer !== anmeldung.nutzer) {
+      sicherheitsLog("charakter", "fremde firmaId " + firmaId + " von " + anmeldung.nutzer);
+      return { statusCode: 403 };
+    }
+  }
+
   // Kosten-Bremsen: pro IP und (wenn bekannt) pro Firma. Alles ausser dem
   // Einzelbild-"bearbeiten" gilt als (teurere) Generierung.
   const ip = holeIp(event);
   const istGen = aktion !== "bearbeiten";
-  if (!(await rateOk((istGen ? "chargen:" : "charedit:") + ip, istGen ? 3 : 10, 3600)))
+  if (!(await rateOkStreng((istGen ? "chargen:" : "charedit:") + ip, istGen ? 3 : 10, 3600)))
     return { statusCode: 429 };
   if (firmaId &&
-      !(await rateOk((istGen ? "chargenf:" : "chareditf:") + firmaId, istGen ? 5 : 15, MONAT_SEK)))
+      !(await rateOkStreng((istGen ? "chargenf:" : "chareditf:") + firmaId, istGen ? 5 : 15, MONAT_SEK)))
     return { statusCode: 429 };
 
   // Konfigurationsfehler sollen als Job-Fehler sichtbar werden (nicht stumm 202).

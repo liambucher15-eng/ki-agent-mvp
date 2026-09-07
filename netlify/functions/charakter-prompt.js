@@ -11,6 +11,7 @@
 // Sicherheit/Kosten: Origin-Prüfung + Rate-Limit, Verlauf und Felder gedeckelt.
 
 const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { pruefeAnmeldung } = require("./lib/anmeldung");
 const { rufeClaude } = require("./lib/claude");
 
 const MAX_NACHRICHT = 600, MAX_VERLAUF = 16, MAX_FIRMA = 120, MAX_ANGEBOT = 300;
@@ -21,6 +22,12 @@ exports.handler = async (event) => {
   if (!(await rateOk("charprompt:" + holeIp(event), 40, 60))) {
     return json(429, { error: "Zu viele Anfragen." });
   }
+
+  // Auch das hier ist ein Claude-Aufruf und gehört ins angemeldete Onboarding,
+  // nicht ins offene Netz — 40 Aufrufe pro Minute und IP sind eine Bremse,
+  // keine Tür.
+  const anmeldung = await pruefeAnmeldung(event);
+  if (!anmeldung.ok) return anmeldung.antwort;
 
   let verlauf, firma, angebot;
   try { ({ verlauf, firma, angebot } = JSON.parse(event.body || "{}")); }

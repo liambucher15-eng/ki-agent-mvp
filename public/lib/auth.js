@@ -72,6 +72,26 @@ const Auth = (function () {
       try { return await c.session.getToken(); } catch (e) { return null; }
     },
 
+    // Wie fetch, aber mit dem Clerk-Token im Authorization-Header.
+    //
+    // Die Netlify Functions prüfen dieses Token seit lib/anmeldung.js
+    // serverseitig. Vorher schickte das Frontend die Nutzer-ID einfach im Body
+    // mit und der Server glaubte sie — wer eine fremde Clerk-ID kannte, kam
+    // damit an fremde Rechnungsdaten.
+    //
+    // Ohne Anmeldung (oder ohne Clerk-Key) bleibt der Header weg und die
+    // Anfrage geht wie bisher raus. Das ist Absicht: Nicht jeder Endpunkt
+    // verlangt eine Anmeldung — die Probefahrt zum Beispiel ist offen.
+    async fetch(url, optionen) {
+      const o = Object.assign({}, optionen || {});
+      o.headers = Object.assign({}, o.headers || {});
+      try {
+        const t = await Auth.token();
+        if (t) o.headers["Authorization"] = "Bearer " + t;
+      } catch (e) { /* ohne Token weiter — der Server entscheidet */ }
+      return window.fetch(url, o);
+    },
+
     // Ist jemand eingeloggt? (Clerk lässt nur bestätigte Konten hinein, deshalb
     // ist das gleichbedeutend mit "Konto vorhanden und E-Mail bestätigt".)
     async hatKonto() {
