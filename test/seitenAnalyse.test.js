@@ -262,9 +262,21 @@ test("analysiere: leere/kaputte Eingabe wirft nicht", () => {
   assert.deepEqual(a.produkte, []);
 });
 
-test("analysiere: Seitentext wird auf 1500 Zeichen gedeckelt", () => {
-  const a = A.analysiere({ text: "z".repeat(5000) });
-  assert.equal(a.inhalt.length, 1500);
+test("analysiere: Seitentext wird auf 9000 Zeichen gedeckelt", () => {
+  // 9000, nicht 1500: Beide Deckel wurden in 4130d38 bewusst angehoben, weil
+  // der Agent auf langen Seiten das Wort "Preis" sonst nie sah — auf
+  // start.html steht es an Zeichen 6439. Der Test wurde damals nicht
+  // mitgezogen und schlug seither fehl; der Code hatte recht.
+  //
+  // Der Deckel in public/widget.js (seitenText()) muss denselben Wert haben.
+  // Wer nur einen erhoeht, erzeugt genau den Fehler zurueck, gegen den beide
+  // angehoben wurden.
+  const a = A.analysiere({ text: "z".repeat(12000) });
+  assert.equal(a.inhalt.length, 9000);
+
+  // Kuerzerer Text bleibt unangetastet.
+  const b = A.analysiere({ text: "z".repeat(500) });
+  assert.equal(b.inhalt.length, 500);
 });
 
 // ── Zusammenfassung für den Prompt ──────────────────────────────────────────

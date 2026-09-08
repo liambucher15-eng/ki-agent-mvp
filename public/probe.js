@@ -28,6 +28,44 @@
   addEventListener("resize", misseKopf);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(misseKopf);
 
+  // ── Bot-Schutz (Cloudflare Turnstile) ──────────────────────────────────
+  //
+  // Wird NUR geladen, wenn in probe.html ein echter Site Key steht. Solange
+  // dort der Platzhalter liegt, passiert hier gar nichts: kein fremdes Skript,
+  // kein Kasten in der Oberflaeche, kein Unterschied fuer den Besucher.
+  //
+  // So laesst sich der Schutz einschalten, ohne die Seite vorher umzubauen —
+  // und ein vergessener Schluessel bricht nichts.
+  function botKasten() {
+    const el = $("botschutz");
+    if (!el) return null;
+    const key = el.getAttribute("data-sitekey") || "";
+    return key && !key.includes("DEIN-") ? el : null;
+  }
+
+  (function ladeBotschutz() {
+    const el = botKasten();
+    if (!el) {
+      const tot = $("botschutz");
+      if (tot) tot.hidden = true;
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  })();
+
+  // Das Token, das Turnstile in ein verstecktes Feld schreibt. Ohne aktiven
+  // Schutz ist es leer — der Server laesst das dann durch (lib/botschutz.js).
+  function botToken() {
+    const el = botKasten();
+    if (!el) return "";
+    const feld = el.querySelector('input[name="cf-turnstile-response"]');
+    return (feld && feld.value) || "";
+  }
+
   let probeId = null;   // die jobId des Scans, zugleich der Schlüssel zum Gespräch
   let verlauf = [];     // Gesprächsverlauf für chat.js
   let laeuft = false;   // verhindert doppelte Absendung
@@ -126,9 +164,10 @@
       const start = await fetch("/.netlify/functions/scan-background", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: adresse, jobId, probe: true }),
+        body: JSON.stringify({ url: adresse, jobId, probe: true, botToken: botToken() }),
       });
       if (start.status === 429) throw new Error("Gerade sind zu viele Probefahrten unterwegs. Bitte in einer Minute nochmal.");
+      if (start.status === 403) throw new Error("Die Sicherheitsprüfung ist nicht durchgelaufen. Bitte lade die Seite neu.");
       if (start.status !== 202 && !start.ok) throw new Error("Der Scan liess sich nicht starten.");
 
       let ergebnis = null, pannen = 0;

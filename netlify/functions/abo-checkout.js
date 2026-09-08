@@ -6,7 +6,8 @@
 // Deshalb nimmt diese Function eine NUTZER-ID entgegen und keine firmaId: Beim
 // Bezahlen existiert der Agent noch nicht.
 
-const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { json, holeIp, originErlaubt, rateOk, serverFehler } = require("./lib/schutz");
+const { pruefeAnmeldung } = require("./lib/anmeldung");
 const { KAUFBAR, TAKTE, konfiguriert, erstelleCheckout } = require("./lib/stripe");
 
 exports.handler = async (event) => {
@@ -20,21 +21,25 @@ exports.handler = async (event) => {
     return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
   }
 
-  let nutzer, basis, plan, takt;
-  try { ({ nutzer, basis, plan, takt } = JSON.parse(event.body || "{}")); }
+  // Wer kauft? Das entscheidet die Signatur des Clerk-Tokens, nicht der Body.
+  //
+  // Hier stand früher als Begründung, warum die ungeprüfte Nutzer-ID aus dem
+  // Browser vertretbar sei: Ein Plan wird erst beim bestätigten Zahlungs-Event
+  // gesetzt (stripe-webhook.js), wer eine fremde ID mitschickt, verschenkt also
+  // sein eigenes Geld. Das stimmte — es hiess aber auch, dass ein Fremder einem
+  // Konto ein Abo unterschieben konnte, an das dessen Besitzer nie wollte.
+  // Beides ist erledigt, sobald die ID aus dem Token kommt.
+  const anmeldung = await pruefeAnmeldung(event);
+  if (!anmeldung.ok) return anmeldung.antwort;
+
+  let basis, plan, takt, nutzerAusBody;
+  try { ({ basis, plan, takt, nutzer: nutzerAusBody } = JSON.parse(event.body || "{}")); }
   catch { return json(400, { error: "Ungültiges JSON" }); }
 
-  // Die Nutzer-ID kommt aus dem Browser (Clerk-Session). Serverseitig prüfen
-  // könnten wir sie nur mit einer Clerk-JWT-Verifikation, die es im Projekt
-  // heute nicht gibt.
-  //
-  // Warum das hier trotzdem trägt: Ein Plan wird ERST beim bestätigten
-  // Zahlungs-Event gesetzt (stripe-webhook.js). Wer eine fremde Nutzer-ID
-  // mitschickt, verschenkt also sein eigenes Geld an jemand anderen — er kann
-  // sich damit nichts erschleichen. Der Schaden bliebe bei ihm.
-  //
-  // Sobald es eine serverseitige Clerk-Prüfung gibt, gehört sie hierher.
-  if (!nutzer || typeof nutzer !== "string") return json(400, { error: "Nicht angemeldet" });
+  // Ohne Clerk (netlify dev, Simulations-Modus) bleibt die Angabe aus dem Body
+  // gültig, damit lokales Testen weiter geht.
+  const nutzer = anmeldung.nutzer || (anmeldung.dev ? nutzerAusBody : null);
+  if (!nutzer || typeof nutzer !== "string") return json(401, { error: "Nicht angemeldet." });
   if (!KAUFBAR.includes(plan)) {
     return json(400, { error: "Plan '" + plan + "' kann nicht gekauft werden." });
   }
@@ -57,6 +62,9 @@ exports.handler = async (event) => {
     const session = await erstelleCheckout({ nutzer, plan, takt, erfolgUrl, abbruchUrl });
     return json(200, { url: session.url });
   } catch (e) {
-    return json(502, { error: e.message });
+    // Stripe-Fehlermeldungen nennen Preis-IDs und Konto-Interna — nichts, was
+    // ein Kunde sehen muss.
+    return serverFehler("abo-checkout", e,
+      "Der Kauf konnte nicht gestartet werden. Bitte versuch es gleich nochmal.");
   }
 };

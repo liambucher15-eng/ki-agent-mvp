@@ -2,7 +2,7 @@
 // Status "done" (mit Ergebnis) oder "error" (mit Fehlertext) ist.
 
 const { leseJob } = require("./lib/jobSpeicher");
-const { json, holeIp, originErlaubt, rateOk } = require("./lib/schutz");
+const { json, holeIp, originErlaubt, rateOk, serverFehler } = require("./lib/schutz");
 
 exports.handler = async (event) => {
   if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
@@ -17,7 +17,7 @@ exports.handler = async (event) => {
 
   let job;
   try { job = await leseJob(jobId); }
-  catch (e) { return json(502, { error: e.message }); }
+  catch (e) { return serverFehler("scan-status", e, "Der Stand ist gerade nicht abrufbar."); }
 
   // Noch kein Eintrag -> die Background-Function ist gerade erst gestartet.
   if (!job) return json(200, { status: "pending" });

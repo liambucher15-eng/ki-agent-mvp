@@ -121,23 +121,89 @@ function preflightAntwort(event) {
   };
 }
 
+// Ein Treffer auf den Zähler. Wirft, wenn die RPC nicht erreichbar ist — die
+// beiden Hüllen darunter entscheiden, was in diesem Fall gilt.
+async function rateHit(kennung, limit, fensterSek) {
+  const res = await fetch(URL_BASIS + "/rest/v1/rpc/rate_hit", {
+    method: "POST",
+    headers: { "content-type": "application/json", apikey: ANON, authorization: "Bearer " + ANON },
+    body: JSON.stringify({ p_key: kennung, p_limit: limit, p_fenster: fensterSek }),
+  });
+  if (!res.ok) throw new Error("rate_hit antwortete " + res.status);
+  return (await res.json()) === true;
+}
+
 // true = Anfrage erlaubt. Nutzt die Postgres-Funktion rate_hit (siehe schema.sql).
-// Fail-open: Ist Supabase/die RPC nicht verfügbar, wird NICHT blockiert (der Chat
-// soll nicht wegen eines fehlenden Limits ausfallen).
+// Fail-open: Ist Supabase/die RPC nicht verfügbar, wird NICHT blockiert.
+//
+// Das ist für die billigen Endpunkte richtig — scan-status etwa soll nicht
+// ausfallen, bloss weil ein Zähler klemmt. Für alles, was Geld kostet, gibt es
+// darunter rateOkStreng().
 async function rateOk(kennung, limit, fensterSek) {
   if (!URL_BASIS || !ANON) return true;
-  try {
-    const res = await fetch(URL_BASIS + "/rest/v1/rpc/rate_hit", {
-      method: "POST",
-      headers: { "content-type": "application/json", apikey: ANON, authorization: "Bearer " + ANON },
-      body: JSON.stringify({ p_key: kennung, p_limit: limit, p_fenster: fensterSek }),
-    });
-    if (!res.ok) return true;
-    return (await res.json()) === true;
-  } catch { return true; }
+  try { return await rateHit(kennung, limit, fensterSek); }
+  catch { return true; }
+}
+
+// Wie rateOk, aber FAIL-CLOSED: Ist der Zähler nicht erreichbar, wird
+// abgelehnt.
+//
+// Für Endpunkte, hinter denen ein bezahlter Modellaufruf steht (chat.js,
+// charakter-background.js). Fällt Supabase aus, gilt sonst gar kein Limit mehr
+// — ausgerechnet in dem Moment, in dem niemand hinschaut. Ein paar Minuten
+// "Bitte gleich nochmal" sind billiger als eine offene Rechnung.
+//
+// Dasselbe Muster steht schon in chat.js beim Probefahrt-Zähler, mit derselben
+// Begründung.
+async function rateOkStreng(kennung, limit, fensterSek) {
+  if (!URL_BASIS || !ANON) {
+    // Ohne konfigurierten Speicher gibt es keinen Zähler — dann greift diese
+    // Bremse gar nicht, und das soll auffallen.
+    if (IST_DEV) return true;
+    sicherheitsLog("rate", "Zähler nicht konfiguriert, strenge Prüfung abgelehnt");
+    return false;
+  }
+  try { return await rateHit(kennung, limit, fensterSek); }
+  catch (e) {
+    sicherheitsLog("rate", "Zähler nicht erreichbar (" + e.message + ") -> abgelehnt: " + kennung);
+    return false;
+  }
+}
+
+// ── Sicherheits-Ereignisse protokollieren ───────────────────────────────────
+//
+// Abgewiesene Herkunft, gerissene Limits, ungültige Signaturen: All das
+// verschwand bisher spurlos. Wer nicht mitschreibt, merkt einen Angriff erst
+// an der Rechnung.
+//
+// Einheitlicher Präfix, damit die Netlify-Logsuche eine Handhabe hat:
+//   SICHERHEIT <bereich>: <text>
+// Bewusst nur console.error und kein Fremddienst — es soll nichts kosten und
+// nichts ausfallen können.
+function sicherheitsLog(bereich, text) {
+  console.error("SICHERHEIT " + bereich + ": " + text);
+}
+
+// ── Fehler, die der Browser NICHT erfahren soll ─────────────────────────────
+//
+// Vorher gaben chat.js, abo-checkout.js und abo-portal.js die rohe
+// Fehlermeldung an den Browser weiter. Darin stehen Stripe- und
+// Anthropic-Interna: welche Bibliothek, welcher Endpunkt, manchmal Teile der
+// Konfiguration. Für den Besucher nutzlos, für einen Angreifer eine Landkarte.
+//
+// Stattdessen: Der Grund bleibt im Log, der Browser bekommt eine Kennung. Wer
+// anruft, nennt die Kennung, und im Log steht sie daneben.
+function serverFehler(bereich, e, text) {
+  const kennung = Math.random().toString(36).slice(2, 8).toUpperCase();
+  console.error("FEHLER " + bereich + " [" + kennung + "]:", (e && e.stack) || e);
+  return json(500, {
+    error: text || "Da ist etwas schiefgelaufen. Bitte später nochmal.",
+    kennung,
+  });
 }
 
 module.exports = {
-  json, holeIp, originErlaubt, rateOk, IST_DEV,
+  json, holeIp, originErlaubt, rateOk, rateOkStreng, IST_DEV,
   originPasstZuFirma, corsKopf, preflightAntwort,
+  sicherheitsLog, serverFehler,
 };

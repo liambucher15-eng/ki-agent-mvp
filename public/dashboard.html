@@ -820,6 +820,39 @@
             <button class="btn klein" id="aboUmhaengen" hidden style="margin-top:0.4rem;"></button>
           </div>
         </article>
+        <!-- ===== Deine Daten =====
+             Auskunft und Löschung waren bis hierher nicht vorgesehen: Es gab
+             keinen Weg, die eigenen Daten zu bekommen, und keinen, das Konto
+             loszuwerden. Das ist DSGVO Art. 15, 17 und 20 — und der Unterschied
+             zwischen einem Produkt und einer Falle. -->
+        <article class="karte sp5">
+          <div class="kopfzeile"><h2>Deine Daten</h2></div>
+          <p class="sub">Alles herunterladen oder das Konto endgültig löschen.</p>
+
+          <div class="konto-zeile" style="margin-top:0.6rem;">
+            <span class="klabel">Export</span>
+            <div class="zeile">
+              <button class="btn klein" id="datenExport">Als JSON herunterladen</button>
+            </div>
+            <p class="sub" style="margin-top:0.4rem;">
+              Agenten, Gespräche und Kontaktanfragen in einer Datei.
+            </p>
+          </div>
+
+          <div class="konto-zeile">
+            <span class="klabel">Löschen</span>
+            <div class="zeile">
+              <button class="btn klein" id="kontoLoeschen"
+                      style="border-color:#e11d48;color:#e11d48;">Konto löschen</button>
+            </div>
+            <p class="sub" style="margin-top:0.4rem;">
+              Entfernt Agenten, Gespräche, Kontaktanfragen und Charakterbilder und
+              beendet ein laufendes Abo. Das lässt sich nicht rückgängig machen.
+            </p>
+            <p class="sub" id="datenStatus" hidden style="margin-top:0.4rem;"></p>
+          </div>
+        </article>
+
         <article class="karte sp7">
           <div class="kopfzeile"><h2>Einbetten</h2></div>
           <p class="sub">Füge den folgenden Code in deine Webseite ein, um deinen Chat-Agenten zu aktivieren.</p>
@@ -1123,7 +1156,7 @@
             text = (await f.text()).trim();
           } else {
             const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
-            const resp = await fetch("/.netlify/functions/dokument-lesen", { method: "POST", headers: { "content-type": "application/json" },
+            const resp = await Auth.fetch("/.netlify/functions/dokument-lesen", { method: "POST", headers: { "content-type": "application/json" },
               body: JSON.stringify({ dateiname: f.name, mediaType: f.type, daten: String(dataUrl).split(",")[1] }) });
             const d = await resp.json(); if (!resp.ok) throw new Error(d.error || "Fehler");
             text = d.text || "";
@@ -1149,7 +1182,7 @@
       try {
         const jobId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                        : Date.now() + "-" + Math.random().toString(36).slice(2);
-        const start = await fetch("/.netlify/functions/scan-background", {
+        const start = await Auth.fetch("/.netlify/functions/scan-background", {
           method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, jobId }),
         });
         if (start.status !== 202 && !start.ok) throw new Error("Scan konnte nicht gestartet werden");
@@ -1190,7 +1223,7 @@
     async function charJob(payload, maxVersuche) {
       const jobId = "char-" + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID()
                      : Date.now() + "-" + Math.random().toString(36).slice(2));
-      const start = await fetch("/.netlify/functions/charakter-background", {
+      const start = await Auth.fetch("/.netlify/functions/charakter-background", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jobId, firmaId: firma.id, farbe: firma.charakter.farbe, ...payload }),
       });
@@ -1772,7 +1805,7 @@
       if (!nutzer) { alert("Bitte zuerst anmelden."); return; }
       if (knopf) knopf.disabled = true;
       try {
-        const res = await fetch("/.netlify/functions/abo-portal", {
+        const res = await Auth.fetch("/.netlify/functions/abo-portal", {
           method: "POST", headers: { "content-type": "application/json" },
           body: JSON.stringify({ nutzer: nutzer.id, basis: location.origin }),
         });
@@ -1800,7 +1833,7 @@
       const nutzer = window.Auth ? await window.Auth.nutzer() : null;
       if (!nutzer) { alert("Bitte zuerst anmelden."); return; }
       try {
-        const res = await fetch("/.netlify/functions/abo-checkout", {
+        const res = await Auth.fetch("/.netlify/functions/abo-checkout", {
           method: "POST", headers: { "content-type": "application/json" },
           body: JSON.stringify({ nutzer: nutzer.id, plan, takt, basis: location.origin }),
         });
@@ -1812,6 +1845,88 @@
         alert("Abo konnte nicht gestartet werden: " + e.message);
       }
     }
+
+    // ── Deine Daten: Export und Löschung ──────────────────────────────────
+    //
+    // Beide Endpunkte nehmen KEINE Nutzer-ID entgegen. Wer fragt, steht im
+    // Clerk-Token, das Auth.fetch mitschickt — deshalb ist hier auch nichts
+    // zu übergeben.
+    function datenStatus(text, fehler) {
+      const el = $("datenStatus");
+      if (!el) return;
+      el.textContent = text || "";
+      el.hidden = !text;
+      el.style.color = fehler ? "#e11d48" : "";
+    }
+
+    async function exportiereDaten() {
+      const knopf = $("datenExport");
+      if (knopf) knopf.disabled = true;
+      datenStatus("Wird zusammengestellt …");
+      try {
+        const res = await Auth.fetch("/.netlify/functions/daten-export", { method: "POST" });
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          throw new Error(d.error || "Status " + res.status);
+        }
+        // Über einen Blob statt eines direkten Links: Die Antwort kommt aus
+        // einer POST-Anfrage mit Authorization-Header — ein <a href> könnte
+        // den nicht mitschicken und liefe in ein 401.
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "aurachat-daten-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        datenStatus("Datei heruntergeladen.");
+      } catch (e) {
+        datenStatus("Export fehlgeschlagen: " + e.message, true);
+      } finally {
+        if (knopf) knopf.disabled = false;
+      }
+    }
+
+    async function loescheKonto() {
+      // Zwei Hürden, weil der Vorgang nicht umkehrbar ist: erst die Frage,
+      // dann ein Wort, das man tippen muss. Ein einzelnes confirm() klickt
+      // man versehentlich weg.
+      if (!confirm(
+        "Konto wirklich löschen?\n\n" +
+        "Alle Agenten, Gespräche, Kontaktanfragen und Charakterbilder werden " +
+        "entfernt und ein laufendes Abo wird beendet. Das lässt sich nicht " +
+        "rückgängig machen."
+      )) return;
+
+      const wort = prompt('Zum Bestätigen bitte LÖSCHEN eingeben:');
+      if (wort !== "LÖSCHEN") { datenStatus("Abgebrochen — nichts wurde gelöscht."); return; }
+
+      const knopf = $("kontoLoeschen");
+      if (knopf) knopf.disabled = true;
+      datenStatus("Wird gelöscht …");
+      try {
+        const res = await Auth.fetch("/.netlify/functions/konto-loeschen", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ bestaetigung: "LÖSCHEN" }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(d.error || "Status " + res.status);
+        alert(d.hinweis || "Konto gelöscht.");
+        // Abmelden statt nur weiterleiten: Die Sitzung zeigt sonst auf ein
+        // Konto, dessen Daten es nicht mehr gibt — jede weitere Seite liefe
+        // in Fehler.
+        try { await Auth.abmelden(); } catch (e) { /* egal, wir gehen ohnehin */ }
+        location.href = "start.html";
+      } catch (e) {
+        datenStatus("Löschen fehlgeschlagen: " + e.message, true);
+        if (knopf) knopf.disabled = false;
+      }
+    }
+
+    if ($("datenExport")) $("datenExport").addEventListener("click", exportiereDaten);
+    if ($("kontoLoeschen")) $("kontoLoeschen").addEventListener("click", loescheKonto);
 
     function zeigeEmbed() {
       // data-stil nur bei "leiste": "orb" ist der Standard im Widget, das

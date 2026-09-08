@@ -194,4 +194,38 @@ function verifiziereWebhook(rohBody, signaturHeader) {
   return JSON.parse(rohBody);
 }
 
-module.exports = { KAUFBAR, TAKTE, konfiguriert, preisFuer, planFuerPreis, erstelleCheckout, erstellePortal, verifiziereWebhook };
+// Alle laufenden Abos eines Kunden SOFORT beenden.
+//
+// Gebraucht beim Loeschen des Kontos: Wer sein Konto entfernt, darf nicht
+// weiter belastet werden. Deshalb sofort statt zum Periodenende — bei einer
+// Kuendigung im Kundenportal ist das Periodenende richtig (der Kunde hat
+// bezahlt und nutzt weiter), beim Loeschen gibt es aber nichts mehr zu nutzen.
+//
+// Gibt die Zahl der beendeten Abos zurueck. Ohne Stripe-Konfiguration 0 statt
+// eines Fehlers — ein Konto ohne Zahlung soll sich trotzdem loeschen lassen.
+async function beendeAbos(kunde) {
+  if (!kunde || !konfiguriert()) return 0;
+
+  const liste = await fetch(
+    "https://api.stripe.com/v1/subscriptions?customer=" + encodeURIComponent(kunde) + "&status=all&limit=100",
+    { headers: { authorization: "Bearer " + SECRET } }
+  );
+  const daten = await liste.json();
+  if (!liste.ok) throw new Error(daten.error?.message || "Stripe-Fehler beim Lesen der Abos");
+
+  let beendet = 0;
+  for (const abo of daten.data || []) {
+    // Bereits beendete nicht noch einmal anfassen — Stripe antwortet darauf
+    // mit einem Fehler, und die ganze Loeschung braeche daran ab.
+    if (abo.status === "canceled" || abo.status === "incomplete_expired") continue;
+    const res = await fetch("https://api.stripe.com/v1/subscriptions/" + encodeURIComponent(abo.id), {
+      method: "DELETE",
+      headers: { authorization: "Bearer " + SECRET },
+    });
+    if (res.ok) beendet++;
+    else console.error("stripe: Abo " + abo.id + " nicht beendet, Status " + res.status);
+  }
+  return beendet;
+}
+
+module.exports = { KAUFBAR, TAKTE, konfiguriert, preisFuer, planFuerPreis, erstelleCheckout, erstellePortal, verifiziereWebhook, beendeAbos };

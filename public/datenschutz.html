@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Datenschutz — AuraChat</title>
+  <meta name="description" content="Datenschutzerklärung von AuraChat: welche Daten anfallen, wo sie liegen, wer sie sieht und wie lange sie bleiben." />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="canonical" href="datenschutz.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="lib/seite.css" />
+  <link rel="stylesheet" href="lib/recht.css" />
+</head>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  ENTWURF — NICHT GÜLTIG, SOLANGE HIER PLATZHALTER STEHEN
+  ═══════════════════════════════════════════════════════════════════════════
+
+  Anders als beim Impressum ist hier das MEISTE schon ausgefüllt: Welche Daten
+  wo anfallen, liest man dem Code an, und genau das steht unten drin. Belegt in
+  schema.sql, den migration-*.sql, lib/protokoll.js, lib/schutz.js und
+  netlify/functions/chat.js.
+
+  Offen bleiben nur die Angaben, die nirgends im Code stehen — Firmierung,
+  Server-Standorte, Aufbewahrungsfristen. Die sind gelb markiert.
+
+  ZWEI ROLLEN, DIE NICHT DURCHEINANDERGERATEN DÜRFEN:
+  1. Für aurachat.ch selbst ist AuraChat VERANTWORTLICHER.
+  2. Für die Agenten auf Kundenwebseiten ist AuraChat AUFTRAGSVERARBEITER —
+     verantwortlich ist dort der Betrieb, der den Agenten einsetzt. Dafür
+     braucht es einen AVV. Gerüst dazu in RECHT-CHECKLISTE.md.
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<body id="oben">
+
+  <header class="kopf" id="kopf">
+    <a class="logo" href="start.html">
+      <span class="zeichen" aria-hidden="true"></span>AuraChat
+    </a>
+    <nav class="nav" aria-label="Hauptnavigation">
+      <a href="start.html#so">So funktioniert es</a>
+      <a href="start.html#funktionen">Funktionen</a>
+      <a href="preis.html">Preis</a>
+      <a href="start.html#faq">Fragen</a>
+    </nav>
+    <div class="kopf-rechts">
+      <a class="anmelden" href="dashboard.html">Anmelden</a>
+    </div>
+  </header>
+
+  <div class="entwurf-hinweis" role="note">
+    <strong>Entwurf — noch nicht gültig.</strong>
+    Die Beschreibung der Verarbeitung ist aus dem Code belegt und stimmt. Die
+    gelb markierten Stellen fehlen noch. Anleitung: <code>RECHT-CHECKLISTE.md</code>.
+  </div>
+
+  <main class="recht">
+
+    <h1>Datenschutzerklärung</h1>
+    <p class="stand">Stand: <span class="luecke">[Datum eintragen]</span></p>
+
+    <h2>Verantwortlich</h2>
+    <p>
+      <span class="luecke">[Firmierung, Adresse, E-Mail — gleich wie im
+      Impressum]</span>
+    </p>
+    <p>
+      Diese Erklärung gilt für die Webseite von AuraChat und für das Kundenkonto.
+      Für den KI-Agenten, der auf der Webseite eines Betriebs läuft, gilt der
+      Abschnitt „Agenten auf Kundenwebseiten“ weiter unten — dort ist AuraChat
+      nicht Verantwortlicher, sondern Auftragsverarbeiter.
+    </p>
+
+    <h2>Kurz gefasst</h2>
+    <ul>
+      <li>Es gibt <strong>kein Tracking und keine Werbe-Cookies</strong>. Keine
+        Analyse-Software, keine Zählpixel, keine Weitergabe an Werbenetzwerke.</li>
+      <li>Deshalb gibt es auch <strong>kein Cookie-Banner</strong>. Gespeichert
+        wird im Browser nur, was die Seite zum Funktionieren braucht.</li>
+      <li>Gesprächsinhalte gehen zur Beantwortung an <strong>Anthropic</strong> in
+        den USA. Ohne das gäbe es kein Produkt.</li>
+    </ul>
+
+    <h2>Was beim Besuch dieser Webseite anfällt</h2>
+    <p>
+      Der Hoster (Netlify) verarbeitet beim Abruf jeder Seite technische
+      Zugriffsdaten: IP-Adresse, Zeitpunkt, aufgerufene Adresse, Browserkennung.
+      Das ist für den Betrieb einer Webseite unvermeidbar. Rechtsgrundlage ist
+      das berechtigte Interesse an einem sicheren, funktionierenden Betrieb
+      (Art. 6 Abs. 1 lit. f DSGVO).
+    </p>
+    <p>
+      Zusätzlich speichert AuraChat IP-bezogene Zähler, um Missbrauch zu bremsen
+      (Tabelle <code>rate_limits</code>). Auch das stützt sich auf das berechtigte
+      Interesse: Ohne diese Bremse könnte jeder Fremde beliebig teure
+      KI-Anfragen auslösen.
+    </p>
+
+    <h3>Schriftarten</h3>
+    <p>
+      Die Seite lädt die Schrift „Inter“ von Google Fonts
+      (<code>fonts.googleapis.com</code>, <code>fonts.gstatic.com</code>). Dabei
+      erfährt Google die IP-Adresse des Besuchers.
+      <span class="luecke">[Entscheidung nötig: so lassen und hier nennen, oder
+      die Schriftdateien selbst ausliefern — dann fällt dieser Abschnitt weg.
+      Selbst ausliefern ist die datensparsamere Variante und kostet eine halbe
+      Stunde.]</span>
+    </p>
+
+    <h3>Was im Browser gespeichert wird</h3>
+    <p>
+      Keine Werbe- oder Analyse-Cookies. Gespeichert wird ausschliesslich
+      Funktionales, und zwar lokal im Browser (<code>localStorage</code>) — es
+      wird nicht an AuraChat übertragen:
+    </p>
+    <ul>
+      <li>ob die Sprachausgabe ein- oder ausgeschaltet ist</li>
+      <li>an welcher Seitenkante das Chatfenster stehen soll</li>
+      <li>ob ein Hinweis bereits weggeklickt wurde</li>
+      <li>zuletzt geöffneter Agent im Dashboard</li>
+    </ul>
+    <p>
+      Für die Anmeldung setzt Clerk ein Sitzungs-Cookie. Es ist technisch
+      notwendig — ohne bleibt man nicht angemeldet.
+    </p>
+
+    <h2>Kundenkonto und Einrichtung</h2>
+    <p>
+      Wer ein Konto anlegt, gibt E-Mail-Adresse und Passwort bei Clerk ein.
+      AuraChat sieht das Passwort nie. Im Onboarding kommen dazu: Name und
+      Webseite des Betriebs, die Angaben, die der Agent kennen soll, und die
+      Gestaltung der Figur.
+    </p>
+    <p>
+      Wird eine Webseite gescannt, ruft der Server die öffentlich erreichbaren
+      Seiten dieser Adresse ab und speichert den daraus gewonnenen Text als
+      Wissen des Agenten. Rechtsgrundlage ist die Erfüllung des Vertrags
+      (Art. 6 Abs. 1 lit. b DSGVO).
+    </p>
+
+    <h2>Agenten auf Kundenwebseiten</h2>
+    <p>
+      Läuft ein Agent auf der Webseite eines Betriebs, verarbeitet AuraChat die
+      dort anfallenden Daten <strong>im Auftrag dieses Betriebs</strong>.
+      Verantwortlich ist der Betrieb; AuraChat ist Auftragsverarbeiter. Grundlage
+      ist ein Auftragsverarbeitungsvertrag.
+    </p>
+    <p>Verarbeitet werden dabei:</p>
+    <div class="recht-tabelle">
+      <table>
+        <thead>
+          <tr><th>Was</th><th>Wozu</th><th>Wo gespeichert</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Frage des Besuchers und Antwort des Agenten</td>
+            <td>Die Antwort erzeugen; der Betrieb kann seine Gespräche einsehen</td>
+            <td>Tabelle <code>gespraeche</code></td>
+          </tr>
+          <tr>
+            <td>Adresse der Unterseite, auf der gefragt wurde</td>
+            <td>Passende Antwort zur richtigen Seite</td>
+            <td>Tabelle <code>gespraeche</code></td>
+          </tr>
+          <tr>
+            <td>Sichtbarer Text der aufgerufenen Seite</td>
+            <td>Der Agent soll wissen, wo der Besucher gerade steht</td>
+            <td>Nicht dauerhaft gespeichert — nur für die eine Anfrage</td>
+          </tr>
+          <tr>
+            <td>Name, E-Mail und Nachricht, wenn der Besucher sie hinterlässt</td>
+            <td>Der Betrieb soll zurückrufen können</td>
+            <td>Tabelle <code>kontaktanfragen</code></td>
+          </tr>
+          <tr>
+            <td>IP-bezogene Zähler</td>
+            <td>Missbrauch bremsen</td>
+            <td>Tabelle <code>rate_limits</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Der Agent verfolgt Besucher <strong>nicht</strong> über verschiedene
+      Webseiten hinweg und legt kein Profil an. Er löst keine Käufe aus und
+      schickt keine Formulare ab.
+    </p>
+
+    <h2>Fremddienste</h2>
+    <p>
+      Ohne diese Dienste gäbe es das Produkt nicht. Mit allen bestehen
+      Auftragsverarbeitungsverträge; für die Übermittlung in die USA gelten die
+      Standardvertragsklauseln der EU-Kommission.
+      <span class="luecke">[Prüfen und bestätigen: Ist mit jedem Dienst
+      tatsächlich ein AVV abgeschlossen?]</span>
+    </p>
+    <div class="recht-tabelle">
+      <table>
+        <thead>
+          <tr><th>Dienst</th><th>Wofür</th><th>Was dorthin geht</th><th>Ort</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Anthropic (Claude)</td>
+            <td>Antworten des Agenten, Auslesen von Dokumenten</td>
+            <td>Gesprächsverlauf, Wissen des Betriebs, Text der aufgerufenen Seite</td>
+            <td>USA</td>
+          </tr>
+          <tr>
+            <td>Google (Gemini)</td>
+            <td>Bilder der Figur erzeugen</td>
+            <td>Beschreibung der Figur, hochgeladene Vorlagen</td>
+            <td>USA</td>
+          </tr>
+          <tr>
+            <td>Supabase</td>
+            <td>Datenbank und Bildspeicher</td>
+            <td>Alle oben genannten gespeicherten Daten</td>
+            <td><span class="luecke">[Region des Projekts eintragen]</span></td>
+          </tr>
+          <tr>
+            <td>Netlify</td>
+            <td>Hosting und Serverfunktionen</td>
+            <td>Zugriffsdaten, alle Anfragen</td>
+            <td><span class="luecke">[Region eintragen]</span></td>
+          </tr>
+          <tr>
+            <td>Clerk</td>
+            <td>Anmeldung und Konten</td>
+            <td>E-Mail, Passwort (gehasht), Sitzungsdaten</td>
+            <td>USA</td>
+          </tr>
+          <tr>
+            <td>Stripe</td>
+            <td>Zahlungen und Abos</td>
+            <td>Zahlungsdaten, Rechnungsangaben</td>
+            <td>USA / EU</td>
+          </tr>
+          <tr>
+            <td>Google Fonts</td>
+            <td>Schriftart der Webseite</td>
+            <td>IP-Adresse beim Laden</td>
+            <td>USA</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Wie lange die Daten bleiben</h2>
+    <div class="recht-tabelle">
+      <table>
+        <thead>
+          <tr><th>Was</th><th>Frist</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Scan-Aufträge (<code>scan_jobs</code>)</td><td>1 Tag, danach automatisch gelöscht</td></tr>
+          <tr><td>Gespräche</td><td><span class="luecke">[Frist festlegen — Vorschlag: 90 Tage]</span></td></tr>
+          <tr><td>Kontaktanfragen</td><td><span class="luecke">[Frist festlegen — Vorschlag: 12 Monate]</span></td></tr>
+          <tr><td>Zähler für Missbrauchsschutz</td><td><span class="luecke">[Frist festlegen — Vorschlag: 30 Tage]</span></td></tr>
+          <tr><td>Konto- und Betriebsdaten</td><td>Bis zur Löschung des Kontos</td></tr>
+          <tr><td>Rechnungen</td><td>10 Jahre (gesetzliche Aufbewahrungspflicht)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Rechte</h2>
+    <p>
+      Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und
+      Widerspruch. Anfragen an
+      <span class="luecke">[E-Mail-Adresse]</span>.
+    </p>
+    <p>
+      Im Dashboard lassen sich Konto und Agent selbst löschen und alle Daten als
+      Datei herunterladen — dafür braucht es keine Anfrage.
+    </p>
+    <p>
+      Wer sich beschweren möchte, kann sich an die zuständige Aufsichtsbehörde
+      wenden: in der Schweiz an den Eidgenössischen Datenschutz- und
+      Öffentlichkeitsbeauftragten (EDÖB), in der EU an die Behörde des eigenen
+      Wohnsitzlandes.
+    </p>
+
+    <h2>Künstliche Intelligenz</h2>
+    <p>
+      Die Antworten des Agenten erzeugt ein Sprachmodell. Der Agent ist als
+      solcher gekennzeichnet — Besucher sollen jederzeit wissen, dass sie nicht
+      mit einem Menschen schreiben.
+    </p>
+    <p>
+      Es findet keine automatisierte Entscheidungsfindung mit rechtlicher Wirkung
+      statt: Der Agent gibt Auskunft und nimmt Nachrichten auf. Er löst keine
+      Bestellung aus und trifft keine Entscheidung über eine Person.
+    </p>
+
+  </main>
+
+  <footer>
+    <div class="fuss-karte">
+      <div class="fuss-oben">
+        <p class="fuss-claim">Der persönliche Mitarbeiter für kleine Betriebe. Er lernt alles selbst von deiner Webseite, du musst nichts vorbereiten.</p>
+
+        <div class="fuss-spalte">
+          <h4>Erkunden</h4>
+          <ul>
+            <li><a href="start.html#funktionen">Funktionen</a></li>
+            <li><a href="preis.html">Preis</a></li>
+            <li><a href="demo-nordform.html">Demo</a></li>
+            <li><a href="kontakt.html">Kontakt</a></li>
+          </ul>
+        </div>
+
+        <div class="fuss-spalte">
+          <h4>Rechtliches</h4>
+          <ul>
+            <li><a href="impressum.html">Impressum</a></li>
+            <li><a href="datenschutz.html" aria-current="page">Datenschutz</a></li>
+            <li><a href="agb.html">AGB</a></li>
+          </ul>
+        </div>
+
+        <div class="fuss-cta">
+          <a class="fuss-aktion" href="kontakt.html">
+            Sprich mit Aura
+            <span class="fuss-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
+          </a>
+          <p class="fuss-aktion-notiz">Kein Formular, ein echtes Gespräch</p>
+        </div>
+      </div>
+
+      <div class="fuss-unten">
+        <span>AuraChat © 2026 · KI-Agenten für kleine Betriebe</span>
+        <span>Schweiz · <time id="fussZeit">--:--</time></span>
+      </div>
+    </div>
+  </footer>
+
+<script src="lib/seite.js"></script>
+
+</body>
+</html>

@@ -60,6 +60,28 @@
                    aria-label="Adresse deiner Webseite" required />
             <button class="knopf knopf-voll" type="submit" id="losKnopf">Seite lesen</button>
           </form>
+
+          <!-- ── Bot-Schutz (Cloudflare Turnstile) ─────────────────────────
+               Diese Seite ist die einzige Stelle im System, an der ein Fremder
+               OHNE Konto Geld kostet: ein Webseiten-Scan plus drei
+               Claude-Aufrufe. Ein Rate-Limit pro IP bremst einen Menschen,
+               aber kein Skript mit wechselnden Adressen.
+
+               NOCH NICHT AKTIV: Solange in data-sitekey der Platzhalter steht,
+               laedt probe.js das Turnstile-Skript gar nicht erst, und der
+               Server (lib/botschutz.js) laesst ohne TURNSTILE_SECRET ebenfalls
+               alles durch. Beides mit Absicht — ein halb eingerichteter Schutz
+               darf das Schaufenster nicht schliessen.
+
+               Zum Einschalten: Site Key von cloudflare.com/turnstile hier
+               eintragen, Secret Key als Netlify-Variable TURNSTILE_SECRET.
+               Dann in netlify.toml challenges.cloudflare.com in script-src und
+               frame-src der CSP aufnehmen — steht dort schon vorbereitet. -->
+          <div id="botschutz" class="cf-turnstile"
+               data-sitekey="DEIN-TURNSTILE-SITEKEY"
+               data-theme="light" data-size="flexible"
+               style="margin-top:0.75rem;"></div>
+
           <p class="knopf-notiz" id="adresseFehler" role="alert"></p>
           <div class="dehner"></div>
         </section>

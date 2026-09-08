@@ -1,0 +1,126 @@
+/* Gestaltung der Rechtsseiten (Impressum, Datenschutz, AGB).
+   ──────────────────────────────────────────────────────────────────────────
+   Bewusst eine eigene, kleine Datei statt drei Kopien im <style> jeder Seite:
+   Rechtstexte werden gepflegt, und dabei soll niemand dreimal dasselbe CSS
+   anfassen müssen.
+
+   Alle Farben kommen aus den Variablen in lib/seite.css — diese Datei wird
+   IMMER NACH seite.css eingebunden. */
+
+.recht {
+  /* Schmaler als .bahn (72rem). Fliesstext liest sich ab etwa 75 Zeichen pro
+     Zeile schlecht; bei 72rem wären es weit über hundert. */
+  max-width: 46rem;
+  margin: 0 auto;
+
+  /* Der Kopf ist position: fixed und rund 61px hoch — er liegt ÜBER dem
+     Inhalt, nicht davor. Die übrigen Seiten merken das nicht, weil ihre
+     Sektionen mit clamp(4rem, 9vw, 7rem) einsteigen. Hier stand zuerst
+     clamp(2.5rem, …): Am unteren Ende des clamp sind das 40px, und die
+     Überschrift lag dann unter der Navigation. Gemessen, nicht geschätzt.
+     5.5rem = 88px lassen den Kopf auch dann frei, wenn er umbricht. */
+  padding: 5.5rem var(--rand) clamp(4rem, 8vw, 6rem);
+}
+
+/* Steht der Entwurfs-Kasten davor, hat DER den Abstand zum Kopf schon
+   geschaffen — dann hier nur noch der normale Zwischenraum. Ohne diese Regel
+   klaffte zwischen Kasten und Überschrift eine ganze Bildschirmhöhe.
+   Der Kasten verschwindet beim Livegang; die Regel greift dann einfach nicht
+   mehr, und der Abstand oben stimmt weiter. */
+.entwurf-hinweis + .recht { padding-top: clamp(1.5rem, 3vw, 2.5rem); }
+
+.recht h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.6rem;
+}
+
+.recht .stand {
+  color: var(--tinte-hell);
+  font-size: 0.95rem;
+  margin: 0 0 2.5rem;
+}
+
+.recht h2 {
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2.75rem 0 0.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--rand-fein);
+}
+
+.recht h2:first-of-type { border-top: 0; padding-top: 0; }
+
+.recht h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.5rem;
+}
+
+.recht p,
+.recht li {
+  color: var(--tinte-weich);
+  line-height: 1.7;
+}
+
+.recht p { margin: 0 0 1rem; }
+.recht ul, .recht ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+.recht li { margin: 0 0 0.4rem; }
+
+.recht a { color: var(--violett-text); }
+
+/* Tabellen (etwa die Übersicht der Fremddienste im Datenschutz).
+   Der Rahmen mit overflow-x trägt die Tabelle auf dem Handy, ohne dass die
+   ganze Seite seitlich scrollt. */
+.recht-tabelle { overflow-x: auto; margin: 0 0 1.5rem; }
+.recht-tabelle table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.92rem; }
+.recht-tabelle th,
+.recht-tabelle td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.6rem 0.8rem 0.6rem 0;
+  border-bottom: 1px solid var(--rand-fein);
+  color: var(--tinte-weich);
+}
+.recht-tabelle th { color: var(--tinte); font-weight: 600; white-space: nowrap; }
+
+/* ── Der Entwurfs-Hinweis ───────────────────────────────────────────────────
+   Diese Seiten sind Gerüste. Sie sehen aus wie fertige Rechtstexte, und genau
+   das ist die Gefahr: Ein Impressum mit Platzhaltern, das live geht, ist
+   schlechter als gar keines — es sieht gültig aus und ist es nicht.
+
+   Der Kasten und die Marker unten sind deshalb absichtlich laut. Sie
+   verschwinden erst, wenn jemand sie von Hand entfernt. Anleitung dazu steht
+   in RECHT-CHECKLISTE.md. */
+.entwurf-hinweis {
+  /* min() statt max-width: Auf schmalen Schirmen klebte der Kasten sonst an
+     beiden Rändern, weil er anders als .recht kein seitliches Innenmass hat. */
+  width: min(46rem, calc(100% - 2 * var(--rand)));
+  /* 5.5rem oben aus demselben Grund wie bei .recht: Der Kopf ist fixed und
+     lag sonst über dem Kasten. */
+  margin: 5.5rem auto 0;
+  padding: 1rem 1.15rem;
+  border: 2px solid #d97706;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #7c2d12;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.entwurf-hinweis strong { display: block; margin-bottom: 0.2rem; color: #7c2d12; }
+
+/* Jede Angabe, die nur Liam liefern kann. */
+.luecke {
+  background: #fef08a;
+  color: #713f12;
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .recht h2 { scroll-margin-top: 5rem; }
+}

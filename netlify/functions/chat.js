@@ -9,7 +9,8 @@
 
 const { baueSystemPrompt } = require("./lib/baueSystemPrompt");
 const { ladeFirmaServer } = require("./lib/firmaLaden");
-const { json, holeIp, originErlaubt, rateOk, IST_DEV } = require("./lib/schutz");
+const { json, holeIp, originErlaubt, rateOkStreng, IST_DEV,
+        sicherheitsLog, serverFehler } = require("./lib/schutz");
 const { rufeClaude } = require("./lib/claude");
 const { baueTools } = require("./lib/faehigkeiten");
 const { saubereVorschlaege } = require("./lib/vorschlaege");
@@ -17,7 +18,7 @@ const { saubereAktion, zielStehtAufSeite } = require("./lib/seiten-aktion");
 const { speichereGespraech, speichereKontakt } = require("./lib/protokoll");
 const { leseJob, zaehleProbeFrage } = require("./lib/jobSpeicher");
 const { zaehleAntwort } = require("./lib/firmaLaden");
-const { stufeFuer, kuerzeVerlauf, promptZusatz, SPAR_MAX_TOKENS } = require("./lib/verbrauch");
+const { stufeFuer, kuerzeVerlauf, promptZusatz, SPAR_MAX_TOKENS, plattformDeckelOk } = require("./lib/verbrauch");
 const { testLage, promptZusatzTest } = require("./lib/testzeit");
 const { analysiere, zusammenfassung } = require("./lib/seiten-analyse");
 const {
@@ -120,11 +121,19 @@ async function ladeProbe(probeId) {
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { error: "Nur POST erlaubt" });
-  if (!originErlaubt(event)) return json(403, { error: "Origin nicht erlaubt" });
+  if (!originErlaubt(event)) {
+    sicherheitsLog("chat", "Herkunft abgelehnt: " + ((event.headers || {}).origin || "(keine)"));
+    return json(403, { error: "Origin nicht erlaubt" });
+  }
   if (!process.env.ANTHROPIC_API_KEY) return json(500, { error: "ANTHROPIC_API_KEY fehlt (.env)" });
 
-  // Rate-Limit: 20 Chat-Anfragen pro Minute und IP
-  if (!(await rateOk("chat:" + holeIp(event), 20, 60))) {
+  // Rate-Limit: 20 Chat-Anfragen pro Minute und IP.
+  //
+  // STRENG, also fail-closed: Hinter diesem Endpunkt steht ein bezahlter
+  // Modellaufruf. Wäre er fail-open wie früher, hätte ein Supabase-Ausfall
+  // jedes Limit gleichzeitig aufgehoben — beim teuersten Endpunkt, den es hier
+  // gibt.
+  if (!(await rateOkStreng("chat:" + holeIp(event), 20, 60))) {
     return json(429, { error: "Zu viele Anfragen. Bitte einen Moment warten." });
   }
 
@@ -255,6 +264,17 @@ exports.handler = async (event) => {
     lage = { ...lage, nurNachricht: true, sparmodus: false, testAbgelaufen: true };
   }
 
+  // Deckel ueber die ganze Plattform. Steht NACH allem anderen, weil er alles
+  // ueberstimmt — und er gilt auch fuer die Probefahrt, denn gerade die kann
+  // jeder Fremde ohne Konto ausloesen.
+  //
+  // Wirkung mit Absicht dieselbe wie beim vollen Kontingent: Nachrichtendienst
+  // statt Stille. Ein Besucher auf einer Kundenwebseite soll nie merken, dass
+  // AuraChat ein Kostenproblem hat.
+  if (!(await plattformDeckelOk())) {
+    lage = { ...lage, nurNachricht: true, sparmodus: false };
+  }
+
   const tools = baueTools(firma);
   // Bei Fähigkeiten mehr Ausgabe-Budget: Tool-Aufruf + finale Antwort in einem Turn.
   // Im Sparmodus deutlich kuerzere Antworten. Das ist der groesste einzelne
@@ -372,6 +392,9 @@ exports.handler = async (event) => {
       probeUebrig,
     });
   } catch (err) {
-    return json(500, { error: err.message });
+    // Nicht err.message durchreichen: Darin stehen Anthropic-Interna, und diese
+    // Antwort landet im Chatfenster auf einer fremden Kundenwebseite.
+    return serverFehler("chat", err,
+      "Da ist etwas schiefgelaufen. Bitte stell die Frage gleich nochmal.");
   }
 };
